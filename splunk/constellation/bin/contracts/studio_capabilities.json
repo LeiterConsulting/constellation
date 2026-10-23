@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "minimumEnterprise": {
+    "tabs": "10.0", "absoluteAndGrid": "10.0", "tokensAndDrilldowns": "10.0",
+    "conditionalVisibility": "10.2", "spl2DataSources": "10.2",
+    "networkGraph": "10.4", "customVisualizationFramework": "10.4"
+  },
+  "autoRefreshCapabilitySince": "10.4",
+  "autoRefreshCapability": "auto_refresh_dashboards",
+  "source": "https://help.splunk.com/en/splunk-enterprise/create-dashboards-and-reports/dashboard-studio/10.4/whats-new-in-dashboard-studio/whats-new-in-dashboard-studio"
+}

@@ -1,0 +1,19 @@
+# Contributing
+
+Constellation is a development preview. Start with the [README](README.md), [architecture](docs/architecture.md), [support contract](docs/studio-support.md) and [upgrade guide](docs/upgrade-guide.md). Source licensing is pending; this document does not grant an open-source license or impose a contributor agreement.
+
+## Make a focused change
+
+1. Describe the user-visible problem and expected behavior in an issue or pull request. Use synthetic data and sanitized reproduction steps.
+2. Keep provider transport, version rules, search validation, draft migrations and rendering behind their existing module boundaries.
+3. Preserve stable IDs, unknown native properties and unrelated working interactions. Invalid edits must leave the last valid dashboard intact.
+4. Run the appropriate checks from [development](docs/development.md), including publication checks and Gitleaks before committing.
+5. Explain the change, verification and remaining limits in the pull request. Separate mocked/fixture checks from live integration evidence.
+
+UI changes use Splunk UI components and styled-components with Splunk theme tokens. Check both themes, keyboard access, focus, labels and dropdown/textbox contrast. Changes to native behavior need a rendered Studio check in addition to source validation.
+
+## Safe reports
+
+Do not paste API keys, session tokens, passwords, private certificates, real event rows, confidential dashboard definitions, internal hosts or raw provider/Splunk error bodies into issues or logs. Use placeholders and minimal synthetic fixtures. Check image/PDF content and metadata before attaching files.
+
+Report suspected vulnerabilities through the private path described in [SECURITY.md](SECURITY.md), not a public issue containing exploit details or sensitive data. Keep repository visibility private until the owner explicitly authorizes a change.

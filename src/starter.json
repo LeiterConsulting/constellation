@@ -1,0 +1,413 @@
+{
+  "title": "Checkout performance",
+  "description": "Latency, failures, and the services that need attention. Authored sample data.",
+  "visualizations": {
+    "viz_requests": {
+      "type": "splunk.singlevalue",
+      "title": "Requests",
+      "options": {
+        "backgroundColor": "transparent"
+      },
+      "dataSources": {
+        "primary": "ds_requests"
+      }
+    },
+    "viz_latency": {
+      "type": "splunk.singlevalue",
+      "title": "p95 latency (ms)",
+      "options": {
+        "backgroundColor": "transparent"
+      },
+      "dataSources": {
+        "primary": "ds_p95"
+      }
+    },
+    "viz_failures": {
+      "type": "splunk.singlevalue",
+      "title": "Failure rate (%)",
+      "options": {
+        "numberPrecision": 2,
+        "backgroundColor": "transparent"
+      },
+      "dataSources": {
+        "primary": "ds_failures"
+      }
+    },
+    "viz_trend": {
+      "type": "splunk.line",
+      "title": "How latency changed \u00b7 sample day",
+      "options": {
+        "yAxisTitleText": "p95 latency (ms)",
+        "legendDisplay": "bottom",
+        "backgroundColor": "transparent"
+      },
+      "dataSources": {
+        "primary": "ds_latency"
+      }
+    },
+    "viz_services": {
+      "type": "splunk.table",
+      "title": "Services \u00b7 select a service to open its detail",
+      "options": {
+        "backgroundColor": "transparent"
+      },
+      "dataSources": {
+        "primary": "ds_services"
+      },
+      "eventHandlers": [
+        {
+          "type": "drilldown.setToken",
+          "options": {
+            "tokens": [
+              {
+                "token": "selected_service",
+                "key": "row.service.value"
+              }
+            ],
+            "fields": [
+              "service"
+            ]
+          }
+        },
+        {
+          "type": "drilldown.switchToTab",
+          "options": {
+            "tabId": "layout_detail",
+            "fields": [
+              "service"
+            ]
+          }
+        }
+      ]
+    },
+    "viz_ranked": {
+      "type": "splunk.bar",
+      "title": "Latency by service (ms)",
+      "options": {
+        "backgroundColor": "transparent"
+      },
+      "dataSources": {
+        "primary": "ds_ranked"
+      }
+    },
+    "viz_detail": {
+      "type": "splunk.markdown",
+      "options": {
+        "markdown": "## Service detail\n\nSelected service: **$selected_service$**\n\nThis is authored sample data. The row interaction preserves the selected service token when switching tabs.",
+        "backgroundColor": "transparent"
+      }
+    }
+  },
+  "dataSources": {
+    "ds_requests": {
+      "type": "ds.test",
+      "options": {
+        "data": {
+          "fields": [
+            {
+              "name": "requests"
+            }
+          ],
+          "columns": [
+            [
+              "2400000"
+            ]
+          ]
+        }
+      }
+    },
+    "ds_p95": {
+      "type": "ds.test",
+      "options": {
+        "data": {
+          "fields": [
+            {
+              "name": "p95_ms"
+            }
+          ],
+          "columns": [
+            [
+              "642"
+            ]
+          ]
+        }
+      }
+    },
+    "ds_failures": {
+      "type": "ds.test",
+      "options": {
+        "data": {
+          "fields": [
+            {
+              "name": "failure_percent"
+            }
+          ],
+          "columns": [
+            [
+              "1.49"
+            ]
+          ]
+        }
+      }
+    },
+    "ds_latency": {
+      "type": "ds.test",
+      "options": {
+        "data": {
+          "fields": [
+            {
+              "name": "_time"
+            },
+            {
+              "name": "p95_ms"
+            }
+          ],
+          "columns": [
+            [
+              "2026-10-22T00:00:00Z",
+              "2026-10-22T01:00:00Z",
+              "2026-10-22T02:00:00Z",
+              "2026-10-22T03:00:00Z",
+              "2026-10-22T04:00:00Z",
+              "2026-10-22T05:00:00Z",
+              "2026-10-22T06:00:00Z",
+              "2026-10-22T07:00:00Z",
+              "2026-10-22T08:00:00Z",
+              "2026-10-22T09:00:00Z",
+              "2026-10-22T10:00:00Z",
+              "2026-10-22T11:00:00Z",
+              "2026-10-22T12:00:00Z",
+              "2026-10-22T13:00:00Z",
+              "2026-10-22T14:00:00Z",
+              "2026-10-22T15:00:00Z",
+              "2026-10-22T16:00:00Z",
+              "2026-10-22T17:00:00Z",
+              "2026-10-22T18:00:00Z",
+              "2026-10-22T19:00:00Z",
+              "2026-10-22T20:00:00Z",
+              "2026-10-22T21:00:00Z",
+              "2026-10-22T22:00:00Z",
+              "2026-10-22T23:00:00Z"
+            ],
+            [
+              "260",
+              "280",
+              "254",
+              "304",
+              "282",
+              "320",
+              "300",
+              "340",
+              "322",
+              "358",
+              "410",
+              "450",
+              "420",
+              "510",
+              "570",
+              "540",
+              "602",
+              "660",
+              "625",
+              "630",
+              "580",
+              "620",
+              "652",
+              "642"
+            ]
+          ]
+        }
+      }
+    },
+    "ds_services": {
+      "type": "ds.test",
+      "options": {
+        "data": {
+          "fields": [
+            {
+              "name": "service"
+            },
+            {
+              "name": "p95_ms"
+            },
+            {
+              "name": "failure_percent"
+            }
+          ],
+          "columns": [
+            [
+              "checkout",
+              "payments",
+              "inventory"
+            ],
+            [
+              "642",
+              "418",
+              "186"
+            ],
+            [
+              "2.1",
+              "0.8",
+              "0.3"
+            ]
+          ]
+        }
+      }
+    },
+    "ds_ranked": {
+      "type": "ds.test",
+      "options": {
+        "data": {
+          "fields": [
+            {
+              "name": "service"
+            },
+            {
+              "name": "p95_ms"
+            }
+          ],
+          "columns": [
+            [
+              "checkout",
+              "payments",
+              "inventory"
+            ],
+            [
+              "642",
+              "418",
+              "186"
+            ]
+          ]
+        }
+      }
+    }
+  },
+  "inputs": {
+    "input_time": {
+      "type": "input.timerange",
+      "title": "Time range \u00b7 static example",
+      "options": {
+        "token": "global_time",
+        "defaultValue": "-24h@h,now"
+      }
+    }
+  },
+  "defaults": {
+    "tokens": {
+      "default": {
+        "selected_service": {
+          "value": "checkout"
+        }
+      }
+    }
+  },
+  "layout": {
+    "globalInputs": [
+      "input_time"
+    ],
+    "tabs": {
+      "items": [
+        {
+          "label": "Overview",
+          "layoutId": "layout_overview"
+        },
+        {
+          "label": "Service detail",
+          "layoutId": "layout_detail"
+        }
+      ]
+    },
+    "layoutDefinitions": {
+      "layout_overview": {
+        "type": "absolute",
+        "options": {
+          "width": 1200,
+          "height": 740,
+          "display": "auto-scale"
+        },
+        "structure": [
+          {
+            "item": "viz_requests",
+            "type": "block",
+            "position": {
+              "x": 0,
+              "y": 0,
+              "w": 390,
+              "h": 110
+            }
+          },
+          {
+            "item": "viz_latency",
+            "type": "block",
+            "position": {
+              "x": 405,
+              "y": 0,
+              "w": 390,
+              "h": 110
+            }
+          },
+          {
+            "item": "viz_failures",
+            "type": "block",
+            "position": {
+              "x": 810,
+              "y": 0,
+              "w": 390,
+              "h": 110
+            }
+          },
+          {
+            "item": "viz_trend",
+            "type": "block",
+            "position": {
+              "x": 0,
+              "y": 125,
+              "w": 1200,
+              "h": 320
+            }
+          },
+          {
+            "item": "viz_services",
+            "type": "block",
+            "position": {
+              "x": 0,
+              "y": 460,
+              "w": 1200,
+              "h": 250
+            }
+          }
+        ]
+      },
+      "layout_detail": {
+        "type": "absolute",
+        "options": {
+          "width": 1200,
+          "height": 600,
+          "display": "auto-scale"
+        },
+        "structure": [
+          {
+            "item": "viz_detail",
+            "type": "block",
+            "position": {
+              "x": 0,
+              "y": 0,
+              "w": 1200,
+              "h": 150
+            }
+          },
+          {
+            "item": "viz_ranked",
+            "type": "block",
+            "position": {
+              "x": 0,
+              "y": 165,
+              "w": 1200,
+              "h": 400
+            }
+          }
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "name": "constellation",
+  "version": "0.7.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "tsc --noEmit && vite build",
+    "test": "vitest run",
+    "package": "python3 scripts/package_app.py"
+  },
+  "dependencies": {
+    "@splunk/dashboard-context": "29.9.0",
+    "@splunk/dashboard-core": "29.9.0",
+    "@splunk/dashboard-presets": "29.9.0",
+    "@splunk/dashboard-state": "29.9.0",
+    "@splunk/dashboard-types": "29.9.0",
+    "@splunk/react-icons": "5.12.0",
+    "@splunk/react-ui": "5.11.0",
+    "@splunk/splunk-utils": "4.1.0",
+    "@splunk/themes": "1.8.0",
+    "@splunk/visualization-context": "28.9.1",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "react-is": "18.3.1",
+    "styled-components": "5.3.11"
+  },
+  "overrides": {
+    "crypto-js": "4.2.0",
+    "d3-color": "3.1.0"
+  },
+  "devDependencies": {
+    "@types/react": "18.3.29",
+    "@types/react-dom": "18.3.7",
+    "@types/styled-components": "5.1.36",
+    "typescript": "5.9.3",
+    "vite": "7.3.7",
+    "vitest": "4.1.12"
+  },
+  "description": "A conversational canvas for Splunk Dashboard Studio dashboards.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/LeiterConsulting/constellation.git"
+  },
+  "homepage": "https://github.com/LeiterConsulting/constellation#readme",
+  "bugs": {
+    "url": "https://github.com/LeiterConsulting/constellation/issues"
+  },
+  "license": "UNLICENSED",
+  "engines": {
+    "node": "22.x"
+  }
+}

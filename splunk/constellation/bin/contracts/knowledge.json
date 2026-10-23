@@ -1,0 +1,133 @@
+[
+  {
+    "id": "series-bindings",
+    "title": "Native chart data bindings",
+    "minimumEnterprise": "10.0",
+    "tags": [
+      "chart",
+      "bar",
+      "column",
+      "line",
+      "area",
+      "trend",
+      "dashboard"
+    ],
+    "source": "https://help.splunk.com/en/splunk-enterprise/create-dashboards-and-reports/dashboard-studio/10.2/visualizations/bar-and-column-charts",
+    "text": "Bar, column, line and area charts bind a category/time series with options.x=\"> primary | seriesByName('category')\" and numeric frames with options.y=\"> primary | frameBySeriesNames('metric')\". Put title and description beside type/options. Use output field names actually returned by the search. Keep units in titles and axis labels."
+  },
+  {
+    "id": "scatter-bindings",
+    "title": "Scatter axes and point groups",
+    "minimumEnterprise": "10.0",
+    "tags": [
+      "scatter",
+      "correlation",
+      "relationship",
+      "compare"
+    ],
+    "source": "https://help.splunk.com/en/splunk-enterprise/create-dashboards-and-reports/dashboard-studio/10.2/visualizations/scatter-charts",
+    "text": "Scatter axes each take a single numeric series: x=\"> primary | seriesByName('x_metric')\", y=\"> primary | seriesByName('y_metric')\". Point groups use category=\"> primary | seriesByName('label')\". Do not use frameBySeriesNames for these channels or options.series. A comparison requires compatible measurements on the same entity/grain."
+  },
+  {
+    "id": "single-value",
+    "title": "Single-value metric binding",
+    "minimumEnterprise": "10.0",
+    "tags": [
+      "kpi",
+      "singlevalue",
+      "count",
+      "metric",
+      "volume"
+    ],
+    "source": "https://help.splunk.com/en/splunk-enterprise/create-dashboards-and-reports/dashboard-studio/10.2/visualizations/single-value-visualizations",
+    "text": "A single-value visualization can bind options.majorValue=\"> primary | seriesByName('metric') | lastPoint()\". Identify the metric and unit with the visualization root title. An aggregate count is event volume unless the search explicitly establishes a distinct entity count; do not label it users, devices or transactions without that definition."
+  },
+  {
+    "id": "real-searches",
+    "title": "Efficient searches and consistent time",
+    "minimumEnterprise": "10.0",
+    "tags": [
+      "search",
+      "data",
+      "spl",
+      "index",
+      "fields",
+      "timechart",
+      "stats"
+    ],
+    "source": "https://help.splunk.com/en/splunk-enterprise/search/search-manual/10.2/optimizing-searches/quick-tips-for-optimization",
+    "text": "Start from the selected baseQuery and filter early. Use transforming stats/timechart/chart queries and explicit output fields. Reuse a base search only when it retains sufficient rows and fields. Never infer business definitions from index/field names alone. Respect the selected time window and current-user access. Bounded execution can be incomplete; a successful search is separate from correct analytical meaning."
+  },
+  {
+    "id": "spl2-sources",
+    "title": "Native SPL2 data sources",
+    "minimumEnterprise": "10.2",
+    "tags": [
+      "spl2",
+      "module",
+      "ds.spl2"
+    ],
+    "source": "https://help.splunk.com/en/splunk-enterprise/create-dashboards-and-reports/dashboard-studio/10.4/use-data-sources/create-search-based-visualizations-with-spl2",
+    "text": "Use ds.spl2 for ad hoc SPL2 in a verified environment. Native SPL2 sources do not use SPL base/chain searches. Module-view management is a separate capability: preserve existing ds.spl2.view definitions, but add new ones only when the module endpoint and namespace are verified. SPL and SPL2 quoting and command semantics differ."
+  },
+  {
+    "id": "visibility",
+    "title": "Native conditions and evaluated tokens",
+    "minimumEnterprise": "10.2",
+    "tags": [
+      "visibility",
+      "condition",
+      "toggle",
+      "button",
+      "notes",
+      "hide",
+      "show"
+    ],
+    "source": "https://help.splunk.com/en/splunk-enterprise/create-dashboards-and-reports/dashboard-studio/10.2/make-dashboards-dynamic-and-interactive/specify-visibility-conditions-for-panels-and-other-dashboard-elements",
+    "text": "Define expressions.conditions.ID={name,value} and refer to IDs in containerOptions.visibility.showConditions/hideConditions. Matching uses all-true or any-true. Evaluated tokens use expressions.eval.ID={name,value} and $eval:NAME$ references. input.button labels use options.label and may reference a named expression. Inputs belong in either globalInputs or a page structure, not both."
+  },
+  {
+    "id": "modern-studio",
+    "title": "Studio 10.4 feature boundary",
+    "minimumEnterprise": "10.4",
+    "tags": [
+      "networkgraph",
+      "custom",
+      "refresh",
+      "10.4"
+    ],
+    "source": "https://help.splunk.com/en/splunk-enterprise/create-dashboards-and-reports/dashboard-studio/10.4/whats-new-in-dashboard-studio/whats-new-in-dashboard-studio",
+    "text": "Network graphs and the newer custom visualization framework have a 10.4 version boundary. Dashboard auto-refresh also requires the user's auto_refresh_dashboards capability on these newer targets. Keep unknown imported configuration, but do not introduce unsupported new features or equate version availability with rendered qualification."
+  },
+  {
+    "id": "preview-time-buckets",
+    "title": "Time buckets within the preview budget",
+    "minimumEnterprise": "10.0",
+    "tags": [
+      "time",
+      "timechart",
+      "trend",
+      "trends",
+      "temperature",
+      "wifi"
+    ],
+    "source": "https://help.splunk.com/en/splunk-enterprise/spl-search-reference/10.2/search-commands/timechart",
+    "text": "Timechart accepts bins or span. For the 200-row bounded preview, prefer bins=100 with no span, or a coarser span covering the full selected window. A 5-minute span over 24 hours exceeds this budget. Never use head to hide a truncated time series."
+  },
+  {
+    "id": "statistical-outliers",
+    "title": "Statistical screening with explicit units",
+    "minimumEnterprise": "10.0",
+    "tags": [
+      "outlier",
+      "outliers",
+      "average",
+      "averages",
+      "temperature",
+      "rssi",
+      "spikes"
+    ],
+    "source": "https://help.splunk.com/en/splunk-enterprise/search/search-manual/10.2/advanced-statistics/commands-for-advanced-statistics",
+    "text": "Apply a user-specified exclusion in the correct unit before computing temperature means and deviations. eventstats can retain events while adding a baseline. Label any chosen statistical rule, guard null/zero deviation and keep the zero-outlier case valid. Use count or a zero-inclusive flag aggregate for an outlier KPI. A statistical screen is not an equipment alarm or proof of a fault. An empty outlier subset does not mean the source index has no events."
+  }
+]

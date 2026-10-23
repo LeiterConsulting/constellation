@@ -1,0 +1,30 @@
+name: Bug report
+description: Report a reproducible problem using sanitized or synthetic examples.
+body:
+  - type: markdown
+    attributes:
+      value: Do not include credentials, internal hosts, real event rows, private documents or raw provider error bodies. Report vulnerabilities privately using SECURITY.md.
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      description: Constellation, Splunk Enterprise and Dashboard Studio versions.
+    validations:
+      required: true
+  - type: input
+    id: provider
+    attributes:
+      label: Provider and model
+      description: Provider/model name only; no endpoint, connection export or key.
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps and expected result
+      description: Use a minimal synthetic example. Describe the actual result and any controlled app error message.
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: Does this occur in the preview, native Studio, persistence, or provider setup? Explain what you already verified.

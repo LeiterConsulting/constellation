@@ -1,0 +1,55 @@
+node_modules/
+dist/
+artifacts/
+.local/
+.env
+.env.*
+!.env.example
+__pycache__/
+*.pyc
+.DS_Store
+
+# Local evidence, generated exports, and a separate exploratory prototype.
+/docs/validation/
+/docs/lab-validation.md
+/factory001/
+/output/
+/tmp/
+/coverage/
+/.venv/
+/.codex/
+*.log
+
+# Environment-specific lab harnesses are retained locally.
+/scripts/lab_probe.py
+/scripts/install_labs.py
+/scripts/native_render.py
+/scripts/provider_live_check.py
+/scripts/roundtrip_lab.py
+
+# Runtime configuration, credentials, and certificate material.
+/splunk/constellation/local/
+/splunk/constellation/users/
+/splunk/constellation/var/
+/splunk/constellation/logs/
+passwords.conf
+authentication.conf
+splunk.secret
+id_rsa
+id_ed25519
+/secrets/
+/credentials/
+*.env
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.cer
+
+# Editor and tool caches.
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.vscode/
+.idea/
