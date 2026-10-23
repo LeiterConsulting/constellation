@@ -16,7 +16,7 @@ npm run package
 
 Packaging creates a deterministic archive from app source, compiled assets, the optional renderer baseline and runtime dependency notices. It refuses app-source paths or text that violate the repository's publication policy, including private runtime configuration and credential/certificate files. This is an additional guard rather than a replacement for secret scanning. Browser/handler entry names are content-derived to avoid stale caches after an app update. Build before packaging. `artifacts/SHA256SUMS` identifies the exact archive; inspection and live acceptance apply to that archive, not just a version string.
 
-The production bundle currently triggers Vite's size warning. Reduction is a release task, not a reason to conceal the warning.
+The production bundle currently triggers Vite's size warning. The Linux CI build needs a larger Node heap than its default; the build step sets a 4 GB old-space allowance. Use a build host with enough memory for that heap plus the process/OS overhead. This affects build tooling only. Bundle reduction remains a release task, not a reason to conceal the warning.
 
 ## Repository publication checks
 
