@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.13.0 — Measurement and table recovery preview
+
+- Compile explicit Fahrenheit temperature exclusions at the measurement boundary for changed scoped SPL, protecting ordinary aggregates including latest while preserving independent Wi-Fi events.
+- Inspect selected table output metadata and compile typed formatting without rebuilding aggregations, aliases or navigation. Restrict formatting-only actions and hide evidence-dependent actions during creation.
+- Revalidate existing bindings after search edits and report the actual missing aliases in recovery feedback.
+- Preserve native Studio output, draft schema 3, existing provider budgets and the compact canvas UI.
+
 ## 0.12.0 — Responsive authoring preview
 
 - Show real authoring stages and elapsed time beside a persistent Stop control. Add bounded session-owned receipts and cooperative cancellation of native inference/validation jobs. Direct provider calls may still finish upstream.

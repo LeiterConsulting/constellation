@@ -2,11 +2,13 @@
 
 Constellation is a working development preview. Checked-in code and selected live exercises establish concrete behavior; they do not establish a production-ready app or full Dashboard Studio parity.
 
-## Current 1.0 blockers from 0.12
+## Current 1.0 qualification priorities
 
-- Make AITK table formatting reliable within the existing resource/latency limits; final repeated checks still rejected edits after three calls.
-- Enforce explicit exclusions across every applicable aggregate. A synthetic probe caught a latest-temperature value that bypassed the cutoff even though its average was correct.
-- Expand provider/model and analytical fixtures before interpreting the small successful samples as general readiness. See [validation](validation.md).
+The 0.13 bounded three-provider sensor flow closes the observed AITK table-formatting and latest-temperature exclusion failures. Two creations and four focused edits per provider passed, with independent calculation probes and ordinary native output checks. Prior failures remain in [validation](validation.md).
+
+- Reduce slower-provider creation latency and extend repeated provider/model trials beyond this small sensor sample. Keep useful progress/cancellation and the current resource limits.
+- Qualify business rules on representative operational, sparse and partial datasets, including derived fields, complex predicates and SPL2/chain semantics beyond the narrow Fahrenheit compiler.
+- Complete unaided-user, native feature/version, role/setup, accessibility/reflow, upgrade/rollback and deployment qualification. AITK on the second target remains unqualified.
 
 ## Product improvements
 

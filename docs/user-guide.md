@@ -10,6 +10,8 @@ Constellation is a development preview. Begin with a small operational question 
 6. Let the draft save before leaving. Reopen it from **Dashboards**. **More → Draft details and history** keeps the brief and previous document versions. Restoring a version retains the current conversation. Undo/redo covers the current session.
 7. Choose **Save to Splunk**, select the destination app, then **Save private copy**. Open the result in native Studio and check its queries, ranges, layout and interactions.
 
+For a summary-table cleanup, select the table and ask: “Polish only this selected table: round temperatures to one decimal, Wi-Fi RSSI to whole dBm, and format last seen as a readable date if it is present.” Existing columns and row navigation are retained. Broader changes, such as adding a new aggregate or column, remain ordinary conversational edits.
+
 The conversation can float, dock or hide. **More** holds source, JSON export, private draft links, environment details and theme. Import an existing Studio JSON file through the workspace's **Dashboards** dialog. The optional example uses illustrative data.
 
 ## Model limits

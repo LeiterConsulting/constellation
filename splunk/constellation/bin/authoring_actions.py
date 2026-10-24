@@ -9,6 +9,8 @@ from geometry_normalization import normalize_structure, fit_button_labels
 from input_normalization import normalize_button_actions
 from search_chart_actions import SEARCH_ACTION, CHART_ACTION, TOKEN_ACTION, compile_search, compile_chart, compile_token, normalize_field_bindings, normalize_event_counts
 from search_chart_actions import FILTER_ACTION, DASHBOARD_ACTION, compile_filter, compile_dashboard, normalize_row_filters
+from table_format import TABLE_FORMAT_ACTION, compile_table_format
+from measurement_constraints import normalize_measurements
 
 LEGACY_CHANGE = {'type': 'object', 'properties': {
     'op': {'type': 'string', 'enum': ['set', 'remove']},
@@ -34,7 +36,7 @@ PAGE_ACTION['properties']['op'] = {'type': 'string', 'enum': ['page']}
 PAGE_ACTION['properties']['purpose'] = {'type': 'string', 'maxLength': 1200}
 PAGE_ACTION['properties']['moveItems'] = {'type': 'boolean', 'description': 'Move these items off their previous pages when true; otherwise allow reuse.'}
 PAGE_ACTION['required'].extend(['purpose', 'moveItems'])
-ACTION_SCHEMA = {'anyOf': [LEGACY_CHANGE, DASHBOARD_ACTION, SEARCH_ACTION, CHART_ACTION, TOKEN_ACTION, FILTER_ACTION, LAYOUT_ACTION, PAGE_ACTION, LINK_ACTION, BUTTON_ACTION]}
+ACTION_SCHEMA = {'anyOf': [LEGACY_CHANGE, DASHBOARD_ACTION, SEARCH_ACTION, CHART_ACTION, TOKEN_ACTION, FILTER_ACTION, TABLE_FORMAT_ACTION, LAYOUT_ACTION, PAGE_ACTION, LINK_ACTION, BUTTON_ACTION]}
 
 
 def validate_chart_placement(document, previous):
@@ -65,14 +67,15 @@ def validate_chart_placement(document, previous):
                     raise ProviderError('Place charts and inputs in separate rectangles so every element remains usable: ' + first_id + ', ' + second_id)
 
 
-def compile_actions(document, actions, profile=None):
+def compile_actions(document, actions, profile=None, table_receipt=None):
     if not isinstance(actions, list) or len(actions) > 64: raise ProviderError('Use at most 64 authoring actions.')
     layout = copy.deepcopy(document['layout'])
     defaults, token_changes = copy.deepcopy(document.get('defaults', {})), False
-    result, links, buttons, filters, typed = [], [], [], [], False
+    result, links, buttons, filters, formats, typed = [], [], [], [], [], False
     for action in actions:
         if not isinstance(action, dict): raise ProviderError('Each authoring action must be an object.')
         if action.get('op') == 'dashboard': result.extend(compile_dashboard(action)); continue
+        if action.get('op') == 'formatTable': formats.append(action); continue
         if action.get('op') == 'filter': filters.append(action); continue
         if action.get('op') == 'token':
             compile_token(action, defaults); token_changes = True
@@ -198,7 +201,11 @@ def compile_actions(document, actions, profile=None):
             result.append(change)
             candidate = apply_changes(candidate, [change])
     candidate = apply_changes(document, result)
-    for normalize in (normalize_field_bindings, normalize_event_counts, normalize_row_filters):
+    for action in formats:
+        change = compile_table_format(action, candidate, table_receipt)
+        result.append(change)
+        candidate = apply_changes(candidate, [change])
+    for normalize in (normalize_field_bindings, normalize_event_counts, normalize_row_filters, normalize_measurements):
         bindings = normalize(candidate, document, profile)
         if bindings:
             result.extend(bindings)

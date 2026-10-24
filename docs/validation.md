@@ -1,12 +1,12 @@
 # Validation status
 
-Snapshot: **0.12.0 development preview, October 24, 2026**. This file is a sanitized summary. Private lab addresses, credentials, screenshots, transcripts, raw search data and detailed runtime receipts are excluded from the repository.
+Snapshot: **0.13.0 development preview, October 24, 2026**. This file is a sanitized summary. Private lab addresses, credentials, screenshots, transcripts, raw search data and detailed runtime receipts are excluded from the repository.
 
 ## Local verification
 
 | Check | Observed result |
 | --- | --- |
-| Python unit suites | 182 tests passed on Python 3.9 and 3.13, including repository-publication policy and independent-population recovery tests. |
+| Python unit suites | 193 tests passed on Python 3.9 and 3.13, including verified formatting, unchanged-binding checks, action availability and measurement exclusions. |
 | Frontend unit suites | 57 tests passed. |
 | TypeScript and production build | Passed; bundle-size warning remains. |
 | Deterministic app package | Generated with SHA-256 receipt. |
@@ -135,3 +135,26 @@ Synthetic property probes covered seven generated snapshots / 28 sources, using 
 **This is a development preview, not 1.0 qualification.** Outstanding blockers include consistent AITK table editing within latency limits, verified enforcement of exclusions across every applicable aggregate, broader analytical/field-meaning fixtures and recovery coverage. Broader roles, SHC routing/concurrency, upgrade/rollback, accessibility/reflow, native-feature matrices and bundle reduction remain the release gates described elsewhere. Do not report the final 4/4 server-accepted creations as 4/4 analytically qualified dashboards.
 
 The final archive is `constellation-0.12.0.tgz`, SHA-256 `32c07846dec89ea92d3b72ebc22167096467ccb458ac732ae85d3ebe90c4be46`. It contains 429 files / 5,342,392 bytes and no macOS metadata. Both labs installed it without a restart. Final local AppInspect 4.3.1 precert: 0 errors, 0 failures, 0 future failures, 7 warnings, 1 skipped, 107 successes, 137 not applicable. All bundled Python bytes match the qualified authoring source. The last changes after the provider rerun were confined to frontend inspection cancellation and memoizing the canvas against unrelated UI changes; all bundled Python bytes remain identical. Installed checks covered the final build: typing, inspection Stop/goal retention, refresh with selected focus, a separate simple draft, library reopen, native save/readback in Search & Reporting, and native Edit → View without changing the definition. The UI-created dashboard passed its synthetic analytical probes as well.
+
+
+## 0.13 measurement and AITK recovery qualification — October 24, 2026
+
+The final archive has SHA-256 `ff4c1add09d13f4ac742d2e5bbe44e1dd1d1445768d8056f7e7fc766744c310a`. It was installed on both recorded Enterprise targets without restart. Exact packaged Python source bytes were checked against the checkout; the archive contains no macOS resource-fork files, `.DS_Store` or `__MACOSX` directory. The local precert result in the table above applies to this archive.
+
+A preliminary candidate offered the existing-table formatting action during creation, without its required receipt. One installed AITK build exhausted three calls in 137.1 seconds; the blank draft was preserved. The next trial was interrupted after identifying this boundary. The final schema now omits evidence-dependent formatting during creation and restricts explicit selected-table formatting turns. These attempts are retained separately from the final matrix below. A local AITK diagnostic also demonstrated recovery from a rejected table-search rebuild to verified formatting; it is not counted as installed acceptance.
+
+The same blank-canvas, actual-data two-page sensor goal and two focused edits ran twice per provider on Enterprise 10.2.8 / Studio 1.23.12, with unchanged selected models and the existing 16,000-token AITK connection. Every final journey passed creation, both edits, named pages/purposes, device-row token/filter navigation, a placed return button, preservation of unrelated work, draft/conversation/brief reopening and exact private native readback in Search & Reporting.
+
+| Provider / selected model | Creation | Focused edits | Creation seconds / calls | Model-authored table format seconds / calls |
+| --- | --- | --- | --- | --- |
+| OpenAI / gpt-6-luna | 2/2 | 4/4 | 19.2 / 1; 18.3 / 1 | 4.9 / 1; 7.8 / 1 |
+| Ollama / qwen3-coder:latest | 2/2 | 4/4 | 76.6 / 2; 58.5 / 2 | 18.2 / 1; 15.8 / 1 |
+| AITK 6.1.0 / existing GPT-5 mini connection | 2/2 | 4/4 | 87.6 / 2; 101.3 / 2 | 28.7 / 1; 24.3 / 1 |
+
+The six chart type/title edits used the exact local presentation grammar (0.2–0.5 seconds, zero model/search calls); the six table edits were actual inference requests. AITK creation used foundation/completion stages, without validation repairs. Both Ollama creations recovered a shared global measurement filter from validation feedback within the existing budget. OpenAI creations and all six table edits needed one model call. No prompt rewording, model switch, token increase or development fix occurred between the final six runs. These small samples do not establish a general success rate.
+
+Independent synthetic probes covered creation and post-table-edit definitions for every journey: **12 snapshots / 48 sources**, all applicable checks passed. They established nonempty all-device defaults, temperature-output invariance when already-excluded readings became much hotter, retained Wi-Fi effects from those readings, and changed outputs on both destination charts for either fictional device. No synthetic rows were ingested and no indexed result values entered model context. A separate native fixture on both Enterprise versions verified average/latest/earliest/min/max/sum/count/median/spread against the same valid temperature population, inclusion of exactly 150°F, and all-event Wi-Fi counts/latest values. This closes the observed latest-temperature bypass for the qualified scoped SPL flow; it is not proof of arbitrary SPL/SPL2 business semantics.
+
+Browser checks opened a generated draft and its ordinary native Studio copy for each provider. All three rendered both pages and supported keyboard device-row navigation and Return to Overview in preview and native Studio. The AITK table retained readable dates and its numeric columns. A further browser-driven AITK turn used Select element, formatted the selected table, and preserved every other native property and the original aggregation. Starting a separate blank dashboard, reopening from the library and refreshing retained its eight-message conversation, focus, brief and definition. Save to Splunk created a private Search & Reporting copy with exact independent readback; it rendered and opened in the normal native editor, then returned to view without changes. The original provider was restored afterward. These are representative UI checks, not every native option or a full accessibility audit.
+
+The observed table-formatting and temperature-population failures are closed for this bounded flow. **1.0 remains unqualified**: slower-provider creation still took around a minute or more; unaided user trials, representative operational/sparse/partial data, broader native/version/role coverage, deployment/upgrade/SHC checks and the declared distribution gates remain. AITK on the second target remains unqualified.

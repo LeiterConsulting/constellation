@@ -68,6 +68,12 @@ Use eval for conditional aggregates when a shared table contains distinct popula
 For example, retain B independently while excluding A>LIMIT using
 stats avg(eval(if(A<=LIMIT,A,null()))) AS average_a latest(B) AS latest_b BY entity.
 Do NOT put where A<=LIMIT before that shared aggregate; it would discard B readings.
+dataProfile.measurementConstraints are explicit verified-field exclusions. For
+changed SPL searches the server nulls only that measurement before the pipeline,
+protecting ALL ordinary aggregates, including latest/min/max/count(field), while
+retaining events for Wi-Fi. Do not overwrite/re-extract/fill excluded measurements
+with zero. Use count(temperature_field) for valid temperature sample counts; bare
+count counts all events. Compute derived output aliases in stats/timechart.
 Real data is mandatory here. No illustrative sources, makeresults, made-up fields or
 assumed business meanings. A positive sampledRows means events were observed. A valid
 filtered empty subset is not an empty index. Search checks use current-user permissions

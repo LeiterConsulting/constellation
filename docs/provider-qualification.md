@@ -21,15 +21,16 @@ Search completion is not proof of analytical correctness. In addition to checkin
 The sensor probe has two fictional devices and seven readings, including two temperatures above the cutoff. Make an excluded-temperature reading the newest observation, so both average and latest Wi-Fi aggregates can be checked. Assert that:
 
 - Default all-device filters produce data on the known nonempty fixture.
-- Increasing only the already-excluded temperatures does not change temperature outputs.
+- Increasing only the already-excluded temperatures does not change temperature outputs, including latest values and any temperature counts.
 - Changing Wi-Fi on those same readings changes the Wi-Fi output, including a latest-value table when present.
 - Selecting either fictional device changes both detail outputs.
+- A separate native aggregate fixture includes a reading at exactly 150°F, retains it, and checks average/latest/earliest/min/max/sum/count/median/spread while Wi-Fi counts retain every observation.
 
 An absent Wi-Fi table column is not a failed independence test; apply that check only to sources that calculate Wi-Fi. An empty default view is a failure even when row selection later works. These properties cover the specified exclusion/filter behavior, not every possible business interpretation or native feature.
 
 ## Remaining release decisions
 
-The [latest recorded matrix](validation.md#011-repeated-provider-qualification) shows substantial improvement, but does **not** establish 1.0 readiness. One edit still required a development fix and explicit retry; slower-provider authoring can take over a minute. Independent probes found incorrect analytical populations in definitions the earlier validators had accepted.
+The [recorded matrices](validation.md) shows substantial improvement, but does **not** establish 1.0 readiness. One edit still required a development fix and explicit retry; slower-provider authoring can take over a minute. Independent probes found incorrect analytical populations in definitions the earlier validators had accepted.
 
 1. Demonstrate repeatable creation and focused editing within useful latency across the advertised provider/model combinations. Preserve failure evidence; do not increase retry/time limits merely to make a sample green.
 2. Extend the sensor regression to representative operational datasets, missing fields, sparse data, partial searches and business-rule review. Run unaided user trials; measure completion and required intervention.

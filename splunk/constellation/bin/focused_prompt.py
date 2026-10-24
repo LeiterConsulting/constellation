@@ -22,6 +22,18 @@ applying to one measurement must not discard independent measurements in a table
 Use conditional aggregation for that measurement, for example
 stats avg(eval(if(A<=LIMIT,A,null()))) AS average_a latest(B) AS latest_b BY entity.
 A global where A<=LIMIT before this shared table would incorrectly discard B.
+For the selected existing SPL table prefer op:formatTable {id,columns:[{field,
+kind:"number" or "datetime",precision}]}. Use only existing numeric OUTPUT fields
+in focusedSourceReceipt. Number precision is 0-6; datetime precision is 0. Omit
+missing or already-readable time columns. This action retains the exact aggregation,
+aliases, column bindings and row navigation. Do not reconstruct the search or add
+a last-seen aggregation merely to format a table. No query or binding edit is needed.
+dataProfile.measurementConstraints are explicit verified-field exclusions. The
+server nulls only the constrained measurement at the source boundary for changed
+SPL searches. This protects latest/min/max/averages/count(field), retaining other
+measurements. Never fill excluded measurements with zero or re-extract/overwrite
+them before aggregation. Use count(the_measurement) for temperature sample counts;
+count alone counts ALL events, including independent measurements.
 
 When a new/revised search is necessary, use op:search {id,pipeline}; pipeline begins
 with | and appends to dataProfile.baseQuery. The compiler preserves the inspected

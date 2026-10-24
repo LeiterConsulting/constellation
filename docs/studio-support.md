@@ -1,6 +1,6 @@
 # Studio authoring and runtime support
 
-This is the working support contract for the 0.12.0 development slice. Broad document authoring is implemented; complete native parity is not yet qualified. The preview uses the embedded Splunk Dashboard Framework and preserves the original Studio definition for export and native save.
+This is the working support contract for the 0.13.0 development slice. Broad document authoring is implemented; complete native parity is not yet qualified. The preview uses the embedded Splunk Dashboard Framework and preserves the original Studio definition for export and native save.
 
 | Area | Current behavior | Qualification / boundary |
 | --- | --- | --- |
@@ -70,3 +70,10 @@ Scoped search, chart and token actions compile to ordinary native Studio configu
 Dashboard text and verified SPL entity filters have typed builders. Selected chart/input edits use compact guidance with the same validators. Exact raw native text/binding strings can be encoded on known paths before output-field validation; malformed containers/quoted JSON remain errors. Native table-row intent can repair an exact new entity-equality filter, retaining other AND conditions. Complex/OR expressions and unknown relationships are not silently rewritten.
 
 An explicit independent-measurement request enables a conservative shared-aggregate population guard for changed SPL. It catches a numeric measurement filter placed before another measurement's aggregate; conditional aggregation retains the other population. It does not prove general business semantics, cover all derived/reverse/complex predicates or extend that proof to SPL2. Existing query scopes and untouched imported sources remain preserved. See the [qualification protocol](provider-qualification.md) and recorded failures before deciding on broader support.
+
+
+## Measurement and table formatting (0.13)
+
+Explicit upper Fahrenheit exclusions bound to verified numeric temperature fields compile at the measurement boundary for changed scoped SPL. All ordinary null-ignoring aggregates share that population, while other event measurements remain available. Exactly-at-limit values are retained. Existing query scopes/untouched imports are preserved; general units, derived expressions and SPL2/chain business semantics remain outside this narrow guarantee. See [architecture](architecture.md#measurement-and-formatting-contracts-013).
+
+Selected SPL table edits receive verified output-field/type metadata. Explicit table-only formatting uses an evidence-dependent typed action preserving the aggregation, aliases, bindings and row field. Missing/already-readable columns are not invented. Shared-source formatting and broader semantic changes require ordinary native editing; the typed action fails safely. Changed searches revalidate existing bindings even when chart configuration is unchanged.

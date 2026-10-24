@@ -120,6 +120,28 @@ class DataService:
         result = (self.recovery or self.runtime).preview({'query': resolved_query, 'language': language, 'earliest': profile['scope']['earliest']})
         return language, result
 
+    def focused_table_receipt(self, document, selected, profile):
+        table = document.get('visualizations', {}).get(selected, {})
+        source_id = table.get('dataSources', {}).get('primary')
+        source = document.get('dataSources', {}).get(source_id, {})
+        if table.get('type') != 'splunk.table' or source.get('type') != 'ds.search': return None
+        receipt = {'table': selected, 'source': source_id, 'query': source['options'].get('query', ''), 'fields': []}
+        try:
+            _language, result = self.inspect_source(document, source_id, source, profile)
+            for entry in result['fields'][:80]:
+                name = entry['name']
+                values = [row[name] for row in result['results'] if row.get(name) not in (None, '', [])]
+                numeric = bool(values)
+                for value in values:
+                    try: float(value)
+                    except (ValueError, TypeError): numeric = False; break
+                receipt['fields'].append({'name': name, 'numeric': numeric})
+            receipt['status'] = result.get('state', 'unknown')
+        except ProviderError as error:
+            if error.code in ('recovery_budget', 'author_cancelled', 'author_expired'): raise
+            receipt.update(status='failed', code=error.code)
+        return receipt
+
     def validate_searches(self, document, previous, profile):
         receipts = self.receipts = []
         usable = {}
@@ -174,7 +196,6 @@ class DataService:
                              'fields': fields, 'earliest': profile['scope']['earliest'], 'bounded': True, 'completion': result.get('evidence', {'state': 'unknown'}),
                              'status': 'partial' if result.get('state') == 'partial' else 'results' if result['results'] else 'empty'})
         for identifier, visualization in document.get('visualizations', {}).items():
-            if visualization == previous.get('visualizations', {}).get(identifier): continue
             source_id = visualization.get('dataSources', {}).get('primary')
             if source_id not in usable: continue
             fields = next((receipt['fields'] for receipt in receipts if receipt.get('source') == source_id and 'fields' in receipt), [])
@@ -193,11 +214,13 @@ class DataService:
                     continue
                 for args in re.findall(r'(?:seriesByName|frameBySeriesNames)\(([^)]*)\)', binding):
                     names = re.findall(r'''['"]([^'"]+)['"]''', args)
-                    if usable[source_id] is not None and any(name not in usable[source_id] for name in names):
+                    missing = [name for name in names if usable[source_id] is not None and name not in usable[source_id]]
+                    if missing:
                         query, _language = self.resolve_query(document, source_id)
                         hint = (' A timechart BY clause creates split-series columns instead of the aggregation alias. For one combined or already-filtered trend, remove BY and keep the alias; do not invent a different field.'
                                 if re.search(r'\btimechart\b[^|]*\bby\b', query, re.I) else '')
-                        problems.append('Visualization ' + identifier[:100] + ', channel ' + channel + ', source ' + source_id[:100] + ': missing or empty output fields ' + ', '.join(names)[:180] + '. Tested output fields: ' + ', '.join(sorted(usable[source_id]))[:300] + '.' + hint)
+                        problems.append('Visualization ' + identifier[:100] + ', channel ' + channel + ', source ' + source_id[:100] + ': missing or empty output fields ' + ', '.join(missing)[:180] + '. Tested output fields: ' + ', '.join(sorted(usable[source_id]))[:300] + '.' + hint +
+                            (' For formatting, preserve the verified aggregation and aliases. Use formatTable with numeric fields from focusedSourceReceipt; omit absent columns. Restore its verified query first if a failed proposal rebuilt it.' if channel == 'table' else ''))
         if problems:
             raise ProviderError('\n'.join(problems[:16])[:10000])
         return receipts

@@ -64,7 +64,7 @@ class RecoveryTests(unittest.TestCase):
         self.assertIn('average_f',third['validationError']);self.assertEqual(third['searchReceipts'][0]['status'],'results')
         self.assertNotIn('PRIVATE EVENT VALUE',json.dumps(client.calls));self.assertNotIn('NEVER SEND',json.dumps(client.calls))
         self.assertEqual(original['visualizations'],{});self.assertEqual(reply['pagePurposes'],{'layout_main':'Keep food frozen'})
-        candidate=apply_changes(original,reply['changes']);self.assertEqual(candidate['dataSources']['temperature']['options']['query'],query)
+        candidate=apply_changes(original,reply['changes']);self.assertEqual(candidate['dataSources']['temperature']['options']['query'],query.replace(' | where', ' | eval temperature_f=if(temperature_f<=150,temperature_f,null()) | where'))
     def test_cached_results_are_isolated_and_budgets_stop_additional_work(self):
         runtime=Runtime();clock=[0];session=RecoverySession(runtime,clock=lambda:clock[0]);body={'query':'valid'}
         first=session.preview(body);first['results'].clear();self.assertEqual(len(session.preview(body)['results']),1)

@@ -1,5 +1,6 @@
 """Studio authoring with environment context, history, and guarded attachments."""
 import json
+import copy
 import re
 from provider_service import ProviderError
 from studio_contract import model_document, validate_document
@@ -18,6 +19,8 @@ from repair_hints import placement_hint
 from creation_prompt import CREATION_INSTRUCTIONS
 from focused_prompt import FOCUSED_INSTRUCTIONS
 from population_guard import independent_measurements
+from measurement_constraints import temperature_constraints
+from table_format import formatting_only, TABLE_FORMAT_ACTION
 from quick_edit import quick_edit
 from model_readiness import CREATE_OUTPUT_TOKENS, EDIT_OUTPUT_TOKENS
 from authoring_budget import AuthoringBudget
@@ -331,6 +334,9 @@ class AgentService:
             scope = dict(scope, earliest=inferred_range(prompt) or scope.get('earliest', '-24h'))
         self.progress('profile')
         profile = data.profile(scope) if scope else None
+        if profile:
+            profile['measurementConstraints'] = temperature_constraints(prompt, brief, profile)
+        table_receipt = data.focused_table_receipt(document, focus.get('id'), profile) if profile and focus['kind'] == 'visualization' else None
         if profile and not profile['sampledRows']:
             return {'revision': revision, 'message': 'No rows were found in the selected data and time range. Choose another dataset or a wider range to continue.',
                     'changes': [], 'suggestions': [], 'repaired': False, 'activity': ['Inspected selected dataset; no rows in bounded sample'],
@@ -345,6 +351,10 @@ class AgentService:
                                   'providerManaged': saved.get('provider') == 'aitk',
                                   'reason': 'AITK model/output limits are managed by its named connection and are unverified here.' if saved.get('provider') == 'aitk' else 'Unknown capacities must not be inferred from model IDs. Use concise typed changes.'}
         if profile: context['dataProfile'] = profile
+        if table_receipt: context['focusedSourceReceipt'] = table_receipt
+        format_only = table_receipt and not attachments and formatting_only(prompt, focus.get('id'), document)
+        if format_only:
+            context['formattingOnly'] = 'Format only existing numeric columns through formatTable. Omit absent or already-readable timestamps. Do not add aggregates, columns, search or binding edits.'
         guidance = retrieve_guidance(prompt, document, environment, real_data=bool(profile))
         context['retrievedGuidance'] = guidance
         instructions = (CREATION_INSTRUCTIONS if profile and context['canvasState'] == 'blank' else
@@ -353,6 +363,16 @@ class AgentService:
                    'input': [{'role': 'user', 'content': [{'type': 'input_text', 'text': json.dumps(context)}] + attachments}],
                    'max_output_tokens': CREATE_OUTPUT_TOKENS if context['canvasState'] == 'blank' else EDIT_OUTPUT_TOKENS,
                    'text': {'format': {'type': 'json_schema', 'name': 'studio_changes', 'strict': True, 'schema': SCHEMA}}}
+        if format_only:
+            # Reduce the action space for this explicit presentation-only turn.
+            # Other requests retain the full native contract, not this schema.
+            request['text']['format']['schema'] = copy.deepcopy(SCHEMA)
+            request['text']['format']['schema']['properties']['changes']['items'] = TABLE_FORMAT_ACTION
+        elif not table_receipt:
+            request['text']['format']['schema'] = copy.deepcopy(SCHEMA)
+            request['text']['format']['schema']['properties']['changes']['items']['anyOf'] = [
+                action for action in request['text']['format']['schema']['properties']['changes']['items']['anyOf']
+                if action != TABLE_FORMAT_ACTION]
         if saved['model'] in ('gpt-6-luna', 'gpt-6-astra'):
             request['reasoning'] = {'effort': 'medium' if context['canvasState'] == 'blank' else 'low'}
         budget = AuthoringBudget(saved, context)
@@ -384,9 +404,11 @@ class AgentService:
                 if set(result) != {'message', 'changes', 'suggestions'} or not isinstance(result['message'], str) or len(result['message']) > 6000:
                     raise ProviderError('The model response did not match the expected edit format.')
                 result['suggestions'] = normalize_suggestions(result['suggestions'])
+                if format_only and (not isinstance(result['changes'], list) or any(not isinstance(action, dict) or action.get('op') != 'formatTable' for action in result['changes'])):
+                    raise ProviderError('This turn only formats the selected table. Return formatTable with its existing numeric columns from focusedSourceReceipt, omitting absent or already-readable fields. Do not rebuild its aggregation or bindings.')
                 validate_data_claims(result, profile)
                 raw_actions = budget.actions(result['changes'], proposal.document)
-                compiled = compile_actions(proposal.document, raw_actions, profile)
+                compiled = compile_actions(proposal.document, raw_actions, profile, table_receipt)
                 draft = proposal.stage(compiled)
                 result['changes'] = proposal.changes
                 next_purposes = proposed_purposes(raw_actions, next_purposes, draft)
@@ -436,6 +458,7 @@ class AgentService:
                 self.progress('repair', attempt + 1)
                 if profile and attempt == 0:
                     profile = data.profile(scope)
+                    profile['measurementConstraints'] = temperature_constraints(prompt, brief, profile)
                 # Keep failed output and validation feedback as untrusted user content.
                 budget.feedback(request, {
                     'recoveryFeedback': {'validationError': feedback, 'dataProfile': profile,
