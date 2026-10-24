@@ -4,6 +4,8 @@ import json
 from provider_service import ProviderError
 from page_service import LINK_ACTION, BUTTON_ACTION, BUTTON_MIN_HEIGHT, compile_link, compile_button
 from studio_contract import apply_changes
+from geometry_normalization import normalize_structure, fit_button_labels
+from input_normalization import normalize_button_actions
 
 LEGACY_CHANGE = {'type': 'object', 'properties': {
     'op': {'type': 'string', 'enum': ['set', 'remove']},
@@ -88,14 +90,14 @@ def compile_actions(document, actions):
                 except ValueError:
                     if not value.lstrip().startswith(('"', '{', '[')):
                         action = dict(action, value=json.dumps(value))
-            result.append(action)
+            result.append(normalize_structure(action, document))
             continue
         if not typed and not document['visualizations'] and not document.get('inputs') and not document.get('dataSources'):
             definitions = layout.get('layoutDefinitions', {})
             if set(definitions) == {'layout_main'} and not definitions['layout_main'].get('structure') and action.get('layoutId') != 'layout_main':
                 del definitions['layout_main']
                 layout.setdefault('tabs', {})['items'] = [tab for tab in layout.get('tabs', {}).get('items', []) if tab.get('layoutId') != 'layout_main']
-        if 'layoutDefinitions' not in layout and (document['visualizations'] or document.get('inputs')):
+        if 'layoutDefinitions' not in layout and layout.get('structure'):
             raise ProviderError('Preserve this legacy layout with targeted native edits; typed pages require the tabbed layout structure.')
         typed = True
         if set(action) != {'op', 'layoutId', 'label', 'width', 'height', 'items'}:
@@ -149,4 +151,11 @@ def compile_actions(document, actions):
             change = compile_link(candidate, action)
             result.append(change)
             candidate = apply_changes(candidate, [change])
+    candidate = apply_changes(document, result)
+    button_changes = normalize_button_actions(candidate, document)
+    if button_changes:
+        result.extend(button_changes)
+        candidate = apply_changes(candidate, button_changes)
+    fitted = fit_button_labels(candidate, document)
+    if fitted is not None: result.append({'op': 'set', 'path': '/layout', 'value': json.dumps(fitted)})
     return result

@@ -1,1 +1,1 @@
-<nav search_view="search"><view name="workspace" default="true"/></nav>
+<nav search_view="search"><view name="workspace" default="true"/><view name="dashboards"/></nav>

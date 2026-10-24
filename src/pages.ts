@@ -1,4 +1,5 @@
 import { validateDefinition, type JsonObject, type StudioDefinition } from './document';
+import { elementLabel, type LabelBindings } from './elementLabels';
 
 export type PagePurpose = Record<string,string>;
 export interface PageInfo { id: string; name: string; purpose: string; items: string[]; }
@@ -8,9 +9,9 @@ export function pagesOf(definition: StudioDefinition, purposes: PagePurpose = {}
   return (tabs?.items || []).map(tab => ({id:tab.layoutId,name:tab.label || tab.layoutId,purpose:purposes[tab.layoutId] || '',
     items:layouts?.[tab.layoutId]?.structure?.map(item=>item.item) || []}));
 }
-export function elementsOf(definition: StudioDefinition) {
-  return [...Object.entries(definition.visualizations).map(([id,item])=>({id,label:item.title || id,kind:'visualization' as const})),
-    ...Object.entries((definition.inputs || {}) as Record<string,{title?:string;options?:{label?:string}}>).map(([id,item])=>({id,label:item.title || item.options?.label || id,kind:'input' as const}))];
+export function elementsOf(definition: StudioDefinition, bindings?: LabelBindings) {
+  return [...Object.keys(definition.visualizations).map(id=>({id,label:elementLabel(definition,id,bindings),kind:'visualization' as const})),
+    ...Object.keys(definition.inputs || {}).map(id=>({id,label:elementLabel(definition,id,bindings),kind:'input' as const}))];
 }
 export const validFocus = (definition:StudioDefinition, id:string) => !id || (id.startsWith('page:') ? pagesOf(definition).some(page=>page.id===id.slice(5)) : elementsOf(definition).some(item=>item.id===id));
 export function navigationTarget(definition:StudioDefinition, id:string, field?:unknown):string | undefined {

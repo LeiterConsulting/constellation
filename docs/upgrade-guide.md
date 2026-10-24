@@ -65,3 +65,11 @@ Placement checks protect in-canvas inputs from changed chart rectangles. Typed n
 Draft schema 3 adds `brief`. Migrations retain the first available user goal in its original words and add an empty requirements string; absent historical messages cannot be reconstructed. Older clients cannot save the new format. Material revision history is a separate bounded stanza field, written alongside state with the same compare/write check. `draft_history.py` owns retention/projection/restore; `dashboard_brief.py` owns brief validation and conservative requirement capture. Restore keeps current conversation/files, resets transient token/focus/native-save state and creates a recoverable revision of the dashboard being left. Do not downgrade to a schema-2 writer after upgrading user drafts without a tested migration/export strategy.
 
 The regression journey in `tests/test_reliability_journey.py` uses scripted provider responses and synthetic data, exercising real compiler, data guards, recovery and storage. It is repeatable offline evidence, not a live-model success-rate benchmark. Requalify live provider journeys separately.
+
+## 0.9 sharing-preview contracts
+
+Draft schema stays at 3. Verify private namespace ownership instead of issuing ACL writes during routine draft saves. Secretless connections use the new private `constellation_connections` collection, declared for reload and replication; key-containing legacy connections remain encrypted and are not moved into plaintext preferences. OpenAI setup still requires native credential permissions. Do not grant broad capabilities as an incidental upgrade step.
+
+Repair candidates are transient within one bounded authoring turn. Their accumulated operations must replay exactly against the original revision and remain within 64 edits; all final validators still compare against the original. Typed-structure normalization must preserve unrelated item properties. Button fitting may only enlarge changed buttons into verified clear space.
+
+Native output may live in another selected app. Keep that namespace throughout create/readback/link generation and keep normal platform authorization. Do not make private working-draft links into sharing links. Verify output in its destination app, including any app-scoped dependencies, and manage access with normal Studio permissions.

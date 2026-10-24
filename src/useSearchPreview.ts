@@ -77,5 +77,17 @@ export function useSearchPreview(definition: StudioDefinition, tokens?: TokenSta
     } catch { return []; }
   }), [definition, tokens, earliest, version, failures, enabled, clock]);
   const stale = !running && evidence.some(item => item.state === 'stale');
-  return { run, pause, reset, enabled, running, results, evidence, version, status: stale ? `Stale snapshots · refresh for current data.` : status };
+  const messages = useMemo(() => {
+    const items: Record<string, string> = {};
+    const sources = Object.entries(definition.dataSources || {}).filter(([, source]) => ['ds.search', 'ds.spl2', 'ds.chain'].includes(source.type));
+    for (const [index, [id]] of sources.entries()) {
+      if (results[id]) continue;
+      if (index >= 8) { items[id] = 'This canvas previews the first eight search sources. Open the saved dashboard in Studio to run all sources.'; continue; }
+      try { searchRequest(definition, id, tokens); } catch (error) { items[id] = error instanceof Error ? error.message : 'Choose the required input values to preview this chart.'; continue; }
+      items[id] = failures[id] ? `Search preview failed. ${failures[id]}\n\nRefresh searches to retry; the saved query is preserved.`
+        : enabled ? 'Search results pending.' : 'Choose Run searches to preview this chart.';
+    }
+    return items;
+  }, [definition, tokens, results, failures, enabled]);
+  return { run, pause, reset, enabled, running, results, evidence, messages, version, status: stale ? `Stale snapshots · refresh for current data.` : status };
 }

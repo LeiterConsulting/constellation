@@ -26,12 +26,13 @@ interface Props {
   onSelect: (id: string) => void;
   searchResults: Record<string, PreviewRows>;
   searchVersion: number;
+  searchMessages?: Record<string, string>;
   selected: string; selecting: boolean;
 }
-export default function Preview({ definition, revision, tokens, activeTab, onTokens, onTab, onSelect, searchResults, searchVersion, selected, selecting }: Props) {
+export default function Preview({ definition, revision, tokens, activeTab, onTokens, onTab, onSelect, searchResults, searchVersion, searchMessages, selected, selecting }: Props) {
   const frame=useRef<HTMLDivElement>(null);
   const preview = useMemo(() => {
-    const result = previewDefinition(definition, searchResults, tokens);
+    const result = previewDefinition(definition, searchResults, tokens, searchMessages);
     for (const [id, visualization] of Object.entries(result.visualizations)) {
       if (!Object.hasOwn(EnterprisePreset.visualizations || {}, visualization.type)) {
         result.visualizations[id] = { type: 'splunk.markdown', title: visualization.title,
@@ -45,7 +46,7 @@ export default function Preview({ definition, revision, tokens, activeTab, onTok
       if (Array.isArray(result.layout.globalInputs)) result.layout.globalInputs = result.layout.globalInputs.filter(id => !removed.has(String(id)));
     }
     return result as unknown as DashboardJSON;
-  }, [definition, searchResults, tokens]);
+  }, [definition, searchResults, tokens, searchMessages]);
   const plugin = useMemo(() => ({ onEventTrigger: (event: { [key: string]: unknown }) => {
     if (typeof event.type === 'string' && /click$/.test(event.type) && typeof event.targetId === 'string') {
       const source = definition.visualizations[event.targetId] || (definition.inputs as Record<string, {eventHandlers?: unknown}> | undefined)?.[event.targetId];
@@ -53,12 +54,13 @@ export default function Preview({ definition, revision, tokens, activeTab, onTok
       onSelect(navigationTarget(definition,event.targetId,(event.payload as {name?:unknown}|undefined)?.name) || event.targetId);
     }
   } }), [definition, onSelect]);
-  return <RendererFrame ref={frame}><RendererBoundary key={revision + ':' + searchVersion}>
-    <DashboardContextProvider key={revision + ':' + searchVersion} preset={EnterprisePreset} initialDefinition={preview}
+  const renderKey = revision + ':' + searchVersion + ':' + JSON.stringify(searchMessages);
+  return <RendererFrame ref={frame}><RendererBoundary key={renderKey}>
+    <DashboardContextProvider key={renderKey} preset={EnterprisePreset} initialDefinition={preview}
       initialTokenBinding={tokens} initialTab={activeTab} onTokenBindingChange={onTokens}
       onActiveTabChange={onTab} dashboardPlugin={plugin}>
       <><DashboardCore width="100%" height={700} />
-      <ElementFocus definition={definition} activeTab={activeTab} selected={selected} selecting={selecting} frame={frame} onSelect={onSelect}/>
+      <ElementFocus definition={definition} activeTab={activeTab} selected={selected} selecting={selecting} frame={frame} onSelect={onSelect} bindings={tokens}/>
       </>
     </DashboardContextProvider>
   </RendererBoundary></RendererFrame>;

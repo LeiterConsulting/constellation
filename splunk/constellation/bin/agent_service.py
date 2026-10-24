@@ -2,7 +2,7 @@
 import json
 import re
 from provider_service import ProviderError
-from studio_contract import apply_changes, model_document, validate_document
+from studio_contract import model_document, validate_document
 from studio_features import feature_contract, validate_features
 from model_capabilities import attachment_parts
 from prompt_suggestions import SUGGESTION_SCHEMA, normalize_suggestions
@@ -12,8 +12,9 @@ from authoring_actions import ACTION_SCHEMA, compile_actions, validate_chart_pla
 from scope_intent import inferred_range
 from agent_feedback import validate_data_claims, presentation_message
 from authoring_intent import validate_page_intent
-from recovery_service import RecoverySession, MAX_MODEL_CALLS
+from recovery_service import RecoverySession, PendingProposal, MAX_MODEL_CALLS
 from dashboard_brief import authoring_brief
+from repair_hints import placement_hint
 from page_service import validate_purposes, proposed_purposes, focus_context
 
 SCHEMA = {'type': 'object', 'properties': {
@@ -30,6 +31,11 @@ On recoveryFeedback, use the fresh field profile, successful search receipts, fa
 source and validation error to correct the SAME user goal. Do not ask them to rephrase
 because an edit failed. Reuse successful queries and stable IDs, keep the requested
 units/exclusions, and change only the broken part. Never invent substitute data.
+recoveryFeedback.candidateDefinition is the current UNCOMMITTED repair base. When
+editsApplyTo is candidate, return changes against that candidate: you may patch only
+the broken properties. Earlier staged changes are retained and all checks rerun before
+anything is applied to the user's canvas. When editsApplyTo is original, repair the
+original definition because no structurally valid candidate has been staged yet.
 dashboardBrief retains the user's purpose and explicit requirements across sessions.
 Use its units, exclusions, audience and constraints even when absent from recent history.
 The current request can revise requirements explicitly; never silently drop them.
@@ -83,7 +89,8 @@ Never mix typed layout actions with /layout JSON-pointer edits in the same reply
 Choose its metrics, native
 visualizations, layout and useful interactions freely. Never substitute a prewritten
 checkout/service dashboard for an unrelated idea. Build a useful first draft rather
-than asking the user to choose every tile. Start with 3-6 purposeful visualizations.
+than asking the user to choose every tile. Usually start with 3-6 purposeful visualizations,
+or fewer when the user explicitly requests a simpler dashboard.
 When dataProfile is present, build against that REAL Splunk data. Its field metadata
 was retrieved under this user's permissions. A positive sampledRows proves events
 were observed in the selected window. Never claim there are no events/data because
@@ -186,7 +193,9 @@ hideConditions (arrays); showWhenConditions/hideWhenConditions is all-true or an
 Token evaluation uses expressions.eval.{ID}={name,value} and $eval:NAME$ references.
 Token defaults are defaults.tokens.default.{TOKEN}={value:'false'} (strings for toggles).
 A native input.button uses options.label and drilldown.setToken with tokens [{token,
-value:'$eval:NAME$'}]. For a dynamic button label use options.label:'$eval:LABEL_NAME$'
+value:'$eval:NAME$'}] inside its eventHandlers array. Never use a root drilldown property.
+For example eventHandlers:[{type:'drilldown.setToken',options:{tokens:[{token:'showNotes',value:'$eval:NOTES_NEXT$'}]}}].
+For a dynamic button label use options.label:'$eval:LABEL_NAME$'
 and a corresponding named expression. An input belongs either in globalInputs or
 inside page structure, never both. Set layout structure type:'input' for inputs. Use JSONata
 expressions such as $showNotes$ = 'true' ? 'false' : 'true' for a toggle, and
@@ -278,7 +287,8 @@ class AgentService:
             chosen = selected_source or (search_ids[0] if len(search_ids) == 1 else None)
             if chosen and document.get('dataSources', {}).get(chosen, {}).get('type') in ('ds.search', 'ds.spl2', 'ds.chain'):
                 query, language = data.resolve_query(document, chosen)
-                scope = {'query': query, 'language': language, 'earliest': '-24h'}
+                source_range = document['dataSources'][chosen].get('options', {}).get('queryParameters', {}).get('earliest')
+                scope = {'query': query, 'language': language, 'earliest': source_range if source_range in ('-15m', '-1h', '-24h', '-7d') else '-24h'}
         if scope is not None and not isinstance(scope, dict): raise ProviderError('Select a valid data context.')
         if scope and not body.get('dataContext'):
             scope = dict(scope, earliest=inferred_range(prompt) or scope.get('earliest', '-24h'))
@@ -302,6 +312,8 @@ class AgentService:
         if saved['model'] in ('gpt-6-luna', 'gpt-6-astra'):
             request['reasoning'] = {'effort': 'medium' if context['canvasState'] == 'blank' else 'low'}
         repair, validation_notes = False, []
+        proposal = PendingProposal(document)
+        next_purposes = purposes
         for attempt in range(MAX_MODEL_CALLS):
             recovery.model_call()
             response = self.provider.complete(saved, request)
@@ -321,9 +333,10 @@ class AgentService:
                 result['suggestions'] = normalize_suggestions(result['suggestions'])
                 validate_data_claims(result, profile)
                 raw_actions = result['changes']
-                result['changes'] = compile_actions(document, raw_actions)
-                draft = apply_changes(document, result['changes'])
-                next_purposes = proposed_purposes(raw_actions, purposes, draft)
+                compiled = compile_actions(proposal.document, raw_actions)
+                draft = proposal.stage(compiled)
+                result['changes'] = proposal.changes
+                next_purposes = proposed_purposes(raw_actions, next_purposes, draft)
                 validate_features(draft, document, environment)
                 validate_chart_placement(draft, document)
                 validate_page_intent(prompt, result['message'], draft, document, focus)
@@ -365,9 +378,12 @@ class AgentService:
                 request['input'].append({'role': 'user', 'content': [{'type': 'input_text', 'text': json.dumps({
                     'recoveryFeedback': {'validationError': feedback, 'dataProfile': profile,
                                          'searchReceipts': data.receipts, 'attempt': attempt + 1,
+                                         'editsApplyTo': 'candidate' if proposal.changes else 'original',
+                                         'candidateDefinition': model_document(proposal.document),
+                                         'placementHint': placement_hint(proposal.document, body.get('activeTab')),
                                          'remainingModelCalls': MAX_MODEL_CALLS - attempt - 1},
                     'validationError': feedback, 'rejectedOutput': text[:100000],
-                    'request': 'Correct the same user request using verified data and validation feedback. Preserve working searches and unrelated configuration.'})}]})
+                    'request': 'Correct the same user request against candidateDefinition using verified data and validation feedback. This candidate is not yet applied to the canvas. Preserve working searches and unrelated configuration.'})}]})
         return {'revision': revision, 'message': presentation_message(result['message'], prompt, repair), 'changes': result['changes'],
                 'suggestions': result['suggestions'] if body.get('suggestionFormat') == 'cards' else [item['prompt'] for item in result['suggestions']], 'repaired': repair,
                 'activity': ['Inspected Splunk ' + environment['version'], 'Checked index catalog access',

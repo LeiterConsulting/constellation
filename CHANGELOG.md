@@ -2,6 +2,17 @@
 
 This repository begins with the 0.7.1 development preview. Version history below summarizes implemented behavior; it is not a record of production releases or certification.
 
+## 0.9.0
+
+- Make native saves explicit private copies and let the author choose the destination Splunk app; expose standard native dashboard navigation and links.
+- Fix ordinary-user draft creation by verifying the private namespace instead of attempting privileged ACL changes.
+- Separate secretless provider preferences from encrypted keys; explain direct-key permission requirements before entry.
+- Verify owner-only credential ACLs before writing a new key.
+- Stage repair candidates so subsequent model replies can patch a rejected proposal without losing earlier construction; apply only the fully validated transaction.
+- Normalize exact typed structure geometry and fit changed native button labels only into clear space, preserving unrelated properties.
+- Improve modal focus return, setup loading/retry, library pagination/empty states, attachment/import errors and failed/native-only preview messages.
+- Render safe conversational Markdown, collapse long descriptions and add a first-user/native-handoff guide.
+
 ## 0.8.0
 
 - Track short-lived current-user preview jobs, including completion, truncation, resource finalization, cancellation and stale snapshots.

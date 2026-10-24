@@ -61,6 +61,9 @@ export const Message = styled.div<{ $user?: boolean }>`
   background: ${p => p.$user ? v.backgroundColorPage : v.backgroundColorSection};
   color: ${v.contentColorDefault}; padding: ${v.spacingSmall}; border-radius: ${v.borderRadius};
   overflow-wrap: anywhere;
+  > :first-child { margin-top: 0; }
+  > :last-child { margin-bottom: 0; }
+  pre { white-space: pre-wrap; overflow-wrap: anywhere; }
 `;
 export const Transcript = styled.div`
   display: flex; flex-direction: column; gap: ${v.spacingSmall};
@@ -70,7 +73,7 @@ export const Composer = styled.form`
   flex-shrink: 0; display: flex; flex-direction: column; gap: ${v.spacingSmall};
 `;
 export const FloatingLauncher = styled.div`
-  position: absolute; bottom: ${v.spacingLarge}; right: ${v.spacingLarge}; z-index: 11;
+  position: fixed; bottom: ${v.spacingLarge}; right: ${v.spacingLarge}; z-index: 11;
 `;
 export const RendererFrame = styled.div`
   position:relative; min-height: 650px; width: 100%; overflow: hidden; border-radius: ${v.borderRadius};

@@ -4,6 +4,7 @@ import styled from 'styled-components';
 import { variables as v } from '@splunk/themes';
 import type { StudioDefinition } from './document';
 import { elementsOf, pagesOf } from './pages';
+import type { LabelBindings } from './elementLabels';
 
 const Target = styled.button`
   position:absolute; padding:0; margin:0; background:transparent; cursor:crosshair;
@@ -17,8 +18,9 @@ const Outline = styled.div`
 `;
 type Rect={id:string;label:string;left:number;top:number;width:number;height:number};
 
-export default function ElementFocus({definition,activeTab,selected,selecting,frame,onSelect}:{
+export default function ElementFocus({definition,activeTab,selected,selecting,frame,onSelect,bindings}:{
   definition:StudioDefinition;activeTab?:string;selected:string;selecting:boolean;frame:RefObject<HTMLDivElement>;onSelect:(id:string)=>void;
+  bindings?: LabelBindings;
 }) {
   const api=useDashboardCoreApi(),[rects,setRects]=useState<Rect[]>([]),last=useRef('');
   useEffect(()=>{if(activeTab&&api.getActiveTab()!==activeTab)api.setActiveTab(activeTab);},[api,activeTab]);
@@ -35,7 +37,7 @@ export default function ElementFocus({definition,activeTab,selected,selecting,fr
       const canvas=api.getCanvasDomElement(page?.id)?.getBoundingClientRect();
       const layout=(definition.layout.layoutDefinitions as Record<string,{type:string;options?:{width?:number};structure?:Array<{item:string;position?:{x:number;y:number;w:number;h:number}}>}>|undefined)?.[page?.id||''];
       const next:Rect[]=[];
-      for(const item of elementsOf(definition)) {
+      for(const item of elementsOf(definition, bindings)) {
         if(!selecting&&item.id!==selected)continue;
         if(item.kind==='visualization') {
           const rect=api.getVisualizationDomElement(item.id)?.getBoundingClientRect();
@@ -52,7 +54,7 @@ export default function ElementFocus({definition,activeTab,selected,selecting,fr
     const mutations=new MutationObserver(schedule);mutations.observe(root,{childList:true,subtree:true});
     window.addEventListener('resize',schedule);root.addEventListener('scroll',schedule,true);schedule();
     return()=>{alive=false;cancelAnimationFrame(scheduled);resize.disconnect();mutations.disconnect();window.removeEventListener('resize',schedule);root.removeEventListener('scroll',schedule,true);};
-  },[api,definition,activeTab,selected,selecting,frame]);
+  },[api,definition,activeTab,selected,selecting,frame,bindings]);
   return <>{rects.map(({id,label,...rect})=>selecting
     ? <Target key={id} type="button" style={rect} aria-label={`Focus on ${label}`} onClick={event=>{event.stopPropagation();onSelect(id);}}><span>{label}</span></Target>
     : <Outline key={id} style={rect} aria-hidden="true"/>)}</>;

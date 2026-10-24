@@ -1,13 +1,13 @@
 # Validation status
 
-Snapshot: **0.8.0 development preview, October 23, 2026**. This file is a sanitized summary. Private lab addresses, credentials, screenshots, transcripts, raw search data and detailed runtime receipts are excluded from the repository.
+Snapshot: **0.9.0 development preview, October 24, 2026**. This file is a sanitized summary. Private lab addresses, credentials, screenshots, transcripts, raw search data and detailed runtime receipts are excluded from the repository.
 
 ## Local verification
 
 | Check | Observed result |
 | --- | --- |
-| Python unit suites | 118 tests passed on Python 3.9 and 3.13, including seven repository-publication policy tests. |
-| Frontend unit suites | 38 tests passed. |
+| Python unit suites | 130 tests passed on Python 3.9 and 3.13, including seven repository-publication policy tests. |
+| Frontend unit suites | 51 tests passed. |
 | TypeScript and production build | Passed; bundle-size warning remains. |
 | Deterministic app package | Generated with SHA-256 receipt. |
 | Splunk AppInspect 4.3.1, precert | 0 errors, 0 failures, 0 future failures, 7 warnings, 1 skipped, 107 successes, 137 not applicable on the tested app archive. |
@@ -44,13 +44,23 @@ A separate one-panel dashboard correctly used its own dataset and requested last
 - Direct Ollama model/JSON and title-edit checks passed. Its attempted new two-page real-data creation exhausted automatic scope validation; it remains unqualified for that journey.
 - Offline synthetic journey fixtures cover automatic repair from a rejected proposal, focused edits, two-page navigation compilation, switching/reopening, revision restore, exhausted-recovery preservation, scope equivalence, partial inspection, owner/conflict checks and retention. Scripted model fixtures do not establish a live-model success rate.
 
+## 0.9 sharing review
+
+The [sharing readiness report](share-readiness.md) records the control and journey coverage. Selected standard-user checks passed with two disposable accounts: private draft/connection storage, denied cross-user direct REST reads/writes, native private-view isolation and explicit shared-view access. An observed unnecessary ACL write was removed; keyless preferences no longer require credential-store authority. New credential entries receive private ACL verification before the actual key is written. No user roles were expanded.
+
+A real-data import, selected-title chat edit, undo/redo, draft/native library CRUD, version restore and reopen passed. Independent readback confirmed the actual query and conversation survived. A native real-data copy in the Search app supported native editing and two-way device navigation without a Constellation script. Existing OpenAI/Ollama provider selections were restored after fresh AITK/Ollama focused checks.
+
+A combined synthetic napkin/PDF request produced three pages after retry and automatic repair. Focused chat fixed the generated notes button; native service-row/return navigation and Show/Hide notes passed. Exact native readback matched the draft; unrelated sources, inputs and layout were preserved. Ollama's attempted new-dashboard creation still exhausted recovery, while its real-query title edit passed. These are bounded task results, not a measured success rate.
+
+The final installed 0.9.0 app archive has SHA-256 `ea47d0811b9728022201365f68f1a7135afb2ffacc1111f6d6833e9f1bb1cb5d`. It was installed on both lab versions without restart and inspected with the local precert result above. Private raw evidence is excluded from the handoff.
+
 ## Boundaries and remaining work
 
 - Preview results are bounded to the selected window, 200 rows, five seconds and eight sources. Tracked completion proves execution/row coverage for the submitted query, not the correctness of its business meaning or an intentionally sampled query.
 - Live success is not universal first-response accuracy. Output/search validation errors can be repaired within a budget; transport/authentication failures are preserved for explicit recovery.
 - OpenAI image/PDF layouts passed selected exercises. Ollama vision and complete AITK multi-page real-data authoring remain unqualified; AITK is text-only in this adapter.
 - Native custom visualization parity, saved/module-search execution, refresh policies, full option-schema coverage and broader token behavior remain open.
-- Non-admin multiuser isolation, full accessibility/reflow, distributed SHC concurrency and production scale still require qualification.
+- Selected two-user isolation checks passed. Broader role/administrator boundaries, full accessibility/reflow, distributed SHC concurrency and production scale still require qualification.
 - Local unit suites use fixtures/mocks and do not establish live infrastructure behavior.
 
 See the [support contract](studio-support.md), [security boundaries](../SECURITY.md) and [release gates](roadmap.md).

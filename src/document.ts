@@ -76,7 +76,7 @@ export function applyEdits(revision: Revision, expectedRevision: number, edits: 
   return { number: revision.number + 1, definition: draft.definition };
 }
 
-export function previewDefinition(definition: StudioDefinition, results: Record<string, { fields: Array<{ name: string }>; columns: unknown[][] }> = {}, tokens?: {default?:Record<string,unknown>}): StudioDefinition {
+export function previewDefinition(definition: StudioDefinition, results: Record<string, { fields: Array<{ name: string }>; columns: unknown[][] }> = {}, tokens?: {default?:Record<string,unknown>}, messages: Record<string, string> = {}): StudioDefinition {
   const preview = structuredClone(definition);
   // Framework initialization gives static defaults precedence over initial bindings.
   // Mirror current values only in the preview clone so result refreshes and reopen
@@ -96,8 +96,10 @@ export function previewDefinition(definition: StudioDefinition, results: Record<
   for (const [id, visualization] of Object.entries(preview.visualizations)) {
     const sourceId = visualization.dataSources?.primary;
     if (sourceId && definition.dataSources?.[sourceId]?.type !== 'ds.test' && !results[sourceId]) {
+      const source = definition.dataSources?.[sourceId];
+      const nativeOnly = source && !['ds.search', 'ds.spl2', 'ds.chain'].includes(source.type);
       preview.visualizations[id] = { type: 'splunk.markdown', title: visualization.title,
-        options: { markdown: 'Search results pending.' } };
+        options: { markdown: nativeOnly ? 'Open this dashboard in native Studio to run this source type. Its configuration is preserved.' : messages[sourceId] || 'Search results pending.' } };
     }
   }
   const stripExternalActions = (node: unknown) => {

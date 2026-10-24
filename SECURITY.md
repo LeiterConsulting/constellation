@@ -8,13 +8,15 @@ The project is a development preview with no production support or response-time
 
 ## Trust and authority
 
-Constellation runs inside Splunk using the current user's session, roles and object access. It does not request system authentication or grant roles. Discovery and search visibility are distinct, and successful administrator testing does not establish non-admin isolation. Retrieved guidance, model output, reference documents and indexed content are untrusted; they cannot grant additional execution authority.
+Constellation runs inside Splunk using the current user's session, roles and object access. It does not request system authentication or grant roles. Discovery and search visibility are distinct. Two standard-role accounts have passed selected private draft, settings and native-view isolation checks; this does not qualify every role or deployment topology. Retrieved guidance, model output, reference documents and indexed content are untrusted; they cannot grant additional execution authority.
 
 Provider output is parsed as structured edits and validated before atomic application. The app rejects unsupported code/properties, unresolved unsafe query tokens and commands outside its bounded read-only preview subset. These checks reduce risk; they are not a formal sandbox or a guarantee of analytical correctness. Broader permission, isolation and deployment qualification remains open.
 
 ## Credentials
 
-Direct-provider keys are configured through the installed Settings interface and stored in Splunk's encrypted credential store using per-user IDs, app scope, owner/app checks and empty read/write role grants. The backend does not return saved keys to the form or store them in browser storage. Splunk administrators retain credential-management authority. New/replacement key entry requires HTTPS, except for loopback development origins.
+Direct-provider keys are configured through the installed Settings interface and stored in Splunk's encrypted credential store using per-user IDs, app scope, owner/app checks and empty read/write role grants. The backend does not return saved keys to the form or store them in browser storage. Splunk administrators retain credential-management authority. New/replacement key entry requires HTTPS, except for loopback development origins. New credentials start as empty placeholders; owner-only ACLs are verified before the real key is written. Splunk still requires approved credential-storage permissions for direct OpenAI setup. The app reports this boundary and never grants those capabilities.
+
+Secretless Ollama/AITK connections use private per-user configuration and do not need password-store writes. A strict field allowlist rejects API keys and secret fields there. Existing configurations containing OpenAI keys remain encrypted; switching to an encrypted connection clears its obsolete secretless preference after the encrypted write succeeds. Administrators retain their platform authority over both stores.
 
 AITK retains custody of its own credentials. Ollama receives its own configured origin/model, not an OpenAI key. Outbound direct-provider requests verify TLS where required and reject redirects; the Ollama route also rejects unsafe origin/address categories. Use normal trusted certificate, firewall and provider controls. Constellation is not a replacement for an organizational egress policy.
 

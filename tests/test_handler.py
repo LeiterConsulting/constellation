@@ -24,7 +24,8 @@ class HandlerBoundaryTests(unittest.TestCase):
     def request(self, **changes):
         value={'method':'GET','path_info':'settings','session':{'user':'fixture-user','authtoken':'fixture-session'}}
         value.update(changes)
-        return self.handler.handle(json.dumps(value))
+        with patch('connection_store.ConnectionPreferences.read', return_value=None), patch.object(handler.CredentialStore, 'key_access', return_value={'canWrite': True}):
+            return self.handler.handle(json.dumps(value))
     def test_authentication_is_required(self):
         self.assertEqual(self.request(session={})['status'],401)
     def test_unknown_methods_are_rejected(self):
@@ -112,12 +113,22 @@ class CredentialIsolationTests(unittest.TestCase):
         config = {'api_key': 'fixture-secret', 'model': ''}
         with patch.object(self.store, 'locate', return_value=None), \
              patch.object(self.store, 'read', return_value=config), \
-             patch.object(self.store, 'request') as request:
+             patch.object(self.store, 'request', return_value=self.entry()) as request:
             self.store.write(config)
         fields = request.call_args_list[0].args[2]
         self.assertEqual(fields['name'], self.store.name)
         self.assertEqual(fields['realm'], 'constellation.openai')
+        self.assertEqual(fields['password'], '{}')
         self.assertEqual(request.call_args_list[1].args[0], self.store.entry + '/acl')
+        self.assertEqual(request.call_args_list[2].args, (self.store.entry + '/acl',))
+        self.assertEqual(json.loads(request.call_args_list[3].args[2]['password']), config)
+
+    def test_new_connection_never_receives_secret_when_acl_restriction_fails(self):
+        for result in (None, self.entry(dict(self.acl, owner='other'))):
+            with self.subTest(result=result), patch.object(self.store, 'locate', return_value=None), \
+                 patch.object(self.store, 'request', return_value=result) as request:
+                with self.assertRaises(handler.ProviderError): self.store.write({'api_key': 'fixture-secret'})
+                self.assertNotIn('fixture-secret', str(request.call_args_list))
 
 
 if __name__ == '__main__': unittest.main()

@@ -1,6 +1,7 @@
 import type { DataDiscovery, DataScope } from './data';
 import type { StudioDefinition } from './document';
 import { validFocus, pagesOf, type PagePurpose } from './pages';
+import { elementLabel } from './elementLabels';
 
 export interface PromptSuggestion { label: string; prompt: string; reason: string; kind: 'idea' | 'data' | 'comparison' | 'interaction' | 'layout' | 'refine'; }
 export interface InstanceIdea extends PromptSuggestion { scope?: DataScope; }
@@ -34,11 +35,11 @@ export function contextualPrompts(definition: StudioDefinition, selected = '', a
     {label:'Connect this page',kind:'interaction',reason:'Help readers move between the overview and relevant details.',
       prompt:'Add useful native navigation between the selected page and a related page using the existing dashboard context. Use a table row token when a verified field can filter the detail page; preserve working searches.'}];
   const input = (definition.inputs as Record<string,{type?:string;options?:{label?:string}}> | undefined)?.[selected];
-  if (input?.type==='input.button') return [{label:'Refine this button',kind:'refine',reason:`Focus on ${input.options?.label || selected}.`,
+  if (input?.type==='input.button') return [{label:'Refine this button',kind:'refine',reason:`Focus on ${elementLabel(definition,selected)}.`,
     prompt:'Improve the selected button’s label and action using its purpose and the surrounding dashboard. Keep its behavior clear and preserve unrelated inputs and panels.'},
     {label:'Improve page navigation',kind:'interaction',reason:'Connect this button to the right page and investigation target.',
       prompt:'Refine the selected button’s native page navigation using our conversation and page purposes. Choose a useful destination and element focus, and preserve existing filters and return navigation.'}];
-  if (input) return [{label:'Refine this input',kind:'refine',reason:`Focus on ${input.options?.label || selected}.`,
+  if (input) return [{label:'Refine this input',kind:'refine',reason:`Focus on ${elementLabel(definition,selected)}.`,
     prompt:'Improve the selected input using its purpose, verified fields and current token bindings. Make its label and choices clear, preserve working filters and keep it readable in both Splunk themes.'},
     {label:'Connect the filter',kind:'interaction',reason:'Make the input control the relevant panels.',prompt:'Connect the selected input to the relevant existing searches with safe native Studio tokens and a useful default. Validate the filtered searches, preserve other inputs and explain which panels it controls.'}];
   const chart = definition.visualizations[selected];

@@ -12,3 +12,7 @@ export = none
 [constellation_drafts]
 access = read : [ ], write : [ ]
 export = none
+
+[constellation_connections]
+access = read : [ ], write : [ ]
+export = none

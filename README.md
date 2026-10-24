@@ -4,7 +4,7 @@ A conversational canvas for creating and editing **Splunk Dashboard Studio** das
 
 Describe an operational question, choose data available to your Splunk user, and watch a dashboard take shape. Select a chart, input or page to refine it through chat. Start from a blank canvas, an existing Studio definition, or an image/PDF reference when the selected provider supports it.
 
-**Status: 0.8.0 development preview.** This is a new codebase, separate from Splunk Dashboard Generator. It is not a production release or Splunk Cloud certified app. The repository is currently private and is being prepared for a future public release.
+**Status: 0.9.0 development preview.** This is a new codebase, separate from Splunk Dashboard Generator. It is not a production release or Splunk Cloud certified app. The repository is currently private and is being prepared for a future public release.
 
 ## What works today
 
@@ -14,11 +14,13 @@ Describe an operational question, choose data available to your Splunk user, and
 - Element selection for directed chat edits and contextual suggestions.
 - Private, Splunk-backed drafts with conversations, a persistent dashboard brief, refresh/reopen, rename, duplicate and recoverable Trash.
 - Atomic validated edits, bounded automatic repair, visible activity, Stop, current-session undo/redo and durable dashboard version history.
-- Studio JSON import/export and new private native copies verified by reading their definitions back.
+- Studio JSON import/export and private native copies in a chosen Splunk app, verified by reading their definitions back.
 - OpenAI, Ollama and named Splunk AI Toolkit (AITK) connections behind separate provider adapters.
 - Image/PDF input guarded by the exact selected model's verified capabilities.
 
 This app remains self-contained inside Splunk: React/TypeScript, the Splunk Dashboard Framework, Splunk UI Toolkit and bundled Python REST handlers. It requires no separate agent platform, worker service or vector database. Retrieval currently uses bundled, attributed guidance filtered by version and intent; semantic RAG and verified cross-dataset relationships remain future work.
+
+For a first user, follow the [user guide](docs/user-guide.md). Review the [handoff audit](docs/share-readiness.md) before sharing the preview.
 
 ## Quick start for developers
 
@@ -35,7 +37,7 @@ npm run dev -- --port 5178
 
 Open the local URL printed by Vite. Standalone mode demonstrates the canvas and authored example data; provider Settings, live Splunk searches, server-backed drafts and native saves require an installed Splunk app.
 
-The package is written to `artifacts/constellation-0.8.0.tgz`, with its digest in `artifacts/SHA256SUMS`. Build artifacts and dependencies are not committed. See [installation](docs/installation.md) to install the package and configure a provider in the app.
+The package is written to `artifacts/constellation-0.9.0.tgz`, with its digest in `artifacts/SHA256SUMS`. Build artifacts and dependencies are not committed. See [installation](docs/installation.md) to install the package and configure a provider in the app.
 
 ## Compatibility and boundaries
 

@@ -26,7 +26,7 @@ The current reliability milestone is recorded in [the goal brief](reliability-go
 
 ## Before production qualification
 
-- Complete non-admin owner isolation and permission/ACL tests, including administrator boundaries and failed-access paths.
+- Extend the completed selected two-user owner-isolation/ACL checks to broader roles, administrator boundaries and deployment profiles.
 - Qualify upgrade/rollback, retention and backup behavior for drafts, Trash, pending attachments and native restores.
 - Qualify cross-member search-head-cluster concurrency; configuration replication is not atomic distributed coordination.
 - Complete native rendering/interaction fixtures, accessibility and reflow, resource budgets and failure/timeout tests.

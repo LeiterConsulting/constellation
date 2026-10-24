@@ -50,6 +50,7 @@ export default function DataChooser({ discovery, initial, initialGoal = '', onBu
         <Select.Option label="An index in this instance" value="index"/><Select.Option label="My existing search" value="query"/>
       </Select></ControlGroup>
       {mode === 'index' ? <>
+        {!discovery?.indexes.length ? <Message type="info">No index catalog is available. Choose “My existing search” above, or close and reopen after discovery finishes.</Message> : null}
         <ControlGroup label="Index"><Select value={scope.index || ''} disabled={busy} filter onChange={(_event, { value }) => change({ ...scope, index: String(value), sourcetype: '' })}>
           {(discovery?.indexes || []).map(item => <Select.Option key={item.name} value={item.name} label={item.name}/>)}</Select></ControlGroup>
         <ControlGroup label="Sourcetype"><Select value={scope.sourcetype || ''} disabled={busy} onChange={(_event, { value }) => change({ ...scope, sourcetype: String(value) })}>

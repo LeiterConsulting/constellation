@@ -9,6 +9,21 @@ MAX_QUERY_CHECKS = 16
 MAX_SECONDS = 120
 
 
+class PendingProposal:
+    """A repairable candidate; nothing reaches the user's document until accepted."""
+    def __init__(self, document):
+        self.document, self.changes = copy.deepcopy(document), []
+
+    def stage(self, changes):
+        from studio_contract import apply_changes
+        combined = self.changes + changes
+        if len(combined) > 64:
+            raise ProviderError('Keep the complete repaired proposal within 64 edits.')
+        candidate = apply_changes(self.document, changes)
+        self.document, self.changes = candidate, combined
+        return candidate
+
+
 class RecoverySession:
     def __init__(self, runtime, clock=time.monotonic):
         self.runtime, self.clock = runtime, clock

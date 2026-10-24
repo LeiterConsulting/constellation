@@ -116,18 +116,19 @@ class DraftService:
 
     def listing(self):
         result = self.request(self.base, projection=True) or {}
-        drafts, trash, active = [], [], None
+        drafts, trash, active, retained = [], [], None, 0
         for entry in result.get('entry', []):
             if entry.get('name') == self.preference:
                 self.verify(entry)
                 active = entry['content'].get('active_id') or None
             elif entry.get('name', '').startswith(self.prefix):
                 self.verify(entry)
+                retained += 1
                 record = self.record(entry, include_state=False)
                 if entry['content'].get('restored_at'): continue
                 (trash if record['deletedAt'] else drafts).append(record)
         return {'drafts': sorted(drafts, key=lambda item: item['updatedAt'], reverse=True),
-                'trash': sorted(trash, key=lambda item: item['updatedAt'], reverse=True), 'activeId': active}
+                'trash': sorted(trash, key=lambda item: item['updatedAt'], reverse=True), 'activeId': active, 'retainedRecords': retained}
 
     def read(self, identifier, deleted=False):
         entry = self.entry(identifier)
@@ -154,10 +155,11 @@ class DraftService:
         if entry: self.request(path, 'POST', fields)
         else:
             listing = self.listing()
-            if len(listing['drafts']) + len(listing['trash']) >= 200:
-                raise ProviderError('This account has reached the 200-draft storage limit.', 413)
+            if listing['retainedRecords'] >= 200:
+                raise ProviderError('This account has reached the 200-record limit, including drafts and retained recovery copies.', 413)
             self.request(self.base, 'POST', dict(fields, name=self.key(identifier)))
-        self.request(path + '/acl', 'POST', {'owner': self.user, 'sharing': 'user', 'perms.read': '', 'perms.write': ''})
+        # User-namespace creation is already private. Changing its ACL requires
+        # privileges an ordinary author need not hold; verify rather than widen.
         saved = self.entry(identifier)
         if not saved or any(saved['content'].get(key, '') != value for key, value in fields.items()):
             raise ProviderError('The saved draft did not match its readback. Your current work is still in this tab.', 503)
@@ -170,7 +172,9 @@ class DraftService:
             self.verify(preference['entry'][0])
             self.request(self.base + '/' + self.preference, 'POST', {'active_id': identifier})
         else: self.request(self.base, 'POST', {'name': self.preference, 'active_id': identifier})
-        self.request(self.base + '/' + self.preference + '/acl', 'POST', {'owner': self.user, 'sharing': 'user', 'perms.read': '', 'perms.write': ''})
+        saved = self.request(self.base + '/' + self.preference)
+        if not saved or not saved.get('entry'): raise ProviderError('The recent draft could not be verified.', 503)
+        self.verify(saved['entry'][0])
 
     def operation(self, body):
         action, identifier = body.get('action', 'list'), body.get('id')

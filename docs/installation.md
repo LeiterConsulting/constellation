@@ -1,6 +1,6 @@
 # Installation and first dashboard
 
-Constellation 0.8.0 is a development preview. Start in an isolated Splunk Enterprise environment with representative data. Review the [support matrix](studio-support.md), [validation scope](validation.md) and [security guide](../SECURITY.md).
+Constellation 0.9.0 is a development preview. Start in an isolated Splunk Enterprise environment with representative data. Review the [support matrix](studio-support.md), [validation scope](validation.md) and [security guide](../SECURITY.md).
 
 ## Build the app
 
@@ -24,7 +24,7 @@ Run Splunk AppInspect against the exact archive before distributing it. Local pr
 2. In Splunk's app management interface, choose **Install app from file** and upload the generated archive. Select the update option only when intentionally updating an existing Constellation installation.
 3. Follow Splunk's reported restart requirements. Open **Constellation** from the Apps menu.
 4. Use a browser origin with valid HTTPS for API-key entry/replacement. Loopback development origins are the only HTTP exception. Configure trusted certificates and server outbound access through your normal administration process.
-5. Open **Environment** to inspect the current Splunk/Studio versions, capabilities and ad hoc SPL2 availability. A missing SPL2 module-list endpoint is distinct from unavailable ad hoc SPL2.
+5. Open **More → Environment** to inspect the current Splunk/Studio versions, capabilities and ad hoc SPL2 availability. A missing SPL2 module-list endpoint is distinct from unavailable ad hoc SPL2.
 
 The app uses the `constellation` namespace. It does not install an external agent service or alter user roles. Do not assume that a successful administrator test proves access isolation for every role or search-head-cluster topology.
 
@@ -45,7 +45,7 @@ See [providers](providers.md) for route-specific requirements. No provider key o
 3. Ask for a first dashboard. The agent validates proposed changes and tests new real-data searches before applying them. Expand **Activity** for validation details.
 4. Use **Select element**, or the **Conversation focus** list, to direct a change to a chart, input or page. Ask for page names, purposes and native drilldowns explicitly when needed.
 5. Refresh or reopen the draft from **Dashboards** to continue. Drafts and conversations save privately in Splunk; check the visible save state before leaving.
-6. Choose **Save a copy to Splunk** when ready for native Studio. This creates a new private view and verifies its definition by readback. Inspect its native rendering and interactions separately.
+6. Choose **Save to Splunk**, select the destination app, then **Save private copy**. This creates a new private native view and verifies its definition by readback. Open it in Studio to inspect rendering, edit normally and manage sharing. Your working draft remains separate.
 
 ## Upgrading and recovery
 

@@ -46,6 +46,14 @@ class MemoryDrafts(DraftService):
 
 class DraftTests(unittest.TestCase):
     identifier = 'a' * 32
+    def test_restored_recovery_records_still_count_toward_the_storage_bound(self):
+        store = MemoryDrafts()
+        for i in range(200):
+            store.entries[store.prefix + format(i, '032x')] = {'name': store.prefix + format(i, '032x'), 'acl': {'owner': store.user, 'app': 'constellation', 'sharing': 'user'}, 'content': {'restored_at': 'fixture-time'}}
+        self.assertEqual(store.listing()['retainedRecords'], 200)
+        self.assertEqual(store.listing()['drafts'], [])
+        with self.assertRaisesRegex(ProviderError, '200-record'): store.write('f' * 32, 0, blank())
+        self.assertEqual(len(store.entries), 200)
     def test_roundtrip_includes_conversation_prompt_tokens_context_and_pending_files(self):
         store, state = MemoryDrafts(), blank()
         state['attachments'] = [{'name': 'reference.png', 'data': 'data:image/png;base64,' + base64.b64encode(b'\x89PNG\r\n\x1a\nfixture').decode()}]

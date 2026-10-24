@@ -8,7 +8,11 @@ Provider adapters share the validated Studio edit contract but retain their own 
 | Ollama | Native `/api/tags`, `/api/show`, `/api/chat`, JSON schema output. | A server-reachable origin and installed model. | Images only when the exact model's live metadata advertises vision. PDFs are blocked. |
 | Splunk AITK | `ai` command in a current-user synthetic search under `Splunk_ML_Toolkit`. | Existing accessible named LLM connection and `apply_ai_commander_command`. | Text only; image/PDF transmission is blocked. |
 
-OpenAI authoring, image/sketch and PDF exercises have passed on one tested Enterprise target. Ollama `qwen3-coder:latest` dashboard edits have passed on both tested target versions. AITK connection/model checks and simple dashboard edits passed through an existing OpenAI-backed connection; a fresh 0.8.0 model/JSON and title-edit check also passed in that configured environment. A second target still lacks a usable completion through its named connection. The complete new multi-page real-data journey is not yet AITK-qualified.
+OpenAI authoring, image/sketch and PDF exercises have passed on one tested Enterprise target. Ollama `qwen3-coder:latest` dashboard edits have passed on both tested target versions. AITK connection/model checks and simple dashboard edits passed through an existing OpenAI-backed connection; a fresh 0.9.0 model/JSON and title-edit check also passed in that configured environment. A second target still lacks a usable completion through its named connection. The complete new multi-page real-data journey is not yet AITK-qualified.
+
+## User permissions
+
+A normal user can save secretless Ollama or AITK preferences privately. Direct OpenAI setup requires Splunk permission to manage encrypted credentials; Settings checks the current capability and explains missing access before enabling key entry. Constellation does not grant roles. AITK separately enforces `apply_ai_commander_command` and named-connection access. An administrator must review required access under the organization's policy; do not grant administrator access as a shortcut.
 
 ## Endpoint and credential boundaries
 

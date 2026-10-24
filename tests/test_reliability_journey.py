@@ -31,6 +31,39 @@ def reply(changes, message='Dashboard updated.'):
 
 
 class ReliabilityJourneyTests(unittest.TestCase):
+    def test_imported_search_retains_its_supported_native_range_for_grounding(self):
+        source = {'type': 'ds.search', 'options': {'query': 'search index="fixture_index" | stats count', 'queryParameters': {'earliest': '-1h', 'latest': 'now'}}}
+        document = {'title': 'Imported', 'visualizations': {'metric': {'type': 'splunk.singlevalue', 'dataSources': {'primary': 'events'}}}, 'dataSources': {'events': source}, 'layout': {'type': 'absolute', 'structure': [{'item': 'metric'}]}}
+        provider = Provider([reply([{'op': 'set', 'path': '/visualizations/metric/title', 'value': '"Events"'}])])
+        result = AgentService(provider, Runtime()).assist({'prompt': 'Give this a clearer title', 'revision': 0, 'definition': document, 'selected': 'metric'})
+        self.assertEqual(result['dataContext']['earliest'], '-1h')
+        self.assertEqual(document['dataSources']['events'], source)
+    def test_placement_feedback_uses_exact_ids_and_free_space_without_changing_the_candidate(self):
+        from repair_hints import placement_hint
+        candidate = {'visualizations': {'existing': {}, 'new_chart': {}}, 'layout': {'tabs': {'items': [{'layoutId': 'overview', 'label': 'Overview'}]}, 'layoutDefinitions': {'overview': {'type': 'absolute', 'options': {'width': 1200, 'height': 800}, 'structure': [{'item': 'existing', 'position': {'x': 20, 'y': 20, 'w': 1160, 'h': 400}}]}}}}
+        before = copy.deepcopy(candidate)
+        hint = placement_hint(candidate, 'overview')
+        self.assertEqual(hint['unplacedVisualizations'], ['new_chart'])
+        self.assertEqual(hint['layoutActionExample']['items'][0]['y'], 440)
+        self.assertEqual(candidate, before)
+    def test_repair_can_patch_the_uncommitted_candidate_without_repeating_creation(self):
+        original = blank()['definition']
+        initial = reply([
+            {'op':'set','path':'/dataSources','value':json.dumps({'events':{'type':'ds.search','options':{'query':'search index="fixture_index" | stats count','queryParameters':{'earliest':'-1h','latest':'now'}}}})},
+            {'op':'set','path':'/visualizations','value':json.dumps({'metric':{'type':'splunk.singlevalue','title':'Events','dataSources':{'primary':'events'}}})},
+            {'op':'layout','layoutId':'overview','label':'Overview','width':1200,'height':600,'items':[{'id':'metric','kind':'block','x':20,'y':20,'w':400,'h':200}]},
+        ])
+        patch = reply([{'op':'set','path':'/dataSources/events/options/queryParameters','value':'{"earliest":"-24h","latest":"now"}'}])
+        provider = Provider([initial, patch])
+        result = AgentService(provider, Runtime()).assist({'prompt':'Build from index=fixture_index','revision':0,'definition':original,'dataContext':blank()['dataContext']})
+        self.assertEqual(result['recovery']['modelCalls'], 2)
+        self.assertFalse(original['visualizations'])
+        final = apply_changes(original, result['changes'])
+        self.assertIn('metric', final['visualizations'])
+        self.assertEqual(final['dataSources']['events']['options']['queryParameters']['earliest'], '-24h')
+        feedback = json.loads(provider.requests[1]['input'][-1]['content'][0]['text'])['recoveryFeedback']
+        self.assertEqual(feedback['editsApplyTo'], 'candidate')
+        self.assertIn('metric', feedback['candidateDefinition']['visualizations'])
     def test_repair_create_focus_edit_navigation_switch_reopen_and_restore(self):
         store, runtime = MemoryDrafts(), Runtime()
         state = blank(); state['brief'] = {'purpose':'Understand real sensor activity', 'requirements':'Use Fahrenheit. Exclude readings over 150°F.'}

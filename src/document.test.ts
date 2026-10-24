@@ -2,6 +2,16 @@ import { describe, expect, it } from 'vitest';
 import { applyEdit, applyEdits, createStarter, previewDefinition, toStudioXml, validateDefinition } from './document';
 
 describe('Studio document boundaries', () => {
+  it('explains failed and native-only previews without altering saved searches', () => {
+    const definition = createStarter();
+    definition.dataSources!.ds_external = { type: 'ds.search', options: { query: 'index=fixture | stats count' } };
+    definition.visualizations.viz_trend.dataSources = { primary: 'ds_external' };
+    expect(previewDefinition(definition, {}, undefined, { ds_external: 'Search preview failed. Refresh searches to retry.' }).visualizations.viz_trend.options?.markdown).toContain('failed');
+    definition.dataSources!.ds_external.type = 'ds.savedSearch';
+    expect(previewDefinition(definition).visualizations.viz_trend.options?.markdown).toContain('native Studio');
+    expect(definition.dataSources!.ds_external.options?.query).toBe('index=fixture | stats count');
+    expect(definition.visualizations.viz_trend.type).not.toBe('splunk.markdown');
+  });
   it('commits model edits atomically and rejects stale batches', () => {
     const revision = { number: 3, definition: createStarter() };
     const changed = applyEdits(revision, 3, [{ type: 'rename', title: 'Healthy' }, { type: 'compare' }]);

@@ -1,4 +1,5 @@
 import copy
+import json
 from pathlib import Path
 import sys
 import unittest
@@ -10,6 +11,49 @@ from provider_service import ProviderError
 
 
 class TypedLayoutTests(unittest.TestCase):
+    def test_exact_button_alias_becomes_native_handlers_without_touching_imported_properties(self):
+        from input_normalization import normalize_button_actions
+        handler = {'type': 'drilldown.setToken', 'options': {'tokens': [{'token': 'showNotes', 'value': 'true'}]}}
+        document = {'visualizations': {}, 'inputs': {'toggle': {'type': 'input.button', 'options': {'label': 'Show notes'}, 'drilldown': handler, 'future': 'keep'}}, 'layout': {'type': 'absolute', 'structure': []}}
+        changes = normalize_button_actions(document, {})
+        corrected = apply_changes(document, changes)
+        self.assertNotIn('drilldown', corrected['inputs']['toggle'])
+        self.assertEqual(corrected['inputs']['toggle']['eventHandlers'], [handler])
+        self.assertEqual(corrected['inputs']['toggle']['future'], 'keep')
+        self.assertEqual(normalize_button_actions(document, copy.deepcopy(document)), [])
+        previous = copy.deepcopy(document)
+        document['inputs']['toggle']['options']['label'] = 'Toggle notes'
+        self.assertTrue(normalize_button_actions(document, previous))
+        document['inputs']['toggle']['eventHandlers'] = [handler]
+        self.assertEqual(normalize_button_actions(document, previous), [])
+        self.assertEqual(len(normalize_button_actions(document, {})), 1)
+        document['inputs']['toggle']['eventHandlers'] = [{'type': 'drilldown.switchToTab', 'options': {'tabId': 'other'}}]
+        with self.assertRaises(ProviderError): normalize_button_actions(document, {})
+    def test_button_labels_fit_only_when_space_is_clear_and_untouched_layouts_stay_unchanged(self):
+        from geometry_normalization import fit_button_labels
+        doc = {'visualizations': {}, 'inputs': {'toggle': {'type': 'input.button'}}, 'layout': {'type': 'absolute', 'options': {'width': 1200, 'height': 400}, 'structure': [{'item': 'toggle', 'position': {'x': 20, 'y': 20, 'w': 200, 'h': 40}, 'future': 'keep'}]}}
+        fitted = fit_button_labels(doc, {})
+        self.assertEqual(fitted['structure'][0]['position']['h'], 80)
+        self.assertEqual(fitted['structure'][0]['future'], 'keep')
+        self.assertEqual(doc['layout']['structure'][0]['position']['h'], 40)
+        self.assertIsNone(fit_button_labels(doc, copy.deepcopy(doc)))
+        doc['visualizations']['chart'] = {'type': 'splunk.line'}
+        doc['layout']['structure'].append({'item': 'chart', 'position': {'x': 20, 'y': 80, 'w': 200, 'h': 200}})
+        self.assertIsNone(fit_button_labels(doc, {}))
+    def test_typed_geometry_in_native_structure_is_compiled_without_inventing_positions(self):
+        original = self.document()
+        geometry = self.action()['items']
+        action = {'op': 'set', 'path': '/layout/layoutDefinitions/layout_main/structure', 'value': json.dumps(geometry)}
+        result = apply_changes(original, compile_actions(original, [action]))
+        self.assertEqual(result['layout']['layoutDefinitions']['layout_main']['structure'],
+                         [{'item': 'metric', 'type': 'block', 'position': {'x': 20, 'y': 40, 'w': 1160, 'h': 300}, 'future': 'keep'}])
+        self.assertEqual(result['layout']['future'], original['layout']['future'])
+        self.assertEqual(json.loads(action['value']), geometry)
+        native = original['layout']['layoutDefinitions']['layout_main']['structure']
+        native_action = dict(action, value=json.dumps(native))
+        self.assertEqual(compile_actions(original, [native_action]), [native_action])
+        for bad in ([dict(geometry[0], x=-1)], geometry * 2, [dict(geometry[0], w=True)]):
+            with self.subTest(bad=bad), self.assertRaises(ProviderError): compile_actions(original, [dict(action, value=json.dumps(bad))])
     def test_literal_root_text_is_encoded_without_loosening_native_object_validation(self):
         original=self.document()
         actions=[{'op':'set','path':'/title','value':'Freezer monitoring'},

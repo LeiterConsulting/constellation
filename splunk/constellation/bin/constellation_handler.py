@@ -74,14 +74,26 @@ class CredentialStore:
             self.request(path, 'POST', fields)
         else:
             path = self.entry
-            fields.update({'name': self.name, 'realm': 'constellation.openai'})
-            self.request(self.base, 'POST', fields)
-        # default.meta denies role access during creation. Keep the credential in
-        # the password endpoint's supported scope, with no read/write role grants.
+            # Never put a real key in the initially inherited ACL: create an
+            # empty placeholder, restrict it, verify, then write the secret.
+            self.request(self.base, 'POST', {'password': '{}', 'name': self.name, 'realm': 'constellation.openai'})
+            self.request(path + '/acl', 'POST', {'sharing': 'app', 'owner': self.user,
+                                               'perms.read': '', 'perms.write': ''})
+            acl = self.request(path + '/acl')
+            if not acl or not acl.get('entry'):
+                raise ProviderError('The private credential permissions could not be verified. No key was stored.', 503)
+            self.verify_acl(acl['entry'][0].get('acl', {}))
+            self.request(path, 'POST', fields)
+        # Retain the endpoint's supported scope and deny every read/write role.
         self.request(path + '/acl', 'POST', {'sharing': 'app', 'owner': self.user,
                                            'perms.read': '', 'perms.write': ''})
         if self.read() != config:
             raise ProviderError('The saved connection could not be verified.', 500)
+
+    def key_access(self):
+        context = self.request('/services/authentication/current-context')['entry'][0]['content']
+        caps = set(context.get('capabilities', []))
+        return {'canWrite': bool(caps.intersection({'admin_all_objects', 'edit_storage_passwords'}))}
 
 
 class ConstellationHandler(PersistentServerConnectionApplication):
@@ -105,7 +117,9 @@ class ConstellationHandler(PersistentServerConnectionApplication):
             if not isinstance(body, dict):
                 raise ProviderError('Expected a JSON object.')
             runtime = SearchService(session['user'], session['authtoken'])
-            service = ProviderService(CredentialStore(session['user'], session['authtoken']), runtime=runtime)
+            from connection_store import ConnectionStore, ConnectionPreferences
+            store = ConnectionStore(CredentialStore(session['user'], session['authtoken']), ConnectionPreferences(session['user'], session['authtoken']))
+            service = ProviderService(store, runtime=runtime)
             routes = {('GET','settings'): service.settings, ('POST','settings'): lambda: service.save(body),
                       ('POST','models'): service.models, ('POST','test'): service.test,
                       ('POST','assist'): lambda: service.assist(body),

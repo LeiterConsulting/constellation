@@ -114,7 +114,8 @@ class ProviderService:
         return {'provider': provider, 'baseUrl': 'https://api.openai.com/v1' if provider == 'openai' else saved.get('base_url', ''),
                 'model': saved.get('model', ''), 'connection': saved.get('connection', ''),
                 'keyConfigured': bool(saved.get('api_key')) if provider == 'openai' else False,
-                'configured': configured, 'connections': summaries, 'capabilities': modalities}
+                'configured': configured, 'connections': summaries, 'capabilities': modalities,
+                'keyStorage': self.store.key_access() if hasattr(self.store, 'key_access') else None}
 
     def save(self, body):
         from provider_adapters import ollama_origin

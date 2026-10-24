@@ -20,9 +20,9 @@ Provider messages, retrieved guidance, uploaded documents and indexed content ar
 | --- | --- |
 | Workspace and contextual chat | `src/App.tsx`, `prompts.ts`, `Preview.tsx`, `ElementFocus.tsx`, `PageManager.tsx`. |
 | Data selection and previews | `src/DataChooser.tsx`, `useSearchPreview.ts`, `previewJobs.ts`; `data_service.py`, `search_service.py`, `preview_jobs.py`, `search_scope.py`. |
-| Provider transport and modality policy | `provider_service.py`, `provider_adapters.py`, `model_capabilities.py`. |
+| Provider transport and modality policy | `provider_service.py`, `provider_adapters.py`, `model_capabilities.py`, `connection_store.py`. |
 | Orchestration and validation | `agent_service.py`, `recovery_service.py`, `studio_contract.py`, `studio_features.py`, `agent_feedback.py`. |
-| Layout, pages, navigation and tokens | `authoring_actions.py`, `authoring_intent.py`, `page_service.py`, `token_service.py`; `src/pages.ts`. |
+| Layout, pages, navigation and tokens | `authoring_actions.py`, `geometry_normalization.py`, `repair_hints.py`, `authoring_intent.py`, `page_service.py`, `token_service.py`; `src/pages.ts`. |
 | Versioned compatibility and guidance | `compatibility.py`, `knowledge_service.py`, bundled JSON under `bin/contracts/`. |
 | Working drafts and native library | `draft_service.py`, `draft_history.py`, `dashboard_brief.py`, `draft_migrations.py`, `dashboard_library.py`; `src/drafts.ts`, `useDraftPersistence.ts`, `DashboardLibrary.tsx`. |
 | Distribution | `splunk/constellation/default/`, `metadata/`, `scripts/package_app.py`. |
@@ -54,3 +54,11 @@ Material changes to definition, brief, page purposes or data scope retain the pr
 Preview jobs use the normal v2 search endpoint with a five-second runtime cap, 10,000-event finalization threshold, 30-second inactivity cancellation, 60-second retention and native current-user search quotas. Signed handles bind an app-created SID, scope and expiry to the current user/session; poll rechecks native owner/app. No registry or new service is required. Results are fetched only after a terminal state, capped to 200 rows with a 201st-row truncation check, then the job is cancelled. Client Stop/pause, query changes and unmount cancel outstanding jobs, including a race with job creation. Closing a tab can interrupt cleanup; server limits remain the backstop.
 
 Only positive completion metadata with no finalization, truncation or reported diagnostics earns a complete label. Missing evidence is partial, not complete. Results become stale after a minute or when paused; this is snapshot freshness, not automatic refresh. Search details hold per-source evidence and timestamps. Internal field inspection and authoring validation use the same lifecycle and return schema/controlled diagnostics without event values to the model. A partial zero-row inspection cannot establish an empty index.
+
+## Sharing-preview contracts (0.9)
+
+Repairs use an uncommitted candidate and accumulated edits, bounded to 64 total operations. Structurally valid candidate edits are retained for the next repair; every feature, intent and real-data search check still compares the resulting document against the original user document. No failed candidate is persisted or shown as accepted. Recovery feedback names its explicit candidate base and provides bounded placement hints; hints do not execute themselves. Exact typed geometry in a structure edit is converted to native geometry while retaining existing item properties. Changed absolute buttons can grow to the minimum readable height only when canvas bounds and neighboring content allow it.
+
+Private user-namespace draft creation does not require rewriting ACLs. Every readback verifies the owner, app and private sharing, including the last-opened preference. Secretless Ollama/AITK preferences use a separate owner-private configuration collection; key-containing configurations remain in encrypted storage. Strict preference fields exclude keys. No runtime identity or role escalation is introduced.
+
+Native save targets a selected app under the current owner and verifies app, owner, private sharing and exact definition readback. Output contains the original native sources and layout, with no Constellation script or service dependency. App context can affect macros, lookups, saved searches and modules. Native copies, working drafts and conversations have separate lifecycles; native edits do not silently overwrite a draft.

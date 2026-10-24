@@ -18,6 +18,8 @@ Packaging creates a deterministic archive from app source, compiled assets, the 
 
 The production bundle currently triggers Vite's size warning. The Linux CI build needs a larger Node heap than its default; the build step sets a 4 GB old-space allowance. Use a build host with enough memory for that heap plus the process/OS overhead. This affects build tooling only. Bundle reduction remains a release task, not a reason to conceal the warning.
 
+After acceptance and documentation review, `python3 scripts/create_handoff.py` bundles the exact built app archive, checksum and an explicit allowlist of user documentation into `artifacts/constellation-<version>-handoff.zip`. It excludes local configuration, credentials and evidence. Inspect the archive and verify the embedded app checksum before sharing. The bundle is a private development-pilot handoff, not a public release or license grant.
+
 ## Repository publication checks
 
 The index, rather than every file in a developer's workspace, is the publication boundary. Before committing:
