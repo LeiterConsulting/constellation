@@ -12,7 +12,7 @@ Snapshot: **0.9.0 development preview, October 24, 2026**. This file is a saniti
 | Deterministic app package | Generated with SHA-256 receipt. |
 | Splunk AppInspect 4.3.1, precert | 0 errors, 0 failures, 0 future failures, 7 warnings, 1 skipped, 107 successes, 137 not applicable on the tested app archive. |
 
-The AppInspect result applies to the tested development archive. The seven warnings cover categories including telemetry, Python/runtime migration, cluster replication and Cloud-role compatibility; review the full local report before distributing a new archive. Repository/CI changes alone do not establish a fresh AppInspect result. This is not Splunk Cloud certification, a security audit or production qualification.
+The AppInspect result applies to the tested development archive. The seven warnings cover Splunk UI/framework telemetry detection, Python migration, Cloud-role compatibility and a public-IP example inside the bundled network-chart schema. The detected address was traced to a third-party documentation example, not lab configuration. Review the full local report before distributing a new archive. Repository/CI changes alone do not establish a fresh AppInspect result. This is not Splunk Cloud certification, a security audit or production qualification.
 
 ## Tested versions
 
