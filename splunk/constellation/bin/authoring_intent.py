@@ -3,8 +3,21 @@ import re
 from provider_service import ProviderError
 
 
-def validate_page_intent(prompt, message, document, previous, focus):
+def validate_page_intent(prompt, message, document, previous, focus, purposes=None):
     problems = []
+    tabs = document.get('layout', {}).get('tabs', {}).get('items', [])
+    if document != previous:
+        counts = {'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5, 'six': 6}
+        for match in re.finditer(r'\b(?:with|include|create|build|make|add)\s+(?:a\s+)?(one|two|three|four|five|six|[1-9][0-9]?)[ -]pages?\b', prompt, re.I):
+            if re.search(r"(?:don't|do not|never)\s*$", prompt[max(0, match.start()-12):match.start()], re.I): continue
+            requested = counts.get(match[1].lower(), int(match[1]) if match[1].isdigit() else 0)
+            if len(tabs) < requested:
+                problems.append('The request needs at least ' + str(requested) + ' pages, but the candidate has ' + str(len(tabs)) + '. Create every requested page with op:page, preserving its requested name and purpose, and place its charts there.')
+        if purposes is not None and re.search(r'\bpage\s+purposes?\b', prompt, re.I):
+            old_ids = {item['layoutId'] for item in previous.get('layout', {}).get('tabs', {}).get('items', [])}
+            blank = not previous.get('visualizations') and not previous.get('dataSources')
+            missing = [item['layoutId'] for item in tabs if (blank or item['layoutId'] not in old_ids) and not purposes.get(item['layoutId'], '').strip()]
+            if missing: problems.append('Supply the requested purpose using op:page for: ' + ', '.join(missing)[:300])
     # A syntactically valid link can still point back to its source page. Check
     # explicitly named row-navigation destinations before claiming success.
     if re.search(r'\b(?:row|device|table)\b', prompt, re.I) and re.search(r'\b(?:open|navigate|drill|link)\b', prompt, re.I):
@@ -42,6 +55,10 @@ def validate_page_intent(prompt, message, document, previous, focus):
                         for handler in item.get('eventHandlers', []) if handler.get('type') == 'drilldown.switchToTab'}
         if not destinations:
             problems.append('The requested navigation button is absent. Use op:button to create, place and connect a native page button atomically; mentioning a button in the message does not create it.')
+        for tab in tabs:
+            label = tab.get('label', '')
+            if label and re.search(r'\b(?:return|back)[ -]+to[ -]+(?:the[ -]+)?' + re.escape(label) + r'(?!\w)', prompt, re.I) and tab['layoutId'] not in destinations:
+                problems.append('Add the requested placed return button with targetPageId=' + tab['layoutId'] + ' (' + label[:120] + ').')
         if focus.get('kind') == 'page' and re.search(r'\bmatching\b|\bbetween pages\b|\bboth pages\b', prompt, re.I) and (focus['id'] not in destinations or not any(destination != focus['id'] for destination in destinations)):
             problems.append('Add the matching button on the other page with targetPageId equal to the focused page, in addition to its return button.')
     if problems: raise ProviderError(' '.join(problems))

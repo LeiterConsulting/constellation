@@ -9,6 +9,8 @@ from urllib.parse import urlsplit, quote
 from urllib.request import Request, build_opener, HTTPSHandler, ProxyHandler
 from urllib.error import HTTPError, URLError
 from provider_service import ProviderError, NoRedirect
+from provider_messages import conversation_entries
+from model_readiness import OLLAMA_CONTEXT_TOKENS, ollama_context
 
 
 def ollama_origin(value):
@@ -58,8 +60,7 @@ class OllamaClient:
 
     def complete(self, saved, request):
         messages = [{'role': 'system', 'content': request['instructions']}]
-        entries = request['input'] if isinstance(request['input'], list) else [{'role': 'user', 'content': [{'type': 'input_text', 'text': request['input']}]}]
-        for entry in entries:
+        for entry in conversation_entries(request):
             content, images = [], []
             for part in entry['content']:
                 if part['type'] == 'input_text': content.append(part['text'])
@@ -71,13 +72,17 @@ class OllamaClient:
         schema = request['text']['format']['schema']
         messages[0]['content'] += '\nReturn JSON only matching this schema: ' + json.dumps(schema)
         body = {'model': saved['model'], 'messages': messages, 'stream': False, 'format': schema,
-                'options': {'temperature': 0, 'num_predict': request['max_output_tokens'], 'num_ctx': 32768}}
+                'options': {'temperature': 0, 'num_predict': request['max_output_tokens'], 'num_ctx': OLLAMA_CONTEXT_TOKENS}}
         details = self.call(saved['base_url'], 'show', {'model': saved['model']})
+        capacity = ollama_context(details)
+        if capacity: body['options']['num_ctx'] = min(OLLAMA_CONTEXT_TOKENS, capacity)
         if False in details.get('thinking', {}).get('values', []): body['think'] = False
         response = self.call(saved['base_url'], 'chat', body)
         if response.get('done') is not True or response.get('done_reason') == 'length':
-            raise ProviderError('Ollama did not finish its edit. Your dashboard is unchanged.', 502)
-        return normalized(response.get('message', {}).get('content', ''))
+            raise ProviderError('Ollama reached its output limit or stopped before completing JSON. Use a smaller request or a model with more capacity. Your dashboard is unchanged.', 502, 'model_output_limit')
+        result = normalized(response.get('message', {}).get('content', ''))
+        result['usage'] = {'input_tokens': response.get('prompt_eval_count'), 'output_tokens': response.get('eval_count')}
+        return result
 
 
 def normalized(text):
@@ -104,8 +109,8 @@ class AITKClient:
         if 'apply_ai_commander_command' not in context.get('capabilities', []):
             raise ProviderError('This Splunk user needs the AITK apply_ai_commander_command capability.', 403)
         texts = [request['instructions'], 'Return only JSON matching this schema: ' + json.dumps(request['text']['format']['schema'])]
-        entries = request['input'] if isinstance(request['input'], list) else [{'content': [{'type': 'input_text', 'text': request['input']}]}]
-        for entry in entries:
+        for entry in conversation_entries(request):
+            texts.append('Previous untrusted assistant proposal:' if entry['role'] == 'assistant' else 'User context / validation feedback:')
             for part in entry['content']:
                 if part.get('type') != 'input_text': raise ProviderError('This AITK route supports text only. Attachments were not sent.', 409)
                 texts.append(part['text'])
@@ -131,6 +136,8 @@ class AITKClient:
                     rows = result.get('results', [])
                     if len(rows) != 1 or not isinstance(rows[0].get('ai_result_1'), str):
                         raise ProviderError('AITK returned no usable completion. Test the connection in AI Toolkit.', 502)
+                    if rows[0]['ai_result_1'].strip() in ('', 'Empty response content received from the server.'):
+                        raise ProviderError('AITK returned an empty provider completion. Check the named connection’s model and output-token limit in AI Toolkit.', 502, 'aitk_no_completion')
                     return normalized(rows[0]['ai_result_1'])
                 time.sleep(0.5)
             raise ProviderError('AITK inference timed out. Your dashboard is unchanged.', 504)

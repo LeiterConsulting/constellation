@@ -8,7 +8,15 @@ Provider adapters share the validated Studio edit contract but retain their own 
 | Ollama | Native `/api/tags`, `/api/show`, `/api/chat`, JSON schema output. | A server-reachable origin and installed model. | Images only when the exact model's live metadata advertises vision. PDFs are blocked. |
 | Splunk AITK | `ai` command in a current-user synthetic search under `Splunk_ML_Toolkit`. | Existing accessible named LLM connection and `apply_ai_commander_command`. | Text only; image/PDF transmission is blocked. |
 
-OpenAI authoring, image/sketch and PDF exercises have passed on one tested Enterprise target. Ollama `qwen3-coder:latest` dashboard edits have passed on both tested target versions. AITK connection/model checks and simple dashboard edits passed through an existing OpenAI-backed connection; a fresh 0.9.0 model/JSON and title-edit check also passed in that configured environment. A second target still lacks a usable completion through its named connection. The complete new multi-page real-data journey is not yet AITK-qualified.
+OpenAI authoring, image/sketch and PDF exercises have passed on one tested Enterprise target. Ollama `qwen3-coder:latest` actual-data creation and focused edits have been exercised. AITK 6.1.0 completed a multi-page sensor creation/editing/native-save journey through an existing GPT-5 mini connection with a temporary 16,000-token output budget. Its original 2,000-token setting was restored; larger creation at that low budget did not pass. A second target still lacks a usable AITK completion. See [validation](validation.md) for scope and earlier failures; these examples do not establish a general live-model success rate.
+
+## Model capacity and batching
+
+Settings shows potential limitations when a connection is saved and reports the scope/usage of **Test model**. The test permits enough output budget for a reasoning response, while requesting only a small structured answer. It does not exercise full creation. Changing connection fields clears its display.
+
+Ollama's reported model context capacity caps the app's requested window of up to 32,768 tokens. Authoring allocates a smaller output budget when that context requires it. The agent receives available limits, trims older rolling history under a conservative input estimate and keeps the durable brief/document. Unknown model limits stay unknown. Direct OpenAI model discovery does not expose capacity; AITK controls its own model/output settings and does not expose them through this route.
+
+New real-data multi-page Ollama/AITK requests use a smaller foundation schema and a completion stage. These share the existing turn budget, reuse verified searches, retain stable page IDs and apply together only after the final original-goal checks. Batching reduces reply size; it does not overcome insufficient memory, an inaccessible model or a reasoning budget that yields no visible completion. In AITK review **Max Tokens** in the named connection before larger authoring tests. OpenAI documents how [reasoning shares the output budget](https://developers.openai.com/api/docs/guides/reasoning#allocating-space-for-reasoning).
 
 ## User permissions
 
@@ -41,4 +49,4 @@ The repository's [napkin fixture](../tests/fixtures/README.md) is an AI-generate
 - For direct OpenAI, inspect the app's controlled authentication, quota/rate, model/access or request-format error. Replace keys only through Settings over an eligible secure origin.
 - A validation failure preserves the last valid dashboard. The bounded repair loop handles supported output/search errors; authentication and transport failures are not blindly retried.
 
-Provider-specific changes belong in `provider_service.py`, `provider_adapters.py` and `model_capabilities.py`. Capability updates require tests and source verification; see [upgrade guide](upgrade-guide.md).
+Provider-specific changes belong in `provider_service.py`, `provider_adapters.py`, `provider_messages.py`, `model_readiness.py` and `model_capabilities.py`. `authoring_budget.py` owns provider-aware staging without introducing a separate runtime. Capability updates require tests and source verification; see [upgrade guide](upgrade-guide.md).

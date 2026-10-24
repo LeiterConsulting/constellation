@@ -12,6 +12,14 @@ Constellation is a development preview. Begin with a small operational question 
 
 The conversation can float, dock or hide. **More** holds source, JSON export, private draft links, environment details and theme. Import an existing Studio JSON file through the workspace's **Dashboards** dialog. The optional example uses illustrative data.
 
+## Model limits
+
+Settings shows potential context and output-budget issues, with **Model limits and test details** for the numbers and reported test usage. A successful test means the connection returned a small valid structured response. It does not establish dashboard-creation reliability or maximum context capacity. Changing the provider, model, endpoint, connection or key clears the previous test display.
+
+Ollama reports model context metadata when available; the app requests up to 32,768 tokens, capped by reported capacity. Instructions, the dashboard, conversation and output share that space. Models need sufficient memory and time as well as context capacity. For AITK, check the actual model and **Max Tokens** under **AI Toolkit → Connections**. Constellation cannot verify those limits through this route. Reasoning can exhaust a small output budget before any visible answer appears. Batching cannot fix a connection that cannot return even a small usable completion.
+
+Larger new multi-page goals through Ollama and AITK use an internal foundation and completion stage. The stages share the existing recovery budget, reuse verified searches and apply together only after validation. The agent receives reported limits and retains the durable brief while trimming older rolling history when the conservative Ollama input estimate requires it. These safeguards reduce avoidable failures; they do not guarantee that every model can author every dashboard.
+
 ## Sketches and PDFs
 
 Attach up to two PNG/JPEG/WebP images or PDFs, at most 4 MB each, when the selected model's verified capabilities permit them. Explain whether the file specifies layout, data, or both. Files are sent with the message and can remain in the private draft. Unsupported models/routes block transmission; AITK is text-only and this Ollama route blocks PDFs. Layout interpretation does not establish actual field meanings or data quality.

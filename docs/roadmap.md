@@ -9,7 +9,7 @@ Constellation is a working development preview. Checked-in code and selected liv
 - Expand modular, versioned guidance and evaluate semantic retrieval within the Splunk app boundary.
 - Expand native visualization/option, input, token, drilldown, refresh and search-source coverage through versioned fixtures.
 - Improve canvas manipulation, responsive layouts, keyboard interaction and contrast/reflow qualification.
-- Qualify the complete real-data multi-page journey independently through each supported provider. Extend typed source builders to reduce repeated provider-generated scope/format errors, using the same deterministic search boundary.
+- Extend the selected OpenAI/Ollama/AITK real-data journeys into a representative provider/model benchmark. Measure first-draft success, automatic recovery, latency, token use and low-budget failure behavior; retain tested connection budgets and permissions.
 - Add additional provider adapters and genuine progress/token streaming through supported Splunk transport paths.
 - Reduce the renderer bundle and test performance at realistic document/data sizes.
 

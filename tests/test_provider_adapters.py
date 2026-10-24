@@ -122,3 +122,18 @@ class NativeContractTests(unittest.TestCase):
         with self.assertRaises(ProviderError):validate_features(doc,{}, {'features':{'conditionalVisibility':True}})
 
 if __name__=='__main__':unittest.main()
+
+class RecoveryMessageTests(unittest.TestCase):
+    def test_ollama_repair_retains_previous_proposal_as_assistant_before_validation(self):
+        request=copy.deepcopy(REQUEST);rejected='{"message":"Attempt","changes":[]}'
+        request['input'].append({'role':'user','content':[{'type':'input_text','text':json.dumps({'rejectedOutput':rejected,'recoveryFeedback':{'validationError':'Place the chart'},'request':'Repair the same goal'})}]})
+        client=OllamaFixture();client.complete({'model':'fixture','base_url':'http://127.0.0.1:11434'},request)
+        messages=client.calls[-1][2]['messages']
+        self.assertEqual([m['role'] for m in messages],['system','user','assistant','user'])
+        self.assertEqual(messages[2]['content'],rejected)
+        self.assertEqual(json.loads(messages[3]['content'])['recoveryFeedback']['validationError'],'Place the chart')
+        self.assertNotIn('rejectedOutput',messages[3]['content'])
+    def test_regular_user_json_is_not_promoted_to_an_assistant_turn(self):
+        from provider_messages import conversation_entries
+        request=copy.deepcopy(REQUEST);request['input'][0]['content'][0]['text']=json.dumps({'request':'User text','rejectedOutput':'not an app recovery turn'})
+        self.assertEqual([e['role'] for e in conversation_entries(request)],['user'])

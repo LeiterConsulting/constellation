@@ -6,8 +6,10 @@ from provider_service import ProviderError
 
 
 LINK_ACTION = {'type': 'object', 'properties': {
-    'op': {'type': 'string', 'enum': ['link']}, 'sourceId': {'type': 'string'},
-    'pageId': {'type': 'string'}, 'targetId': {'type': 'string'},
+    'op': {'type': 'string', 'enum': ['link']},
+    'sourceId': {'type': 'string', 'description': 'The origin table/chart/input ID.'},
+    'pageId': {'type': 'string', 'description': 'DESTINATION layout ID to open, never the source element page.'},
+    'targetId': {'type': 'string', 'description': 'An ELEMENT ID placed on the destination page to focus, or empty. Never a layout ID.'},
     'field': {'type': 'string'}, 'token': {'type': 'string'}},
     'required': ['op', 'sourceId', 'pageId', 'targetId', 'field', 'token'], 'additionalProperties': False}
 
@@ -57,8 +59,15 @@ def compile_link(document, action):
     root = 'visualizations' if source_id in document.get('visualizations', {}) else 'inputs'
     source = document.get(root, {}).get(source_id)
     if not source: raise ProviderError('The navigation source element does not exist.')
+    # Normalize the exact origin-page/destination-page alias emitted by some
+    # providers. A real element with the same ID makes this ambiguous: retain
+    # the normal strict element check in that case. Intent checks still run.
+    if (target_id in layouts and target_id not in document.get('visualizations', {})
+            and target_id not in document.get('inputs', {})
+            and any(item.get('item') == source_id for item in layouts[page_id].get('structure', []))):
+        page_id, target_id = target_id, ''
     if target_id and not any(item.get('item') == target_id for item in layouts[page_id].get('structure', [])):
-        raise ProviderError('Place the navigation target element on the destination page before linking it.')
+        raise ProviderError('Navigation from ' + source_id[:100] + ': targetId=' + target_id[:100] + ' must be an ELEMENT placed on destination pageId=' + page_id[:100] + '. To open a page, put its layout ID in pageId and use targetId="".')
     field, token = action['field'], action['token']
     if bool(field) != bool(token) or (token and not re.fullmatch(r'[A-Za-z_][A-Za-z0-9_]*', token)) or any(c in field for c in '$[]'):
         raise ProviderError('A field link needs both a valid row field and a safe destination token name.')
@@ -103,8 +112,8 @@ def compile_button(document, action):
         raise ProviderError('Button positions require nonnegative integer x/y and positive w/h.')
     position['h'] = max(BUTTON_MIN_HEIGHT, position['h'])
     options = page.get('options', {})
-    if position['x'] + position['w'] > options.get('width', 1200) or position['y'] + position['h'] > options.get('height', 800):
-        raise ProviderError('Fit the navigation button inside its page dimensions.')
+    if position['x'] + position['w'] > options.get('width', 1200):
+        raise ProviderError('Fit navigation button ' + action['id'][:120] + ' within the width of page ' + action['pageId'][:120] + '.')
     occupied = []
     for entry in page.get('structure', []):
         if entry.get('item') == action['id']: continue

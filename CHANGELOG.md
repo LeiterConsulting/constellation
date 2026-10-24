@@ -2,6 +2,15 @@
 
 This repository begins with the 0.7.1 development preview. Version history below summarizes implemented behavior; it is not a record of production releases or certification.
 
+## 0.10.0 development preview
+
+- Expose reported/unknown model capacity, output risks, small-test scope and numerical usage in Settings; clear stale diagnostics when connection fields change.
+- Build new multi-page Ollama/AITK dashboards in bounded internal stages, retaining stable page identity and applying only a complete validated result.
+- Compile scoped searches, charts and tokens from typed actions; preserve native properties while validating actual output fields.
+- Combine independent validation failures, reuse successful searches and retain the latest recovery feedback within context budgets.
+- Improve provider-native recovery roles, empty/truncated completion errors, native field bindings, event-count syntax and DOS/SPL formatting diagnostics.
+- Exercise real-data Ollama creation/refinement and the AITK multi-page/native-handoff journey with a sufficient connection budget. Retain model/environment qualification limits; this is not 1.0 acceptance.
+
 ## 0.9.0
 
 - Make native saves explicit private copies and let the author choose the destination Splunk app; expose standard native dashboard navigation and links.

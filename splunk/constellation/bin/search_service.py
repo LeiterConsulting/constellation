@@ -85,6 +85,7 @@ def search_feedback(message):
     """Classify native diagnostics without forwarding bodies, query literals or tokens."""
     text = message.lower()
     for patterns, feedback in (
+        (('number of wildcards', 'empty field specifier'), 'Avoid empty aggregate field specifiers. In SPL, event counts use count AS alias without parentheses; other aggregate functions need verified fields.'),
         (('unknown search command', 'unknown command'), 'Remove or replace an unknown search command using the supported read-only subset.'),
         (('unsupported function', 'unknown function', 'function is undefined'), 'Use a supported function and the verified field names.'),
         (('malformed', 'parse error', 'unable to parse', 'syntax error', 'unbalanced', 'unexpected token'), 'Correct the query syntax, quoting and parentheses.'),

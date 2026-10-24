@@ -39,14 +39,17 @@ def validate_document(document):
         raise ProviderError('Data sources and inputs must be objects.')
     if len(visualizations) > 100 or len(sources) > 200 or len(inputs) > 100:
         raise ProviderError('This workspace supports up to 100 tiles, 200 sources, and 100 inputs.')
-    for visualization in visualizations.values():
+    for identifier, visualization in visualizations.items():
         if not isinstance(visualization, dict) or not isinstance(visualization.get('type'), str):
             raise ProviderError('Each visualization needs a type.')
         if not isinstance(visualization.get('options', {}), dict):
             raise ProviderError('Visualization options must be an object.')
         bindings = visualization.get('dataSources', {})
-        if not isinstance(bindings, dict) or any(not isinstance(source, str) or source not in sources for source in bindings.values()):
-            raise ProviderError('A visualization refers to a missing data source.')
+        if not isinstance(bindings, dict):
+            raise ProviderError('Visualization ' + str(identifier)[:120] + ' needs a dataSources object.')
+        missing = [str(source)[:120] for source in bindings.values() if not isinstance(source, str) or source not in sources]
+        if missing:
+            raise ProviderError('Visualization ' + str(identifier)[:120] + ' refers to missing source IDs: ' + ', '.join(missing)[:250] + '. Available dataSource IDs: ' + ', '.join(str(key) for key in sources)[:350] + '. Use the exact same ID in the source and visualization binding.')
     for source in sources.values():
         if not isinstance(source, dict) or not isinstance(source.get('type'), str):
             raise ProviderError('Each data source needs a type.')

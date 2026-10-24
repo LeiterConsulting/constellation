@@ -3,6 +3,7 @@ import json
 import re
 import ssl
 import socket
+from model_readiness import report, ollama_context, CREATE_OUTPUT_TOKENS
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, HTTPSHandler, HTTPRedirectHandler, build_opener
 
@@ -35,6 +36,11 @@ class OpenAIClient:
                     raise ProviderError('The provider response exceeded the allowed size.', 502)
                 return json.loads(raw)
         except HTTPError as error:
+            if error.code == 400:
+                try: reason = json.loads(error.read(16384)).get('error', {}).get('code')
+                except (ValueError, TypeError, AttributeError, OSError): reason = None
+                if reason in ('context_length_exceeded', 'max_tokens_exceeded'):
+                    raise ProviderError('The request exceeds the selected model’s token limit. Start a shorter conversation or choose a model with more context/output capacity.', 413, 'model_token_limit') from None
             messages = {400: 'OpenAI rejected this model or request format. Choose a model that supports Responses and structured outputs.',
                         401: 'OpenAI rejected the saved key. Replace it in Settings.',
                         403: 'This key cannot access the requested model or API operation.',
@@ -89,21 +95,25 @@ class ProviderService:
         result['provider'] = provider
         return result
 
-    def capabilities(self, saved):
+    def capabilities(self, saved, details=None):
         from model_capabilities import capabilities
         provider = saved.get('provider', 'openai')
         if provider == 'openai': return capabilities(saved.get('model', ''))
         if provider == 'aitk': return {'images': False, 'pdf': False, 'reason': 'The AITK ai-command route supports text only.', 'source': ''}
-        details = self.ollama.call(saved['base_url'], 'show', {'model': saved['model']}) if saved.get('model') and saved.get('base_url') else {}
+        if details is None: details = self.ollama.call(saved['base_url'], 'show', {'model': saved['model']}) if saved.get('model') and saved.get('base_url') else {}
         vision = 'vision' in details.get('capabilities', [])
-        return {'images': vision, 'pdf': False, 'source': 'Ollama /api/show',
+        return {'images': vision, 'pdf': False, 'source': 'Ollama /api/show', 'contextTokens': ollama_context(details),
                 'reason': 'Ollama accepts verified vision images; PDF input is unavailable on this route.' if vision else 'The selected Ollama model does not advertise vision support.'}
 
     def settings(self):
         saved = self.selected()
         provider = saved['provider']
+        details, metadata_error = {}, False
+        if provider == 'ollama' and saved.get('base_url') and saved.get('model'):
+            try: details = self.ollama.call(saved['base_url'], 'show', {'model': saved['model']})
+            except ProviderError: metadata_error = True
         configured = bool(saved.get('api_key')) if provider == 'openai' else bool(saved.get('base_url') if provider == 'ollama' else saved.get('connection'))
-        try: modalities = self.capabilities(saved)
+        try: modalities = self.capabilities(saved, details)
         except ProviderError as error: modalities = {'images': False, 'pdf': False, 'reason': str(error), 'source': ''}
         all_saved = self.store.read() or {}
         connections = all_saved.get('connections', {})
@@ -115,6 +125,7 @@ class ProviderService:
                 'model': saved.get('model', ''), 'connection': saved.get('connection', ''),
                 'keyConfigured': bool(saved.get('api_key')) if provider == 'openai' else False,
                 'configured': configured, 'connections': summaries, 'capabilities': modalities,
+                'readiness': report(provider, details, metadata_error),
                 'keyStorage': self.store.key_access() if hasattr(self.store, 'key_access') else None}
 
     def save(self, body):
@@ -183,10 +194,12 @@ class ProviderService:
         response = self.complete(saved, {
             'model': saved['model'], 'store': False, 'instructions': INSTRUCTIONS,
             'input': json.dumps({'request': prompt, 'dashboard': context}),
-            'max_output_tokens': 512 if test else 2048,
+            'max_output_tokens': CREATE_OUTPUT_TOKENS if test else 2048,
             'text': {'format': {'type': 'json_schema', 'name': 'dashboard_edits',
                                 'strict': True, 'schema': EDIT_SCHEMA}}})
         if response.get('status') != 'completed':
+            if (response.get('incomplete_details') or {}).get('reason') == 'max_output_tokens':
+                raise ProviderError('The model exhausted its output-token budget before completing JSON. Reasoning may use this budget. Choose a suitable model or increase the output limit in its connection.', 502, 'model_output_limit')
             raise ProviderError('The model did not complete its response. The draft is unchanged.', 502)
         texts = []
         for item in response.get('output', []):
@@ -223,8 +236,11 @@ class ProviderService:
                 'model': saved['model'], 'requestId': response.get('id'), 'usage': response.get('usage', {})}
 
     def test(self):
-        self.respond('Verify the connection. Reply briefly with no operations.', {}, True)
-        return {'verified': True, 'message': self.selected()['provider'].upper() + ' connection and validated JSON edits verified.'}
+        result = self.respond('Verify the connection. Reply briefly with no operations.', {}, True)
+        readiness = self.settings()['readiness']
+        readiness['tested'] = True
+        readiness['usage'] = report(self.selected()['provider'], usage=result.get('usage'))['usage']
+        return {'verified': True, 'message': 'Connection and structured response passed.', 'readiness': readiness}
 
     def assist(self, body):
         prompt, context, revision = body.get('prompt'), body.get('context'), body.get('revision')

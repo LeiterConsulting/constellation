@@ -1,13 +1,13 @@
 # Validation status
 
-Snapshot: **0.9.0 development preview, October 24, 2026**. This file is a sanitized summary. Private lab addresses, credentials, screenshots, transcripts, raw search data and detailed runtime receipts are excluded from the repository.
+Snapshot: **0.10.0 development preview, October 24, 2026**. This file is a sanitized summary. Private lab addresses, credentials, screenshots, transcripts, raw search data and detailed runtime receipts are excluded from the repository.
 
 ## Local verification
 
 | Check | Observed result |
 | --- | --- |
-| Python unit suites | 130 tests passed on Python 3.9 and 3.13, including seven repository-publication policy tests. |
-| Frontend unit suites | 51 tests passed. |
+| Python unit suites | 163 tests passed on Python 3.9 and 3.13, including seven repository-publication policy tests. |
+| Frontend unit suites | 53 tests passed. |
 | TypeScript and production build | Passed; bundle-size warning remains. |
 | Deterministic app package | Generated with SHA-256 receipt. |
 | Splunk AppInspect 4.3.1, precert | 0 errors, 0 failures, 0 future failures, 7 warnings, 1 skipped, 107 successes, 137 not applicable on the tested app archive. |
@@ -54,11 +54,24 @@ A combined synthetic napkin/PDF request produced three pages after retry and aut
 
 The final installed 0.9.0 app archive has SHA-256 `ea47d0811b9728022201365f68f1a7135afb2ffacc1111f6d6833e9f1bb1cb5d`. It was installed on both lab versions without restart and inspected with the local precert result above. Private raw evidence is excluded from the handoff.
 
+## 0.10 provider reliability and model budgets
+
+The candidate adds scoped search/chart/token builders, compact creation guidance, aggregated validation feedback, native field-reference normalization and stable page identity across internal stages. New multi-page Ollama/AITK creation uses a foundation and completion stage within the same three-call/120-second recovery budget. Intermediate work is validated and applied together. This is bounded staging, not a persistent background agent or an unlimited task planner.
+
+- Ollama `qwen3-coder:latest` completed a two-page, four-chart real sensor dashboard in a local orchestration diagnostic using actual provider and Splunk search endpoints. It repaired unsafe token references within three model calls. Earlier failures drove fixes for source IDs, native bindings, SPL event counts and cross-stage page identity. This diagnostic is distinct from installed browser acceptance.
+- The installed Ollama flow created a two-page actual-data search-health dashboard, accepted a selected-chart title change, navigated both directions, persisted across refresh and saved a private native Studio copy with exact independent readback. A final installed follow-up also built the four-chart, two-page sensor dashboard, completed four preview searches, accepted a selected-chart title change with unchanged searches, ran device-row/return navigation and saved a private native copy with exact independent readback. These observations establish examples, not a representative reliability rate.
+- The installed AITK 6.1.0 flow created a four-chart, two-page sensor dashboard, with Fahrenheit exclusions above 150°F, independent Wi-Fi measurements, row-driven device filtering and return navigation. A selected line-to-area/title change preserved all queries, other charts, layout and defaults by independent history comparison. Starting a separate blank draft, reopening and refreshing retained the dashboard, conversation and focus.
+- An additional AITK table-formatting request initially exhausted query validation safely. Improved guidance and rejection of SPL commands inside native DOS bindings preceded a successful retry of the original request. The refined dashboard displayed rounded metrics/readable timestamps and a completed description. Its private copy in Search & Reporting matched exact independent definition readback and ran native page/token navigation without a Constellation runtime dependency.
+- The AITK connection kept its underlying GPT-5 mini model and credentials. Its original 2,000-token output cap produced an empty completion during larger creation. A temporary 16,000-token setting allowed the larger tests; the original 2,000 setting was restored afterward. Full creation at the original low budget remains unsupported by this evidence. This route cannot verify the named connection’s token limits, and it remains text-only.
+- Installed Settings was visually checked in light and dark themes, with the original theme restored. It showed the distinction between a small structured-response test and full authoring acceptance. Ollama reported model context metadata and numerical test usage. Changing the model field cleared the old test display. Metadata capacity, app-requested capacity, estimated input size and actual token usage are separate signals; unknown capacities are not inferred from model names.
+
+The final 0.10.0 archive has SHA-256 `470b0489f12ecbfbf9fbc623031dff603111a9fc53881cca7cdd6cb86312c130`. It passed the precert result above and was installed on both recorded lab versions without restart. Core AITK/Ollama browser checks ran during candidate iterations; final follow-up checks cover the affected installed paths. No new broad role, first-install, SHC, scale or Cloud qualification was established.
+
 ## Boundaries and remaining work
 
 - Preview results are bounded to the selected window, 200 rows, five seconds and eight sources. Tracked completion proves execution/row coverage for the submitted query, not the correctness of its business meaning or an intentionally sampled query.
 - Live success is not universal first-response accuracy. Output/search validation errors can be repaired within a budget; transport/authentication failures are preserved for explicit recovery.
-- OpenAI image/PDF layouts passed selected exercises. Ollama vision and complete AITK multi-page real-data authoring remain unqualified; AITK is text-only in this adapter.
+- OpenAI image/PDF layouts passed selected exercises. Ollama vision and AITK availability across other connections/targets remain unqualified; AITK is text-only in this adapter.
 - Native custom visualization parity, saved/module-search execution, refresh policies, full option-schema coverage and broader token behavior remain open.
 - Selected two-user isolation checks passed. Broader role/administrator boundaries, full accessibility/reflow, distributed SHC concurrency and production scale still require qualification.
 - Local unit suites use fixtures/mocks and do not establish live infrastructure behavior.

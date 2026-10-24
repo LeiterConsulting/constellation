@@ -90,6 +90,34 @@ class DataService:
             raise ProviderError('Use a search or a compatible chain source for this real-data draft.')
         return query, 'spl2' if source['type'] == 'ds.spl2' else 'spl'
 
+    def inspect_source(self, document, identifier, source, profile):
+        if source.get('type') == 'ds.test':
+            raise ProviderError('This dashboard uses real Splunk data. Do not introduce illustrative sample data.')
+        query, language = self.resolve_query(document, identifier)
+        # Keep generated queries within the explicitly selected search scope.
+        suffix = scoped_suffix(query, profile)
+        if suffix is None or (suffix.strip() and not suffix.lstrip().startswith('|')):
+            raise ProviderError('Start with the supplied baseQuery, then a pipe before filters or aggregations. Preserve its index/sourcetype scope.', 422, 'search_scope')
+        if re.search(r'(?:^|\|)\s*(?:from|makeresults|metadata|tstats)\b', suffix, re.I):
+            raise ProviderError('Append transforming commands to the selected source; do not replace it with another generating command.')
+        resolved_query = resolve_query_tokens(query, document, self.tokens)
+        read_only_query(resolved_query, language)
+        # A fine span can silently truncate the preview's chronological tail.
+        syntax = re.sub(r'"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'', '""', query)
+        window = {'-15m': 900, '-1h': 3600, '-24h': 86400, '-7d': 604800}[profile['scope']['earliest']]
+        for segment in re.findall(r'(?:^|\|)\s*timechart\b([^|]*)', syntax, re.I):
+            span = re.search(r'\bspan\s*=\s*(\d+(?:\.\d+)?)(s|m|h|d)\b', segment, re.I)
+            if span:
+                seconds = float(span[1]) * {'s': 1, 'm': 60, 'h': 3600, 'd': 86400}[span[2].lower()]
+                if seconds <= 0 or window / seconds + 2 > 200:
+                    raise ProviderError('The timechart span exceeds the 200-row preview budget across the selected window. Use timechart bins=100 without span, or a coarser span. Do not truncate the series with head.')
+        if source.get('type') in ('ds.search', 'ds.spl2'):
+            parameters = source.get('options', {}).get('queryParameters', {})
+            if parameters.get('earliest') != profile['scope']['earliest'] or parameters.get('latest') != 'now':
+                raise ProviderError('Set each new search options.queryParameters to earliest=' + profile['scope']['earliest'] + ' and latest=now so native Studio uses the inspected time range.')
+        result = (self.recovery or self.runtime).preview({'query': resolved_query, 'language': language, 'earliest': profile['scope']['earliest']})
+        return language, result
+
     def validate_searches(self, document, previous, profile):
         receipts = self.receipts = []
         usable = {}
@@ -112,45 +140,26 @@ class DataService:
         needed = set()
         for identifier, visualization in document.get('visualizations', {}).items():
             old = previous.get('visualizations', {}).get(identifier, {})
-            channels = ('x', 'y', 'y2', 'category', 'majorValue')
+            channels = ('x', 'y', 'y2', 'category', 'majorValue', 'table')
             if (visualization.get('dataSources') != old.get('dataSources') or
                     visualization.get('eventHandlers') != old.get('eventHandlers') or
                     any(visualization.get('options', {}).get(key) != old.get('options', {}).get(key) for key in channels)):
                 needed.update(visualization.get('dataSources', {}).values())
-        for identifier, source in document.get('dataSources', {}).items():
-            if source == previous.get('dataSources', {}).get(identifier) and identifier not in needed: continue
-            if len(receipts) >= 8: raise ProviderError('Build at most eight new search sources in one turn.')
-            if source.get('type') == 'ds.test':
-                raise ProviderError('This dashboard uses real Splunk data. Do not introduce illustrative sample data.')
-            query, language = self.resolve_query(document, identifier)
-            # Keep generated queries within the explicitly selected search scope.
-            suffix = scoped_suffix(query, profile)
-            if suffix is None or (suffix.strip() and not suffix.lstrip().startswith('|')):
-                receipts.append({'source': identifier, 'status': 'failed', 'code': 'search_scope', 'requiredPrefix': base})
-                raise ProviderError('Source ' + identifier[:120] + ': start with the supplied baseQuery, then a pipe before filters or aggregations. Preserve its index/sourcetype scope.')
-            if re.search(r'(?:^|\|)\s*(?:from|makeresults|metadata|tstats)\b', suffix, re.I):
-                raise ProviderError('Append transforming commands to the selected source; do not replace it with another generating command.')
-            resolved_query = resolve_query_tokens(query, document, self.tokens)
-            read_only_query(resolved_query, language)
-            # A fine span can silently truncate the preview's chronological tail.
-            syntax = re.sub(r'"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'', '""', query)
-            window = {'-15m': 900, '-1h': 3600, '-24h': 86400, '-7d': 604800}[profile['scope']['earliest']]
-            for segment in re.findall(r'(?:^|\|)\s*timechart\b([^|]*)', syntax, re.I):
-                span = re.search(r'\bspan\s*=\s*(\d+(?:\.\d+)?)(s|m|h|d)\b', segment, re.I)
-                if span:
-                    seconds = float(span[1]) * {'s': 1, 'm': 60, 'h': 3600, 'd': 86400}[span[2].lower()]
-                    if seconds <= 0 or window / seconds + 2 > 200:
-                        raise ProviderError('The timechart span exceeds the 200-row preview budget across the selected window. Use timechart bins=100 without span, or a coarser span. Do not truncate the series with head.')
-            if source.get('type') in ('ds.search', 'ds.spl2'):
-                parameters = source.get('options', {}).get('queryParameters', {})
-                if parameters.get('earliest') != profile['scope']['earliest'] or parameters.get('latest') != 'now':
-                    raise ProviderError('Set each new search options.queryParameters to earliest=' + profile['scope']['earliest'] + ' and latest=now so native Studio uses the inspected time range.')
+        pending = [(identifier, source) for identifier, source in document.get('dataSources', {}).items()
+                   if source != previous.get('dataSources', {}).get(identifier) or identifier in needed]
+        if len(pending) > 8: raise ProviderError('Build at most eight new search sources in one turn.')
+        problems = []
+        for identifier, source in pending:
             try:
-                result = (self.recovery or self.runtime).preview({'query': resolved_query, 'language': language, 'earliest': profile['scope']['earliest']})
+                language, result = self.inspect_source(document, identifier, source, profile)
             except ProviderError as error:
-                receipts.append({'source': identifier, 'language': language, 'status': 'failed', 'code': error.code,
-                                 'earliest': profile['scope']['earliest'], 'bounded': True})
-                raise
+                if error.code == 'recovery_budget': raise
+                receipt = {'source': identifier, 'status': 'failed', 'code': error.code,
+                           'earliest': profile['scope']['earliest'], 'bounded': True}
+                if error.code == 'search_scope': receipt['requiredPrefix'] = base
+                receipts.append(receipt)
+                problems.append('Source ' + identifier[:100] + ': ' + str(error)[:600])
+                continue
             fields = [field['name'] for field in result['fields']]
             # Successful filtered searches can legitimately have no matches. In
             # particular, zero statistical outliers must not reject other panels.
@@ -167,14 +176,23 @@ class DataService:
             if visualization.get('type') == 'splunk.table' and fields:
                 linked_fields = {field for handler in visualization.get('eventHandlers', []) for field in handler.get('options', {}).get('fields', [])}
                 if linked_fields - set(fields):
-                    raise ProviderError('The table drilldown references fields absent from its verified search output. Use these fields: ' + ', '.join(fields)[:500])
-            for channel in ('x', 'y', 'y2', 'category', 'majorValue'):
+                    problems.append('Table ' + identifier[:100] + ' drilldown references absent fields. Tested output fields: ' + ', '.join(fields)[:400])
+            for channel in ('x', 'y', 'y2', 'category', 'majorValue', 'table'):
                 binding = visualization.get('options', {}).get(channel)
                 if binding is None: continue
                 if not isinstance(binding, str) or not binding.lstrip().startswith(('>', '$')):
-                    raise ProviderError('Real-data chart channels must bind to search output, not constant sample values.')
+                    problems.append('Visualization ' + identifier[:100] + ', channel ' + channel + ': bind to search output, not constant sample values.')
+                    continue
+                if binding != previous.get('visualizations', {}).get(identifier, {}).get('options', {}).get(channel) and re.search(r'\|\s*eval\s+', binding, re.I):
+                    problems.append('Visualization ' + identifier[:100] + ', channel ' + channel + ': SPL eval is not a native DOS binding function. Format fields in the ds.search query with eval round/strftime after aggregation, then bind the existing output fields with seriesByName/frameBySeriesNames. Preserve query scope and temperature/Wi-Fi exclusions.')
+                    continue
                 for args in re.findall(r'(?:seriesByName|frameBySeriesNames)\(([^)]*)\)', binding):
                     names = re.findall(r'''['"]([^'"]+)['"]''', args)
                     if usable[source_id] is not None and any(name not in usable[source_id] for name in names):
-                        raise ProviderError('A chart binds a missing or empty output field. Use the tested search fields: ' + ', '.join(sorted(usable[source_id]))[:500])
+                        query, _language = self.resolve_query(document, source_id)
+                        hint = (' A timechart BY clause creates split-series columns instead of the aggregation alias. For one combined or already-filtered trend, remove BY and keep the alias; do not invent a different field.'
+                                if re.search(r'\btimechart\b[^|]*\bby\b', query, re.I) else '')
+                        problems.append('Visualization ' + identifier[:100] + ', channel ' + channel + ', source ' + source_id[:100] + ': missing or empty output fields ' + ', '.join(names)[:180] + '. Tested output fields: ' + ', '.join(sorted(usable[source_id]))[:300] + '.' + hint)
+        if problems:
+            raise ProviderError('\n'.join(problems[:16])[:10000])
         return receipts

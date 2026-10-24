@@ -72,6 +72,11 @@ class PreviewJobTests(unittest.TestCase):
         runtime.owner='bob'
         with self.assertRaises(ProviderError): jobs.poll(handle)
         self.assertFalse(any(call[0].endswith('/results') for call in runtime.calls))
+    def test_aggregate_feedback_handles_native_diagnostic_shapes_without_raw_content(self):
+        for messages in ('number of wildcards PRIVATE', {'message':'empty field specifiers PRIVATE'}, [{'msg':'number of wildcards PRIVATE'}]):
+            runtime=JobRuntime({'isFailed':'1','messages':messages})
+            with self.assertRaises(ProviderError) as error:runtime.preview({'query':'| makeresults'})
+            self.assertIn('count AS alias',str(error.exception));self.assertNotIn('PRIVATE',str(error.exception))
     def test_missing_completion_fields_and_warnings_fail_closed(self):
         runtime = JobRuntime(); del runtime.meta['isFinalized']
         self.assertEqual(runtime.preview({'query':'| makeresults'})['state'],'partial')

@@ -15,6 +15,9 @@ from authoring_intent import validate_page_intent
 from recovery_service import RecoverySession, PendingProposal, MAX_MODEL_CALLS
 from dashboard_brief import authoring_brief
 from repair_hints import placement_hint
+from creation_prompt import CREATION_INSTRUCTIONS
+from model_readiness import CREATE_OUTPUT_TOKENS, EDIT_OUTPUT_TOKENS
+from authoring_budget import AuthoringBudget
 from page_service import validate_purposes, proposed_purposes, focus_context
 
 SCHEMA = {'type': 'object', 'properties': {
@@ -26,6 +29,24 @@ SCHEMA = {'type': 'object', 'properties': {
 INSTRUCTIONS = '''You are Constellation, an expert Splunk Dashboard Studio author working
 directly with a user's live canvas. Make requested changes, ask one short question only
 when genuinely necessary, and suggest useful next steps grounded in the environment.
+For display formatting, use supported native table options or SPL eval round/strftime
+after aggregation in the search query. Never put SPL eval commands in DOS bindings.
+For new REAL-DATA dashboards prefer typed search and chart actions, then page/layout:
+1. op:search {id,pipeline}. The pipeline begins with | and contains only filters and
+aggregations. The compiler prepends dataProfile.baseQuery and sets the inspected
+language/earliest/latest automatically. Never repeat the baseQuery in pipeline.
+2. op:chart {id,chartType,title,description,sourceId,x,y}. sourceId MUST equal a search
+action's id or an existing source ID. x/y are OUTPUT FIELD NAMES, not expressions.
+Line/area/column/bar use category/time x and numeric y fields (an array). A table uses
+x:"",y:[visibleFieldNames] or y:[] for all fields; a single value uses x:"",y:[oneField].
+The compiler supplies native bindings.
+3. Place every chart with typed page/layout items using the SAME chart id. Include
+all searches, charts and their page placements in one complete proposal. Add native
+navigation using button/link actions. Never omit placement, even for one chart.
+These actions use ordinary strings, not nested JSON encoding. Use native set/remove
+for focused property edits or features outside these typed builders; preserve unknown
+properties and unrelated work. Do not replace existing source/chart collections just
+to add one item. Search guards and output-field checks still apply to typed actions.
 The app automatically tests and repairs proposals within a bounded recovery session.
 On recoveryFeedback, use the fresh field profile, successful search receipts, failed
 source and validation error to correct the SAME user goal. Do not ask them to rephrase
@@ -261,7 +282,8 @@ class AgentService:
         brief = authoring_brief(body)
         saved = self.provider.configured()
         # This guard runs before discovery and before any provider request.
-        attachments = attachment_parts(body.get('attachments', []), saved['model'], self.provider.capabilities(saved))
+        capabilities = self.provider.capabilities(saved)
+        attachments = attachment_parts(body.get('attachments', []), saved['model'], capabilities)
         history = body.get('history', [])
         if not isinstance(history, list) or len(history) > 12:
             raise ProviderError('Use at most twelve recent conversation messages.')
@@ -302,15 +324,22 @@ class AgentService:
                    'environment': environment, 'nativeFeatures': feature_contract(), 'catalog': catalog, 'history': safe_history,
                    'selected': str(body.get('selected', ''))[:200], 'activeTab': str(body.get('activeTab', ''))[:200],
                    'focus': focus, 'pagePurposes': purposes, 'dashboardBrief': brief}
+        context['modelLimits'] = {'contextTokens': capabilities.get('contextTokens'),
+                                  'outputTokens': CREATE_OUTPUT_TOKENS if context['canvasState'] == 'blank' else EDIT_OUTPUT_TOKENS,
+                                  'providerManaged': saved.get('provider') == 'aitk',
+                                  'reason': 'AITK model/output limits are managed by its named connection and are unverified here.' if saved.get('provider') == 'aitk' else 'Unknown capacities must not be inferred from model IDs. Use concise typed changes.'}
         if profile: context['dataProfile'] = profile
         guidance = retrieve_guidance(prompt, document, environment, real_data=bool(profile))
         context['retrievedGuidance'] = guidance
-        request = {'model': saved['model'], 'store': False, 'instructions': INSTRUCTIONS,
+        instructions = CREATION_INSTRUCTIONS if profile and context['canvasState'] == 'blank' else INSTRUCTIONS
+        request = {'model': saved['model'], 'store': False, 'instructions': instructions,
                    'input': [{'role': 'user', 'content': [{'type': 'input_text', 'text': json.dumps(context)}] + attachments}],
-                   'max_output_tokens': 8500 if context['canvasState'] == 'blank' else 6500,
+                   'max_output_tokens': CREATE_OUTPUT_TOKENS if context['canvasState'] == 'blank' else EDIT_OUTPUT_TOKENS,
                    'text': {'format': {'type': 'json_schema', 'name': 'studio_changes', 'strict': True, 'schema': SCHEMA}}}
         if saved['model'] in ('gpt-6-luna', 'gpt-6-astra'):
             request['reasoning'] = {'effort': 'medium' if context['canvasState'] == 'blank' else 'low'}
+        budget = AuthoringBudget(saved, context)
+        budget.prepare(request, document)
         repair, validation_notes = False, []
         proposal = PendingProposal(document)
         next_purposes = purposes
@@ -332,14 +361,14 @@ class AgentService:
                     raise ProviderError('The model response did not match the expected edit format.')
                 result['suggestions'] = normalize_suggestions(result['suggestions'])
                 validate_data_claims(result, profile)
-                raw_actions = result['changes']
-                compiled = compile_actions(proposal.document, raw_actions)
+                raw_actions = budget.actions(result['changes'], proposal.document)
+                compiled = compile_actions(proposal.document, raw_actions, profile)
                 draft = proposal.stage(compiled)
                 result['changes'] = proposal.changes
                 next_purposes = proposed_purposes(raw_actions, next_purposes, draft)
                 validate_features(draft, document, environment)
                 validate_chart_placement(draft, document)
-                validate_page_intent(prompt, result['message'], draft, document, focus)
+                if budget.phase == 'complete': validate_page_intent(prompt, result['message'], draft, document, focus, next_purposes)
                 if not profile:
                     for key, source in draft.get('dataSources', {}).items():
                         if source == document.get('dataSources', {}).get(key): continue
@@ -360,6 +389,11 @@ class AgentService:
                         raise ProviderError('SPL2 module management is unavailable; use an ad hoc ds.spl2 source instead.')
                     if source.get('options', {}).get('refresh') != previous.get('options', {}).get('refresh') and source.get('options', {}).get('refresh') and not environment['features'].get('autoRefreshPermitted', False):
                         raise ProviderError('This user does not have the capability to run dashboard auto-refresh searches.')
+                if budget.phase == 'foundation' and result['changes']:
+                    if attempt == MAX_MODEL_CALLS - 1: raise ProviderError('The staged dashboard needs another completion step within the recovery budget.', 422, 'recovery_budget')
+                    budget.advance(request, draft)
+                    continue
+                budget.stages += 1
                 break
             except (ValueError, KeyError, TypeError, ProviderError) as error:
                 feedback = str(error) if isinstance(error, ProviderError) else 'Invalid JSON edit structure.'
@@ -375,7 +409,7 @@ class AgentService:
                 if profile and attempt == 0:
                     profile = data.profile(scope)
                 # Keep failed output and validation feedback as untrusted user content.
-                request['input'].append({'role': 'user', 'content': [{'type': 'input_text', 'text': json.dumps({
+                budget.feedback(request, {
                     'recoveryFeedback': {'validationError': feedback, 'dataProfile': profile,
                                          'searchReceipts': data.receipts, 'attempt': attempt + 1,
                                          'editsApplyTo': 'candidate' if proposal.changes else 'original',
@@ -383,12 +417,13 @@ class AgentService:
                                          'placementHint': placement_hint(proposal.document, body.get('activeTab')),
                                          'remainingModelCalls': MAX_MODEL_CALLS - attempt - 1},
                     'validationError': feedback, 'rejectedOutput': text[:100000],
-                    'request': 'Correct the same user request against candidateDefinition using verified data and validation feedback. This candidate is not yet applied to the canvas. Preserve working searches and unrelated configuration.'})}]})
+                    'request': 'Correct the same user request against candidateDefinition using verified data and validation feedback. This candidate is not yet applied to the canvas. Preserve working searches and unrelated configuration.'})
         return {'revision': revision, 'message': presentation_message(result['message'], prompt, repair), 'changes': result['changes'],
                 'suggestions': result['suggestions'] if body.get('suggestionFormat') == 'cards' else [item['prompt'] for item in result['suggestions']], 'repaired': repair,
                 'activity': ['Inspected Splunk ' + environment['version'], 'Checked index catalog access',
                              *(['Inspected selected dataset fields', 'Tested ' + str(len(receipts)) + ' bounded searches'] if profile else []),
                              *['Guidance: ' + item['title'] for item in guidance],
+                             *(['Built in ' + str(budget.stages) + ' internal stages; applied together'] if budget.stages > 1 else []),
                              'Validated ' + str(len(result['changes'])) + ' Studio changes'],
                 'dataContext': profile['scope'] if profile else None, 'searchReceipts': receipts,
                 'knowledgeSources': [{key: item[key] for key in ('id', 'title', 'source')} for item in guidance],

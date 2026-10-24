@@ -1,11 +1,13 @@
 """Typed authoring actions compiled into the stable native Studio edit contract."""
 import copy
 import json
+import re
 from provider_service import ProviderError
 from page_service import LINK_ACTION, BUTTON_ACTION, BUTTON_MIN_HEIGHT, compile_link, compile_button
 from studio_contract import apply_changes
 from geometry_normalization import normalize_structure, fit_button_labels
 from input_normalization import normalize_button_actions
+from search_chart_actions import SEARCH_ACTION, CHART_ACTION, TOKEN_ACTION, compile_search, compile_chart, compile_token, normalize_field_bindings, normalize_event_counts
 
 LEGACY_CHANGE = {'type': 'object', 'properties': {
     'op': {'type': 'string', 'enum': ['set', 'remove']},
@@ -31,7 +33,7 @@ PAGE_ACTION['properties']['op'] = {'type': 'string', 'enum': ['page']}
 PAGE_ACTION['properties']['purpose'] = {'type': 'string', 'maxLength': 1200}
 PAGE_ACTION['properties']['moveItems'] = {'type': 'boolean', 'description': 'Move these items off their previous pages when true; otherwise allow reuse.'}
 PAGE_ACTION['required'].extend(['purpose', 'moveItems'])
-ACTION_SCHEMA = {'anyOf': [LEGACY_CHANGE, LAYOUT_ACTION, PAGE_ACTION, LINK_ACTION, BUTTON_ACTION]}
+ACTION_SCHEMA = {'anyOf': [LEGACY_CHANGE, SEARCH_ACTION, CHART_ACTION, TOKEN_ACTION, LAYOUT_ACTION, PAGE_ACTION, LINK_ACTION, BUTTON_ACTION]}
 
 
 def validate_chart_placement(document, previous):
@@ -62,12 +64,23 @@ def validate_chart_placement(document, previous):
                     raise ProviderError('Place charts and inputs in separate rectangles so every element remains usable: ' + first_id + ', ' + second_id)
 
 
-def compile_actions(document, actions):
+def compile_actions(document, actions, profile=None):
     if not isinstance(actions, list) or len(actions) > 64: raise ProviderError('Use at most 64 authoring actions.')
     layout = copy.deepcopy(document['layout'])
+    defaults, token_changes = copy.deepcopy(document.get('defaults', {})), False
     result, links, buttons, typed = [], [], [], False
     for action in actions:
         if not isinstance(action, dict): raise ProviderError('Each authoring action must be an object.')
+        if action.get('op') == 'token':
+            compile_token(action, defaults); token_changes = True
+            continue
+        if action.get('op') in ('search', 'chart'):
+            root = 'dataSources' if action['op'] == 'search' else 'visualizations'
+            key, value = compile_search(action, document, profile) if root == 'dataSources' else compile_chart(action, document)
+            if root not in document and not any(change.get('path') == '/' + root for change in result):
+                result.append({'op': 'set', 'path': '/' + root, 'value': '{}'})
+            result.append({'op': 'set', 'path': '/' + root + '/' + key, 'value': json.dumps(value)})
+            continue
         if action.get('op') == 'link': links.append(action); continue
         if action.get('op') == 'button': buttons.append(action); continue
         if action.get('op') == 'page':
@@ -80,11 +93,14 @@ def compile_actions(document, actions):
             action = {key: value for key, value in action.items() if key not in ('purpose', 'moveItems')}
             action['op'] = 'layout'
         if action.get('op') != 'layout':
-            # These two native properties are unambiguously text. Some providers
+            # These native properties are unambiguously text. Some providers
             # return their literal text instead of the JSON-encoded string.
             # Normalize that narrow case without accepting malformed objects,
             # arrays, quoted JSON, or changing any other native property contract.
-            if action.get('op') == 'set' and action.get('path') in ('/title', '/description') and isinstance(action.get('value'), str):
+            path = action.get('path', '')
+            query_path = re.fullmatch(r'/dataSources/([^/]+)/options/query', path) if isinstance(path, str) else None
+            known_query = query_path and document.get('dataSources', {}).get(query_path[1].replace('~1', '/').replace('~0', '~'), {}).get('type') in ('ds.search', 'ds.spl2', 'ds.chain')
+            if action.get('op') == 'set' and (path in ('/title', '/description') or known_query) and isinstance(action.get('value'), str):
                 value = action['value']
                 try: json.loads(value)
                 except ValueError:
@@ -137,6 +153,10 @@ def compile_actions(document, actions):
         if tab is None: tabs.append({'layoutId': identifier, 'label': label})
         else: tab['label'] = label
         layout.setdefault('globalInputs', [])
+    if token_changes:
+        if any(str(action.get('path', '')).split('/')[1:2] == ['defaults'] for action in result):
+            raise ProviderError('Use typed token actions or native /defaults edits in one batch, not both.')
+        result.append({'op': 'set', 'path': '/defaults', 'value': json.dumps(defaults)})
     if typed:
         if any(str(action.get('path', '')).split('/')[1:2] == ['layout'] for action in result):
             raise ProviderError('Use typed layout actions or native /layout edits in a batch, not both.')
@@ -152,6 +172,10 @@ def compile_actions(document, actions):
             result.append(change)
             candidate = apply_changes(candidate, [change])
     candidate = apply_changes(document, result)
+    bindings = normalize_field_bindings(candidate, document, profile) + normalize_event_counts(candidate, document, profile)
+    if bindings:
+        result.extend(bindings)
+        candidate = apply_changes(candidate, bindings)
     button_changes = normalize_button_actions(candidate, document)
     if button_changes:
         result.extend(button_changes)

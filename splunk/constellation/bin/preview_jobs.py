@@ -79,8 +79,10 @@ class PreviewJobs:
         meta = entry.get('content', {})
         if flag(meta.get('isFailed')) or flag(meta.get('isZombie')) or meta.get('dispatchState') in ('FAILED', 'BAD_INPUT_CANCEL'):
             diagnostics = meta.get('messages', [])
-            texts = [str(item.get('text', '')) for item in diagnostics if isinstance(item, dict)] if isinstance(diagnostics, list) else []
-            raise ProviderError('The preview search failed. ' + search_feedback(' '.join(texts)), 422, 'preview_failed')
+            # Splunk versions can return diagnostics as text, dictionaries or
+            # lists. Only the allowlisted classifier output leaves this boundary.
+            diagnostic_text = json.dumps(diagnostics)[:20000]
+            raise ProviderError('The preview search failed. ' + search_feedback(diagnostic_text), 422, 'preview_failed')
         if not flag(meta.get('isDone')) and not flag(meta.get('isFinalized')):
             return {'state': 'running'}
         # Results are POSTed so count is applied by both supported v2 endpoints.

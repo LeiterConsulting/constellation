@@ -20,8 +20,9 @@ Provider messages, retrieved guidance, uploaded documents and indexed content ar
 | --- | --- |
 | Workspace and contextual chat | `src/App.tsx`, `prompts.ts`, `Preview.tsx`, `ElementFocus.tsx`, `PageManager.tsx`. |
 | Data selection and previews | `src/DataChooser.tsx`, `useSearchPreview.ts`, `previewJobs.ts`; `data_service.py`, `search_service.py`, `preview_jobs.py`, `search_scope.py`. |
-| Provider transport and modality policy | `provider_service.py`, `provider_adapters.py`, `model_capabilities.py`, `connection_store.py`. |
+| Provider transport, limits and modality policy | `provider_service.py`, `provider_adapters.py`, `provider_messages.py`, `model_readiness.py`, `model_capabilities.py`, `connection_store.py`. |
 | Orchestration and validation | `agent_service.py`, `recovery_service.py`, `studio_contract.py`, `studio_features.py`, `agent_feedback.py`. |
+| Scoped creation and internal batching | `creation_prompt.py`, `search_chart_actions.py`, `authoring_budget.py`. |
 | Layout, pages, navigation and tokens | `authoring_actions.py`, `geometry_normalization.py`, `repair_hints.py`, `authoring_intent.py`, `page_service.py`, `token_service.py`; `src/pages.ts`. |
 | Versioned compatibility and guidance | `compatibility.py`, `knowledge_service.py`, bundled JSON under `bin/contracts/`. |
 | Working drafts and native library | `draft_service.py`, `draft_history.py`, `dashboard_brief.py`, `draft_migrations.py`, `dashboard_library.py`; `src/drafts.ts`, `useDraftPersistence.ts`, `DashboardLibrary.tsx`. |
@@ -62,3 +63,11 @@ Repairs use an uncommitted candidate and accumulated edits, bounded to 64 total 
 Private user-namespace draft creation does not require rewriting ACLs. Every readback verifies the owner, app and private sharing, including the last-opened preference. Secretless Ollama/AITK preferences use a separate owner-private configuration collection; key-containing configurations remain in encrypted storage. Strict preference fields exclude keys. No runtime identity or role escalation is introduced.
 
 Native save targets a selected app under the current owner and verifies app, owner, private sharing and exact definition readback. Output contains the original native sources and layout, with no Constellation script or service dependency. App context can affect macros, lookups, saved searches and modules. Native copies, working drafts and conversations have separate lifecycles; native edits do not silently overwrite a draft.
+
+## Provider readiness and staged creation (0.10)
+
+Settings separates a small structured-response test from full authoring acceptance. Diagnostics allowlist context metadata and numerical usage; unknown OpenAI/AITK capacities remain unknown. AITK retains model/credential custody. Empty AITK completions and provider output/context limits have controlled, actionable errors. Ollama and AITK recovery messages distinguish prior untrusted assistant proposals from current validation feedback.
+
+Real-data search actions supply only a pipeline; the compiler binds the verified base scope, language and rolling range. Chart actions compile output field names into native DOS expressions. Explicit field-reference repair shapes are normalized only for changed channels backed by actual searches, then checked against executed output. Successful checks are reused and independent failures are combined for the next repair. The exact invalid SPL event-count shorthand `count() AS alias` compiles to an event count only in changed aggregate queries; quoted text, field counts, wildcard aliases, untouched queries and SPL2 are preserved. Recovery keeps the latest failed reply and current candidate instead of accumulating every rejected reply.
+
+For new real-data multi-page Ollama/AITK requests, a smaller foundation schema precedes completion. Stages consume the same three-call/120-second turn budget, not an additional unbounded loop. A later stage can reuse this turn's foundation page identity when its unique label matches; existing-user dashboard editing does not perform that aliasing. The complete candidate must satisfy original page/navigation intent and all data/feature checks before publication to the canvas. No partial foundation is saved as accepted work. Context budgeting uses a conservative byte estimate rather than a tokenizer; it never claims a verified provider token count and never drops the durable brief or native definition.

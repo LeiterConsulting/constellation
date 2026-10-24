@@ -6,7 +6,8 @@ import ControlGroup from '@splunk/react-ui/ControlGroup';
 import Text from '@splunk/react-ui/Text';
 import Modal from '@splunk/react-ui/Modal';
 import Message from '@splunk/react-ui/Message';
-import { providerRequest, secureSettingsOrigin, type ProviderSettings, type ProviderName } from './api';
+import { providerRequest, secureSettingsOrigin, type ProviderSettings, type ProviderName, type ModelReadinessReport } from './api';
+import ModelReadiness from './ModelReadiness';
 import { Actions, Muted } from './styles';
 
 interface Props { onClose: () => void; onSaved: (settings: ProviderSettings) => void; returnFocus: React.RefObject<HTMLElement | null>; }
@@ -23,6 +24,8 @@ export default function Settings({ onClose, onSaved, returnFocus }: Props) {
   const [loading, setLoading] = useState(true), [loaded, setLoaded] = useState(false), [reload, setReload] = useState(0);
   const [status, setStatus] = useState('Loading connection…');
   const [error, setError] = useState(false);
+  const [readiness, setReadiness] = useState<ModelReadinessReport | null>(null);
+  const invalidateTest = () => { setReadiness(null); setStatus('Connection changed. Save and test these settings.'); setError(false); };
   const secure = secureSettingsOrigin();
   const canStoreKey = saved?.keyStorage?.canWrite !== false;
   useEffect(() => {
@@ -30,6 +33,7 @@ export default function Settings({ onClose, onSaved, returnFocus }: Props) {
     setLoading(true); setError(false);
     void providerRequest<ProviderSettings>('settings', undefined, controller.signal).then(settings => {
       setSaved(settings); setProvider(settings.provider); setModel(settings.model);
+      setReadiness(settings.readiness || null);
       setHasKey(settings.connections?.openai?.keyConfigured || settings.keyConfigured);
       setEndpoint(settings.connections?.ollama?.base_url || 'http://localhost:11434');
       setConnection(settings.connections?.aitk?.connection || '');
@@ -41,6 +45,7 @@ export default function Settings({ onClose, onSaved, returnFocus }: Props) {
   }, [reload]);
   const chooseProvider = (value: ProviderName) => {
     setProvider(value); setApiKey(''); setModels([]); setError(false);
+    setReadiness(null);
     setModel(saved?.connections?.[value]?.model || '');
     setStatus('Save to use this connection. Your other provider settings are retained.');
   };
@@ -52,6 +57,7 @@ export default function Settings({ onClose, onSaved, returnFocus }: Props) {
   const save = async () => {
     const settings = await providerRequest<ProviderSettings>('settings', { provider, apiKey, model, baseUrl: endpoint, connection });
     setApiKey(''); setHasKey(settings.connections?.openai?.keyConfigured || false); setSaved(settings); onSaved(settings);
+    setReadiness(settings.readiness || null);
     setStatus('Connection saved. Test it when ready.');
   };
   const valid = loaded && !loading && (provider === 'openai' ? canStoreKey && !!(apiKey || hasKey) && (secure || !apiKey) : provider === 'ollama' ? !!endpoint.trim() : !!connection.trim());
@@ -66,15 +72,15 @@ export default function Settings({ onClose, onSaved, returnFocus }: Props) {
         {!secure ? <Message type="warning">Open through HTTPS to enter a key.</Message> : null}
         {!canStoreKey ? <Message type="info">OpenAI setup requires permission to manage encrypted credentials in Splunk. Ask your administrator to review this access, or choose Ollama or an authorized AITK connection. Constellation does not grant roles.</Message> : null}
         <ControlGroup label={hasKey ? 'Replace API key (optional)' : 'API key'} help="Stored encrypted in Splunk with owner-restricted permissions. The saved key is never returned to this form.">
-          <Text type="password" autoComplete="new-password" value={apiKey} onChange={(_event, { value }) => setApiKey(value)} disabled={!secure || !canStoreKey || busy || loading || !loaded} canClear/>
+          <Text type="password" autoComplete="new-password" value={apiKey} onChange={(_event, { value }) => { setApiKey(value); invalidateTest(); }} disabled={!secure || !canStoreKey || busy || loading || !loaded} canClear/>
         </ControlGroup>
       </> : provider === 'ollama' ? <ControlGroup label="Ollama server" help="An origin reachable from the Splunk server, such as http://server:11434. Localhost means the Splunk host. HTTPS certificates are verified.">
-        <Text value={endpoint} onChange={(_event, { value }) => setEndpoint(value)} disabled={busy || loading || !loaded}/>
+        <Text value={endpoint} onChange={(_event, { value }) => { setEndpoint(value); invalidateTest(); }} disabled={busy || loading || !loaded}/>
       </ControlGroup> : <ControlGroup label="AITK connection name" help="Use an existing LLM connection from AI Toolkit → Connections. AITK keeps its credentials and configured model; your Splunk permissions apply.">
-        <Text value={connection} onChange={(_event, { value }) => setConnection(value)} disabled={busy || loading || !loaded}/>
+        <Text value={connection} onChange={(_event, { value }) => { setConnection(value); invalidateTest(); }} disabled={busy || loading || !loaded}/>
       </ControlGroup>}
-      {provider !== 'aitk' ? <ControlGroup label="Model" help="Load installed or available models, or enter an exact model ID. The model test verifies JSON edits.">
-        <ComboBox value={model} onChange={(_event, { value }) => setModel(value)} disabled={busy || loading || !loaded} noOptionsMessage="Enter a model ID, or load available models.">
+      {provider !== 'aitk' ? <ControlGroup label="Model" help="Load models or enter an exact ID. Test the connection and a small structured response before building.">
+        <ComboBox value={model} onChange={(_event, { value }) => { setModel(value); invalidateTest(); }} disabled={busy || loading || !loaded} noOptionsMessage="Enter a model ID, or load available models.">
           {models.map(id => <ComboBox.Option key={id} value={id}/>)}
         </ComboBox>
       </ControlGroup> : null}
@@ -84,13 +90,14 @@ export default function Settings({ onClose, onSaved, returnFocus }: Props) {
           await save(); const result = await providerRequest<{ models: string[] }>('models', {}); setModels(result.models); setStatus(`Found ${result.models.length} models. Choose one and save.`);
         })}>Load models</Button> : null}
         <Button disabled={busy || !valid || (provider !== 'aitk' && !model)} onClick={() => void run(async () => {
-          await save(); const result = await providerRequest<{ message: string }>('test', {}); setStatus(result.message);
+          await save(); const result = await providerRequest<{ message: string; readiness: ModelReadinessReport }>('test', {}); setStatus(result.message); setReadiness(result.readiness);
         })}>Test model</Button>
       </Actions>
       {!loaded && !loading ? <Button onClick={() => setReload(value => value + 1)}>Retry loading settings</Button> : null}
       <Muted>Testing sends a small request and may incur provider charges. Chat sends dashboard configuration, recent conversation, index metadata, and supported attachments you send. Search result rows stay in Splunk and your browser.</Muted>
-      {provider === 'aitk' ? <Muted>Text only on this route. Prompts use synthetic AITK search jobs and follow Splunk’s search retention. Adjust model and output limits in AI Toolkit.</Muted> : provider === 'ollama' ? <Muted>Images require the model’s advertised vision capability. PDFs are blocked on this route.</Muted> : null}
+      {provider === 'aitk' ? <Muted>Text only on this route. Prompts use synthetic AITK search jobs and follow Splunk’s search retention.</Muted> : provider === 'ollama' ? <Muted>Images require advertised vision capability. PDFs are blocked on this route.</Muted> : null}
       <Message type={error ? 'error' : 'info'}><span role="status">{loading ? 'Loading connection…' : busy ? 'Working…' : status}</span></Message>
+      {readiness && !busy ? <ModelReadiness report={readiness}/> : null}
     </Modal.Body>
     <Modal.Footer><Button onClick={() => { setApiKey(''); onClose(); }} disabled={busy}>Close</Button></Modal.Footer>
   </Modal>;
