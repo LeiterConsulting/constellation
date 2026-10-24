@@ -4,7 +4,7 @@ A conversational canvas for creating and editing **Splunk Dashboard Studio** das
 
 Describe an operational question, choose data available to your Splunk user, and watch a dashboard take shape. Select a chart, input or page to refine it through chat. Start from a blank canvas, an existing Studio definition, or an image/PDF reference when the selected provider supports it.
 
-**Status: 0.10.0 development preview.** This is a new codebase, separate from Splunk Dashboard Generator. It is not a production release or Splunk Cloud certified app. The repository is currently private and is being prepared for a future public release.
+**Status: 0.11.2 development preview.** This is a new codebase, separate from Splunk Dashboard Generator. It is not a production release or Splunk Cloud certified app. The repository is currently private and is being prepared for a future public release.
 
 ## What works today
 
@@ -37,7 +37,7 @@ npm run dev -- --port 5178
 
 Open the local URL printed by Vite. Standalone mode demonstrates the canvas and authored example data; provider Settings, live Splunk searches, server-backed drafts and native saves require an installed Splunk app.
 
-The package is written to `artifacts/constellation-0.10.0.tgz`, with its digest in `artifacts/SHA256SUMS`. Build artifacts and dependencies are not committed. See [installation](docs/installation.md) to install the package and configure a provider in the app.
+The package is written to `artifacts/constellation-0.11.2.tgz`, with its digest in `artifacts/SHA256SUMS`. Build artifacts and dependencies are not committed. See [installation](docs/installation.md) to install the package and configure a provider in the app.
 
 ## Compatibility and boundaries
 
@@ -45,7 +45,7 @@ Selected flows have been exercised on Splunk Enterprise **10.2.8** with Studio *
 
 Search previews use the current user's permissions and a read-only command subset. They are bounded to a selected 15-minute, 1-hour, 24-hour or 7-day window, at most **200 rows / 5 seconds per query**, and eight sources in the preview. Tracked jobs label completed queries, partial output, failures and stale snapshots. Counts and aggregates can still be partial; a completed query is not proof of analytical correctness. Preserve the distinction between native Studio rendering, bounded preview results and a validated dashboard definition.
 
-Multi-page actual-data creation and focused edits have been exercised through OpenAI, Ollama and AITK. AITK’s larger creation test used GPT-5 mini with a temporary 16,000-token output budget; the prior 2,000-token setting could return no completion. Settings distinguishes small connection tests from full authoring checks and exposes reported or unknown limits. These are bounded provider/model/environment checks, not a general success-rate claim or 1.0 acceptance. See [validation](docs/validation.md) and the [support matrix](docs/studio-support.md).
+Multi-page actual-data creation and focused edits have been exercised through OpenAI, Ollama and AITK. The current repeated AITK tests retain a 16,000-token budget on the existing GPT-5 mini connection; the prior 2,000-token setting could return no completion. A sufficient output budget does not eliminate validation failures or latency. Settings distinguishes small connection tests from full authoring checks and exposes reported or unknown limits. These are bounded provider/model/environment checks, not a general success-rate claim or 1.0 acceptance. See [validation](docs/validation.md) and the [qualification protocol](docs/provider-qualification.md).
 
 ## Data and credentials
 
@@ -63,6 +63,7 @@ The selected provider receives the prompt, recent conversation, dashboard defini
 | [Studio support](docs/studio-support.md) | Implemented behavior and remaining parity gates. |
 | [Development](docs/development.md) | Local commands, synthetic fixtures, CI and repository checks. |
 | [Validation](docs/validation.md) | Verified test scope and explicit limitations. |
+| [Provider qualification](docs/provider-qualification.md) | Repeated core journey, analytical probes and the 1.0 decision. |
 | [Upgrade guide](docs/upgrade-guide.md) | Compatibility profiles, provider adapters and draft migrations. |
 | [Product direction](docs/product-direction.md) | Interaction principles and product goals. |
 | [Roadmap and release gates](docs/roadmap.md) | Work required before broader/public release. |

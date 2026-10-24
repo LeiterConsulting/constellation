@@ -18,6 +18,8 @@ Settings shows potential context and output-budget issues, with **Model limits a
 
 Ollama reports model context metadata when available; the app requests up to 32,768 tokens, capped by reported capacity. Instructions, the dashboard, conversation and output share that space. Models need sufficient memory and time as well as context capacity. For AITK, check the actual model and **Max Tokens** under **AI Toolkit → Connections**. Constellation cannot verify those limits through this route. Reasoning can exhaust a small output budget before any visible answer appears. Batching cannot fix a connection that cannot return even a small usable completion.
 
+The tested GPT-5 mini AITK connection used 16,000 tokens for multi-page creation; its earlier 2,000-token setting could return no completion. This is a tested configuration, not a universal model recommendation. A larger budget does not guarantee fast or correct authoring. Review the [provider qualification results](provider-qualification.md) when choosing a connection.
+
 Larger new multi-page goals through Ollama and AITK use an internal foundation and completion stage. The stages share the existing recovery budget, reuse verified searches and apply together only after validation. The agent receives reported limits and retains the durable brief while trimming older rolling history when the conservative Ollama input estimate requires it. These safeguards reduce avoidable failures; they do not guarantee that every model can author every dashboard.
 
 ## Sketches and PDFs

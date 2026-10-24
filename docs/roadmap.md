@@ -15,6 +15,8 @@ Constellation is a working development preview. Checked-in code and selected liv
 
 The current reliability milestone is recorded in [the goal brief](reliability-goal.md). Before calling the authoring experience reliable for a broader audience, run unaided user trials against representative datasets, measure task completion, recovery rate, latency, rewording and undo/restore use. A target such as 90 percent completion needs measured evidence from those trials.
 
+The [provider qualification protocol and 1.0 decision](provider-qualification.md) define the repeated core journey, independent analytical probes and outstanding acceptance work. Passing one authored example is insufficient.
+
 ## Before public release
 
 - Select and document the first-party source license; complete third-party attribution and redistribution review. Public visibility is separate from an open-source license grant.

@@ -16,6 +16,8 @@ from recovery_service import RecoverySession, PendingProposal, MAX_MODEL_CALLS
 from dashboard_brief import authoring_brief
 from repair_hints import placement_hint
 from creation_prompt import CREATION_INSTRUCTIONS
+from focused_prompt import FOCUSED_INSTRUCTIONS
+from population_guard import independent_measurements
 from model_readiness import CREATE_OUTPUT_TOKENS, EDIT_OUTPUT_TOKENS
 from authoring_budget import AuthoringBudget
 from page_service import validate_purposes, proposed_purposes, focus_context
@@ -85,6 +87,8 @@ field/token are empty for direct button/chart navigation. For table row navigati
 give a verified field and a destination token; the compiler emits field-scoped native
 setToken and switchToTab actions. For filtered destination searches use $token|s$
 and define a safe input/default, commonly '*', so initial preview is executable.
+An all-entities '*' default needs search FIELD=$token|s$; where FIELD=$token|s$ is
+literal equality and starts empty. Keep numeric exclusions in a separate where.
 The app focuses targetId on navigation; native Studio switches pages and sets tokens.
 Never invent native URL fragments to focus an element. Do not put page purposes
 or app-only focus state inside the exported native Studio definition.
@@ -295,7 +299,7 @@ class AgentService:
         environment = self.runtime.environment()
         catalog = self.runtime.datasets()
         recovery = RecoverySession(self.runtime)
-        data = DataService(self.runtime, recovery=recovery, document=document, tokens=body.get('tokens'))
+        data = DataService(self.runtime, recovery=recovery, document=document, tokens=body.get('tokens'), independent_populations=independent_measurements(prompt, brief))
         purposes = validate_purposes(body.get('pagePurposes', {}), document)
         focus = focus_context(document, str(body.get('selected', ''))[:200], str(body.get('activeTab', ''))[:200], purposes)
         scope = body.get('dataContext')
@@ -331,7 +335,8 @@ class AgentService:
         if profile: context['dataProfile'] = profile
         guidance = retrieve_guidance(prompt, document, environment, real_data=bool(profile))
         context['retrievedGuidance'] = guidance
-        instructions = CREATION_INSTRUCTIONS if profile and context['canvasState'] == 'blank' else INSTRUCTIONS
+        instructions = (CREATION_INSTRUCTIONS if profile and context['canvasState'] == 'blank' else
+                        FOCUSED_INSTRUCTIONS if focus['kind'] in ('visualization', 'input') else INSTRUCTIONS)
         request = {'model': saved['model'], 'store': False, 'instructions': instructions,
                    'input': [{'role': 'user', 'content': [{'type': 'input_text', 'text': json.dumps(context)}] + attachments}],
                    'max_output_tokens': CREATE_OUTPUT_TOKENS if context['canvasState'] == 'blank' else EDIT_OUTPUT_TOKENS,
@@ -344,8 +349,12 @@ class AgentService:
         proposal = PendingProposal(document)
         next_purposes = purposes
         for attempt in range(MAX_MODEL_CALLS):
-            recovery.model_call()
-            response = self.provider.complete(saved, request)
+            try:
+                recovery.model_call()
+                response = self.provider.complete(saved, request)
+            except ProviderError as error:
+                error.recovery = recovery.evidence()
+                raise
             text = ''
             for item in response.get('output', []):
                 for part in item.get('content', []):
@@ -404,6 +413,7 @@ class AgentService:
                                'I couldn’t finish a valid change within the automatic recovery limit. Your previous dashboard is preserved; Activity explains the remaining issue.')
                     failure = ProviderError(message, 422, 'studio_validation')
                     failure.validation_error = feedback[:800]
+                    failure.recovery = recovery.evidence()
                     raise failure from None
                 repair = True
                 if profile and attempt == 0:

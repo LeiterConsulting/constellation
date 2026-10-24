@@ -9,7 +9,7 @@ from check_repository import text_issues
 ROOT = Path(__file__).resolve().parents[1]
 VERSION = json.loads((ROOT / 'package.json').read_text())['version']
 DOCS = ('SECURITY.md', 'CHANGELOG.md', 'docs/user-guide.md', 'docs/installation.md',
-        'docs/providers.md', 'docs/studio-support.md', 'docs/validation.md',
+        'docs/providers.md', 'docs/studio-support.md', 'docs/validation.md', 'docs/provider-qualification.md',
         'docs/share-readiness.md', 'docs/architecture.md', 'docs/upgrade-guide.md',
         'docs/roadmap.md', 'docs/development.md', 'docs/product-direction.md',
         'docs/reliability-goal.md', 'tests/fixtures/README.md',
@@ -23,7 +23,8 @@ def main():
     digest = hashlib.sha256(app).hexdigest()
     files = {package.name: app, 'SHA256SUMS': (digest + '  ' + package.name + '\n').encode(),
              'README.md': ('# Constellation ' + VERSION + ' private pilot\n\n'
-                           'Start with docs/user-guide.md, then review docs/share-readiness.md. '
+                           'Start with docs/user-guide.md, then review docs/provider-qualification.md '
+                           'and docs/validation.md. docs/share-readiness.md retains the historical sharing audit. '
                            'Install the enclosed app archive using docs/installation.md. '
                            'Verify it against SHA256SUMS before installation.\n\n'
                            'This is a development preview, not a production or Splunk Cloud certified release. '

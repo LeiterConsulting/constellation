@@ -73,6 +73,20 @@ class StudioAgentTests(unittest.TestCase):
             document = {'visualizations': {}, 'layout': {'type': 'grid'}, 'dataSources': sources}
             with self.assertRaises(ProviderError): validate_document(document)
 
+    def test_layout_feedback_identifies_all_missing_and_available_ids_atomically(self):
+        document = {'visualizations': {'actual_chart': {'type': 'splunk.markdown', 'options': {'markdown': 'private fixture text'}}},
+                    'inputs': {'actual_button': {'type': 'input.button'}},
+                    'layout': {'layoutDefinitions': {
+                        'overview': {'type': 'absolute', 'structure': [{'item': 'wrong_chart'}]},
+                        'details': {'type': 'absolute', 'structure': [{'item': 'wrong_button'}]}}}}
+        before = copy.deepcopy(document)
+        with self.assertRaises(ProviderError) as caught: validate_document(document)
+        feedback = str(caught.exception)
+        for identifier in ('overview: wrong_chart', 'details: wrong_button', 'actual_chart', 'actual_button'):
+            self.assertIn(identifier, feedback)
+        self.assertNotIn('private fixture text', feedback)
+        self.assertEqual(document, before)
+
     def test_sample_and_search_result_rows_do_not_enter_model_context(self):
         document = copy.deepcopy(STARTER)
         document['dataSources']['ds_requests']['state'] = {'rows': ['private-result']}

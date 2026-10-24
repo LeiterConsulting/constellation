@@ -2,6 +2,26 @@
 
 This repository begins with the 0.7.1 development preview. Version history below summarizes implemented behavior; it is not a record of production releases or certification.
 
+## 0.11.2 development preview
+
+- Encode unambiguous raw chart text and native DOS binding strings on known property paths before existing feature/output-field validation, avoiding repeated nested-JSON failures during focused edits.
+- Retain rejection of malformed JSON containers/quoted strings and nonexistent output fields.
+
+## 0.11.1 development preview
+
+- Repair exact new entity-equality predicates only when verified table-row token/navigation intent identifies the destination search; preserve unrelated and untouched queries.
+- Detect a narrow shared-aggregate population error when the user explicitly requires independent measurements, and provide conditional-aggregation feedback before execution.
+- Retain independent synthetic analytical probes and the pre-fix failures alongside fresh installed-provider reruns.
+
+## 0.11.0 development preview
+
+- Add typed dashboard text and verified SPL entity-filter actions, reducing fragile model-generated quoting while retaining native Studio output.
+- Reject the literal-asterisk `where` filter trap in new/revised searches and provide actionable feedback to automatic recovery.
+- Compile a new page/button reference together when both actions specify the same placement; retain strict errors for missing or conflicting elements.
+- Use compact selected-element editing guidance with the existing feature/search guards and unchanged recovery budgets.
+- Identify missing layout references precisely and show numerical failed-request recovery evidence under the existing Activity disclosure.
+- Record repeated installed-provider tests, independent synthetic transformation checks and the remaining 1.0 gates in the qualification documentation.
+
 ## 0.10.0 development preview
 
 - Expose reported/unknown model capacity, output risks, small-test scope and numerical usage in Settings; clear stale diagnostics when connection fields change.

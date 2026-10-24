@@ -6,8 +6,8 @@ Snapshot: **0.10.0 development preview, October 24, 2026**. This file is a sanit
 
 | Check | Observed result |
 | --- | --- |
-| Python unit suites | 163 tests passed on Python 3.9 and 3.13, including seven repository-publication policy tests. |
-| Frontend unit suites | 53 tests passed. |
+| Python unit suites | 175 tests passed on Python 3.9 and 3.13, including repository-publication policy and independent-population recovery tests. |
+| Frontend unit suites | 54 tests passed. |
 | TypeScript and production build | Passed; bundle-size warning remains. |
 | Deterministic app package | Generated with SHA-256 receipt. |
 | Splunk AppInspect 4.3.1, precert | 0 errors, 0 failures, 0 future failures, 7 warnings, 1 skipped, 107 successes, 137 not applicable on the tested app archive. |
@@ -67,6 +67,32 @@ The candidate adds scoped search/chart/token builders, compact creation guidance
 
 The final 0.10.0 archive has SHA-256 `470b0489f12ecbfbf9fbc623031dff603111a9fc53881cca7cdd6cb86312c130`. It passed the precert result above and was installed on both recorded lab versions without restart. Core AITK/Ollama browser checks ran during candidate iterations; final follow-up checks cover the affected installed paths. No new broad role, first-install, SHC, scale or Cloud qualification was established.
 
+## 0.11 repeated provider qualification
+
+The same actual sensor dataset and last-24-hour scope were used for repeated installed-handler creation and editing on Enterprise 10.2.8 / Studio 1.23.12. Every new request started from an empty definition and asked for two named pages, four charts, page purposes, Fahrenheit exclusions above 150°F, independent Wi-Fi measurements, device-row filtering and return navigation. Each accepted creation was followed by a selected trend type/title edit and a selected table-formatting request. Raw definitions, queries, traces and screenshots remain local.
+
+| Phase | OpenAI `gpt-6-luna` | Ollama `qwen3-coder:latest` | AITK 6.1.0 / GPT-5 mini |
+| --- | --- | --- | --- |
+| 0.10.0 baseline: server-accepted creations | 3/3 | 1/3 | 1/3 |
+| 0.10.0 baseline: accepted focused edits | 6/6 | 2/2 attempted | 1/2 attempted |
+| 0.11.0 intermediate: server-accepted creations | 3/3 | 1/3 | 2/3 |
+| 0.11.0 intermediate: accepted focused edits | 6/6 | 2/2 attempted | 3/4 attempted |
+| 0.11.1 fresh repeated creations | 2/2 | 2/2 | 2/2 |
+| 0.11.1 focused edits | 4/4 | 3/4 | 4/4 |
+| 0.11.2 focused continuation, reopened two-page draft | Passed | Passed | Passed |
+
+Edits were not attempted after a failed creation. These small samples are regression evidence, not population success-rate estimates. The AITK connection retained its existing model/credentials and a native readback-confirmed **16,000-token** budget; it was not restored to 2,000 after this qualification. The original selected direct provider was restored after testing.
+
+Server acceptance alone was insufficient. An earlier accepted Ollama definition had literal-asterisk `where` filters that produced empty default detail views. Another accepted summary globally filtered temperature before calculating Wi-Fi, discarding measurements the user requested retaining. Independent synthetic transformation probes exposed both. The current compiler repairs exact row-filter syntax only when verified native navigation establishes its intent; a conservative shared-population guard supplies conditional-aggregation feedback. In a fresh 0.11.1 creation Ollama corrected the shared-table error within the same three-call turn, without rephrasing the original request.
+
+The sole failed 0.11.1 edit exhausted three attempts on a raw DOS-binding string that was not nested-JSON encoded. Version 0.11.2 adds narrow string encoding on known chart text/binding paths, followed by the existing feature and actual-output-field checks. The **identical original table prompt** then passed through the installed selection tool and conversation panel. Independent readback confirmed the changed definition, six-message conversation, unchanged unrelated charts/sources/layout/inputs/defaults, exact private native copy and no Constellation runtime dependency. Native rendering and device-row/return navigation passed. This was an explicit retry after a code fix, not retroactively a first-attempt success.
+
+All six 0.11.1 accepted dashboard definitions were saved/reopened with conversations and exact private native readback. Their final transformations passed authored seven-reading probes for nonempty all-device defaults, excluded-temperature invariance, retained Wi-Fi readings and two fictional device filters. These probes were separate read-only synthetic searches; actual dashboard sources remained the selected real index. Exact document comparison confirmed that each trend refinement changed only its type/title. On final 0.11.2, three additional provider-specific focused continuations changed only the selected title, used zero new dashboard-source query checks, persisted and produced exact private native copies in Search & Reporting.
+
+The repeated 0.11.1 creation-plus-draft-save times were about **21 seconds** for direct OpenAI, **82–107 seconds** for Ollama and **88–89 seconds** for AITK. Successful edits ranged from roughly 3 to 55 seconds. Earlier validation failures and longer requests remain recorded. The 120-second recovery budget is checked between operations; it does not preempt an in-flight provider call. No retry or time budget was increased to make the matrix pass.
+
+Final 0.11.2 has SHA-256 `a13f9b33269bfdbb6bbc3a896c37ae9997ef55d0cce5873eb92dbc2c8ae198c0`. Its packaged Python source matched the checkout, it passed the precert result above, and it was installed on both recorded lab versions without restart. The complete fresh-creation matrix ran on 0.11.1; 0.11.2 qualification targeted the affected encoding path and cross-provider continuation/native readback. This is not a claim of another full matrix on 0.11.2, fresh multimodal/SPL2 acceptance, broader roles, SHC or production scale.
+
 ## Boundaries and remaining work
 
 - Preview results are bounded to the selected window, 200 rows, five seconds and eight sources. Tracked completion proves execution/row coverage for the submitted query, not the correctness of its business meaning or an intentionally sampled query.
@@ -74,6 +100,7 @@ The final 0.10.0 archive has SHA-256 `470b0489f12ecbfbf9fbc623031dff603111a9fc53
 - OpenAI image/PDF layouts passed selected exercises. Ollama vision and AITK availability across other connections/targets remain unqualified; AITK is text-only in this adapter.
 - Native custom visualization parity, saved/module-search execution, refresh policies, full option-schema coverage and broader token behavior remain open.
 - Selected two-user isolation checks passed. Broader role/administrator boundaries, full accessibility/reflow, distributed SHC concurrency and production scale still require qualification.
+- A 1280×720 browser review showed that Splunk chrome and expanded source/time controls can push lower panels below the fold. Compact-control/reflow and unaided language review remain UX work before 1.0; the current selected-element/dock/float/refresh/native-save paths passed.
 - Local unit suites use fixtures/mocks and do not establish live infrastructure behavior.
 
 See the [support contract](studio-support.md), [security boundaries](../SECURITY.md) and [release gates](roadmap.md).

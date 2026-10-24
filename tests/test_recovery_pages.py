@@ -7,7 +7,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'splunk/constellati
 from agent_service import AgentService
 from provider_service import ProviderService, ProviderError
 from recovery_service import RecoverySession, MAX_QUERY_CHECKS
-from token_service import resolve_query_tokens
+from token_service import resolve_query_tokens, validate_wildcard_filters, without_entity_equality
 from page_service import focus_context, proposed_purposes
 from authoring_actions import compile_actions
 from studio_contract import apply_changes
@@ -31,6 +31,22 @@ class Runtime:
 
 
 class RecoveryTests(unittest.TestCase):
+    def test_literal_all_value_filter_is_repaired_before_search_execution(self):
+        original=fixtures.NewDashboardTests().blank()
+        bad=self.proposal('search index="esp32" | where device_name=$entity|s$ | stats avg(temperature_f) AS average_f','average_f')
+        bad['changes'].append({'op':'token','name':'entity','value':'*'})
+        good={'message':'Updated the device filter.','suggestions':[],'changes':[
+            change('/dataSources/temperature/options/query','search index="esp32" | search device_name=$entity|s$ | stats avg(temperature_f) AS average_f')]}
+        client=Client([bad,good]);runtime=Runtime()
+        result=AgentService(ProviderService(Store(),client),runtime).assist({'prompt':'Build a device-filtered temperature chart','revision':0,'definition':original,'dataContext':{'index':'esp32','earliest':'-24h'}})
+        self.assertEqual(result['recovery']['modelCalls'],2)
+        self.assertEqual(len(runtime.queries),1)
+        feedback=json.loads(client.calls[1]['input'][-1]['content'][0]['text'])['recoveryFeedback']
+        self.assertIn('literal',feedback['validationError'])
+        self.assertEqual(feedback['editsApplyTo'],'candidate')
+        doc=apply_changes(original,result['changes'])
+        self.assertIn('| search device_name=',doc['dataSources']['temperature']['options']['query'])
+        self.assertEqual(original['visualizations'],{})
     def proposal(self, query, field):
         return {'message':'Freezer temperature with readings above 150°F excluded.', 'suggestions':[], 'changes':[
             change('/dataSources/temperature',{'type':'ds.search','options':{'query':query,'queryParameters':{'earliest':'-24h','latest':'now'}}}),
@@ -98,6 +114,32 @@ class PageTests(unittest.TestCase):
 
 
 class TokenTests(unittest.TestCase):
+    def test_explicit_filter_removes_only_exact_entity_equality_and_preserves_conditions(self):
+        for predicate in ('device=$entity|s$', '$entity|s$=device', '(device=$entity$)'):
+            pipeline='| where '+predicate+' AND temperature<=150 | stats count'
+            self.assertEqual(without_entity_equality(pipeline,'device','entity'),'| where temperature<=150 | stats count')
+        pipeline='| where device=$entity|s$ | stats count'
+        self.assertEqual(without_entity_equality(pipeline,'device','entity'),'| stats count')
+        for pipeline in ('| where device=$entity|s$ OR other=1 | stats count',
+                         '| eval note="| where device=$entity|s$" | stats count',
+                         '| where (device=$entity|s$ AND value<=150) | stats count',
+                         '| where other_device=$entity|s$ | stats count'):
+            self.assertEqual(without_entity_equality(pipeline,'device','entity'),pipeline)
+    def test_all_entity_defaults_require_wildcard_aware_filters(self):
+        document={'defaults':{'tokens':{'default':{'entity':{'value':'*'}}}}}
+        for query in ('search index=fixture | where device=$entity|s$',
+                      'search index=fixture | where device==$entity|s$ AND value<=150',
+                      "search index=fixture | where 'device name'=$entity|s$",
+                      'search index=fixture | where device=$entity|s$ AND $entity|s$="*"',
+                      'search index=fixture | where $entity|s$=device'):
+            with self.subTest(query=query),self.assertRaisesRegex(ProviderError,'literal'):
+                validate_wildcard_filters(query,document)
+        for query in ('search index=fixture | search device=$entity|s$ | where value<=150',
+                      'search index=fixture | where $entity|s$="*" OR device=$entity|s$',
+                      'search index=fixture | where ("*"==$entity|s$ OR device=$entity|s$) AND value<=150',
+                      'search index=fixture | eval note="| where device=$entity|s$"'):
+            validate_wildcard_filters(query,document)
+        validate_wildcard_filters('search index=fixture | where device=$entity|s$', {'inputs':{'entity_input':{'options':{'token':'entity','defaultValue':'fixture_A'}}}})
     def test_current_values_override_defaults_without_enabling_query_injection(self):
         document={'defaults':{'tokens':{'default':{'device':{'value':'*'}}}},'inputs':{'x':{'options':{'token':'room','defaultValue':'kitchen'}}}}
         self.assertEqual(resolve_query_tokens('search device=$device|s$ room=$room|s$',document),'search device="*" room="kitchen"')

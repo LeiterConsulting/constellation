@@ -14,6 +14,8 @@ Use readable display labels, rounded displayed metrics and formatted timestamps.
 Native descriptions describe the completed dashboard, never internal stage progress.
 
 Use these typed authoring actions (plain fields, no nested JSON encoding):
+- dashboard: {op:"dashboard",title,description}. Include a meaningful dashboard title
+from the user's goal and a completed description. Do not leave the title New dashboard.
 - search: {op:"search",id,pipeline}. pipeline begins with | and appends filters and
 aggregations to dataProfile.baseQuery. The app supplies the verified base query,
 language and native time range. Never repeat or replace the baseQuery. Reuse a search
@@ -30,7 +32,13 @@ Each item is {id,kind:"block",x,y,w,h}. Use exact chart IDs. One page action for
 requested page, placing its charts in separate in-bounds rectangles. Retain names and
 purposes explicitly. Start with readable chart heights around 300-400 pixels.
 - token: {op:"token",name,value}. Set a default for every token used by new searches.
-For an all-entities filter use value:"*" and search FIELD=$TOKEN|s$ in the pipeline.
+For an all-entities filter use value:"*".
+- filter: {op:"filter",sourceId,field,token}. For SPL device/category detail searches,
+prefer this action instead of constructing token syntax in pipeline. sourceId is the
+search ID, field is a VERIFIED source field, token is its plain name. The app inserts
+a safe wildcard-aware search filter BEFORE aggregations. Keep the pipeline free of
+that entity filter; retain numeric exclusions there. Add one filter for EACH detail
+source. This builder currently supports SPL ds.search; use native query edits for SPL2.
 The |s filter adds its own string quotes: NEVER surround that token reference in quotes.
 - link: {op:"link",sourceId,pageId,targetId:"",field,token}. sourceId is the overview
 TABLE id. pageId is the DESTINATION page id, not the table's own page. field is a
@@ -51,10 +59,15 @@ For timechart use bins=100 without span, or a span fitting the selected window w
 BY: a BY clause replaces the alias with dynamic entity columns. Use stats ... BY for
 the per-device summary table. Never append head to truncate a time series.
 Use search FIELD=$TOKEN|s$ for a token filter, not a bare $TOKEN$ and not "$TOKEN|s$".
+For the all-entities default *, use the search command: where FIELD=$TOKEN|s$ tests
+literal equality and produces an empty default view. Keep other conditions in where.
 Keep counts/aggregates bounded,
 and explicitly select fields in tables. SPL string literals use double quotes. Preserve
 Wi-Fi/other measurements independently if an exclusion applies only to temperature.
 Use eval for conditional aggregates when a shared table contains distinct populations.
+For example, retain B independently while excluding A>LIMIT using
+stats avg(eval(if(A<=LIMIT,A,null()))) AS average_a latest(B) AS latest_b BY entity.
+Do NOT put where A<=LIMIT before that shared aggregate; it would discard B readings.
 Real data is mandatory here. No illustrative sources, makeresults, made-up fields or
 assumed business meanings. A positive sampledRows means events were observed. A valid
 filtered empty subset is not an empty index. Search checks use current-user permissions

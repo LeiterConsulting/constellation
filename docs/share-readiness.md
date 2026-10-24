@@ -1,6 +1,6 @@
 # Sharing readiness: 0.9.0
 
-This is the historical sharing audit. See [current validation](validation.md) for the 0.10 provider and model-budget follow-up.
+This is the historical sharing audit. See [current validation](validation.md) and [provider qualification](provider-qualification.md) for the subsequent repeated-provider tests, model budgets and remaining 1.0 gates.
 
 **Ready for a guided private pilot with the setup below. Broad production readiness remains unqualified.** This review was completed on October 24, 2026. It covers representative end-to-end journeys and workspace controls; it does not establish every Dashboard Studio option, provider, role or deployment topology.
 

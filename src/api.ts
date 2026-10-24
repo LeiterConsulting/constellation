@@ -7,6 +7,15 @@ export const isSplunk = () => window.location.pathname.includes('/app/constellat
 export const secureSettingsOrigin = () => window.location.protocol === 'https:' || ['localhost', '127.0.0.1', '[::1]'].includes(window.location.hostname);
 export type ProviderName = 'openai' | 'ollama' | 'aitk';
 export const providerLabel = (provider?: ProviderName) => provider === 'aitk' ? 'Splunk AITK' : provider === 'ollama' ? 'Ollama' : 'OpenAI';
+interface RecoveryStats { modelCalls: number; queryChecks: number; seconds: number; }
+type ProviderFailure = Error & { validationError?: string; code?: string; recovery?: RecoveryStats };
+export function failureActivity(error: unknown): string[] {
+  if (!(error instanceof Error)) return [];
+  const failure = error as ProviderFailure;
+  return [...(failure.validationError ? [failure.validationError] : []), ...(failure.recovery ? [
+    `${failure.recovery.modelCalls} model requests · ${failure.recovery.queryChecks} search checks · ${Math.round(failure.recovery.seconds)} seconds. Previous dashboard preserved.`,
+  ] : [])];
+}
 export interface ModelReadinessReport { limits: { label: string; value: string }[]; warnings: string[]; scope: string; tested: boolean; usage: { input_tokens?: number; output_tokens?: number; reasoning_tokens?: number }; }
 export interface ProviderSettings { provider: ProviderName; configured: boolean; readiness?: ModelReadinessReport; connection?: string; connections?: Partial<Record<ProviderName, { model?: string; keyConfigured?: boolean; base_url?: string; connection?: string }>>; baseUrl: string; model: string; keyConfigured: boolean; keyStorage?: { canWrite: boolean } | null; capabilities?: { images: boolean; pdf: boolean; reason: string; source: string }; }
 export async function providerRequest<T>(action: 'settings' | 'models' | 'test' | 'assist' | 'author' | 'environment' | 'datasets' | 'preview' | 'drafts' | 'library' | 'discovery' | 'profile' | 'preview_job', body?: Record<string, unknown>, signal?: AbortSignal): Promise<T> {
@@ -15,14 +24,18 @@ export async function providerRequest<T>(action: 'settings' | 'models' | 'test' 
   const url = createRESTURL(`constellation/v1/${action}`, { app: 'constellation', owner: '-' });
   const { response, result } = await fetchWithDeadline(url, createFetchInit({ method: body ? 'POST' : 'GET',
     body: body ? JSON.stringify(body) : undefined, headers: body ? { 'Content-Type': 'application/json' } : {}, signal }), ['author', 'test'].includes(action) ? 240_000 : 30_000, async response => {
-    let result: T & { error?: string; validationError?: string; code?: string };
+    let result: T & { error?: string; validationError?: string; code?: string; recovery?: Record<string, unknown> };
     try { result = await response.json(); } catch (failure) { if (failure instanceof SyntaxError) throw new Error('The app service is unavailable. Check your Splunk session and try again.'); throw failure; }
     return { response, result };
   });
   if (!response.ok || result.error) {
-    const failure: Error & { validationError?: string; code?: string } = new Error(result.error || `The app service returned HTTP ${response.status}.`);
+    const failure: ProviderFailure = new Error(result.error || `The app service returned HTTP ${response.status}.`);
     failure.code = result.code;
     if (typeof result.validationError === 'string') failure.validationError = result.validationError;
+    const evidence = result.recovery;
+    if (evidence && ['modelCalls', 'queryChecks', 'seconds'].every(key => typeof evidence[key] === 'number' && Number.isFinite(evidence[key]) && Number(evidence[key]) >= 0)) {
+      failure.recovery = { modelCalls: Number(evidence.modelCalls), queryChecks: Number(evidence.queryChecks), seconds: Number(evidence.seconds) };
+    }
     throw failure;
   }
   return result;

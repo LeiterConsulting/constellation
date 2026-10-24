@@ -47,6 +47,9 @@ class AuthoringBudgetTests(unittest.TestCase):
         budget=AuthoringBudget({'provider':'aitk'},{'request':'Build two pages','canvasState':'blank','history':[],'dataProfile':PROFILE})
         actions=[{'op':'set','path':'/description','value':'"More will be added in the next stage."'}, {'op':'set','path':'/title','value':'"A useful dashboard"'}]
         self.assertEqual(budget.actions(actions,blank()['definition']),actions[1:])
+        metadata={'op':'dashboard','title':'A useful dashboard','description':'More will be added in the next stage.'}
+        self.assertEqual(budget.actions([metadata],blank()['definition']),[{'op':'set','path':'/title','value':'"A useful dashboard"'}])
+        with self.assertRaises(ProviderError):budget.actions([dict(metadata,unknown='reject')],blank()['definition'])
     def test_reference_only_creation_keeps_full_native_schema_without_a_real_profile(self):
         budget=AuthoringBudget({'provider':'aitk'},{'request':'Build two pages from this illustrative reference','canvasState':'blank','history':[]})
         self.assertEqual(budget.phase,'complete')

@@ -3,6 +3,8 @@ import copy
 import json
 import re
 from provider_service import ProviderError
+from search_scope import scoped_suffix
+from token_service import without_entity_equality, default_token_values
 
 SEARCH_ACTION = {'type': 'object', 'properties': {
     'op': {'type': 'string', 'enum': ['search']},
@@ -14,6 +16,15 @@ TOKEN_ACTION = {'type': 'object', 'properties': {
     'op': {'type': 'string', 'enum': ['token']}, 'name': {'type': 'string'},
     'value': {'type': 'string', 'description': 'A native default token value, for example * for an all-entities search filter.'}},
     'required': ['op', 'name', 'value'], 'additionalProperties': False}
+FILTER_ACTION = {'type': 'object', 'properties': {
+    'op': {'type': 'string', 'enum': ['filter']}, 'sourceId': {'type': 'string'},
+    'field': {'type': 'string', 'description': 'Verified source field to filter before aggregation.'},
+    'token': {'type': 'string', 'description': 'Native token name, without dollar signs or filter syntax. Define its default with op:token.'}},
+    'required': ['op', 'sourceId', 'field', 'token'], 'additionalProperties': False}
+DASHBOARD_ACTION = {'type': 'object', 'properties': {
+    'op': {'type': 'string', 'enum': ['dashboard']},
+    'title': {'type': 'string'}, 'description': {'type': 'string'}},
+    'required': ['op', 'title', 'description'], 'additionalProperties': False}
 CHART_ACTION = {'type': 'object', 'properties': {
     'op': {'type': 'string', 'enum': ['chart']}, 'id': {'type': 'string'},
     'chartType': {'type': 'string', 'enum': list(CHART_TYPES)},
@@ -64,6 +75,67 @@ def compile_search(action, document, profile):
     options['query'] = profile['baseQuery'].strip() + ' ' + pipeline.strip()
     options.setdefault('queryParameters', {}).update(earliest=earliest, latest='now')
     return key, source
+
+
+def compile_filter(action, document, profile):
+    if set(action) != set(FILTER_ACTION['required']) or not profile:
+        raise ProviderError('A typed filter needs sourceId, field, token and an inspected data profile.')
+    source_id, token = identifier(action['sourceId']), identifier(action['token'])
+    if not re.fullmatch(r'[A-Za-z_][A-Za-z0-9_]{0,149}', token):
+        raise ProviderError('Use a plain native token name without punctuation or dollar signs.')
+    field = action['field']
+    if not isinstance(field, str) or not re.fullmatch(r'[A-Za-z_][A-Za-z0-9_.]*', field) or field not in {item['name'] for item in profile['fields']}:
+        raise ProviderError('A typed filter needs an exact verified source field with a simple field name.')
+    source = document.get('dataSources', {}).get(source_id, {})
+    if source.get('type') != 'ds.search' or profile['scope'].get('language', 'spl') != 'spl':
+        raise ProviderError('Typed entity filters currently support scoped SPL ds.search sources. Preserve SPL2/chain semantics with targeted native query edits.')
+    suffix = scoped_suffix(source.get('options', {}).get('query', ''), profile)
+    if suffix is None or (suffix.strip() and not suffix.lstrip().startswith('|')):
+        raise ProviderError('The filtered source must preserve the inspected baseQuery before its pipeline.')
+    suffix = without_entity_equality(suffix, field, token)
+    clause = '| search ' + field + '=$' + token + '|s$'
+    query = profile['baseQuery'].strip() + ' ' + clause + (' ' + suffix.strip() if suffix.strip() else '')
+    if suffix.strip() == clause or suffix.strip().startswith(clause + ' |'): query = source['options']['query']
+    return {'op': 'set', 'path': '/dataSources/' + source_id.replace('~', '~0').replace('/', '~1') + '/options/query', 'value': json.dumps(query)}
+
+
+def normalize_row_filters(document, previous, profile):
+    """Repair exact new row-filter syntax from verified native intent, not prose."""
+    if not profile or profile['scope'].get('language', 'spl') != 'spl': return []
+    defaults = default_token_values(document)
+    verified = {item['name'] for item in profile.get('fields', [])}
+    pages = document['layout'].get('layoutDefinitions', {})
+    changes, handled = [], set()
+    for table in document['visualizations'].values():
+        if table.get('type') != 'splunk.table': continue
+        handlers = table.get('eventHandlers', [])
+        for handler in handlers:
+            if handler.get('type') != 'drilldown.setToken': continue
+            fields = handler.get('options', {}).get('fields', [])
+            targets = [h.get('options', {}).get('tabId') for h in handlers if h.get('type') == 'drilldown.switchToTab' and h.get('options', {}).get('fields', []) == fields]
+            sources = {source for target in targets for entry in pages.get(target, {}).get('structure', [])
+                       for source in document['visualizations'].get(entry.get('item'), {}).get('dataSources', {}).values()}
+            for token in handler.get('options', {}).get('tokens', []):
+                name = token.get('token')
+                if not isinstance(name, str) or defaults.get(name) != '*': continue
+                for field in fields:
+                    if field not in verified or token.get('key') != 'row.' + field + '.value': continue
+                    for source_id in sources:
+                        source = document.get('dataSources', {}).get(source_id, {})
+                        query = source.get('options', {}).get('query', '')
+                        old = previous.get('dataSources', {}).get(source_id, {}).get('options', {}).get('query')
+                        if source.get('type') != 'ds.search' or query == old or source_id in handled: continue
+                        suffix = scoped_suffix(query, profile)
+                        if suffix is None or without_entity_equality(suffix, field, name) == suffix: continue
+                        changes.append(compile_filter({'op':'filter','sourceId':source_id,'field':field,'token':name}, document, profile))
+                        handled.add(source_id)
+    return changes
+
+
+def compile_dashboard(action):
+    if set(action) != set(DASHBOARD_ACTION['required']) or any(not isinstance(action.get(key), str) or len(action[key]) > maximum for key, maximum in (('title', 200), ('description', 2000))) or not action['title'].strip():
+        raise ProviderError('Give the dashboard a concise title and completed description.')
+    return [{'op': 'set', 'path': '/' + key, 'value': json.dumps(action[key])} for key in ('title', 'description')]
 
 
 def compile_chart(action, document):

@@ -26,12 +26,12 @@ class AuthoringBudget:
             request['max_output_tokens'] = 3500
             context['originalGoal'] = context['request']
             context['request'] = 'Build only the first useful chart and its search on the first requested page of originalGoal. Do not build the rest yet. The server will request the remaining work in the next stage.'
-            from authoring_actions import LEGACY_CHANGE, SEARCH_ACTION, CHART_ACTION, PAGE_ACTION
+            from authoring_actions import LEGACY_CHANGE, SEARCH_ACTION, CHART_ACTION, PAGE_ACTION, DASHBOARD_ACTION
             title = copy.deepcopy(LEGACY_CHANGE)
             title['properties']['path']['enum'] = ['/title']
             title['properties']['op']['enum'] = ['set']
             schema = copy.deepcopy(self.schema)
-            schema['properties']['changes']['items'] = {'anyOf': [title, SEARCH_ACTION, CHART_ACTION, PAGE_ACTION]}
+            schema['properties']['changes']['items'] = {'anyOf': [title, DASHBOARD_ACTION, SEARCH_ACTION, CHART_ACTION, PAGE_ACTION]}
             schema['properties']['changes']['maxItems'] = 5
             request['text']['format']['schema'] = schema
         else:
@@ -62,7 +62,13 @@ class AuthoringBudget:
     def actions(self, actions, document):
         """Keep page identity stable when completing this turn's new foundation."""
         if self.phase == 'foundation' and isinstance(actions, list):
-            return [action for action in actions if not isinstance(action, dict) or action.get('path') != '/description']
+            from search_chart_actions import compile_dashboard
+            result = []
+            for action in actions:
+                if isinstance(action, dict) and action.get('op') == 'dashboard':
+                    result.extend(compile_dashboard(action)[:1])
+                elif not isinstance(action, dict) or action.get('path') != '/description': result.append(action)
+            return result
         if not self.creation or not self.stages or not isinstance(actions, list): return actions
         tabs = document.get('layout', {}).get('tabs', {}).get('items', [])
         existing = {tab['layoutId'] for tab in tabs}

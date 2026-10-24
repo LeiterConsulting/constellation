@@ -3,8 +3,9 @@ import json
 import re
 from provider_service import ProviderError
 from search_service import read_only_query, TIME_RANGES
-from token_service import resolve_query_tokens
+from token_service import resolve_query_tokens, validate_wildcard_filters
 from search_scope import scoped_suffix
+from population_guard import validate_populations
 
 
 def spl_literal(value):
@@ -12,10 +13,11 @@ def spl_literal(value):
 
 
 class DataService:
-    def __init__(self, runtime, recovery=None, document=None, tokens=None):
+    def __init__(self, runtime, recovery=None, document=None, tokens=None, independent_populations=False):
         self.runtime, self.recovery = runtime, recovery
         self.document, self.tokens = document or {}, tokens
         self.receipts = []
+        self.independent_populations = independent_populations
 
     def discovery(self):
         catalog = self.runtime.datasets()
@@ -151,6 +153,9 @@ class DataService:
         problems = []
         for identifier, source in pending:
             try:
+                if source.get('options', {}).get('query') != previous.get('dataSources', {}).get(identifier, {}).get('options', {}).get('query'):
+                    validate_wildcard_filters(source.get('options', {}).get('query', ''), document)
+                    if self.independent_populations: validate_populations(source.get('options', {}).get('query', ''), profile)
                 language, result = self.inspect_source(document, identifier, source, profile)
             except ProviderError as error:
                 if error.code == 'recovery_budget': raise

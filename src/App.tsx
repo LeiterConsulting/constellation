@@ -15,7 +15,7 @@ import SplunkThemeProvider from '@splunk/themes/SplunkThemeProvider';
 import type { DashboardContextProviderProps } from '@splunk/dashboard-context';
 import Preview from './Preview';
 import { applyEdit, cleanDashboardUrl, createBlank, createStarter, validateDefinition, fromStudioXml, type Edit, type Revision, type StudioDefinition } from './document';
-import { isSplunk, providerRequest, providerLabel, type ProviderSettings } from './api';
+import { isSplunk, providerRequest, providerLabel, failureActivity, type ProviderSettings } from './api';
 import Settings from './Settings';
 import { applyStudioChanges, readAttachment, type AgentReply, type Attachment, type Environment } from './agent';
 import { useSearchPreview } from './useSearchPreview';
@@ -256,7 +256,7 @@ export default function App({ initialColorScheme }: { initialColorScheme: 'light
         if (result.dataContext && result.changes.length && !searches.enabled) searches.run();
       } catch (error) {
         if (!controller.signal.aborted) {
-          if (error instanceof Error && 'validationError' in error && typeof error.validationError === 'string') setActivity([error.validationError]);
+          const details = failureActivity(error); if (details.length) setActivity(details);
           setProposals({ key: promptContextKey(base.number, base.definition, selected, activeTab, scopeOverride || dataContext), items: [{ label: 'Retry your request', prompt: text, reason: 'Retry the original goal against the current verified data. Your draft is retained.', kind: 'refine' }] });
           const message = error instanceof Error ? error.message : 'The request failed. Your draft is unchanged.'; setStatus(message); addMessage(message); }
       } finally { if (generation.current === controller) { generation.current = null; setThinking(false); } }

@@ -41,6 +41,15 @@ class HandlerBoundaryTests(unittest.TestCase):
             result=self.request()
         self.assertEqual(result['status'],500)
         self.assertNotIn('fixture-secret-value',json.dumps(result))
+    def test_authoring_failure_returns_numerical_recovery_evidence(self):
+        error=handler.ProviderError('Previous dashboard preserved.',422,'studio_validation')
+        error.validation_error='Use the existing chart ID.'
+        error.recovery={'modelCalls':3,'queryChecks':2,'maximumModelCalls':3,'maximumQueryChecks':16,'seconds':12.5}
+        with patch.object(handler.AgentService,'assist',side_effect=error):
+            result=self.request(method='POST',path_info='author',payload='{}')
+        self.assertEqual(result['status'],422)
+        self.assertEqual(result['payload']['recovery'],error.recovery)
+        self.assertEqual(result['headers']['Cache-Control'],'no-store')
     def test_platform_missing_credential_is_unconfigured(self):
         store=handler.CredentialStore('fixture-user','fixture-session')
         with patch.object(handler.splunk.rest,'simpleRequest',side_effect=RESTException(404),create=True):

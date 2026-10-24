@@ -72,20 +72,29 @@ def validate_document(document):
         layouts = {'legacy': document['layout']}
     if not isinstance(layouts, dict) or not layouts or len(layouts) > 30:
         raise ProviderError('Provide between 1 and 30 dashboard layouts.')
-    for layout in layouts.values():
+    available_items = set(visualizations) | set(inputs)
+    missing_items = []
+    for layout_id, layout in layouts.items():
         if not isinstance(layout, dict) or layout.get('type') not in ('absolute', 'grid'):
             raise ProviderError('Use an absolute or grid Studio layout.')
         structure = layout.get('structure', [])
         if not isinstance(structure, list):
             raise ProviderError('A layout structure must be a list.')
         for item in structure:
-            if not isinstance(item, dict) or not isinstance(item.get('item'), str) or item['item'] not in {**visualizations, **inputs}:
-                raise ProviderError('A layout refers to a missing tile or input.')
+            if not isinstance(item, dict) or not isinstance(item.get('item'), str):
+                raise ProviderError('Each layout item needs an existing tile or input ID in item.')
+            if item['item'] not in available_items:
+                missing_items.append(str(layout_id)[:150] + ': ' + item['item'][:150])
             if not isinstance(item.get('position', {}), dict):
                 raise ProviderError('A tile position must be an object.')
             for axis, size in item.get('position', {}).items():
                 if axis in ('x', 'y', 'w', 'h') and (type(size) not in (int, float) or not math.isfinite(size) or size < 0 or size > 20000 or (axis in ('w', 'h') and size == 0)):
                     raise ProviderError('A tile position is outside the supported canvas.')
+    if missing_items:
+        raise ProviderError('Layouts reference missing tile/input IDs: ' + '; '.join(missing_items)[:1000] +
+                            '. Available visualization IDs: ' + ', '.join(str(key)[:150] for key in visualizations)[:700] +
+                            '. Available input IDs: ' + ', '.join(str(key)[:150] for key in inputs)[:400] +
+                            '. Use these exact IDs; create any requested missing element in the same proposal before placing it.')
     tabs = document['layout'].get('tabs', {})
     if not isinstance(tabs, dict) or not isinstance(tabs.get('items', []), list):
         raise ProviderError('Dashboard tabs must contain a list of items.')

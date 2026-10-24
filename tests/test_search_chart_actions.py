@@ -16,6 +16,70 @@ def page():
     return {'op':'page','layoutId':'layout_main','label':'Overview','purpose':'Understand activity','moveItems':False,'width':1200,'height':600,'items':[{'id':'trend','kind':'block','x':20,'y':20,'w':1160,'h':400}]}
 
 class SearchChartActionTests(unittest.TestCase):
+    def test_raw_native_binding_text_is_encoded_and_still_checked_against_actual_fields(self):
+        doc=apply_changes(blank()['definition'],compile_actions(blank()['definition'],[{'op':'search','id':'events','pipeline':'| stats count'},chart('splunk.table','',['count']),page()],PROFILE))
+        raw={'op':'set','path':'/visualizations/trend/options/table','value':'> primary | frameBySeriesNames("count")'}
+        title={'op':'set','path':'/visualizations/trend/title','value':'Event count'}
+        provider=Provider([reply([raw,title])]);runtime=Runtime()
+        result=AgentService(provider,runtime).assist({'prompt':'Polish only this selected table','revision':1,'definition':doc,'dataContext':blank()['dataContext'],'selected':'trend'})
+        changed=apply_changes(doc,result['changes'])
+        self.assertEqual(result['recovery']['modelCalls'],1)
+        self.assertEqual(changed['visualizations']['trend']['options']['table'],raw['value'])
+        self.assertEqual(changed['visualizations']['trend']['title'],'Event count')
+        self.assertEqual(changed['dataSources'],doc['dataSources'])
+        # JSON containers and malformed quoted strings are never treated as raw DOS.
+        for value in ('"unfinished', '{unfinished'):
+            with self.assertRaises(ProviderError):compile_actions(doc,[dict(raw,value=value)],PROFILE)
+        bad=Provider([reply([dict(raw,value='> primary | frameBySeriesNames("missing")')])]*3)
+        with self.assertRaises(ProviderError):AgentService(bad,Runtime()).assist({'prompt':'Polish only this table','revision':1,'definition':doc,'dataContext':blank()['dataContext'],'selected':'trend'})
+    def test_new_row_filter_repair_requires_verified_native_intent_and_retains_other_fixes(self):
+        from search_chart_actions import normalize_row_filters
+        profile=dict(PROFILE,fields=[{'name':'device_name'}])
+        doc=blank()['definition'];doc['defaults']={'tokens':{'default':{'device':{'value':'*'}}}}
+        doc['layout']={'layoutDefinitions':{'layout_main':{'type':'absolute','structure':[]}},'tabs':{'items':[{'label':'Overview','layoutId':'layout_main'}]}}
+        doc['visualizations']={'devices':{'type':'splunk.table','eventHandlers':[
+            {'type':'drilldown.setToken','options':{'fields':['device_name'],'tokens':[{'token':'device','key':'row.device_name.value'}]}},
+            {'type':'drilldown.switchToTab','options':{'fields':['device_name'],'tabId':'detail'}}]},
+            'trend':{'type':'splunk.line','dataSources':{'primary':'events'}}}
+        doc['layout']['layoutDefinitions']['detail']={'type':'absolute','structure':[{'item':'trend'}]}
+        doc['layout']['tabs']['items'].append({'label':'Detail','layoutId':'detail'})
+        doc['dataSources']={'events':{'type':'ds.search','future':'keep','options':{'query':'search index="fixture_index" | where device_name=$device|s$ AND value<=150 | stats count() AS reading_count'}}}
+        before=copy.deepcopy(doc)
+        result=apply_changes(doc,compile_actions(doc,[{'op':'set','path':'/description','value':'"Finished"'}],profile))
+        # Untouched imported queries are preserved, including their old mistakes.
+        self.assertEqual(result['dataSources'],doc['dataSources'])
+        original=copy.deepcopy(doc);original['dataSources']['events']['options']['query']='search index="fixture_index" | stats count'
+        result=apply_changes(original,compile_actions(original,[{'op':'set','path':'/dataSources/events/options/query','value':json.dumps(doc['dataSources']['events']['options']['query'])}],profile))
+        self.assertEqual(result['dataSources']['events']['options']['query'],'search index="fixture_index" | search device_name=$device|s$ | where value<=150 | stats count AS reading_count')
+        self.assertEqual(result['dataSources']['events']['future'],'keep')
+        self.assertEqual(result['visualizations'],original['visualizations']);self.assertEqual(doc,before)
+        self.assertEqual(normalize_row_filters(doc,{},dict(profile,fields=[])),[])
+        no_link=copy.deepcopy(doc);no_link['visualizations']['devices']['eventHandlers']=[]
+        self.assertEqual(normalize_row_filters(no_link,{},profile),[])
+        self.assertEqual(normalize_row_filters(doc,doc,profile),[])
+    def test_typed_filter_builds_safe_preaggregation_spl_and_preserves_native_work(self):
+        from token_service import resolve_query_tokens
+        profile=dict(PROFILE,fields=[{'name':'device_name'},{'name':'temperature_f'}])
+        original=blank()['definition']
+        original['dataSources']={'untouched':{'type':'ds.search','options':{'query':'search index=other | stats count'}}}
+        original['future']={'keep':True};before=copy.deepcopy(original)
+        actions=[{'op':'search','id':'events','pipeline':'| where temperature_f<=150 | stats avg(temperature_f) AS temperature'},
+                 {'op':'token','name':'device','value':'*'}, {'op':'filter','sourceId':'events','field':'device_name','token':'device'},
+                 {'op':'dashboard','title':'Sensor health','description':'A completed sensor view.'}]
+        result=apply_changes(original,compile_actions(original,actions,profile))
+        query=result['dataSources']['events']['options']['query']
+        self.assertEqual(query,'search index="fixture_index" | search device_name=$device|s$ | where temperature_f<=150 | stats avg(temperature_f) AS temperature')
+        self.assertIn('device_name="*"',resolve_query_tokens(query,result))
+        self.assertIn('device_name="fixture_A"',resolve_query_tokens(query,result,{'default':{'device':'fixture_A'}}))
+        again=apply_changes(result,compile_actions(result,[actions[2]],profile))
+        self.assertEqual(again,result)
+        self.assertEqual(result['dataSources']['untouched'],original['dataSources']['untouched'])
+        self.assertEqual(result['future'],{'keep':True});self.assertEqual(original,before)
+        for change in ({'field':'invented'},{'field':'device_name | delete'},{'token':'device|s$'},{'sourceId':'untouched'}):
+            with self.subTest(change=change),self.assertRaises(ProviderError):
+                compile_actions(result,[dict(actions[2],**change)],profile)
+        with self.assertRaisesRegex(ProviderError,'SPL2/chain'):
+            compile_actions(result,[actions[2]],dict(profile,scope=dict(profile['scope'],language='spl2')))
     def test_real_authoring_journey_compiles_source_bindings_and_scope_without_encoded_objects(self):
         class TimeRuntime(Runtime):
             def preview(self, body):

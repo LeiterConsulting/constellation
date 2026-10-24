@@ -1,6 +1,6 @@
 # Studio authoring and runtime support
 
-This is the working support contract for the 0.10.0 development slice. Broad document authoring is implemented; complete native parity is not yet qualified. The preview uses the embedded Splunk Dashboard Framework and preserves the original Studio definition for export and native save.
+This is the working support contract for the 0.11.2 development slice. Broad document authoring is implemented; complete native parity is not yet qualified. The preview uses the embedded Splunk Dashboard Framework and preserves the original Studio definition for export and native save.
 
 | Area | Current behavior | Qualification / boundary |
 | --- | --- | --- |
@@ -64,3 +64,9 @@ Native references: [field-level table drilldowns](https://help.splunk.com/en/spl
 ## Model-aware creation (0.10)
 
 Scoped search, chart and token actions compile to ordinary native Studio configuration. Actual output-field validation still applies. New real-data multi-page Ollama/AITK creation uses two internal stages and the existing recovery budget; no stage reaches the accepted draft on failure. Ollama capacity metadata bounds the requested context/output allocation. Conservative size estimates can trim rolling history while retaining the durable brief and definition. Settings exposes known/unknown capacities, small-test scope and allowlisted usage. A passing connection test does not establish full creation reliability; see [validation](validation.md) for tested models and budgets.
+
+## Focused editing and analytical checks (0.11)
+
+Dashboard text and verified SPL entity filters have typed builders. Selected chart/input edits use compact guidance with the same validators. Exact raw native text/binding strings can be encoded on known paths before output-field validation; malformed containers/quoted JSON remain errors. Native table-row intent can repair an exact new entity-equality filter, retaining other AND conditions. Complex/OR expressions and unknown relationships are not silently rewritten.
+
+An explicit independent-measurement request enables a conservative shared-aggregate population guard for changed SPL. It catches a numeric measurement filter placed before another measurement's aggregate; conditional aggregation retains the other population. It does not prove general business semantics, cover all derived/reverse/complex predicates or extend that proof to SPL2. Existing query scopes and untouched imported sources remain preserved. See the [qualification protocol](provider-qualification.md) and recorded failures before deciding on broader support.

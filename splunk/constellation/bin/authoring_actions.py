@@ -8,6 +8,7 @@ from studio_contract import apply_changes
 from geometry_normalization import normalize_structure, fit_button_labels
 from input_normalization import normalize_button_actions
 from search_chart_actions import SEARCH_ACTION, CHART_ACTION, TOKEN_ACTION, compile_search, compile_chart, compile_token, normalize_field_bindings, normalize_event_counts
+from search_chart_actions import FILTER_ACTION, DASHBOARD_ACTION, compile_filter, compile_dashboard, normalize_row_filters
 
 LEGACY_CHANGE = {'type': 'object', 'properties': {
     'op': {'type': 'string', 'enum': ['set', 'remove']},
@@ -33,7 +34,7 @@ PAGE_ACTION['properties']['op'] = {'type': 'string', 'enum': ['page']}
 PAGE_ACTION['properties']['purpose'] = {'type': 'string', 'maxLength': 1200}
 PAGE_ACTION['properties']['moveItems'] = {'type': 'boolean', 'description': 'Move these items off their previous pages when true; otherwise allow reuse.'}
 PAGE_ACTION['required'].extend(['purpose', 'moveItems'])
-ACTION_SCHEMA = {'anyOf': [LEGACY_CHANGE, SEARCH_ACTION, CHART_ACTION, TOKEN_ACTION, LAYOUT_ACTION, PAGE_ACTION, LINK_ACTION, BUTTON_ACTION]}
+ACTION_SCHEMA = {'anyOf': [LEGACY_CHANGE, DASHBOARD_ACTION, SEARCH_ACTION, CHART_ACTION, TOKEN_ACTION, FILTER_ACTION, LAYOUT_ACTION, PAGE_ACTION, LINK_ACTION, BUTTON_ACTION]}
 
 
 def validate_chart_placement(document, previous):
@@ -68,9 +69,11 @@ def compile_actions(document, actions, profile=None):
     if not isinstance(actions, list) or len(actions) > 64: raise ProviderError('Use at most 64 authoring actions.')
     layout = copy.deepcopy(document['layout'])
     defaults, token_changes = copy.deepcopy(document.get('defaults', {})), False
-    result, links, buttons, typed = [], [], [], False
+    result, links, buttons, filters, typed = [], [], [], [], False
     for action in actions:
         if not isinstance(action, dict): raise ProviderError('Each authoring action must be an object.')
+        if action.get('op') == 'dashboard': result.extend(compile_dashboard(action)); continue
+        if action.get('op') == 'filter': filters.append(action); continue
         if action.get('op') == 'token':
             compile_token(action, defaults); token_changes = True
             continue
@@ -100,7 +103,11 @@ def compile_actions(document, actions, profile=None):
             path = action.get('path', '')
             query_path = re.fullmatch(r'/dataSources/([^/]+)/options/query', path) if isinstance(path, str) else None
             known_query = query_path and document.get('dataSources', {}).get(query_path[1].replace('~1', '/').replace('~0', '~'), {}).get('type') in ('ds.search', 'ds.spl2', 'ds.chain')
-            if action.get('op') == 'set' and (path in ('/title', '/description') or known_query) and isinstance(action.get('value'), str):
+            chart_path = re.fullmatch(r'/visualizations/([^/]+)/(title|description|options/(?:x|y|y2|category|majorValue|table))', path) if isinstance(path, str) else None
+            known_chart = bool(chart_path and chart_path[1].replace('~1', '/').replace('~0', '~') in document['visualizations'])
+            chart_text = known_chart and chart_path[2] in ('title', 'description')
+            binding_text = known_chart and chart_path[2].startswith('options/') and str(action.get('value', '')).lstrip().startswith('>')
+            if action.get('op') == 'set' and (path in ('/title', '/description') or known_query or chart_text or binding_text) and isinstance(action.get('value'), str):
                 value = action['value']
                 try: json.loads(value)
                 except ValueError:
@@ -160,9 +167,28 @@ def compile_actions(document, actions, profile=None):
     if typed:
         if any(str(action.get('path', '')).split('/')[1:2] == ['layout'] for action in result):
             raise ProviderError('Use typed layout actions or native /layout edits in a batch, not both.')
+        # A typed button owns its creation AND placement. Some models also list
+        # the same new input in page.items. Defer that redundant placeholder so
+        # the intermediate layout is valid before compile_button creates it.
+        # Only exact, same-page button actions qualify; unknown references still
+        # fail and unrelated or imported placements are never removed.
+        for button in buttons:
+            identifier, page_id = button.get('id'), button.get('pageId')
+            if not isinstance(identifier, str) or not isinstance(page_id, str): continue
+            if identifier in document.get('inputs', {}) or identifier in document['visualizations']: continue
+            for key, page in layout.get('layoutDefinitions', {}).items():
+                if not any(item.get('item') == identifier for item in page.get('structure', [])): continue
+                if key != page_id:
+                    raise ProviderError('Button ' + identifier[:150] + ' is listed on page ' + str(key)[:150] +
+                                        ' but its button action places it on ' + page_id[:150] + '. Use one consistent placement pageId.')
+                page['structure'] = [item for item in page['structure'] if item.get('item') != identifier]
         result.append({'op': 'set', 'path': '/layout', 'value': json.dumps(layout)})
-    if links or buttons:
+    if links or buttons or filters:
         candidate = apply_changes(document, result)
+        for action in filters:
+            change = compile_filter(action, candidate, profile)
+            result.append(change)
+            candidate = apply_changes(candidate, [change])
         for action in buttons:
             changes = compile_button(candidate, action)
             result.extend(changes)
@@ -172,10 +198,11 @@ def compile_actions(document, actions, profile=None):
             result.append(change)
             candidate = apply_changes(candidate, [change])
     candidate = apply_changes(document, result)
-    bindings = normalize_field_bindings(candidate, document, profile) + normalize_event_counts(candidate, document, profile)
-    if bindings:
-        result.extend(bindings)
-        candidate = apply_changes(candidate, bindings)
+    for normalize in (normalize_field_bindings, normalize_event_counts, normalize_row_filters):
+        bindings = normalize(candidate, document, profile)
+        if bindings:
+            result.extend(bindings)
+            candidate = apply_changes(candidate, bindings)
     button_changes = normalize_button_actions(candidate, document)
     if button_changes:
         result.extend(button_changes)

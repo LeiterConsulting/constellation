@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createBlank, fromStudioXml } from './document';
-import { listDashboards, listDestinationApps, providerRequest, saveCopy } from './api';
+import { failureActivity, listDashboards, listDestinationApps, providerRequest, saveCopy } from './api';
 
 vi.mock('@splunk/splunk-utils/url', () => ({ createRESTURL: (endpoint: string, { app, owner }: { app: string; owner: string }) => `https://example.test/servicesNS/${owner}/${app}/${endpoint}`, createURL: (path: string) => `https://example.test/${path}` }));
 vi.mock('@splunk/splunk-utils/fetch', () => ({ createFetchInit: (init: RequestInit) => init }));
@@ -14,6 +14,14 @@ const install = (handler: (url: string, init?: RequestInit) => Response) => {
 };
 afterEach(() => { vi.unstubAllGlobals(); vi.clearAllMocks(); });
 describe('native dashboard handoff', () => {
+  it('keeps only numerical recovery details in the existing failure activity', async () => {
+    install(() => new Response(JSON.stringify({ error: 'Previous dashboard preserved.', validationError: 'Use the existing chart ID.', recovery: { modelCalls: 3, queryChecks: 2, seconds: 12.5, privateDetail: 'fixture-private' } }), { status: 422 }));
+    const failure = await providerRequest('author', {}).catch(error => error);
+    expect(failureActivity(failure)).toEqual(['Use the existing chart ID.', '3 model requests · 2 search checks · 13 seconds. Previous dashboard preserved.']);
+    expect(JSON.stringify(failure)).not.toContain('fixture-private');
+    install(() => new Response(JSON.stringify({ error: 'Stopped.', recovery: { modelCalls: 'fixture-private', queryChecks: 2, seconds: 12 } }), { status: 422 }));
+    expect(failureActivity(await providerRequest('author', {}).catch(error => error))).toEqual([]);
+  });
   it('creates and reads back in the selected app under the current owner, preserving the definition', async () => {
     const definition = { ...createBlank(), title: 'Handoff', futureProperty: { retained: true } };
     vi.mocked(fromStudioXml).mockReturnValue(definition);
