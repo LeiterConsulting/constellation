@@ -13,6 +13,7 @@ from scope_intent import inferred_range
 from agent_feedback import validate_data_claims, presentation_message
 from authoring_intent import validate_page_intent
 from recovery_service import RecoverySession, MAX_MODEL_CALLS
+from dashboard_brief import authoring_brief
 from page_service import validate_purposes, proposed_purposes, focus_context
 
 SCHEMA = {'type': 'object', 'properties': {
@@ -29,6 +30,11 @@ On recoveryFeedback, use the fresh field profile, successful search receipts, fa
 source and validation error to correct the SAME user goal. Do not ask them to rephrase
 because an edit failed. Reuse successful queries and stable IDs, keep the requested
 units/exclusions, and change only the broken part. Never invent substitute data.
+dashboardBrief retains the user's purpose and explicit requirements across sessions.
+Use its units, exclusions, audience and constraints even when absent from recent history.
+The current request can revise requirements explicitly; never silently drop them.
+The dataProfile and pagePurposes supply verified scope and page intent.
+A search receipt marked partial is execution evidence, not proof of complete counts.
 focus identifies the exact visualization, input, page or whole dashboard the user
 selected. Resolve pronouns against this focus and preserve unrelated elements.
 pagePurposes is draft-only metadata, not a native Studio property. For page creation
@@ -44,6 +50,9 @@ a placed input.button with a switchToTab action. For a MOVE, use op:page with
 moveItems:true; copying the chart to another page leaves the request incomplete.
 Use only typed page/layout actions in such a batch; never mix them with /layout edits.
 For native navigation from an EXISTING element use op:link with sourceId,pageId,targetId,field,token.
+For op:link, pageId is the DESTINATION layout ID; sourceId identifies the origin.
+For a table on Overview opening Device details, pageId must be the Device details
+layout ID. For op:button, pageId places the button and targetPageId is its destination.
 targetId is optional (empty string); if nonempty it must be placed on that page.
 field/token are empty for direct button/chart navigation. For table row navigation
 give a verified field and a destination token; the compiler emits field-scoped native
@@ -240,6 +249,7 @@ class AgentService:
         if not isinstance(prompt, str) or not 1 <= len(prompt.strip()) <= 8000 or type(revision) is not int or revision < 0:
             raise ProviderError('Provide a prompt and a valid dashboard revision.')
         validate_document(document)
+        brief = authoring_brief(body)
         saved = self.provider.configured()
         # This guard runs before discovery and before any provider request.
         attachments = attachment_parts(body.get('attachments', []), saved['model'], self.provider.capabilities(saved))
@@ -281,7 +291,7 @@ class AgentService:
                    'canvasState': 'blank' if not document['visualizations'] and not document.get('dataSources') else 'dashboard',
                    'environment': environment, 'nativeFeatures': feature_contract(), 'catalog': catalog, 'history': safe_history,
                    'selected': str(body.get('selected', ''))[:200], 'activeTab': str(body.get('activeTab', ''))[:200],
-                   'focus': focus, 'pagePurposes': purposes}
+                   'focus': focus, 'pagePurposes': purposes, 'dashboardBrief': brief}
         if profile: context['dataProfile'] = profile
         guidance = retrieve_guidance(prompt, document, environment, real_data=bool(profile))
         context['retrievedGuidance'] = guidance
@@ -368,4 +378,4 @@ class AgentService:
                 'knowledgeSources': [{key: item[key] for key in ('id', 'title', 'source')} for item in guidance],
                 'validationNotes': validation_notes,
                 'recovery': recovery.evidence(), 'pagePurposes': next_purposes,
-                'model': saved['model']}
+                'model': saved['model'], 'brief': brief}

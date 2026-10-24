@@ -9,9 +9,11 @@ Constellation is a working development preview. Checked-in code and selected liv
 - Expand modular, versioned guidance and evaluate semantic retrieval within the Splunk app boundary.
 - Expand native visualization/option, input, token, drilldown, refresh and search-source coverage through versioned fixtures.
 - Improve canvas manipulation, responsive layouts, keyboard interaction and contrast/reflow qualification.
-- Qualify the complete real-data multi-page journey independently through each supported provider.
+- Qualify the complete real-data multi-page journey independently through each supported provider. Extend typed source builders to reduce repeated provider-generated scope/format errors, using the same deterministic search boundary.
 - Add additional provider adapters and genuine progress/token streaming through supported Splunk transport paths.
 - Reduce the renderer bundle and test performance at realistic document/data sizes.
+
+The current reliability milestone is recorded in [the goal brief](reliability-goal.md). Before calling the authoring experience reliable for a broader audience, run unaided user trials against representative datasets, measure task completion, recovery rate, latency, rewording and undo/restore use. A target such as 90 percent completion needs measured evidence from those trials.
 
 ## Before public release
 

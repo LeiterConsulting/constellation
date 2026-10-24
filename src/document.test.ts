@@ -44,10 +44,21 @@ describe('Studio document boundaries', () => {
     definition.visualizations.viz_trend.eventHandlers = [{ type: 'drilldown.customUrl', options: { url: 'https://example.com' } }];
     const preview = previewDefinition(definition);
     expect(preview.dataSources!.ds_external.type).toBe('ds.test');
-    expect(preview.dataSources!.ds_external.options?.errorLevel).toBe('info');
+    expect(preview.dataSources!.ds_external.options?.error).toBeUndefined();
     expect(definition.dataSources!.ds_external.type).toBe('ds.search');
     expect(preview.visualizations.viz_trend.eventHandlers).toEqual([]);
     expect(definition.visualizations.viz_trend.eventHandlers).toHaveLength(1);
+  });
+  it('shows a waiting panel for missing results without changing the exported chart', () => {
+    const definition = createStarter();
+    definition.dataSources!.ds_external = { type: 'ds.search', options: { query: 'index=main | stats count' } };
+    definition.visualizations.viz_trend.dataSources = { primary: 'ds_external' };
+    const preview = previewDefinition(definition);
+    expect(preview.visualizations.viz_trend.type).toBe('splunk.markdown');
+    expect(preview.visualizations.viz_trend.options?.markdown).toContain('pending');
+    expect(definition.visualizations.viz_trend.type).not.toBe('splunk.markdown');
+    const populated = previewDefinition(definition, { ds_external: { fields: [{ name: 'count' }], columns: [['5']] } });
+    expect(populated.visualizations.viz_trend.type).toBe(definition.visualizations.viz_trend.type);
   });
   it('escapes XML text and safely splits CDATA terminators', () => {
     const definition = { ...createStarter(), title: '<a>&"', description: ']]>' };

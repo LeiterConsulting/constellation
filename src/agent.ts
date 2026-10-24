@@ -1,18 +1,19 @@
 import type { PromptSuggestion } from './prompts';
+import type { DashboardBrief } from './drafts';
 import type { DataScope } from './data';
 import type { TokenState } from '@splunk/dashboard-types';
 import { validateDefinition, type JsonObject, type Revision, type StudioDefinition } from './document';
 
 export interface StudioChange { op: 'set' | 'remove'; path: string; value: string; }
 export interface Attachment { name: string; data: string; }
-export interface AgentReply { revision: number; message: string; changes: StudioChange[]; suggestions: PromptSuggestion[]; repaired: boolean; activity: string[]; validationNotes?: string[]; recovery?: { modelCalls: number; queryChecks: number }; pagePurposes?: Record<string,string>; dataContext?: DataScope | null; searchReceipts?: Array<{ source: string; fields: string[]; rows: number; earliest: string }>; }
+export interface AgentReply { brief?: DashboardBrief; revision: number; message: string; changes: StudioChange[]; suggestions: PromptSuggestion[]; repaired: boolean; activity: string[]; validationNotes?: string[]; recovery?: { modelCalls: number; queryChecks: number }; pagePurposes?: Record<string,string>; dataContext?: DataScope | null; searchReceipts?: Array<{ source: string; fields: string[]; rows: number; earliest: string }>; }
 export interface Environment {
   version: string; studioVersion: string; spl: string;
   spl2: { adhoc: string; modules: string };
   features: Record<string, boolean>; visualizations: string[];
   preview: { rows: number; seconds: number; timeRange: string; externalNavigation: string; customVisualizations: string };
 }
-export interface SearchResult { fields: Array<{ name: string }>; results: Array<Record<string, unknown>>; language: string; bounded: boolean; warning: string; }
+export interface SearchResult { state: 'complete' | 'partial'; evidence: { state: 'complete' | 'partial'; checkedAt: string; reasons: string[]; resultCount: number | null; finalized: boolean; earliest: string; latest: string }; fields: Array<{ name: string }>; results: Array<Record<string, unknown>>; language: string; bounded: boolean; warning: string; }
 export interface PreviewRows { fields: Array<{ name: string }>; columns: unknown[][]; }
 
 const unsafe = new Set(['__proto__', 'constructor', 'prototype']);

@@ -6,6 +6,7 @@ import sys
 import unittest
 from unittest.mock import patch
 from urllib.error import HTTPError
+from urllib.error import URLError
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'splunk/constellation/bin'))
 from provider_service import ProviderService, ProviderError, OpenAIClient
@@ -98,6 +99,19 @@ class ProviderBoundaryTests(unittest.TestCase):
             class BoundaryClient:
                 def call(self, *args, **kwargs): return response
             with self.assertRaises(ProviderError): ProviderService(self.store,BoundaryClient()).test()
+
+    def test_timeout_is_distinct_from_a_connection_or_tls_failure_and_never_retries(self):
+        for failure, status, code in [(TimeoutError('fixture-secret'), 504, 'provider_timeout'),
+                                       (URLError(TimeoutError('fixture-secret')), 504, 'provider_timeout'),
+                                       (URLError('fixture-secret'), 502, 'provider_connection')]:
+            class Opener:
+                def __init__(self): self.calls = 0
+                def open(self, *args, **kwargs): self.calls += 1; raise failure
+            opener = Opener()
+            with patch('provider_service.build_opener', return_value=opener), self.assertRaises(ProviderError) as error:
+                OpenAIClient().call('fixture-secret', 'responses', {'store':False})
+            self.assertEqual(error.exception.status,status); self.assertEqual(error.exception.code,code)
+            self.assertNotIn('fixture-secret',str(error.exception)); self.assertEqual(opener.calls,1)
 
 
 if __name__ == '__main__':

@@ -4,7 +4,7 @@ A conversational canvas for creating and editing **Splunk Dashboard Studio** das
 
 Describe an operational question, choose data available to your Splunk user, and watch a dashboard take shape. Select a chart, input or page to refine it through chat. Start from a blank canvas, an existing Studio definition, or an image/PDF reference when the selected provider supports it.
 
-**Status: 0.7.1 development preview.** This is a new codebase, separate from Splunk Dashboard Generator. It is not a production release or Splunk Cloud certified app. The repository is currently private and is being prepared for a future public release.
+**Status: 0.8.0 development preview.** This is a new codebase, separate from Splunk Dashboard Generator. It is not a production release or Splunk Cloud certified app. The repository is currently private and is being prepared for a future public release.
 
 ## What works today
 
@@ -12,8 +12,8 @@ Describe an operational question, choose data available to your Splunk user, and
 - Real-data creation from accessible indexes/sourcetypes or an existing SPL/SPL2 search; instance-based starter suggestions.
 - Native Studio pages, page purposes, table drilldowns, device/entity tokens and return navigation.
 - Element selection for directed chat edits and contextual suggestions.
-- Private, Splunk-backed drafts with conversations, refresh/reopen, rename, duplicate and recoverable Trash.
-- Atomic validated edits, bounded automatic repair, visible activity, Stop and undo/redo for current-session edits.
+- Private, Splunk-backed drafts with conversations, a persistent dashboard brief, refresh/reopen, rename, duplicate and recoverable Trash.
+- Atomic validated edits, bounded automatic repair, visible activity, Stop, current-session undo/redo and durable dashboard version history.
 - Studio JSON import/export and new private native copies verified by reading their definitions back.
 - OpenAI, Ollama and named Splunk AI Toolkit (AITK) connections behind separate provider adapters.
 - Image/PDF input guarded by the exact selected model's verified capabilities.
@@ -35,13 +35,13 @@ npm run dev -- --port 5178
 
 Open the local URL printed by Vite. Standalone mode demonstrates the canvas and authored example data; provider Settings, live Splunk searches, server-backed drafts and native saves require an installed Splunk app.
 
-The package is written to `artifacts/constellation-0.7.1.tgz`, with its digest in `artifacts/SHA256SUMS`. Build artifacts and dependencies are not committed. See [installation](docs/installation.md) to install the package and configure a provider in the app.
+The package is written to `artifacts/constellation-0.8.0.tgz`, with its digest in `artifacts/SHA256SUMS`. Build artifacts and dependencies are not committed. See [installation](docs/installation.md) to install the package and configure a provider in the app.
 
 ## Compatibility and boundaries
 
 Selected flows have been exercised on Splunk Enterprise **10.2.8** with Studio **1.23.12**, and Enterprise **10.4.4** with Studio **1.26.6**. These are observed test targets, not a guarantee of full feature parity across every Splunk release or deployment topology. The Environment dialog checks the actual instance's versions, permissions and SPL2 execution surface.
 
-Search previews use the current user's permissions and a read-only command subset. They are bounded to a selected 15-minute, 1-hour, 24-hour or 7-day window, at most **200 rows / 5 seconds per query**, and eight sources in the preview. Counts and aggregates may be incomplete. Preserve the distinction between native Studio rendering, bounded preview results and a validated dashboard definition.
+Search previews use the current user's permissions and a read-only command subset. They are bounded to a selected 15-minute, 1-hour, 24-hour or 7-day window, at most **200 rows / 5 seconds per query**, and eight sources in the preview. Tracked jobs label completed queries, partial output, failures and stale snapshots. Counts and aggregates can still be partial; a completed query is not proof of analytical correctness. Preserve the distinction between native Studio rendering, bounded preview results and a validated dashboard definition.
 
 The full multi-page, actual-data create/refine/reopen journey passed using OpenAI. Ollama dashboard edits and AITK text edits have also been exercised. AITK depends on an accessible named connection in each instance; successful setup in one environment does not qualify every instance. The complete multi-page workflow has not yet been qualified through AITK. See [validation](docs/validation.md) and the [support matrix](docs/studio-support.md).
 

@@ -6,7 +6,9 @@ import type { PromptSuggestion } from './prompts';
 import { providerRequest } from './api';
 
 export interface ChatMessage { id: number; user: boolean; text: string; }
+export interface DashboardBrief { purpose: string; requirements: string; }
 export interface DraftSnapshot {
+  brief?: DashboardBrief;
   definition: StudioDefinition; messages: ChatMessage[]; prompt: string; attachments: Attachment[];
   tokens?: DashboardContextProviderProps['initialTokenBinding']; activeTab?: string; selected: string;
   suggestions: PromptSuggestion[] | null; activity: string[]; saved: { name: string; url: string } | null;
@@ -25,7 +27,7 @@ type Writer = (id: string, version: number, state: DraftSnapshot) => Promise<Dra
 export class DraftSync {
   private saved = new Map<string, { version: number; signature: string }>();
   private queues = new Map<string, Promise<DraftRecord>>();
-  constructor(private writer: Writer = (id, version, state) => providerRequest<DraftRecord>('drafts', { action: 'save', id, version, schemaVersion: 2, state })) {}
+  constructor(private writer: Writer = (id, version, state) => providerRequest<DraftRecord>('drafts', { action: 'save', id, version, schemaVersion: 3, state })) {}
   adopt(record: DraftRecord) { this.saved.set(record.id, { version: record.version, signature: JSON.stringify(record.state) }); }
   matches(id: string, state: DraftSnapshot) { return this.saved.get(id)?.signature === JSON.stringify(state); }
   save(id: string, state: DraftSnapshot): Promise<DraftRecord> {

@@ -2,6 +2,7 @@
 import json
 import re
 import ssl
+import socket
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, HTTPSHandler, HTTPRedirectHandler, build_opener
 
@@ -28,7 +29,7 @@ class OpenAIClient:
                           method='POST' if body is not None else 'GET')
         try:
             opener = build_opener(NoRedirect, HTTPSHandler(context=ssl.create_default_context()))
-            with opener.open(request, timeout=45) as response:
+            with opener.open(request, timeout=90 if body is not None else 20) as response:
                 raw = response.read(2_000_001)
                 if len(raw) > 2_000_000:
                     raise ProviderError('The provider response exceeded the allowed size.', 502)
@@ -40,8 +41,14 @@ class OpenAIClient:
                         404: 'The selected model is unavailable for this API operation.',
                         429: 'OpenAI reported a rate or quota limit. Check the provider account before retrying.'}
             raise ProviderError(messages.get(error.code, 'The OpenAI request failed. Retry later.'), 502) from None
-        except (URLError, ssl.SSLError, TimeoutError, OSError):
-            raise ProviderError('The Splunk server could not establish a verified connection to OpenAI.', 502) from None
+        except (TimeoutError, socket.timeout):
+            raise ProviderError('OpenAI did not finish within the request time limit. Your draft is preserved. Retry the same request; the upstream request may still finish.', 504, 'provider_timeout') from None
+        except URLError as error:
+            if isinstance(error.reason, (TimeoutError, socket.timeout)):
+                raise ProviderError('The OpenAI connection timed out. Your draft is preserved; retry the same request.', 504, 'provider_timeout') from None
+            raise ProviderError('The Splunk server could not establish a verified connection to OpenAI.', 502, 'provider_connection') from None
+        except (ssl.SSLError, OSError):
+            raise ProviderError('The Splunk server could not establish a verified connection to OpenAI.', 502, 'provider_connection') from None
         except (ValueError, TypeError):
             raise ProviderError('OpenAI returned an unreadable response.', 502) from None
 

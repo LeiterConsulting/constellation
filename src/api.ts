@@ -7,7 +7,7 @@ export const secureSettingsOrigin = () => window.location.protocol === 'https:' 
 export type ProviderName = 'openai' | 'ollama' | 'aitk';
 export const providerLabel = (provider?: ProviderName) => provider === 'aitk' ? 'Splunk AITK' : provider === 'ollama' ? 'Ollama' : 'OpenAI';
 export interface ProviderSettings { provider: ProviderName; configured: boolean; connection?: string; connections?: Partial<Record<ProviderName, { model?: string; keyConfigured?: boolean; base_url?: string; connection?: string }>>; baseUrl: string; model: string; keyConfigured: boolean; capabilities?: { images: boolean; pdf: boolean; reason: string; source: string }; }
-export async function providerRequest<T>(action: 'settings' | 'models' | 'test' | 'assist' | 'author' | 'environment' | 'datasets' | 'preview' | 'drafts' | 'library' | 'discovery' | 'profile', body?: Record<string, unknown>, signal?: AbortSignal): Promise<T> {
+export async function providerRequest<T>(action: 'settings' | 'models' | 'test' | 'assist' | 'author' | 'environment' | 'datasets' | 'preview' | 'drafts' | 'library' | 'discovery' | 'profile' | 'preview_job', body?: Record<string, unknown>, signal?: AbortSignal): Promise<T> {
   if (!isSplunk()) throw new Error('Open the installed Splunk app to configure a provider.');
   if (action === 'settings' && body?.apiKey && !secureSettingsOrigin()) throw new Error('Open Splunk through HTTPS before saving a provider key.');
   const url = createRESTURL(`constellation/v1/${action}`, { app: 'constellation', owner: '-' });

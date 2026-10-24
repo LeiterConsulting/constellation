@@ -5,6 +5,25 @@ from provider_service import ProviderError
 
 def validate_page_intent(prompt, message, document, previous, focus):
     problems = []
+    # A syntactically valid link can still point back to its source page. Check
+    # explicitly named row-navigation destinations before claiming success.
+    if re.search(r'\b(?:row|device|table)\b', prompt, re.I) and re.search(r'\b(?:open|navigate|drill|link)\b', prompt, re.I):
+        for tab in document.get('layout', {}).get('tabs', {}).get('items', []):
+            label = tab.get('label', '')
+            if not label or not re.search(r'\b(?:open|navigate\s+to|link\s+to|drill\s+(?:down\s+)?(?:to|into))\s+(?:and\s+filter\s+)?(?:the\s+)?' + re.escape(label) + r'(?!\w)', prompt, re.I): continue
+            target = tab['layoutId']
+            linked = []
+            for item in document.get('visualizations', {}).values():
+                if item.get('type') != 'splunk.table': continue
+                handlers = item.get('eventHandlers', [])
+                row_fields = {field for handler in handlers if handler.get('type') == 'drilldown.setToken'
+                              for field in handler.get('options', {}).get('fields', [])
+                              if any(token.get('key') == 'row.' + field + '.value' for token in handler.get('options', {}).get('tokens', []))}
+                linked.extend(handler for handler in handlers if handler.get('type') == 'drilldown.switchToTab'
+                              and handler.get('options', {}).get('tabId') == target
+                              and row_fields.intersection(handler.get('options', {}).get('fields', [])))
+            if not linked:
+                problems.append('The requested row drilldown must open page ' + label[:200] + ' (' + target + '). Use op:link on the overview table with pageId equal to that destination, plus a verified field/token; a link back to its source page is insufficient.')
     if focus.get('kind') == 'page' and re.search(r'\bmove\b', prompt, re.I) and not re.search(r"\b(?:don't|do not|never)\s+move\b", prompt, re.I):
         target = focus['id']
         for identifier, item in previous.get('visualizations', {}).items():

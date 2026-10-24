@@ -186,15 +186,15 @@ class UpgradeContractsTests(unittest.TestCase):
         original=blank(); migrated=migrate_snapshot(original,0)
         self.assertEqual(original,blank()); self.assertEqual(migrated['dataContext'],original['dataContext'])
         self.assertEqual(migrated['pendingRequest'],'')
-        with self.assertRaises(ProviderError): migrate_snapshot(original,3)
+        with self.assertRaises(ProviderError): migrate_snapshot(original,4)
         store=MemoryDrafts(); item=store.operation({'action':'save','id':'a'*32,'version':0,'state':original})
-        store.entries[store.key(item['id'])]['content']['schema_version']='3'
+        store.entries[store.key(item['id'])]['content']['schema_version']='4'
         before=copy.deepcopy(store.entries)
         with self.assertRaises(ProviderError): store.operation({'action':'save','id':item['id'],'version':item['version'],'state':original})
         self.assertEqual(store.entries,before)
-        self.assertEqual(store.listing()['drafts'][0]['schemaVersion'],3)
+        self.assertEqual(store.listing()['drafts'][0]['schemaVersion'],4)
         with self.assertRaises(ProviderError):
-            MemoryDrafts().operation({'action':'save','id':'b'*32,'schemaVersion':3,'version':0,'state':original})
+            MemoryDrafts().operation({'action':'save','id':'b'*32,'schemaVersion':4,'version':0,'state':original})
     def test_version_rules_and_retrieval_are_independent_of_the_provider(self):
         self.assertFalse(feature_profile('10.2.8',[])['networkGraph'])
         self.assertTrue(feature_profile('10.4.4',[])['networkGraph'])

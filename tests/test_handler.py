@@ -123,15 +123,10 @@ class CredentialIsolationTests(unittest.TestCase):
 if __name__ == '__main__': unittest.main()
 
 class PreviewResultLimitTests(unittest.TestCase):
-    def test_native_oneshot_count_matches_the_declared_200_row_budget(self):
-        from search_service import SearchService
-        calls=[]
-        def request(path,**kwargs):
-            calls.append(kwargs);return {},json.dumps({'results':[{'row':str(i)} for i in range(150)],'fields':[{'name':'row'}]})
-        runtime=SearchService('fixture-user','fixture-session')
-        with patch.dict(sys.modules,{'splunk':handler.splunk,'splunk.rest':handler.splunk.rest}), patch.object(handler.splunk.rest,'simpleRequest',side_effect=request,create=True):
-            preview=runtime.preview({'query':'| makeresults count=150 | streamstats count AS row | table row'})
-            runtime.datasets()
+    def test_native_job_results_request_explicit_pagination(self):
+        from test_preview_jobs import JobRuntime
+        runtime=JobRuntime(rows=150)
+        preview=runtime.preview({'query':'| makeresults count=150 | streamstats count AS row | table row'})
         self.assertEqual(len(preview['results']),150)
-        self.assertEqual(calls[0]['postargs']['count'],'200');self.assertEqual(calls[0]['postargs']['max_count'],'200')
-        self.assertEqual(calls[1]['getargs']['count'],'100')
+        results_call=next(call for call in runtime.calls if call[0].endswith('/results'))
+        self.assertEqual(results_call[2]['count'],'201')

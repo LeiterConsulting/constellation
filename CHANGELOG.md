@@ -2,6 +2,18 @@
 
 This repository begins with the 0.7.1 development preview. Version history below summarizes implemented behavior; it is not a record of production releases or certification.
 
+## 0.8.0
+
+- Track short-lived current-user preview jobs, including completion, truncation, resource finalization, cancellation and stale snapshots.
+- Keep a user-editable dashboard brief independent of the rolling conversation, with verified scope and page purposes supplied separately.
+- Retain up to ten material dashboard versions within a 4 MB history budget; restore across refresh/reopen while keeping the current conversation.
+- Migrate older drafts sequentially to schema 3 without rewriting unknown future formats.
+- Simplify secondary controls under More and replace misleading pending-search error panels with a waiting state.
+- Check explicitly named row-drilldown destinations and verify table handler fields against search output.
+- Accept equivalent simple dataset-prefix formatting while rejecting broader search scopes; provide source-specific repair feedback.
+- Distinguish OpenAI timeouts from connection failures, with a bounded 90-second generation wait and no blind transport retry.
+- Add synthetic journey regressions across recovery, focus edits, navigation, draft switching, revision restore and failure preservation.
+
 ## 0.7.1
 
 - Persist the last-opened draft independently from document edits.

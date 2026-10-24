@@ -21,7 +21,7 @@ Paths in the table are relative to `splunk/constellation/bin/` or `src/` as appr
 
 ## Preserve existing work
 
-Draft format 2 stores the native Studio definition and conversation sidecar separately. The migration accepts unversioned snapshots by adding missing session defaults, then upgrades format 1 by adding an empty page-purpose sidecar; it rejects a future schema without writing it. Add future migrations as explicit steps and test the oldest retained format through the full sequence.
+Draft format 3 stores the native Studio definition and conversation sidecar separately. The migration accepts unversioned snapshots by adding missing session defaults, then adds page purposes for format 1 and a user-authored brief for formats before 3; it rejects a future schema without writing it. Add future migrations as explicit steps and test the oldest retained format through the full sequence.
 
 Studio edits are atomic against the supplied document revision. Targeted changes retain unmentioned native properties, stable IDs, pages, data sources and working interactions. Typed absolute-layout actions compile to the stable set/remove contract, avoiding a client protocol migration. Placement checks reject newly introduced collisions between ordinary data charts while retaining unchanged imported overlaps and conditional/decorative layers.
 
@@ -57,3 +57,11 @@ Direct blank-canvas requests infer a single supported rolling time window (15 mi
 Presentation edits reuse preview results through the existing query/language/range cache; new/changed query keys still execute, and explicit Refresh clears the cache. Build reuses the current UI field profile while authoring independently revalidates server-side. Its progress copy distinguishes inspection from dashboard generation. One-shot search pagination requests `count=200` in the POST body, alongside the execution cap, to match its enforced output budget; putting it only in the query string still returns 100 rows on both labs.
 
 Placement checks protect in-canvas inputs from changed chart rectangles. Typed navigation buttons reserve at least 80 pixels of height for Studio's input wrapper, preventing clipped labels. New or repositioned native button rectangles are checked against that same minimum; unchanged imported layouts remain intact. Recovered chat messages omit known compiler mechanics unless the user requests technical details; Activity retains validation feedback.
+
+## 0.8 reliability contracts
+
+`preview_jobs.py` owns lifecycle/completeness independently of query screening in `search_service.py`. Its public start/poll/cancel contract uses expiring session-bound handles, owner/app checks and fixed limits; `previewJobs.ts` releases jobs on completion, failure or abort. Keep partial execution evidence distinct from valid empty results, and never infer completion from a single aggregate row. Exact existing-query scopes remain fixed; `search_scope.py` recognizes only equivalent formatting for simple catalog-selected SPL scopes.
+
+Draft schema 3 adds `brief`. Migrations retain the first available user goal in its original words and add an empty requirements string; absent historical messages cannot be reconstructed. Older clients cannot save the new format. Material revision history is a separate bounded stanza field, written alongside state with the same compare/write check. `draft_history.py` owns retention/projection/restore; `dashboard_brief.py` owns brief validation and conservative requirement capture. Restore keeps current conversation/files, resets transient token/focus/native-save state and creates a recoverable revision of the dashboard being left. Do not downgrade to a schema-2 writer after upgrading user drafts without a tested migration/export strategy.
+
+The regression journey in `tests/test_reliability_journey.py` uses scripted provider responses and synthetic data, exercising real compiler, data guards, recovery and storage. It is repeatable offline evidence, not a live-model success-rate benchmark. Requalify live provider journeys separately.

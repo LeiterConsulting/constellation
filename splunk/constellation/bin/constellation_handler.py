@@ -118,6 +118,7 @@ class ConstellationHandler(PersistentServerConnectionApplication):
                       ('GET','drafts'): lambda: DraftService(session['user'], session['authtoken']).listing(),
                       ('POST','drafts'): lambda: DraftService(session['user'], session['authtoken']).operation(body),
                       ('POST','library'): lambda: DashboardLibrary(DraftService(session['user'], session['authtoken'])).operation(body),
+                      ('POST','preview_job'): lambda: runtime.job(body),
                       ('POST','preview'): lambda: runtime.preview(body)}
             operation = routes.get((method, action))
             if operation is None:

@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { TokenState } from '@splunk/dashboard-types';
-import { providerRequest } from './api';
+import { previewSummary, runPreview } from './previewJobs';
 import { resultRows, searchRequest, type PreviewRows, type SearchResult } from './agent';
 import type { StudioDefinition } from './document';
-import { previewRanges, type PreviewRange } from './data';
+import { type PreviewRange } from './data';
 
 export function useSearchPreview(definition: StudioDefinition, tokens?: TokenState, earliest: PreviewRange = '-15m') {
   const [enabled, setEnabled] = useState(false);
@@ -11,18 +11,21 @@ export function useSearchPreview(definition: StudioDefinition, tokens?: TokenSta
   const [version, setVersion] = useState(0);
   const [status, setStatus] = useState('');
   const [running, setRunning] = useState(false);
+  const [failures, setFailures] = useState<Record<string, string>>({});
+  const [clock, setClock] = useState(Date.now);
+  useEffect(() => { const timer = window.setInterval(() => setClock(Date.now()), 30_000); return () => window.clearInterval(timer); }, []);
   const activeRequest = useRef<AbortController | null>(null);
   const cache = useRef(new Map<string, SearchResult>());
   const run = useCallback(() => { cache.current.clear(); setEnabled(true); setEpoch(value => value + 1); setVersion(value => value + 1); }, []);
-  const reset = useCallback(() => { activeRequest.current?.abort(); activeRequest.current = null; cache.current.clear(); setEnabled(false); setRunning(false); setStatus(''); setVersion(value => value + 1); }, []);
-  const pause = useCallback(() => { activeRequest.current?.abort(); setEnabled(false); setStatus('Search previews paused. Last results remain visible until the document changes.'); }, []);
+  const reset = useCallback(() => { activeRequest.current?.abort(); activeRequest.current = null; cache.current.clear(); setEnabled(false); setRunning(false); setFailures({}); setStatus(''); setVersion(value => value + 1); }, []);
+  const pause = useCallback(() => { activeRequest.current?.abort(); setEnabled(false); setRunning(false); setStatus('Paused · displayed results are stale.'); }, []);
   useEffect(() => {
     if (!enabled) { setRunning(false); return; }
     const controller = new AbortController(); activeRequest.current = controller;
     const sources = Object.entries(definition.dataSources || {}).filter(([, source]) => ['ds.search', 'ds.spl2', 'ds.chain'].includes(source.type));
-    setRunning(true);
+    setRunning(true); setFailures({});
     void (async () => {
-      let completed = 0;
+      const completed: SearchResult[] = [];
       const problems: string[] = [];
       for (const [id] of sources.slice(0, 8)) {
         if (controller.signal.aborted) return;
@@ -30,22 +33,24 @@ export function useSearchPreview(definition: StudioDefinition, tokens?: TokenSta
           const request = searchRequest(definition, id, tokens);
           const key = JSON.stringify([request.key, earliest]);
           if (!cache.current.has(key)) {
-            setStatus(`Running search ${completed + 1} of ${Math.min(sources.length, 8)}…`);
-            const result = await providerRequest<SearchResult>('preview', { query: request.query, language: request.language, earliest }, controller.signal);
+            setStatus(`Running search ${completed.length + 1} of ${Math.min(sources.length, 8)}…`);
+            const result = await runPreview(request.query, request.language, earliest, controller.signal);
             if (controller.signal.aborted) return;
             if (cache.current.size >= 32) cache.current.delete(cache.current.keys().next().value!);
             cache.current.set(key, result);
             setVersion(value => value + 1);
           }
-          completed++;
+          completed.push(cache.current.get(key)!);
         } catch (error) {
           if (controller.signal.aborted) return;
-          problems.push(`${id}: ${error instanceof Error ? error.message : 'The preview search failed.'}`);
+          const message = error instanceof Error ? error.message : 'The preview search failed.';
+          problems.push(`${id}: ${message}`);
+          setFailures(previous => ({ ...previous, [id]: message }));
         }
       }
       if (controller.signal.aborted) return;
       setRunning(false);
-      setStatus(`${completed} search previews ready. ${previewRanges.find(range => range.value === earliest)?.label} · at most 200 rows / 5 seconds per query. Results may be incomplete.${sources.length > 8 ? ' Only the first 8 sources run in this preview.' : ''}${problems.length ? ' ' + problems.join(' ') : ''}`);
+      setStatus(`${previewSummary(completed, problems.length) || 'No runnable searches'} · snapshot${sources.length > 8 ? ' · first 8 sources' : ''}`);
     })();
     return () => controller.abort();
   }, [definition, tokens, enabled, epoch, earliest]);
@@ -60,5 +65,17 @@ export function useSearchPreview(definition: StudioDefinition, tokens?: TokenSta
     }
     return result;
   }, [definition, tokens, version, earliest]);
-  return { run, pause, reset, enabled, running, results, version, status };
+  const evidence = useMemo(() => Object.keys(definition.dataSources || {}).flatMap(id => {
+    try {
+      const request = searchRequest(definition, id, tokens);
+      const cached = cache.current.get(JSON.stringify([request.key, earliest]));
+      const title = Object.values(definition.visualizations).find(viz => viz.dataSources?.primary === id)?.title || id;
+      if (failures[id]) return [{ id, title, state: 'failed', detail: failures[id] }];
+      if (!cached) return [];
+      const stale = !enabled || clock - Date.parse(cached.evidence.checkedAt) > 60_000;
+      return [{ id, title, state: stale ? 'stale' : cached.state, detail: `${cached.results.length} rows · checked ${new Date(cached.evidence.checkedAt).toLocaleTimeString()}. ${cached.warning}${stale ? ' Refresh for current data.' : ''}` }];
+    } catch { return []; }
+  }), [definition, tokens, earliest, version, failures, enabled, clock]);
+  const stale = !running && evidence.some(item => item.state === 'stale');
+  return { run, pause, reset, enabled, running, results, evidence, version, status: stale ? `Stale snapshots · refresh for current data.` : status };
 }

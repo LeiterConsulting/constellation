@@ -89,7 +89,16 @@ export function previewDefinition(definition: StudioDefinition, results: Record<
   }
   // Loading an imported document must never execute its queries or external links.
   for (const [id, source] of Object.entries(preview.dataSources || {})) if (source.type !== 'ds.test') {
-    preview.dataSources![id] = results[id] ? { type: 'ds.test', options: { data: results[id] } } : { type: 'ds.test', options: { data: { fields: [], columns: [] }, error: 'Choose Run searches for a bounded preview.', errorLevel: 'info' } };
+    preview.dataSources![id] = results[id] ? { type: 'ds.test', options: { data: results[id] } } : { type: 'ds.test', options: { data: { fields: [], columns: [] } } };
+  }
+  // Missing search results are a waiting state, not a native source error. Keep
+  // labels/layout visible without a red error or a misleading empty chart.
+  for (const [id, visualization] of Object.entries(preview.visualizations)) {
+    const sourceId = visualization.dataSources?.primary;
+    if (sourceId && definition.dataSources?.[sourceId]?.type !== 'ds.test' && !results[sourceId]) {
+      preview.visualizations[id] = { type: 'splunk.markdown', title: visualization.title,
+        options: { markdown: 'Search results pending.' } };
+    }
   }
   const stripExternalActions = (node: unknown) => {
     if (Array.isArray(node)) { node.forEach(stripExternalActions); return; }

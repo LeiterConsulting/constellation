@@ -2,7 +2,7 @@
 import copy
 from provider_service import ProviderError
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 
 
 def migrate_snapshot(state, version):
@@ -15,4 +15,7 @@ def migrate_snapshot(state, version):
             result.setdefault(name, value)
     if version < 2:
         result.setdefault('pagePurposes', {})
+    if version < 3:
+        from dashboard_brief import initial_brief
+        result.setdefault('brief', initial_brief(result))
     return result

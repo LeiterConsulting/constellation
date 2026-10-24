@@ -178,7 +178,7 @@ Charts must remain understandable without color alone. Include meaningful titles
 
 ## Current implementation and remaining direction
 
-The 0.7.1 development app uses React/TypeScript, Splunk UI Toolkit, the actual Dashboard Framework and bundled Python REST handlers. Private Splunk-backed drafts retain conversations and page purposes. Real-data authoring uses current-user metadata and bounded searches, typed edits and automatic validation repair. OpenAI, Ollama and AITK have separate adapters, with route/model-specific file guards.
+The 0.8.0 development app uses React/TypeScript, Splunk UI Toolkit, the actual Dashboard Framework and bundled Python REST handlers. Private Splunk-backed drafts retain conversations, a user-editable brief, page purposes and bounded material version history. Tracked preview jobs distinguish completion, partial output and stale snapshots. Real-data authoring uses current-user metadata and bounded searches, typed edits and automatic validation repair. OpenAI, Ollama and AITK have separate adapters, with route/model-specific file guards.
 
 The intended experience extends beyond the implemented subset. Verified related-dataset comparisons, semantic retrieval, broader native option/input/source parity, token streaming, scale/accessibility/role qualification and distributed concurrency remain work. The current native-save path creates a new private copy; deliberate in-place updates with richer conflict review remain future direction.
 

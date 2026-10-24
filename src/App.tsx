@@ -1,4 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import Dropdown from '@splunk/react-ui/Dropdown';
+import Menu from '@splunk/react-ui/Menu';
+import DraftDetails from './DraftDetails';
 import Button from '@splunk/react-ui/Button';
 import Link from '@splunk/react-ui/Link';
 import ControlGroup from '@splunk/react-ui/ControlGroup';
@@ -15,7 +18,7 @@ import Settings from './Settings';
 import { applyStudioChanges, readAttachment, type AgentReply, type Attachment, type Environment } from './agent';
 import { useSearchPreview } from './useSearchPreview';
 import { instanceIdeas, contextualPrompts, promptContextKey, type PromptSuggestion } from './prompts';
-import { newDraftId, readDraft, openDraft, type ChatMessage as Chat, type DraftList, type DraftRecord, type DraftSnapshot } from './drafts';
+import { newDraftId, readDraft, openDraft, type ChatMessage as Chat, type DraftList, type DraftRecord, type DraftSnapshot, type DashboardBrief } from './drafts';
 import { useDraftPersistence } from './useDraftPersistence';
 import { previewRanges, type DataDiscovery, type DataScope } from './data';
 import DashboardLibrary from './DashboardLibrary';
@@ -36,6 +39,9 @@ export default function App({ initialColorScheme }: { initialColorScheme: 'light
   const [floating, setFloating] = useState(readLayout);
   const [collapsed, setCollapsed] = useState(false);
   const [revision, setRevision] = useState<Revision>(() => ({ number: 0, definition: createBlank() }));
+  const [brief, setBrief] = useState<DashboardBrief>({ purpose: '', requirements: '' });
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const moreFocus = useRef<HTMLButtonElement>(null);
   const [history, setHistory] = useState<Revision[]>([]);
   const [future, setFuture] = useState<Revision[]>([]);
   const [selected, setSelected] = useState('');
@@ -83,10 +89,10 @@ export default function App({ initialColorScheme }: { initialColorScheme: 'light
   const contextKey = promptContextKey(revision.number, revision.definition, selected, activeTab, dataContext);
   const suggestions = attachments.length ? contextualPrompts(revision.definition, selected, attachments.length, dataContext, pagePurposes)
     : proposals?.key === contextKey ? proposals.items : contextualPrompts(revision.definition, selected, 0, dataContext, pagePurposes);
-  const snapshot = useMemo<DraftSnapshot>(() => ({ definition: revision.definition, messages, prompt, attachments, tokens, activeTab, selected,
+  const snapshot = useMemo<DraftSnapshot>(() => ({ definition: revision.definition, brief, messages, prompt, attachments, tokens, activeTab, selected,
     suggestions: proposals?.key === contextKey ? proposals.items : null, activity, saved, dataContext,
     searchesEnabled: searches.enabled, pagePurposes, pendingRequest: thinking ? [...messages].reverse().find(message => message.user)?.text || '' : '' }),
-  [revision.definition, messages, prompt, attachments, tokens, activeTab, selected, proposals, contextKey, activity, saved, dataContext, searches.enabled, pagePurposes, thinking]);
+  [revision.definition, brief, messages, prompt, attachments, tokens, activeTab, selected, proposals, contextKey, activity, saved, dataContext, searches.enabled, pagePurposes, thinking]);
   const persistence = useDraftPersistence(draftId, snapshot, storageReady);
   const activate = (definition: StudioDefinition, restored?: DraftRecord, keepLibrary = false) => {
     window.history.replaceState(window.history.state, '', cleanDashboardUrl(window.location.href));
@@ -97,7 +103,7 @@ export default function App({ initialColorScheme }: { initialColorScheme: 'light
     if (restored) persistence.adopt(restored);
     setDraftId(restored?.id || newDraftId());
     setRevision({ number, definition }); setSelected(validFocus(definition,state?.selected || '')?state?.selected || '':'');
-    setPagePurposes(state?.pagePurposes||{});
+    setPagePurposes(state?.pagePurposes||{}); setBrief(state?.brief || { purpose: '', requirements: '' }); setDetailsOpen(false);
     navigationFocus.current=state?.tokens?.default?.constellation_focus;
     setTokens(state?.tokens); setActiveTab(state?.activeTab); setSaved(state?.saved || null);
     setDataContext(state?.dataContext || null);
@@ -197,6 +203,7 @@ export default function App({ initialColorScheme }: { initialColorScheme: 'light
     const text = (request || prompt).trim(); if (!text || !storageReady) return;
     if (attachments.some(file => !connection?.capabilities?.[file.data.startsWith('data:application/pdf;') ? 'pdf' : 'images'])) { setStatus('Attachments were not sent. Choose a provider and model that support these file types in Settings.'); return; }
     setPrompt(''); addMessage(text, true);
+    if (!brief.purpose) setBrief(previous => ({ ...previous, purpose: text }));
     if ((connection?.configured || connection?.keyConfigured) && connection.model) {
       const controller = new AbortController(); generation.current = controller; setThinking(true); setStatus(`${empty ? 'Building' : 'Working'} with ${providerLabel(connection.provider)}…`);
       setActivity([empty ? 'Shaping your first dashboard…' : 'Reading the current dashboard…']); setProposals(null);
@@ -211,10 +218,11 @@ export default function App({ initialColorScheme }: { initialColorScheme: 'light
         setActivity([`Planning Studio changes with ${providerLabel(connection.provider)}…`]);
         const result = await providerRequest<AgentReply>('author', {
           prompt: text, revision: base.number, definition: base.definition, selected, activeTab, suggestionFormat: 'cards',
-          dataContext: scopeOverride || dataContext, pagePurposes, tokens,
+          dataContext: scopeOverride || dataContext, pagePurposes, brief, tokens,
           attachments, history: messages.filter(message => message.id !== 0).slice(-12).map(message => ({ role: message.user ? 'user' : 'assistant', text: message.text })),
         }, controller.signal);
         if (controller.signal.aborted) return;
+        if (result.brief) setBrief(result.brief);
         if (result.dataContext) setDataContext(result.dataContext);
         if(result.pagePurposes)setPagePurposes(result.pagePurposes);
         let updated = base;
@@ -263,23 +271,23 @@ export default function App({ initialColorScheme }: { initialColorScheme: 'light
       <Button onClick={() => { modalReturnFocus.current = document.activeElement as HTMLElement; setSettingsOpen(true); }} disabled={!isSplunk()}>Settings</Button>
       <Button onClick={() => void load(createBlank())} disabled={busy || !storageReady}>New dashboard</Button>
       <Button onClick={() => void openPicker()} disabled={busy || thinking || !storageReady}>Dashboards</Button>
-      <Button onClick={exportJson}>Export JSON</Button>
-      <Button disabled={!isSplunk() || thinking} onClick={() => {
-        modalReturnFocus.current = document.activeElement as HTMLElement; setEnvironmentOpen(true);
-        void providerRequest<Environment>('environment', { probe: true }).then(setEnvironment).catch(error => setStatus(error instanceof Error ? error.message : 'Environment discovery failed.'));
-      }}>Environment</Button>
-      <Button appearance="primary" onClick={() => void save()} disabled={busy || !isSplunk() || empty || thinking}>Save a copy to Splunk</Button>
-      <Button appearance="subtle" onClick={() => setTheme(previous => previous === 'light' ? 'dark' : 'light')}>{theme === 'light' ? 'Dark' : 'Light'} theme</Button>
+      <Button appearance="primary" onClick={() => void save()} disabled={busy || !isSplunk() || empty || thinking}>Save to Splunk</Button>
+      <Dropdown focusToggleReasons={['escapeKey', 'tabKey', 'toggleClick']} toggle={<Button elementRef={moreFocus} isMenu>More</Button>}><Menu style={{ width: 220 }}>
+        <Menu.Item disabled={thinking || !storageReady} onClick={() => { modalReturnFocus.current = moreFocus.current; void persistence.flush().then(ok => { if (ok) setDetailsOpen(true); }); }}>Draft details and history</Menu.Item>
+        <Menu.Item disabled={empty || !isSplunk() || thinking} onClick={() => void (async () => { if (!await persistence.flush()) return; const link = workspaceLink(window.location.href, draftId, activeTab, selected || undefined); try { await navigator.clipboard.writeText(link); setStatus('Copied a private draft link. Splunk access is required.'); } catch { setCopiedLink(link); modalReturnFocus.current = moreFocus.current; setModal('link'); } })()}>Copy draft link</Menu.Item>
+        <Menu.Item onClick={exportJson}>Export JSON</Menu.Item>
+        <Menu.Item onClick={() => { modalReturnFocus.current = moreFocus.current; setModal('source'); }}>Show source</Menu.Item>
+        <Menu.Item disabled={!isSplunk() || thinking} onClick={() => { modalReturnFocus.current = moreFocus.current; setEnvironmentOpen(true); void providerRequest<Environment>('environment', { probe: true }).then(setEnvironment).catch(error => setStatus(error instanceof Error ? error.message : 'Environment discovery failed.')); }}>Environment</Menu.Item>
+        <Menu.Item onClick={() => setTheme(previous => previous === 'light' ? 'dark' : 'light')}>{theme === 'light' ? 'Dark' : 'Light'} theme</Menu.Item>
+      </Menu></Dropdown>
     </Actions></Header>
     <Workspace $floating={floating || collapsed}>
-      <Canvas><CanvasHeading><div><h2>{revision.definition.title || 'Untitled dashboard'}</h2><Muted role="status">{persistence.status}</Muted>{revision.definition.description ? <Muted>{String(revision.definition.description)}</Muted> : null}</div><Actions>
+      <Canvas><CanvasHeading><div><h2>{revision.definition.title || 'Untitled dashboard'}</h2><Muted role="status">{persistence.status}{searches.status ? ` · ${searches.status}` : ''}</Muted>{revision.definition.description ? <Muted>{String(revision.definition.description)}</Muted> : null}</div><Actions>
         <Button disabled={thinking||!storageReady} onClick={()=>{modalReturnFocus.current=document.activeElement as HTMLElement;setPagesOpen(true);}}>Pages</Button>
         {!empty?<Button aria-pressed={selecting} disabled={thinking} onClick={()=>setSelecting(value=>!value)}>{selecting?'Cancel selection':'Select element'}</Button>:null}
-        {!empty?<Button disabled={!isSplunk()||thinking} onClick={()=>void (async()=>{if(!await persistence.flush())return;try{await navigator.clipboard.writeText(workspaceLink(window.location.href,draftId,activeTab,selected||undefined));setStatus('Copied a private draft link to this page and focus. The link requires Splunk access.');}catch{setCopiedLink(workspaceLink(window.location.href,draftId,activeTab,selected||undefined));modalReturnFocus.current=document.activeElement as HTMLElement;setModal('link');}})()}>Copy link</Button>:null}
         {!empty || hasConversation ? <Button disabled={thinking || !storageReady || !isSplunk()} onClick={() => { modalReturnFocus.current = document.activeElement as HTMLElement; setDataChooser({ scope: dataContext }); }}>{dataContext ? `Data: ${dataContext.index || 'existing search'}` : 'Choose Splunk data'}</Button> : null}
         <Button disabled={!history.length || thinking} onClick={() => { const previous = history[history.length - 1]; setFuture(items => [...items, revision]); setHistory(items => items.slice(0, -1)); setRevision({ ...previous, number: revision.number + 1 }); setSaved(null); setStatus('Last document change undone.'); }}>Undo</Button>
-        <Button disabled={!future.length || thinking} onClick={() => { const next = future[future.length - 1]; setHistory(items => [...items, revision]); setFuture(items => items.slice(0, -1)); setRevision({ ...next, number: revision.number + 1 }); setSaved(null); setStatus('Document change restored.'); }}>Redo</Button>
-        <Button onClick={() => { modalReturnFocus.current = document.activeElement as HTMLElement; setModal('source'); }}>Show source</Button>
+        {future.length ? <Button disabled={thinking} onClick={() => { const next = future[future.length - 1]; setHistory(items => [...items, revision]); setFuture(items => items.slice(0, -1)); setRevision({ ...next, number: revision.number + 1 }); setSaved(null); setStatus('Document change restored.'); }}>Redo</Button> : null}
         {!empty ? <Button disabled={!isSplunk() || searches.running} onClick={searches.run}>{searches.enabled ? 'Refresh searches' : 'Run searches'}</Button> : null}
         {searches.enabled ? <Button onClick={searches.pause}>Pause searches</Button> : null}
       </Actions></CanvasHeading>
@@ -291,6 +299,7 @@ export default function App({ initialColorScheme }: { initialColorScheme: 'light
       {dataContext ? <Actions><Muted>{dataContext.sourcetype ? `Sourcetype: ${dataContext.sourcetype}` : dataContext.query ? 'Using your existing search' : 'All sourcetypes in the selected index'}</Muted>
         <ControlGroup label="Preview range"><Select value={dataContext.earliest} disabled={thinking} onChange={(_event, { value }) => setDataContext({ ...dataContext, earliest: value as DataScope['earliest'] })}>
           {previewRanges.map(range => <Select.Option key={range.value} {...range}/>)}</Select></ControlGroup></Actions> : null}
+      {searches.evidence.length ? <details><summary>Search details</summary><Muted>Complete means the query finished and its result rows fit this preview. Partial results may omit events or rows. Snapshots become stale after one minute; refresh for current data.</Muted><ul>{searches.evidence.map(item => <li key={item.id}><strong>{item.title}: {item.state}</strong><Muted>{item.detail}</Muted></li>)}</ul></details> : null}
       {selecting?<Muted role="status">Select an element on the canvas to focus the conversation. Escape cancels; the focus list also supports keyboard selection.</Muted>:null}
       {pagesOf(revision.definition,pagePurposes).find(page=>page.id===(activeTab||pagesOf(revision.definition)[0]?.id))?.purpose?<Muted>{pagesOf(revision.definition,pagePurposes).find(page=>page.id===(activeTab||pagesOf(revision.definition)[0]?.id))?.purpose}</Muted>:null}
       {empty ? <EmptyCanvas $floating={floating && !collapsed} aria-label="New dashboard canvas">
@@ -303,7 +312,6 @@ export default function App({ initialColorScheme }: { initialColorScheme: 'light
         </IdeaButton>)}</IdeaGrid><Muted>{discovery ? discovery.warning || 'Suggested from this instance’s recent activity and visible catalog. We inspect fields before building.' : isSplunk() ? 'Checking the data available in this Splunk instance…' : 'Open the installed Splunk app to discover real data.'}</Muted></> : null}
         {connection?.capabilities?.images ? <Actions><Button onClick={() => { setCollapsed(false); attachmentInput.current?.click(); }} disabled={thinking}>{connection.capabilities.pdf ? 'Start from a sketch or PDF' : 'Start from a sketch'}</Button></Actions> : null}
       </EmptyCanvas> : <Preview definition={revision.definition} revision={revision.number} tokens={tokens} activeTab={activeTab} onTokens={onTokens} onTab={onTab} onSelect={onSelect} searchResults={searches.results} searchVersion={searches.version} selected={selected} selecting={selecting}/> }
-      {searches.status ? <Muted role="status">{searches.status}</Muted> : null}
       {status ? <Muted role="status">{status}</Muted> : null}{saved ? <Link to={saved.url} openInNewContext appearance="standalone">Open saved dashboard in native Studio</Link> : null}
       </Canvas>
       <Conversation ref={conversationElement} style={{ height: panelHeight }} $floating={floating} $collapsed={collapsed} aria-label="Dashboard conversation">
@@ -356,6 +364,9 @@ export default function App({ initialColorScheme }: { initialColorScheme: 'light
       const before=revisionRef.current,next={number:before.number+1,definition:changePage(before.definition,id,name)};
       setHistory(items=>[...items.slice(-19),before]);setFuture([]);setRevision(next);setPagePurposes(values=>({...values,[id]:purpose}));setActiveTab(id);setSelected(`page:${id}`);setSaved(null);setStatus('Page updated. Describe what you want on this page in the conversation.');
     }}/>:null}
+    {detailsOpen ? <DraftDetails id={draftId} brief={brief} scope={dataContext ? `${dataContext.index || 'Existing search'} · ${previewRanges.find(range => range.value === dataContext.earliest)?.label}` : ''} returnFocus={modalReturnFocus}
+      onClose={() => { setDetailsOpen(false); requestAnimationFrame(() => modalReturnFocus.current?.focus()); }} onSave={value => { setBrief(value); setProposals(null); setStatus('Dashboard brief updated.'); }}
+      onRestore={async version => { if (!await persistence.flush()) throw new Error('Save the current draft before restoring a version.'); const current = await readDraft(draftId); const record = await providerRequest<DraftRecord>('drafts', { action: 'restore_revision', id: draftId, version: current.version, revision: version }); activate(record.state.definition, record); setStatus('Earlier dashboard restored. Your conversation and the previous version are retained.'); }}/>:null}
     {settingsOpen ? <Settings onClose={() => setSettingsOpen(false)} onSaved={setConnection} returnFocus={modalReturnFocus}/> : null}
     <Modal open={environmentOpen} onRequestClose={() => setEnvironmentOpen(false)} returnFocus={modalReturnFocus}>
       <Modal.Header title="Splunk environment"/><Modal.Body>

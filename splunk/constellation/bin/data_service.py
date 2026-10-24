@@ -4,6 +4,7 @@ import re
 from provider_service import ProviderError
 from search_service import read_only_query, TIME_RANGES
 from token_service import resolve_query_tokens
+from search_scope import scoped_suffix
 
 
 def spl_literal(value):
@@ -35,6 +36,8 @@ class DataService:
         if body.get('query'):
             query, language = body['query'], body.get('language', 'spl')
             result = self.runtime.preview({'query': resolve_query_tokens(query, self.document, self.tokens), 'language': language, 'earliest': earliest})
+            if not result['results'] and result.get('state') == 'partial':
+                raise ProviderError('The sample stopped before completion. No absence of data was established; simplify the existing search or retry.', 422, 'profile_partial')
             fields = []
             for entry in result['fields'][:60]:
                 name = entry['name']
@@ -55,6 +58,8 @@ class DataService:
             raise ProviderError('Choose a valid sourcetype.')
         base = 'search index=' + spl_literal(index) + (' sourcetype=' + spl_literal(sourcetype) if sourcetype else '')
         result = self.runtime.execute('| ' + base + ' | head 200 | fieldsummary maxvals=1 | eval priority=if(field="_time" OR field="host" OR field="sourcetype" OR field="source",0,1) | sort 0 priority - count | fields field count numeric_count distinct_count | head 80', earliest)
+        if not result['results'] and result.get('state') == 'partial':
+            raise ProviderError('The field inspection stopped before completion. Retry inspection; the source has not been proven empty.', 422, 'profile_partial')
         fields = []
         for row in result['results']:
             name = row.get('field')
@@ -109,6 +114,7 @@ class DataService:
             old = previous.get('visualizations', {}).get(identifier, {})
             channels = ('x', 'y', 'y2', 'category', 'majorValue')
             if (visualization.get('dataSources') != old.get('dataSources') or
+                    visualization.get('eventHandlers') != old.get('eventHandlers') or
                     any(visualization.get('options', {}).get(key) != old.get('options', {}).get(key) for key in channels)):
                 needed.update(visualization.get('dataSources', {}).values())
         for identifier, source in document.get('dataSources', {}).items():
@@ -117,11 +123,11 @@ class DataService:
             if source.get('type') == 'ds.test':
                 raise ProviderError('This dashboard uses real Splunk data. Do not introduce illustrative sample data.')
             query, language = self.resolve_query(document, identifier)
-            normalized = query.strip().lstrip('| ').strip()
             # Keep generated queries within the explicitly selected search scope.
-            suffix = normalized[len(base):] if normalized.startswith(base) else None
+            suffix = scoped_suffix(query, profile)
             if suffix is None or (suffix.strip() and not suffix.lstrip().startswith('|')):
-                raise ProviderError('Start each real-data search with the supplied baseQuery, then append read-only aggregations. Preserve its index/sourcetype scope.')
+                receipts.append({'source': identifier, 'status': 'failed', 'code': 'search_scope', 'requiredPrefix': base})
+                raise ProviderError('Source ' + identifier[:120] + ': start with the supplied baseQuery, then a pipe before filters or aggregations. Preserve its index/sourcetype scope.')
             if re.search(r'(?:^|\|)\s*(?:from|makeresults|metadata|tstats)\b', suffix, re.I):
                 raise ProviderError('Append transforming commands to the selected source; do not replace it with another generating command.')
             resolved_query = resolve_query_tokens(query, document, self.tokens)
@@ -151,12 +157,17 @@ class DataService:
             usable[identifier] = ({field for field in fields if any(row.get(field) not in (None, '', []) for row in result['results'])}
                                   if result['results'] else None)
             receipts.append({'source': identifier, 'language': language, 'rows': len(result['results']),
-                             'fields': fields, 'earliest': profile['scope']['earliest'], 'bounded': True,
-                             'status': 'results' if result['results'] else 'empty'})
+                             'fields': fields, 'earliest': profile['scope']['earliest'], 'bounded': True, 'completion': result.get('evidence', {'state': 'unknown'}),
+                             'status': 'partial' if result.get('state') == 'partial' else 'results' if result['results'] else 'empty'})
         for identifier, visualization in document.get('visualizations', {}).items():
             if visualization == previous.get('visualizations', {}).get(identifier): continue
             source_id = visualization.get('dataSources', {}).get('primary')
             if source_id not in usable: continue
+            fields = next((receipt['fields'] for receipt in receipts if receipt.get('source') == source_id and 'fields' in receipt), [])
+            if visualization.get('type') == 'splunk.table' and fields:
+                linked_fields = {field for handler in visualization.get('eventHandlers', []) for field in handler.get('options', {}).get('fields', [])}
+                if linked_fields - set(fields):
+                    raise ProviderError('The table drilldown references fields absent from its verified search output. Use these fields: ' + ', '.join(fields)[:500])
             for channel in ('x', 'y', 'y2', 'category', 'majorValue'):
                 binding = visualization.get('options', {}).get(channel)
                 if binding is None: continue

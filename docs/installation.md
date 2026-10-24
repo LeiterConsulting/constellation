@@ -1,6 +1,6 @@
 # Installation and first dashboard
 
-Constellation 0.7.1 is a development preview. Start in an isolated Splunk Enterprise environment with representative data. Review the [support matrix](studio-support.md), [validation scope](validation.md) and [security guide](../SECURITY.md).
+Constellation 0.8.0 is a development preview. Start in an isolated Splunk Enterprise environment with representative data. Review the [support matrix](studio-support.md), [validation scope](validation.md) and [security guide](../SECURITY.md).
 
 ## Build the app
 

@@ -155,21 +155,20 @@ class SearchService:
         result['language'] = language
         return result
 
+    def job(self, body):
+        from preview_jobs import PreviewJobs
+        jobs = PreviewJobs(self)
+        action = body.get('action')
+        if action in ('poll', 'cancel'):
+            return getattr(jobs, action)(body.get('handle'))
+        if action != 'start': raise ProviderError('Choose a valid preview job action.')
+        query = read_only_query(body.get('query'), body.get('language', 'spl'))
+        earliest = body.get('earliest', '-15m')
+        if earliest not in TIME_RANGES: raise ProviderError('Choose a supported preview time range.')
+        return jobs.start(query, earliest)
+
     def execute(self, query, earliest='-15m'):
-        """Internal fixed discovery queries and screened user previews share limits."""
+        """Internal discovery and validation use the same completion contract."""
+        from preview_jobs import PreviewJobs
         if earliest not in TIME_RANGES: raise ProviderError('Choose a supported time range.')
-        result = self.request(self.namespace + '/search/v2/jobs', 'POST', {
-            'search': query, 'exec_mode': 'oneshot', 'earliest_time': earliest, 'latest_time': 'now',
-            'max_time': '5', 'max_count': '200', 'count': '200', 'auto_finalize_ec': '10000', 'adhoc_search_level': 'fast'})
-        errors = [message for message in result.get('messages', []) if message.get('type') in ('ERROR', 'FATAL')]
-        if errors:
-            raise ProviderError('The preview search did not complete. ' + search_feedback(' '.join(str(message.get('text', '')) for message in errors)), 422)
-        rows = result.get('results', [])[:200]
-        fields = result.get('fields') or [{'name': name} for name in (rows[0] if rows else {})]
-        names = [field.get('name') for field in fields if isinstance(field, dict) and isinstance(field.get('name'), str)][:100]
-        rows = [{key: value for key, value in row.items() if key in names} for row in rows if isinstance(row, dict)]
-        if len(json.dumps(rows)) > 1_000_000:
-            raise ProviderError('The preview rows exceeded the allowed size. Select fewer fields.', 413)
-        return {'results': rows, 'fields': [{'name': name} for name in names],
-                'limits': {'rows': 200, 'seconds': 5, 'earliest': earliest, 'latest': 'now'},
-                'bounded': True, 'warning': 'Bounded preview; results may be incomplete. Result rows stay in Splunk and your browser.'}
+        return PreviewJobs(self).execute(query, earliest)

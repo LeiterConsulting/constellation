@@ -138,18 +138,16 @@ class SearchGuardTests(unittest.TestCase):
 
     def test_live_search_requests_have_enforced_server_side_limits(self):
         runtime = SearchService('fixture-user', 'fixture-session')
-        calls = []
-        def request(path, method, fields):
-            calls.append((path, method, fields))
-            return {'results': [{'count': '3'}], 'fields': [{'name': 'count'}]}
-        runtime.request = request
+        from test_preview_jobs import JobRuntime
+        runtime = JobRuntime(rows=3)
         result = runtime.preview({'query': '| makeresults count=3 | stats count', 'max_time': 999, 'earliest_time': '0'})
-        self.assertEqual(calls[0][2]['max_time'], '5')
-        self.assertEqual(calls[0][2]['earliest_time'], '-15m')
-        self.assertEqual(calls[0][2]['max_count'], '200')
-        self.assertEqual(calls[0][2]['adhoc_search_level'], 'fast')
-        self.assertNotIn('search_mode', calls[0][2])
-        self.assertEqual(result['results'], [{'count': '3'}])
+        fields = runtime.calls[0][2]
+        self.assertEqual(fields['max_time'], '5')
+        self.assertEqual(fields['earliest_time'], '-15m')
+        self.assertEqual(fields['max_count'], '201')
+        self.assertEqual(fields['adhoc_search_level'], 'fast')
+        self.assertNotIn('search_mode', fields)
+        self.assertEqual(result['state'], 'complete')
 
 
 

@@ -1,6 +1,7 @@
 # Constellation user-private working documents. Managed through the app REST API.
 [<stanza>]
 state = <JSON session snapshot>
+history = <bounded JSON material revision list>
 title = <dashboard title>
 version = <integer revision>
 schema_version = <session format version>

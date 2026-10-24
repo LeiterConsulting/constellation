@@ -13,6 +13,8 @@ from provider_service import ProviderError
 from studio_contract import validate_document
 from model_capabilities import attachment_parts
 from draft_migrations import SCHEMA_VERSION, migrate_snapshot
+from dashboard_brief import validate_brief
+import draft_history
 
 
 def timestamp():
@@ -21,12 +23,13 @@ def timestamp():
 
 def validate_snapshot(state):
     allowed = {'definition', 'messages', 'prompt', 'attachments', 'tokens', 'activeTab', 'selected',
-               'suggestions', 'activity', 'saved', 'dataContext', 'searchesEnabled', 'pendingRequest', 'pagePurposes'}
+               'suggestions', 'activity', 'saved', 'dataContext', 'searchesEnabled', 'pendingRequest', 'pagePurposes', 'brief'}
     if not isinstance(state, dict) or set(state) - allowed or len(json.dumps(state)) > 11_500_000:
         raise ProviderError('This draft exceeds the supported size or contains unknown session properties.', 413)
     validate_document(state.get('definition'))
     from page_service import validate_purposes
     validate_purposes(state.get('pagePurposes', {}), state['definition'])
+    validate_brief(state.get('brief', {}))
     messages = state.get('messages', [])
     if not isinstance(messages, list) or len(messages) > 100:
         raise ProviderError('A draft supports up to 100 conversation messages.')
@@ -143,6 +146,8 @@ class DraftService:
         fields = {'title': state['definition'].get('title', '')[:200] or 'Untitled dashboard',
                   'state': json.dumps(state, separators=(',', ':'), ensure_ascii=True),
                   'version': str(version + 1), 'updated_at': timestamp(), 'deleted_at': deleted or '', 'kind': kind}
+        old_state = migrate_snapshot(json.loads(entry['content']['state']), int(entry['content'].get('schema_version', 0))) if entry else None
+        fields['history'] = draft_history.next_history(entry, state, old_state)
         fields['schema_version'] = str(SCHEMA_VERSION)
         fields.update(extra or {})
         path = self.base + '/' + self.key(identifier)
@@ -171,6 +176,9 @@ class DraftService:
         action, identifier = body.get('action', 'list'), body.get('id')
         if action == 'list': return self.listing()
         if action == 'read': return self.read(identifier)
+        if action == 'history':
+            self.read(identifier)
+            return {'revisions': draft_history.summaries(self.entry(identifier))}
         with self.locked():
             if action == 'open':
                 record = self.read(identifier)
@@ -202,6 +210,10 @@ class DraftService:
                 state['definition']['title'] = (state['definition'].get('title', 'Dashboard') + ' · copy')[:200]
                 state['saved'] = None
                 return self.write(uuid.uuid4().hex, 0, state)
+            if action == 'restore_revision':
+                restored = draft_history.restore(record['state'], self.entry(identifier), body.get('revision'))
+                validate_snapshot(restored)
+                return self.write(identifier, record['version'], restored)
             if action == 'rename':
                 title = body.get('title', '')
                 if not isinstance(title, str) or not title.strip() or len(title) > 200:
