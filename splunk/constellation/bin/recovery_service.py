@@ -32,6 +32,8 @@ class RecoverySession:
         self.calls = 0
 
     def check_time(self):
+        check = getattr(self.runtime, 'check_cancel', None)
+        if check: check()
         if self.clock() - self.started >= MAX_SECONDS:
             raise ProviderError('The automatic recovery time budget is exhausted. Your previous dashboard is preserved.', 422, 'recovery_budget')
 

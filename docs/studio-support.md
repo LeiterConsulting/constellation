@@ -1,6 +1,6 @@
 # Studio authoring and runtime support
 
-This is the working support contract for the 0.11.2 development slice. Broad document authoring is implemented; complete native parity is not yet qualified. The preview uses the embedded Splunk Dashboard Framework and preserves the original Studio definition for export and native save.
+This is the working support contract for the 0.12.0 development slice. Broad document authoring is implemented; complete native parity is not yet qualified. The preview uses the embedded Splunk Dashboard Framework and preserves the original Studio definition for export and native save.
 
 | Area | Current behavior | Qualification / boundary |
 | --- | --- | --- |
@@ -20,7 +20,7 @@ This is the working support contract for the 0.11.2 development slice. Broad doc
 | Image references | PNG, JPEG, WebP, up to two files, 4 MB each; base64 image inputs through Responses. | Exact documented model IDs are checked before discovery/provider calls. Unknown model modality support blocks transmission. File type/signature/encoding/size checks also run server-side. |
 | PDF references | Same size/count/model guards; OpenAI Responses input_file with inline PDF data. | A two-page layout brief passed through actual app attachment, conversational refinement, private save/readback and native interaction checks on both labs. Ollama/AITK PDF transmission is blocked. |
 | Providers | OpenAI Responses; Ollama native tags/show/chat with JSON schema; AITK’s documented ai command through current-user synthetic jobs. Saved connections survive switching. Keyless preferences are owner-private configuration; direct keys stay in encrypted storage and require existing credential-write authority. | OpenAI exercised on the 10.2.8 target; qwen3-coder actual-data creation and focused edits exercised; AITK multi-page sensor creation/refinement through an existing connection with an adequate output budget on one target. A second target did not return a usable AITK completion. Other providers remain separate work. |
-| Activity and cancellation | Visible request stages, completed inspection/validation details, Stop discards late edits. | Stage updates are not token streaming; upstream inference may finish and bill. Preview pause/abort sends native job cancellation; server runtime/inactivity/retention limits remain the backstop. |
+| Activity and cancellation | Session-owned progress receipts show actual inspection, model, validation, search and repair stages. Elapsed time and Stop stay beside the composer. Stop discards late edits and sends a cooperative server stop. | Independent control handler; no token streaming or durable background task. AITK/validation jobs cancel at a checkpoint. Direct provider calls may finish and bill. Receipts expire after five minutes on this search head; cross-member routing is unqualified. |
 | Failed/empty results | A positive server profile overrides an unsupported no-events reply through the same bounded repair loop. A valid filtered search with no matches remains an empty panel rather than rejecting other charts. | Empty output is distinct from a failed search or an empty source. Populated results still require actual output bindings. Fresh profiles, failed/successful search receipts and controlled native diagnostics guide up to two repairs. Unchanged queries are reused within the turn; final failure preserves the prior dashboard and original request. |
 
 New or changed real-data timecharts must fit their selected window within the 200-row preview budget. Use `bins=100` or a sufficiently coarse span; adding `head` does not make a truncated time series acceptable. Existing untouched native searches retain their configuration.
@@ -35,7 +35,7 @@ New or changed real-data timecharts must fit their selected window within the 20
 | Tabs, inputs, tokens, conditional visibility | Version-supported; existing tab/token flow exercised | Version-supported; new agent-created tab exercised |
 | Network graphs / new custom visualization framework | Version-supported; not separately rendered in this slice | Generation gated to existing configuration |
 | Auto-refresh capability | Present for current lab user | Available under pre-10.4 behavior |
-| Provider connection | Direct Ollama edits passed. AITK named-connection inference remains unsuccessful in this environment. | OpenAI, Ollama and an existing AITK connection exercised; AITK multi-page creation/editing passed with a temporary 16,000-token budget, then its original budget was restored. |
+| Provider connection | Direct Ollama edits passed. AITK named-connection inference remains unsuccessful in this environment. | OpenAI, Ollama and an existing AITK connection exercised; AITK multi-page creation/editing passed with a sufficient 16,000-token budget retained for the current repeated qualification. |
 
 The app never treats a module-list 404 as proof that ad hoc SPL2 is unavailable. Each environment check can run a three-row synthetic SPL2 probe separately. User roles, installed visualizations, and server configuration can change; re-check capabilities in the Environment dialog.
 
@@ -63,7 +63,7 @@ Native references: [field-level table drilldowns](https://help.splunk.com/en/spl
 
 ## Model-aware creation (0.10)
 
-Scoped search, chart and token actions compile to ordinary native Studio configuration. Actual output-field validation still applies. New real-data multi-page Ollama/AITK creation uses two internal stages and the existing recovery budget; no stage reaches the accepted draft on failure. Ollama capacity metadata bounds the requested context/output allocation. Conservative size estimates can trim rolling history while retaining the durable brief and definition. Settings exposes known/unknown capacities, small-test scope and allowlisted usage. A passing connection test does not establish full creation reliability; see [validation](validation.md) for tested models and budgets.
+Scoped search, chart and token actions compile to ordinary native Studio configuration. Actual output-field validation still applies. New real-data multi-page AITK creation and Ollama models with unknown or smaller context windows use two internal stages and the existing recovery budget; no stage reaches the accepted draft on failure. Ollama capacity metadata bounds the requested context/output allocation. Conservative size estimates can trim rolling history while retaining the durable brief and definition. Settings exposes known/unknown capacities, small-test scope and allowlisted usage. A passing connection test does not establish full creation reliability; see [validation](validation.md) for tested models and budgets.
 
 ## Focused editing and analytical checks (0.11)
 

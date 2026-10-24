@@ -2,6 +2,12 @@
 
 Constellation is a working development preview. Checked-in code and selected live exercises establish concrete behavior; they do not establish a production-ready app or full Dashboard Studio parity.
 
+## Current 1.0 blockers from 0.12
+
+- Make AITK table formatting reliable within the existing resource/latency limits; final repeated checks still rejected edits after three calls.
+- Enforce explicit exclusions across every applicable aggregate. A synthetic probe caught a latest-temperature value that bypassed the cutoff even though its average was correct.
+- Expand provider/model and analytical fixtures before interpreting the small successful samples as general readiness. See [validation](validation.md).
+
 ## Product improvements
 
 - Improve first-draft analytical quality using verified field meaning, units, population and time coverage.

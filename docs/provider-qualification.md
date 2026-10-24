@@ -40,3 +40,12 @@ The [latest recorded matrix](validation.md#011-repeated-provider-qualification) 
 Prioritize task-level provider/model qualification and useful progress/cancellation during longer calls before adding more dashboard controls. Extend the narrow population guard to representative business rules, derived fields and complex predicates with independent evidence. Keep those gates separate from a passing small model test.
 
 See [recorded validation](validation.md), [provider boundaries](providers.md), [Studio support](studio-support.md) and [release gates](roadmap.md).
+
+
+## Latency and cancellation checks
+
+Record wall time, model calls, search checks and actual stage receipts separately. Distinguish a local exact presentation edit (zero inference) from a model-authored change. Do not claim the same improvement for arbitrary conversational edits. Count stopped trials separately from completed creation trials; a stop is not an accepted dashboard.
+
+Start a real provider request, observe its model stage, then Stop through the independent control route. Record acknowledgement and handler-exit times separately. Confirm the author response cannot apply changes, no further repair starts, and owned native jobs are released. A direct HTTP call can finish and bill after Stop. Exercise Stop before handle creation, while inspecting/searching, while waiting for inference, and around completion; test refresh/new/open and a second request against late-response races. Offline race tests complement installed checks; they do not prove upstream billing cancellation.
+
+Review the compact toolbar, source/time disclosure, search evidence, focus list, dock/float/hide, visible composer/Stop, keyboard dismissal and both themes at the supported viewport sizes. Keep raw screenshots local. Native output retains its original geometry and uses normal Studio navigation/edit/access controls.

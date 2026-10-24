@@ -18,10 +18,10 @@ export function failureActivity(error: unknown): string[] {
 }
 export interface ModelReadinessReport { limits: { label: string; value: string }[]; warnings: string[]; scope: string; tested: boolean; usage: { input_tokens?: number; output_tokens?: number; reasoning_tokens?: number }; }
 export interface ProviderSettings { provider: ProviderName; configured: boolean; readiness?: ModelReadinessReport; connection?: string; connections?: Partial<Record<ProviderName, { model?: string; keyConfigured?: boolean; base_url?: string; connection?: string }>>; baseUrl: string; model: string; keyConfigured: boolean; keyStorage?: { canWrite: boolean } | null; capabilities?: { images: boolean; pdf: boolean; reason: string; source: string }; }
-export async function providerRequest<T>(action: 'settings' | 'models' | 'test' | 'assist' | 'author' | 'environment' | 'datasets' | 'preview' | 'drafts' | 'library' | 'discovery' | 'profile' | 'preview_job', body?: Record<string, unknown>, signal?: AbortSignal): Promise<T> {
+export async function providerRequest<T>(action: 'settings' | 'models' | 'test' | 'assist' | 'author' | 'run' | 'environment' | 'datasets' | 'preview' | 'drafts' | 'library' | 'discovery' | 'profile' | 'preview_job', body?: Record<string, unknown>, signal?: AbortSignal): Promise<T> {
   if (!isSplunk()) throw new Error('Open the installed Splunk app to configure a provider.');
   if (action === 'settings' && body?.apiKey && !secureSettingsOrigin()) throw new Error('Open Splunk through HTTPS before saving a provider key.');
-  const url = createRESTURL(`constellation/v1/${action}`, { app: 'constellation', owner: '-' });
+  const url = createRESTURL(`constellation/${action === 'run' ? 'control' : 'v1'}/${action}`, { app: 'constellation', owner: '-' });
   const { response, result } = await fetchWithDeadline(url, createFetchInit({ method: body ? 'POST' : 'GET',
     body: body ? JSON.stringify(body) : undefined, headers: body ? { 'Content-Type': 'application/json' } : {}, signal }), ['author', 'test'].includes(action) ? 240_000 : 30_000, async response => {
     let result: T & { error?: string; validationError?: string; code?: string; recovery?: Record<string, unknown> };

@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.12.0 — Responsive authoring preview
+
+- Show real authoring stages and elapsed time beside a persistent Stop control. Add bounded session-owned receipts and cooperative cancellation of native inference/validation jobs. Direct provider calls may still finish upstream.
+- Apply exact selected-chart renames and line/area switches locally; remove the redundant first-turn client probe.
+- Compact canvas controls, retain source/time context, and disclose search details and focus selection. Remove the empty legacy host header without hiding Splunk navigation.
+- Isolate the canvas from unrelated typing/dialog updates; let users stop field inspection while retaining their goal.
+- Keep atomic changes, provider budgets, draft schema 3 and ordinary native Studio output.
+
+
 This repository begins with the 0.7.1 development preview. Version history below summarizes implemented behavior; it is not a record of production releases or certification.
 
 ## 0.11.2 development preview

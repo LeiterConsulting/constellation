@@ -13,7 +13,11 @@ class AuthoringBudget:
         self.provider = saved.get('provider', 'openai')
         self.creation = context['canvasState'] == 'blank'
         complex_goal = bool(re.search(r'\b(?:multi[- ]page|(?:two|three|four|[2-9])\s+pages|pages\s*:)', context['request'], re.I))
-        self.phase = 'foundation' if self.creation and context.get('dataProfile') and self.provider in ('ollama', 'aitk') and complex_goal else 'complete'
+        reported = context.get('modelLimits', {}).get('contextTokens')
+        # A verified 32K+ Ollama window can carry the complete typed proposal,
+        # reserving both repairs. Never infer capacity from a model's name.
+        foundation = self.provider == 'aitk' or (self.provider == 'ollama' and (type(reported) is not int or reported < OLLAMA_CONTEXT_TOKENS))
+        self.phase = 'foundation' if self.creation and context.get('dataProfile') and foundation and complex_goal else 'complete'
         self.stages = 0
 
     def prepare(self, request, document):

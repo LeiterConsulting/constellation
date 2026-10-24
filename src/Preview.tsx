@@ -1,4 +1,4 @@
-import { Component, useMemo, useRef, type ErrorInfo, type ReactNode } from 'react';
+import { Component, memo, useMemo, useRef, type ErrorInfo, type ReactNode } from 'react';
 import DashboardCore from '@splunk/dashboard-core';
 import { DashboardContextProvider, type DashboardContextProviderProps } from '@splunk/dashboard-context';
 import EnterprisePreset from '@splunk/dashboard-presets/EnterprisePreset';
@@ -29,7 +29,7 @@ interface Props {
   searchMessages?: Record<string, string>;
   selected: string; selecting: boolean;
 }
-export default function Preview({ definition, revision, tokens, activeTab, onTokens, onTab, onSelect, searchResults, searchVersion, searchMessages, selected, selecting }: Props) {
+export default memo(function Preview({ definition, revision, tokens, activeTab, onTokens, onTab, onSelect, searchResults, searchVersion, searchMessages, selected, selecting }: Props) {
   const frame=useRef<HTMLDivElement>(null);
   const preview = useMemo(() => {
     const result = previewDefinition(definition, searchResults, tokens, searchMessages);
@@ -64,4 +64,4 @@ export default function Preview({ definition, revision, tokens, activeTab, onTok
       </>
     </DashboardContextProvider>
   </RendererBoundary></RendererFrame>;
-}
+});

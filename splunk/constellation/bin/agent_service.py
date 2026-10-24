@@ -18,6 +18,7 @@ from repair_hints import placement_hint
 from creation_prompt import CREATION_INSTRUCTIONS
 from focused_prompt import FOCUSED_INSTRUCTIONS
 from population_guard import independent_measurements
+from quick_edit import quick_edit
 from model_readiness import CREATE_OUTPUT_TOKENS, EDIT_OUTPUT_TOKENS
 from authoring_budget import AuthoringBudget
 from page_service import validate_purposes, proposed_purposes, focus_context
@@ -275,8 +276,9 @@ or save dashboards yourself in this turn; do not claim that you have done so.'''
 
 
 class AgentService:
-    def __init__(self, provider, runtime):
+    def __init__(self, provider, runtime, progress=None):
         self.provider, self.runtime = provider, runtime
+        self.progress = progress or (lambda *args: None)
 
     def assist(self, body):
         prompt, revision, document = body.get('prompt'), body.get('revision'), body.get('definition')
@@ -285,9 +287,6 @@ class AgentService:
         validate_document(document)
         brief = authoring_brief(body)
         saved = self.provider.configured()
-        # This guard runs before discovery and before any provider request.
-        capabilities = self.provider.capabilities(saved)
-        attachments = attachment_parts(body.get('attachments', []), saved['model'], capabilities)
         history = body.get('history', [])
         if not isinstance(history, list) or len(history) > 12:
             raise ProviderError('Use at most twelve recent conversation messages.')
@@ -296,6 +295,18 @@ class AgentService:
             if not isinstance(message, dict) or message.get('role') not in ('user', 'assistant') or not isinstance(message.get('text'), str):
                 raise ProviderError('The conversation history is invalid.')
             safe_history.append({'role': message['role'], 'text': message['text'][:4000]})
+        fast = quick_edit(prompt, document, body.get('selected', ''), body.get('attachments', [])) if body.get('attachments', []) == [] else None
+        if fast:
+            self.progress('validate')
+            return {'revision': revision, 'message': 'Updated the selected chart. Its search and other dashboard elements are preserved.',
+                    'changes': fast, 'suggestions': [], 'repaired': False,
+                    'activity': ['Applied an exact presentation edit locally; no model request or data search was needed.'],
+                    'model': saved['model'], 'brief': brief, 'pagePurposes': validate_purposes(body.get('pagePurposes', {}), document),
+                    'recovery': {'modelCalls': 0, 'queryChecks': 0, 'seconds': 0}, 'searchReceipts': []}
+        # This guard runs before discovery and before any inference request.
+        self.progress('inspect')
+        capabilities = self.provider.capabilities(saved)
+        attachments = attachment_parts(body.get('attachments', []), saved['model'], capabilities)
         environment = self.runtime.environment()
         catalog = self.runtime.datasets()
         recovery = RecoverySession(self.runtime)
@@ -318,6 +329,7 @@ class AgentService:
         if scope is not None and not isinstance(scope, dict): raise ProviderError('Select a valid data context.')
         if scope and not body.get('dataContext'):
             scope = dict(scope, earliest=inferred_range(prompt) or scope.get('earliest', '-24h'))
+        self.progress('profile')
         profile = data.profile(scope) if scope else None
         if profile and not profile['sampledRows']:
             return {'revision': revision, 'message': 'No rows were found in the selected data and time range. Choose another dataset or a wider range to continue.',
@@ -351,9 +363,12 @@ class AgentService:
         for attempt in range(MAX_MODEL_CALLS):
             try:
                 recovery.model_call()
+                self.progress('model', attempt + 1)
                 response = self.provider.complete(saved, request)
+                self.progress('validate', attempt + 1)
             except ProviderError as error:
                 error.recovery = recovery.evidence()
+                if validation_notes: error.validation_error = '\n'.join(validation_notes[-3:])[:1200]
                 raise
             text = ''
             for item in response.get('output', []):
@@ -385,6 +400,7 @@ class AgentService:
                             raise ProviderError('No real dataset has been inspected for these new searches. Ask the user to choose a catalog index or provide an existing search; include index=NAME in a suggested prompt.')
                         if source.get('type') == 'ds.test' and not re.search(r'\b(?:illustrative|synthetic|mock|fake|sample data)\b', prompt, re.I):
                             raise ProviderError('Real Splunk data is the default. Do not introduce sample data unless the user explicitly requested it; ask them to choose a real dataset.')
+                self.progress('search', attempt + 1)
                 receipts = data.validate_searches(draft, document, profile) if profile else []
                 # Newly introduced network graphs must match the target feature set.
                 for key, viz in draft['visualizations'].items():
@@ -405,6 +421,7 @@ class AgentService:
                 budget.stages += 1
                 break
             except (ValueError, KeyError, TypeError, ProviderError) as error:
+                if getattr(error, 'code', None) in ('author_cancelled', 'author_expired'): raise
                 feedback = str(error) if isinstance(error, ProviderError) else 'Invalid JSON edit structure.'
                 validation_notes.append(feedback[:800])
                 if attempt == MAX_MODEL_CALLS - 1 or getattr(error, 'code', None) == 'recovery_budget':
@@ -412,10 +429,11 @@ class AgentService:
                                if profile and profile.get('sampledRows') else
                                'I couldn’t finish a valid change within the automatic recovery limit. Your previous dashboard is preserved; Activity explains the remaining issue.')
                     failure = ProviderError(message, 422, 'studio_validation')
-                    failure.validation_error = feedback[:800]
+                    failure.validation_error = '\n'.join(validation_notes[-3:])[:1200]
                     failure.recovery = recovery.evidence()
                     raise failure from None
                 repair = True
+                self.progress('repair', attempt + 1)
                 if profile and attempt == 0:
                     profile = data.profile(scope)
                 # Keep failed output and validation feedback as untrusted user content.

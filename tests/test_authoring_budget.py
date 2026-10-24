@@ -12,6 +12,13 @@ from provider_service import ProviderError
 from authoring_budget import AuthoringBudget
 
 class AuthoringBudgetTests(unittest.TestCase):
+    def test_verified_ollama_capacity_reserves_repairs_without_guessing_aitk_limits(self):
+        context={'request':'Build two pages','canvasState':'blank','history':[],'dataProfile':PROFILE}
+        for provider,capacity,phase in [('ollama',32768,'complete'),('ollama',262144,'complete'),('ollama',16384,'foundation'),('ollama',None,'foundation'),('aitk',32768,'foundation')]:
+            with self.subTest(provider=provider,capacity=capacity):
+                value=dict(context,modelLimits={'contextTokens':capacity})
+                self.assertEqual(AuthoringBudget({'provider':provider},value).phase,phase)
+
     def test_two_internal_stages_complete_before_any_changes_are_returned(self):
         first=[{'op':'search','id':'events','pipeline':'| stats count'},chart('splunk.table','',['count']),page()]
         second=dict(page(),layoutId='details',label='Details',purpose='Investigate counts')

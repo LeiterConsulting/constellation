@@ -116,6 +116,8 @@ class PreviewJobs:
         try:
             deadline = time.monotonic() + 9
             while time.monotonic() < deadline:
+                check = getattr(self.runtime, 'check_cancel', None)
+                if check: check()
                 result = self.poll(handle)
                 if result['state'] != 'running': return result
                 time.sleep(0.15)

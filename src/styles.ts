@@ -18,7 +18,7 @@ export const Shell = styled.div`
 `;
 export const Header = styled.header`
   display: flex; gap: ${v.spacingMedium}; align-items: center; flex-wrap: wrap;
-  padding: ${v.spacingMedium} ${v.spacingLarge}; border-bottom: 1px solid ${v.borderColor};
+  padding: ${v.spacingSmall} ${v.spacingMedium}; border-bottom: 1px solid ${v.borderColor};
   background: ${v.backgroundColorSection};
   h1 { margin: 0; font-size: ${v.fontSizeLarge}; font-weight: 500; }
 `;
@@ -27,23 +27,39 @@ export const Actions = styled.div`
 `;
 export const Workspace = styled.div<{ $floating: boolean }>`
   position: relative; display: grid; grid-template-columns: ${p => p.$floating ? 'minmax(0, 1fr)' : 'minmax(0, 1fr) minmax(300px, 350px)'};
-  min-height: 780px;
+  min-height: 540px;
   @media (max-width: 760px) { grid-template-columns: minmax(0, 1fr); }
 `;
 export const Canvas = styled.main`
-  min-width: 0; padding: ${v.spacingLarge};
+  min-width: 0; padding: ${v.spacingMedium};
   h2 { margin: 0; font-weight: 500; font-size: ${v.fontSizeLarge}; }
 `;
 export const CanvasHeading = styled.div`
   display: flex; align-items: flex-start; justify-content: space-between; gap: ${v.spacingMedium};
-  flex-wrap: wrap; margin-bottom: ${v.spacingLarge};
+  flex-wrap: wrap; margin-bottom: ${v.spacingSmall};
+`;
+export const CanvasTools = styled.div`
+  display: flex; align-items: center; gap: ${v.spacingSmall}; margin-bottom: ${v.spacingSmall};
+  > p { min-width: 0; overflow-wrap: anywhere; }
+  @media (max-width: 760px) { flex-wrap: wrap; }
+`;
+export const ControlPopover = styled.div`
+  width: min(380px, calc(100vw - 32px)); padding: ${v.spacingMedium};
+  max-height: 60dvh; overflow-y: auto; color: ${v.contentColorDefault};
+  background: ${v.backgroundColorSection};
+`;
+export const ProgressStatus = styled.div`
+  flex-shrink: 0; padding: ${v.spacingSmall}; border: 1px solid ${v.borderColor};
+  background: ${v.backgroundColorPage}; border-radius: ${v.borderRadius};
+  > div { justify-content: space-between; flex-wrap: nowrap; }
+  small { display: block; margin-top: ${v.spacingXSmall}; }
 `;
 export const Muted = styled.p`
   color: ${v.contentColorDefault}; font-size: ${v.fontSizeSmall}; margin: ${v.spacingSmall} 0;
 `;
 export const Conversation = styled.aside<{ $floating: boolean; $collapsed: boolean }>`
   display: ${p => p.$collapsed ? 'none' : 'flex'}; flex-direction: column; gap: ${v.spacingMedium};
-  padding: ${v.spacingMedium}; background: ${v.backgroundColorSection}; color: ${v.contentColorDefault};
+  padding: ${v.spacingSmall}; background: ${v.backgroundColorSection}; color: ${v.contentColorDefault};
   border: 1px solid ${v.borderColor}; min-width: 0; z-index: 10;
   position: ${p => p.$floating ? 'fixed' : 'sticky'}; align-self: start; top: ${p => p.$floating ? 'auto' : v.spacingMedium};
   right: ${p => p.$floating ? '20px' : 'auto'}; bottom: ${p => p.$floating ? '20px' : 'auto'};
@@ -76,7 +92,7 @@ export const FloatingLauncher = styled.div`
   position: fixed; bottom: ${v.spacingLarge}; right: ${v.spacingLarge}; z-index: 11;
 `;
 export const RendererFrame = styled.div`
-  position:relative; min-height: 650px; width: 100%; overflow: hidden; border-radius: ${v.borderRadius};
+  position:relative; min-height: 420px; width: 100%; overflow: hidden; border-radius: ${v.borderRadius};
 `;
 export const Source = styled.pre`
   color: ${v.contentColorDefault};
@@ -85,7 +101,7 @@ export const Source = styled.pre`
 `;
 
 export const EmptyCanvas = styled.section<{ $floating: boolean }>`
-  min-height: 650px; display: flex; flex-direction: column; justify-content: center;
+  min-height: 460px; display: flex; flex-direction: column; justify-content: center;
   max-width: 820px; margin: 0 auto; padding: ${v.spacingLarge} 0;
   h2 { font-size: ${v.fontSizeXXLarge}; line-height: 1.2; margin: 0 0 ${v.spacingMedium}; }
   > p { max-width: 560px; }

@@ -158,7 +158,7 @@ class DataService:
                     if self.independent_populations: validate_populations(source.get('options', {}).get('query', ''), profile)
                 language, result = self.inspect_source(document, identifier, source, profile)
             except ProviderError as error:
-                if error.code == 'recovery_budget': raise
+                if error.code in ('recovery_budget', 'author_cancelled', 'author_expired'): raise
                 receipt = {'source': identifier, 'status': 'failed', 'code': error.code,
                            'earliest': profile['scope']['earliest'], 'bounded': True}
                 if error.code == 'search_scope': receipt['requiredPrefix'] = base

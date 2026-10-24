@@ -1,13 +1,13 @@
 # Validation status
 
-Snapshot: **0.10.0 development preview, October 24, 2026**. This file is a sanitized summary. Private lab addresses, credentials, screenshots, transcripts, raw search data and detailed runtime receipts are excluded from the repository.
+Snapshot: **0.12.0 development preview, October 24, 2026**. This file is a sanitized summary. Private lab addresses, credentials, screenshots, transcripts, raw search data and detailed runtime receipts are excluded from the repository.
 
 ## Local verification
 
 | Check | Observed result |
 | --- | --- |
-| Python unit suites | 175 tests passed on Python 3.9 and 3.13, including repository-publication policy and independent-population recovery tests. |
-| Frontend unit suites | 54 tests passed. |
+| Python unit suites | 182 tests passed on Python 3.9 and 3.13, including repository-publication policy and independent-population recovery tests. |
+| Frontend unit suites | 57 tests passed. |
 | TypeScript and production build | Passed; bundle-size warning remains. |
 | Deterministic app package | Generated with SHA-256 receipt. |
 | Splunk AppInspect 4.3.1, precert | 0 errors, 0 failures, 0 future failures, 7 warnings, 1 skipped, 107 successes, 137 not applicable on the tested app archive. |
@@ -104,3 +104,34 @@ Final 0.11.2 has SHA-256 `a13f9b33269bfdbb6bbc3a896c37ae9997ef55d0cce5873eb92dbc
 - Local unit suites use fixtures/mocks and do not establish live infrastructure behavior.
 
 See the [support contract](studio-support.md), [security boundaries](../SECURITY.md) and [release gates](roadmap.md).
+
+
+## 0.12 responsive authoring qualification — October 24, 2026
+
+This slice adds actual stage receipts, elapsed time, cooperative Stop and a compact canvas toolbar. Exact selected-chart renames and line/area switches use a deliberately narrow local grammar; broader edits still use inference. A first-turn client SPL2 probe no longer duplicates server environment work. Inspection can be stopped without losing the data chooser's goal; late inspection cannot launch a build.
+
+The authoring/control implementation remains inside Splunk. During actual inference, control polls returned in at most 47 ms in the three cancellation trials; Stop acknowledgements took 23–41 ms. AITK's handler exited about 0.4 seconds later. OpenAI and Ollama's blocking calls returned after 22.3 and 32.8 more seconds; both late results were rejected. These timings demonstrate responsive controls, not upstream inference or billing cancellation. The browser also exercised Stop while starting and while visibly waiting for the model, then a selected-chart edit; exact saved readback retained two pages and changed only the selected title.
+
+### Repeated provider runs
+
+All trials used the same real-data two-page sensor goal, current-user validation, exclusion above 150°F, independent Wi-Fi measurements, device-row navigation, selected trend/type/title and table-formatting requests. AITK's existing connection retained 16,000 tokens; no model, key, role or reasoning setting was changed. Full journeys ran on Enterprise 10.2.8 / Studio 1.23.12. Enterprise 10.4.4 / Studio 1.26.6 received the same inspected package and a synthetic control/zero-inference edit check; it did not repeat the complete provider matrix.
+
+The initial six-trial run had OpenAI 2/2 creations and 4/4 edits; Ollama 0/2 creations (the shared-population guard and missing-page validation rejected proposals); AITK 2/2 creations and 3/4 edits. The failed AITK table edit used three attempts and 135 seconds. Failures preserved the previous document.
+
+A bounded local diagnostic suggested reserving both repairs for Ollama models with verified 32K-or-larger context. That diagnostic is not installed-app acceptance. After applying the strategy, the final installed rerun was:
+
+| Provider / selected connection | Creation accepted | Focused edits accepted | Creation wall time | Exact chart edit | Table edit |
+| --- | --- | --- | --- | --- | --- |
+| OpenAI / GPT-6 luna | 1/1 | 2/2 | 21.1 s | 0.3 s, zero inference | 5.9 s |
+| Ollama / Qwen3 coder | 2/2 | 4/4 | 62.9–65.8 s | 0.2 s, zero inference | 16.4–23.5 s |
+| AITK / existing GPT-5 mini connection | 1/1 | 1/2 | 74.6 s | 0.4 s, zero inference | Rejected after three calls / 133.0 s |
+
+Both revised Ollama creations used validation feedback and completed in two calls without a rewritten user goal. The same three-call/120-second budget remains; an already-running request can extend wall time beyond that budget. Native/private definition and conversation readback passed for the retained accepted snapshots. Progress samples put roughly 57–70 seconds of the slower creation journeys in the provider-wait stages; that includes transport and AITK polling, not just model compute. The exact grammar improvement must not be generalized to arbitrary conversational edits.
+
+### Analytical and 1.0 decision
+
+Synthetic property probes covered seven generated snapshots / 28 sources, using fictional devices/readings without ingestion or modification of the actual dashboards. Six snapshots passed all applicable cutoff, independent Wi-Fi, default-filter and device-selection properties. The final AITK creation failed the temperature invariant in its summary: its average excluded the high readings, but its latest-temperature aggregate did not. Query/schema validity did not catch that business-rule gap. The rejected AITK formatting requests also dropped temperature output fields; controlled validation details are now retained across retries instead of being hidden by a final time-budget error.
+
+**This is a development preview, not 1.0 qualification.** Outstanding blockers include consistent AITK table editing within latency limits, verified enforcement of exclusions across every applicable aggregate, broader analytical/field-meaning fixtures and recovery coverage. Broader roles, SHC routing/concurrency, upgrade/rollback, accessibility/reflow, native-feature matrices and bundle reduction remain the release gates described elsewhere. Do not report the final 4/4 server-accepted creations as 4/4 analytically qualified dashboards.
+
+The final archive is `constellation-0.12.0.tgz`, SHA-256 `32c07846dec89ea92d3b72ebc22167096467ccb458ac732ae85d3ebe90c4be46`. It contains 429 files / 5,342,392 bytes and no macOS metadata. Both labs installed it without a restart. Final local AppInspect 4.3.1 precert: 0 errors, 0 failures, 0 future failures, 7 warnings, 1 skipped, 107 successes, 137 not applicable. All bundled Python bytes match the qualified authoring source. The last changes after the provider rerun were confined to frontend inspection cancellation and memoizing the canvas against unrelated UI changes; all bundled Python bytes remain identical. Installed checks covered the final build: typing, inspection Stop/goal retention, refresh with selected focus, a separate simple draft, library reopen, native save/readback in Search & Reporting, and native Edit → View without changing the definition. The UI-created dashboard passed its synthetic analytical probes as well.

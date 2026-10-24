@@ -128,6 +128,8 @@ class AITKClient:
         deadline = time.monotonic() + 90
         try:
             while time.monotonic() < deadline:
+                check = getattr(self.runtime, 'check_cancel', None)
+                if check: check()
                 state = self.runtime.request(path)['entry'][0]['content']
                 if state.get('dispatchState') in ('FAILED', 'BAD_INPUT_CANCEL'):
                     raise ProviderError('AITK inference failed. Check the named connection in AI Toolkit.', 502)

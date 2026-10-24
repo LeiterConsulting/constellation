@@ -13,6 +13,22 @@ from agent_service import AgentService
 from draft_service import DraftService
 from data_service import DataService
 from dashboard_library import DashboardLibrary
+from authoring_progress import AuthoringProgress
+
+
+def author(service, runtime, body):
+    control = AuthoringProgress(runtime.user, runtime.token) if body.get('runHandle') else None
+    progress = control.claim(body['runHandle']) if control else lambda *args: None
+    runtime.check_cancel = lambda: progress()
+    try:
+        result = AgentService(service, runtime, progress=progress).assist(body)
+        progress('complete')
+        return result
+    except Exception:
+        progress('failed')
+        raise
+    finally:
+        if control: control.release(body['runHandle'])
 
 
 class CredentialStore:
@@ -123,7 +139,8 @@ class ConstellationHandler(PersistentServerConnectionApplication):
             routes = {('GET','settings'): service.settings, ('POST','settings'): lambda: service.save(body),
                       ('POST','models'): service.models, ('POST','test'): service.test,
                       ('POST','assist'): lambda: service.assist(body),
-                      ('POST','author'): lambda: AgentService(service, runtime).assist(body),
+                      ('POST','author'): lambda: author(service, runtime, body),
+                      ('POST','run'): lambda: AuthoringProgress(session['user'], session['authtoken']).operation(body),
                       ('GET','environment'): runtime.environment,
                       ('POST','environment'): lambda: runtime.environment(body.get('probe') is True),
                       ('GET','datasets'): runtime.datasets,

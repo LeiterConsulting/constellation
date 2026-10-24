@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Button from '@splunk/react-ui/Button';
 import ControlGroup from '@splunk/react-ui/ControlGroup';
 import Message from '@splunk/react-ui/Message';
@@ -21,15 +21,20 @@ export default function DataChooser({ discovery, initial, initialGoal = '', onBu
   const [stage, setStage] = useState<'inspect' | 'build'>('inspect');
   const [error, setError] = useState('');
   const generation = useRef(0);
+  const pending = useRef<AbortController | null>(null);
+  useEffect(() => () => { generation.current++; pending.current?.abort(); }, []);
+  const stopInspection = () => { generation.current++; pending.current?.abort(); pending.current = null; setBusy(false); };
+  const close = () => { stopInspection(); onClose(); };
   const change = (next: DataScope) => { generation.current++; setScope(next); setProfile(null); setError(''); };
   const chosen = (): DataScope => mode === 'query' ? { query: scope.query || '', language: scope.language || 'spl', earliest: scope.earliest }
     : { index: scope.index || '', sourcetype: scope.sourcetype || '', language: 'spl', earliest: scope.earliest };
   const inspect = async (build = false) => {
+    const controller = new AbortController(); pending.current?.abort(); pending.current = controller;
     const turn = ++generation.current; setBusy(true); setStage(build && profile ? 'build' : 'inspect'); setError('');
     try {
       // Scope changes invalidate profile. Authoring still profiles server-side;
       // avoid repeating the same UI inspection when Build follows Inspect.
-      const result = build && profile ? profile : await providerRequest<DataProfile>('profile', { ...chosen() });
+      const result = build && profile ? profile : await providerRequest<DataProfile>('profile', { ...chosen() }, controller.signal);
       if (turn !== generation.current) return;
       setProfile(result);
       if (!result.sampledRows) { setError('No rows found in this time range. Choose another dataset or range.'); return; }
@@ -39,10 +44,10 @@ export default function DataChooser({ discovery, initial, initialGoal = '', onBu
         await onBuild(result.scope, request); onClose();
       }
     } catch (failure) { if (turn === generation.current) setError(failure instanceof Error ? failure.message : 'Data could not be inspected.'); }
-    finally { if (turn === generation.current) setBusy(false); }
+    finally { if (turn === generation.current) { pending.current = null; setBusy(false); } }
   };
   const sourcetypes = [...new Set(discovery?.activity.filter(item => item.index === scope.index).map(item => item.sourcetype) || [])];
-  return <Modal open onRequestClose={() => { generation.current++; onClose(); }} returnFocus={returnFocus} style={{ width: 'min(700px, calc(100vw - 32px))' }}>
+  return <Modal open onRequestClose={close} returnFocus={returnFocus} style={{ width: 'min(700px, calc(100vw - 32px))' }}>
     <Modal.Header title="Build with Splunk data"/>
     <Modal.Body>
       <Muted>Searches use your Splunk permissions. Only field metadata goes to the model; event values stay in Splunk and the preview.</Muted>
@@ -67,7 +72,7 @@ export default function DataChooser({ discovery, initial, initialGoal = '', onBu
         <details><summary>Field details</summary><Muted>{profile.fields.map(field => field.name).join(', ')}. This sample does not establish a business definition or complete coverage.</Muted></details></> : null}
       {error ? <Message type="error">{error}</Message> : null}
       {busy ? <Muted role="status">{stage === 'build' ? 'Building your dashboard…' : 'Inspecting the selected data…'}</Muted> : null}
-    </Modal.Body><Modal.Footer><Actions><Button onClick={onClose} disabled={busy}>Cancel</Button><Button onClick={() => void inspect()} disabled={busy}>Inspect fields</Button>
+    </Modal.Body><Modal.Footer><Actions><Button onClick={busy ? stopInspection : close}>{busy ? 'Stop inspection' : 'Cancel'}</Button><Button onClick={() => void inspect()} disabled={busy}>Inspect fields</Button>
       <Button appearance="primary" onClick={() => void inspect(true)} disabled={busy || (mode === 'index' ? !scope.index : !scope.query?.trim())}>Build dashboard</Button></Actions></Modal.Footer>
   </Modal>;
 }

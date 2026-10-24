@@ -20,7 +20,7 @@ Ollama reports model context metadata when available; the app requests up to 32,
 
 The tested GPT-5 mini AITK connection used 16,000 tokens for multi-page creation; its earlier 2,000-token setting could return no completion. This is a tested configuration, not a universal model recommendation. A larger budget does not guarantee fast or correct authoring. Review the [provider qualification results](provider-qualification.md) when choosing a connection.
 
-Larger new multi-page goals through Ollama and AITK use an internal foundation and completion stage. The stages share the existing recovery budget, reuse verified searches and apply together only after validation. The agent receives reported limits and retains the durable brief while trimming older rolling history when the conservative Ollama input estimate requires it. These safeguards reduce avoidable failures; they do not guarantee that every model can author every dashboard.
+Larger new multi-page goals through AITK and Ollama models with unknown or smaller context windows use an internal foundation and completion stage. Verified Ollama windows of 32,768 tokens or more attempt the full typed proposal first, reserving both repairs. The stages share the existing recovery budget, reuse verified searches and apply together only after validation. The agent receives reported limits and retains the durable brief while trimming older rolling history when the conservative Ollama input estimate requires it. These safeguards reduce avoidable failures; they do not guarantee that every model can author every dashboard.
 
 ## Sketches and PDFs
 
@@ -39,3 +39,12 @@ A private draft link reopens your own conversation; it does not share a dashboar
 The agent can repair validation failures within a fixed budget. If recovery is exhausted, the accepted draft is preserved; read Activity and retry the original request when appropriate. A model test is not a dashboard-creation qualification. Authentication, quota and transport failures may need provider or administrator action.
 
 Check **Draft saved** before closing. On a save conflict, keep both versions using **Save as new draft**. Draft and managed private native-view deletion uses recoverable Trash. Backups, retention and removal of the app remain administrator responsibilities. See the [handoff audit](share-readiness.md) and [support limits](studio-support.md).
+
+
+### Progress and compact controls
+
+While the agent works, the conversation shows its actual stage and elapsed time. Open Activity for the completed steps. Stop immediately prevents late edits and asks the server to stop at its next checkpoint. A direct provider request may still finish upstream and incur charges. Your last accepted dashboard and conversation remain available; refreshing does not repeat the request.
+
+Stop inspection in the data chooser retains your goal and data selection; a late inspection cannot start a build. The bounded server inspection may still finish.
+
+The source/time button above the canvas opens preview range, change-data, refresh/pause and Search details. Complete/partial/stale evidence still describes bounded preview results. Expand Focus in the conversation for the keyboard-accessible element list, or use Select element on the canvas. Float, Dock and Hide retain their existing behavior.
