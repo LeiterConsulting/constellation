@@ -13,6 +13,12 @@ PROFILE_WITH_FIELDS=dict(PROFILE,fields=[{'name':'metric_a','numeric':True},{'na
 
 
 class PopulationGuardTests(unittest.TestCase):
+    def test_reverse_quoted_null_and_multiple_measurement_filters_still_reject_coupling(self):
+        for condition in ("'metric_a'<=150", '150>=metric_a', 'isnotnull(metric_a)', 'metric_a<=150 AND metric_b>-80'):
+            query=PROFILE['baseQuery']+' | where '+condition+' | stats avg(metric_a) latest(metric_b)'
+            with self.subTest(condition=condition), self.assertRaisesRegex(ProviderError,'discards events'):
+                validate_populations(query,PROFILE_WITH_FIELDS)
+
     def test_explicit_independence_survives_focused_edits_and_allows_a_current_revision(self):
         brief={'purpose':'Exclude high A, but retain B measurements independently.','requirements':''}
         self.assertTrue(independent_measurements('Round the selected table',brief))

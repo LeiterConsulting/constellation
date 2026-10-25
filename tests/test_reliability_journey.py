@@ -53,10 +53,13 @@ class ReliabilityJourneyTests(unittest.TestCase):
             {'op':'set','path':'/visualizations','value':json.dumps({'metric':{'type':'splunk.singlevalue','title':'Events','dataSources':{'primary':'events'}}})},
             {'op':'layout','layoutId':'overview','label':'Overview','width':1200,'height':600,'items':[{'id':'metric','kind':'block','x':20,'y':20,'w':400,'h':200}]},
         ])
+        initial['suggestions'] = [{'label':'x'*61, 'prompt':'Inspect the result', 'reason':'', 'kind':'refine'}]
         patch = reply([{'op':'set','path':'/dataSources/events/options/queryParameters','value':'{"earliest":"-24h","latest":"now"}'}])
         provider = Provider([initial, patch])
         result = AgentService(provider, Runtime()).assist({'prompt':'Build from index=fixture_index','revision':0,'definition':original,'dataContext':blank()['dataContext']})
         self.assertEqual(result['recovery']['modelCalls'], 2)
+        self.assertIn('Omitted invalid optional next-step suggestions', result['activity'])
+        self.assertTrue(result['validationNotes'])  # The invalid query still requires repair.
         self.assertFalse(original['visualizations'])
         final = apply_changes(original, result['changes'])
         self.assertIn('metric', final['visualizations'])

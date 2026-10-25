@@ -188,13 +188,15 @@ class NewDashboardTests(unittest.TestCase):
         client=Client([{'message':'Ready','changes':[],'suggestions':[self.proposal()]}])
         reply=AgentService(ProviderService(Store(),client),Runtime()).assist({'prompt':'Help shape this idea','revision':0,'definition':self.blank()})
         self.assertEqual(reply['suggestions'],[self.proposal()['prompt']])
-    def test_invalid_proposals_are_repaired_once_and_duplicates_are_removed(self):
+    def test_invalid_optional_suggestions_are_rejected_without_repair_and_duplicates_are_removed(self):
         from prompt_suggestions import normalize_suggestions
         self.assertEqual(normalize_suggestions([self.proposal(),self.proposal()]),[self.proposal()])
         invalid=dict(self.proposal(),label='x'*61)
         client=Client([{'message':'Ready','changes':[],'suggestions':[invalid]}, {'message':'Ready','changes':[],'suggestions':[self.proposal()]}])
         reply=AgentService(ProviderService(Store(),client),Runtime()).assist({'prompt':'Help shape this idea','revision':0,'definition':self.blank(),'suggestionFormat':'cards'})
-        self.assertTrue(reply['repaired']);self.assertEqual(len(client.calls),2)
+        self.assertFalse(reply['repaired']);self.assertEqual(len(client.calls),1)
+        self.assertEqual(reply['suggestions'],[])
+        self.assertIn('Omitted invalid optional next-step suggestions',reply['activity'])
         self.assertNotIn('fixture-secret',json.dumps(client.calls))
 
     def test_chart_labels_use_native_root_properties_and_preserve_unchanged_legacy(self):

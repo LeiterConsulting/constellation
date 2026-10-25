@@ -116,6 +116,15 @@ class SearchService:
             code = 'splunk_' + type(error).__name__ + ('_' + status if status.isdigit() else '')
             raise ProviderError('Splunk could not complete this discovery or search request. ' + search_feedback(str(error)), 422, code) from None
 
+    def aitk_job_log(self, job_path):
+        """Diagnostic text stays local to the AITK allowlist classifier."""
+        prefix = '/servicesNS/' + quote(self.user, safe='') + '/Splunk_ML_Toolkit/search/jobs/'
+        if not job_path.startswith(prefix) or not re.fullmatch(r'[A-Za-z0-9_.-]{1,300}', job_path[len(prefix):]):
+            raise ProviderError('The AITK diagnostic job is invalid.')
+        import splunk.rest
+        _, raw = splunk.rest.simpleRequest(job_path + '/search.log', sessionKey=self.token, raiseAllErrors=True)
+        return raw.decode('utf-8', 'replace')[:1_000_000] if isinstance(raw, bytes) else str(raw)[:1_000_000]
+
     def environment(self, probe=False):
         info = self.request('/services/server/info')['entry'][0]['content']
         context = self.request('/services/authentication/current-context')['entry'][0]['content']

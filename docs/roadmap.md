@@ -43,3 +43,8 @@ The [provider qualification protocol and 1.0 decision](provider-qualification.md
 - Establish release artifact hashes, repeatable acceptance records and operational documentation for each supported deployment profile.
 
 Modules and migration contracts are described in [architecture](architecture.md) and [upgrade guide](upgrade-guide.md). Future compatibility is intentionally verified at these boundaries rather than promised from a version number alone.
+
+
+## Latest qualification priorities
+
+Version 0.14 reduces avoidable creation calls and passes selected operational-data journeys, including plain-user Ollama authoring and native use. It is not the 1.0 decision. Next close ordinary-user AITK connection access, characterize remaining 35–45-second AITK edits and stochastic recovery failures, and test bounded-preview dispatch under realistic simultaneous Studio/canvas workloads. Preserve partial-result truth and run unaided user trials before widening support claims. See the [current evidence](validation.md#014-latency-and-operational-data-qualification).

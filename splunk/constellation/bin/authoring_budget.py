@@ -5,6 +5,7 @@ import re
 from model_readiness import CREATE_OUTPUT_TOKENS, EDIT_OUTPUT_TOKENS, OLLAMA_CONTEXT_TOKENS
 from provider_service import ProviderError
 from studio_contract import model_document
+from creation_strategy import bounded_aitk_creation, CONCISE_CREATION
 
 
 class AuthoringBudget:
@@ -16,7 +17,8 @@ class AuthoringBudget:
         reported = context.get('modelLimits', {}).get('contextTokens')
         # A verified 32K+ Ollama window can carry the complete typed proposal,
         # reserving both repairs. Never infer capacity from a model's name.
-        foundation = self.provider == 'aitk' or (self.provider == 'ollama' and (type(reported) is not int or reported < OLLAMA_CONTEXT_TOKENS))
+        foundation = ((self.provider == 'aitk' and not bounded_aitk_creation(context)) or
+                      (self.provider == 'ollama' and (type(reported) is not int or reported < OLLAMA_CONTEXT_TOKENS)))
         self.phase = 'foundation' if self.creation and context.get('dataProfile') and foundation and complex_goal else 'complete'
         self.stages = 0
 
@@ -43,6 +45,15 @@ class AuthoringBudget:
             request['max_output_tokens'] = CREATE_OUTPUT_TOKENS if self.creation else EDIT_OUTPUT_TOKENS
             request['text']['format']['schema'] = copy.deepcopy(self.schema)
         request['instructions'] = self.instructions + '\n\nCURRENT SERVER-CONTROLLED STAGE (takes precedence over whole-dashboard completion instructions):\n' + context['authoringStage']
+        if self.creation and context.get('dataProfile'):
+            request['instructions'] += '\n\n' + CONCISE_CREATION
+            properties = request['text']['format']['schema'].get('properties', {})
+            if 'message' in properties: properties['message']['maxLength'] = 300
+            if 'suggestions' in properties:
+                properties['suggestions']['maxItems'] = 1
+                suggestion = properties['suggestions'].get('items', {}).get('properties', {})
+                for field, maximum in (('label', 48), ('prompt', 200), ('reason', 100)):
+                    if field in suggestion: suggestion[field]['maxLength'] = maximum
         content = request['input'][0]['content']
         # A conservative estimate, not a tokenizer or a verified upstream limit.
         # Drop only rolling history; the durable brief and exact document remain.
@@ -56,7 +67,7 @@ class AuthoringBudget:
                 context['history'] = context['history'][1:]
             if overhead + len(json.dumps(context).encode()) > allowance:
                 raise ProviderError('This dashboard exceeds the conservative input budget for the Ollama context window. Use a smaller dashboard or a provider with more context. Your draft is preserved.', 413, 'model_context_budget')
-        request['input'] = [{'role': 'user', 'content': [{'type': 'input_text', 'text': json.dumps(context)}] + [part for part in content if part.get('type') != 'input_text']}]
+        request['input'] = [{'role': 'user', 'content': [{'type': 'input_text', 'text': json.dumps(context, separators=(',', ':'))}] + [part for part in content if part.get('type') != 'input_text']}]
 
     def advance(self, request, document):
         self.stages += 1
@@ -99,7 +110,7 @@ class AuthoringBudget:
         capacity = min(OLLAMA_CONTEXT_TOKENS, reported) if type(reported) is int and reported > 0 else OLLAMA_CONTEXT_TOKENS
         for maximum in (20000, 10000, 4000, 0):
             compact = dict(envelope, rejectedOutput=envelope['rejectedOutput'][:maximum])
-            entry['content'][0]['text'] = json.dumps(compact)
+            entry['content'][0]['text'] = json.dumps(compact, separators=(',', ':'))
             if self.provider != 'ollama': return
             size = len(request['instructions'].encode()) + len(json.dumps(request['text']).encode())
             size += sum(len(part['text'].encode()) for item in request['input'] for part in item['content'] if part.get('type') == 'input_text')

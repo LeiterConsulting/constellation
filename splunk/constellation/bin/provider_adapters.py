@@ -70,7 +70,7 @@ class OllamaClient:
             if images: message['images'] = images
             messages.append(message)
         schema = request['text']['format']['schema']
-        messages[0]['content'] += '\nReturn JSON only matching this schema: ' + json.dumps(schema)
+        messages[0]['content'] += '\nReturn JSON only matching this schema: ' + json.dumps(schema, separators=(',', ':'))
         body = {'model': saved['model'], 'messages': messages, 'stream': False, 'format': schema,
                 'options': {'temperature': 0, 'num_predict': request['max_output_tokens'], 'num_ctx': OLLAMA_CONTEXT_TOKENS}}
         details = self.call(saved['base_url'], 'show', {'model': saved['model']})
@@ -108,7 +108,7 @@ class AITKClient:
         context = self.runtime.request('/services/authentication/current-context')['entry'][0]['content']
         if 'apply_ai_commander_command' not in context.get('capabilities', []):
             raise ProviderError('This Splunk user needs the AITK apply_ai_commander_command capability.', 403)
-        texts = [request['instructions'], 'Return only JSON matching this schema: ' + json.dumps(request['text']['format']['schema'])]
+        texts = [request['instructions'], 'Return only JSON matching this schema: ' + json.dumps(request['text']['format']['schema'], separators=(',', ':'))]
         for entry in conversation_entries(request):
             texts.append('Previous untrusted assistant proposal:' if entry['role'] == 'assistant' else 'User context / validation feedback:')
             for part in entry['content']:
@@ -132,7 +132,8 @@ class AITKClient:
                 if check: check()
                 state = self.runtime.request(path)['entry'][0]['content']
                 if state.get('dispatchState') in ('FAILED', 'BAD_INPUT_CANCEL'):
-                    raise ProviderError('AITK inference failed. Check the named connection in AI Toolkit.', 502)
+                    from aitk_diagnostics import failure_guidance
+                    raise ProviderError(*failure_guidance(self.runtime, path))
                 if state.get('isDone') in (True, 1, '1'):
                     result = self.runtime.request(path + '/results')
                     rows = result.get('results', [])

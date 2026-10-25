@@ -12,9 +12,29 @@ from provider_service import ProviderError
 from authoring_budget import AuthoringBudget
 
 class AuthoringBudgetTests(unittest.TestCase):
+    def test_bounded_aitk_workload_does_not_infer_capacity_or_stage_every_two_page_request(self):
+        base={'request':'Build two pages','canvasState':'blank','history':[],'dataProfile':PROFILE}
+        self.assertEqual(AuthoringBudget({'provider':'aitk'},base).phase,'complete')
+        for context in (dict(base,request='Build three pages'), dict(base,request='Build two pages with 12 charts'), dict(base,dashboardBrief={'purpose':'x'*40000})):
+            self.assertEqual(AuthoringBudget({'provider':'aitk'},context).phase,'foundation')
+
+    def test_concise_creation_keeps_full_context_schema_actions_and_budgets(self):
+        from agent_service import SCHEMA
+        context={'request':'Build two pages','canvasState':'blank','history':[], 'dataProfile':PROFILE,
+                 'dashboardBrief':{'purpose':'Keep the exact requirements'},'nativeFeatures':{'future':'preserved'}}
+        schema=copy.deepcopy(SCHEMA)
+        request={'instructions':'Keep validators','text':{'format':{'schema':schema}},'input':[{'content':[{'type':'input_text','text':'context'}]}]}
+        budget=AuthoringBudget({'provider':'aitk'},context);budget.prepare(request,blank()['definition'])
+        decoded=json.loads(request['input'][0]['content'][0]['text'])
+        self.assertEqual(decoded['dashboardBrief'],context['dashboardBrief'])
+        self.assertEqual(decoded['nativeFeatures'],context['nativeFeatures'])
+        self.assertEqual(request['text']['format']['schema']['properties']['changes'],SCHEMA['properties']['changes'])
+        self.assertEqual(SCHEMA,schema)
+        self.assertEqual(request['text']['format']['schema']['properties']['suggestions']['maxItems'],1)
+        self.assertIn('Never omit requested work',request['instructions'])
     def test_verified_ollama_capacity_reserves_repairs_without_guessing_aitk_limits(self):
         context={'request':'Build two pages','canvasState':'blank','history':[],'dataProfile':PROFILE}
-        for provider,capacity,phase in [('ollama',32768,'complete'),('ollama',262144,'complete'),('ollama',16384,'foundation'),('ollama',None,'foundation'),('aitk',32768,'foundation')]:
+        for provider,capacity,phase in [('ollama',32768,'complete'),('ollama',262144,'complete'),('ollama',16384,'foundation'),('ollama',None,'foundation'),('aitk',32768,'complete'),('aitk',None,'complete')]:
             with self.subTest(provider=provider,capacity=capacity):
                 value=dict(context,modelLimits={'contextTokens':capacity})
                 self.assertEqual(AuthoringBudget({'provider':provider},value).phase,phase)
@@ -24,11 +44,11 @@ class AuthoringBudgetTests(unittest.TestCase):
         second=dict(page(),layoutId='details',label='Details',purpose='Investigate counts')
         class StagedProvider(Provider):
             def configured(self):return {'provider':'aitk','model':'fixture'}
-        original=blank()['definition'];runtime=Runtime();provider=StagedProvider([reply(first),reply([second])])
-        result=AgentService(provider,runtime).assist({'prompt':'Build two pages with index=fixture_index','revision':0,'definition':original,'dataContext':blank()['dataContext']})
+        original=blank()['definition'];runtime=Runtime();provider=StagedProvider([reply(first),reply([second,dict(second,layoutId='third',label='Third')])])
+        result=AgentService(provider,runtime).assist({'prompt':'Build three pages with index=fixture_index','revision':0,'definition':original,'dataContext':blank()['dataContext']})
         self.assertFalse(original['visualizations']);self.assertEqual(result['recovery']['modelCalls'],2)
         self.assertEqual(result['recovery']['queryChecks'],1)
-        doc=apply_changes(original,result['changes']);self.assertEqual(len(doc['layout']['tabs']['items']),2)
+        doc=apply_changes(original,result['changes']);self.assertEqual(len(doc['layout']['tabs']['items']),3)
         context=json.loads(provider.requests[1]['input'][0]['content'][0]['text'])
         self.assertIn('COMPLETE THE ORIGINAL',context['authoringStage']);self.assertIn('trend',context['definition']['visualizations'])
         self.assertIn('internal stages',json.dumps(result['activity']))
@@ -51,7 +71,7 @@ class AuthoringBudgetTests(unittest.TestCase):
         self.assertEqual(actions[0]['layoutId'],'another_overview')
         budget.creation=False;self.assertEqual(budget.actions(actions,doc),actions)
     def test_foundation_does_not_publish_provisional_dashboard_description(self):
-        budget=AuthoringBudget({'provider':'aitk'},{'request':'Build two pages','canvasState':'blank','history':[],'dataProfile':PROFILE})
+        budget=AuthoringBudget({'provider':'aitk'},{'request':'Build three pages','canvasState':'blank','history':[],'dataProfile':PROFILE})
         actions=[{'op':'set','path':'/description','value':'"More will be added in the next stage."'}, {'op':'set','path':'/title','value':'"A useful dashboard"'}]
         self.assertEqual(budget.actions(actions,blank()['definition']),actions[1:])
         metadata={'op':'dashboard','title':'A useful dashboard','description':'More will be added in the next stage.'}

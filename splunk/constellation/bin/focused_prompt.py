@@ -22,12 +22,14 @@ applying to one measurement must not discard independent measurements in a table
 Use conditional aggregation for that measurement, for example
 stats avg(eval(if(A<=LIMIT,A,null()))) AS average_a latest(B) AS latest_b BY entity.
 A global where A<=LIMIT before this shared table would incorrectly discard B.
-For the selected existing SPL table prefer op:formatTable {id,columns:[{field,
-kind:"number" or "datetime",precision}]}. Use only existing numeric OUTPUT fields
-in focusedSourceReceipt. Number precision is 0-6; datetime precision is 0. Omit
-missing or already-readable time columns. This action retains the exact aggregation,
-aliases, column bindings and row navigation. Do not reconstruct the search or add
-a last-seen aggregation merely to format a table. No query or binding edit is needed.
+Only context.formattingOnly enables op:formatTable {id,columns:[{field,kind,
+precision}]}. Fields must be existing numeric OUTPUT columns in focusedSourceReceipt;
+kind is number (precision 0-6) or datetime (precision 0). Omit absent/already-readable
+columns; retain the aggregation, aliases, bindings and row keys. For broader edits,
+formatTable is unavailable. Use search/native query edits for new calculations,
+then final SPL eval for formatting. Update any explicit options.table
+frameBySeriesNames projection so requested new metrics are VISIBLE; retain existing
+columns and drilldowns.
 dataProfile.measurementConstraints are explicit verified-field exclusions. The
 server nulls only the constrained measurement at the source boundary for changed
 SPL searches. This protects latest/min/max/averages/count(field), retaining other

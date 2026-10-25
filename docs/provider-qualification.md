@@ -50,3 +50,12 @@ Record wall time, model calls, search checks and actual stage receipts separatel
 Start a real provider request, observe its model stage, then Stop through the independent control route. Record acknowledgement and handler-exit times separately. Confirm the author response cannot apply changes, no further repair starts, and owned native jobs are released. A direct HTTP call can finish and bill after Stop. Exercise Stop before handle creation, while inspecting/searching, while waiting for inference, and around completion; test refresh/new/open and a second request against late-response races. Offline race tests complement installed checks; they do not prove upstream billing cancellation.
 
 Review the compact toolbar, source/time disclosure, search evidence, focus list, dock/float/hide, visible composer/Stop, keyboard dismissal and both themes at the supported viewport sizes. Keep raw screenshots local. Native output retains its original geometry and uses normal Studio navigation/edit/access controls.
+
+
+## Operational datasets and ordinary users
+
+Repeat the full journey with a standard `user` role and no administrator, credential-read/edit or AI-configuration-edit privileges. Separate any temporary AITK invocation/read-list diagnosis from the final plain-user Ollama checks. Catalog visibility alone is not search access: inspect the selected source and validate every changed query under that user's session.
+
+Use representative process-observation and per-reading network-response data. For process data, do not invent CPU/memory utilization absent verified fields; add and visibly display a distinct-host summary metric. For network data, label indexed per-OID events as readings, preserve that grain in counts and add a visible recorded-peak response metric. Partial previews remain partial.
+
+Verify actual output fields *and* displayed table columns. Exercise model-authored calculation edits separately from local exact title/type edits. Probe copied transformations with fictional entities, known distinct hosts/response values and two entity selections; never ingest the fixture or replace the real dashboard source. Check owner-private drafts/native views, denied peer access, a separate blank draft and resumed conversation. Record AITK native connection access failures separately from model/schema failures and administrator-only successes.

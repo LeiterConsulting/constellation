@@ -1,12 +1,12 @@
 # Validation status
 
-Snapshot: **0.13.0 development preview, October 24, 2026**. This file is a sanitized summary. Private lab addresses, credentials, screenshots, transcripts, raw search data and detailed runtime receipts are excluded from the repository.
+Snapshot: **0.14.0 development preview, October 25, 2026**. This file is a sanitized summary. Private lab addresses, credentials, screenshots, transcripts, raw search data and detailed runtime receipts are excluded from the repository.
 
 ## Local verification
 
 | Check | Observed result |
 | --- | --- |
-| Python unit suites | 193 tests passed on Python 3.9 and 3.13, including verified formatting, unchanged-binding checks, action availability and measurement exclusions. |
+| Python unit suites | 209 tests passed on Python 3.9 and 3.13, including creation budgets, quoted-pipeline exclusions, independent populations, table projection/action availability and private AITK diagnostics. |
 | Frontend unit suites | 57 tests passed. |
 | TypeScript and production build | Passed; bundle-size warning remains. |
 | Deterministic app package | Generated with SHA-256 receipt. |
@@ -158,3 +158,39 @@ Independent synthetic probes covered creation and post-table-edit definitions fo
 Browser checks opened a generated draft and its ordinary native Studio copy for each provider. All three rendered both pages and supported keyboard device-row navigation and Return to Overview in preview and native Studio. The AITK table retained readable dates and its numeric columns. A further browser-driven AITK turn used Select element, formatted the selected table, and preserved every other native property and the original aggregation. Starting a separate blank dashboard, reopening from the library and refreshing retained its eight-message conversation, focus, brief and definition. Save to Splunk created a private Search & Reporting copy with exact independent readback; it rendered and opened in the normal native editor, then returned to view without changes. The original provider was restored afterward. These are representative UI checks, not every native option or a full accessibility audit.
 
 The observed table-formatting and temperature-population failures are closed for this bounded flow. **1.0 remains unqualified**: slower-provider creation still took around a minute or more; unaided user trials, representative operational/sparse/partial data, broader native/version/role coverage, deployment/upgrade/SHC checks and the declared distribution gates remain. AITK on the second target remains unqualified.
+
+
+## 0.14 latency and operational-data qualification
+
+Creation uses compact JSON/schema serialization and concise generated text. Bounded two-page AITK goals can attempt a complete proposal first; larger/ambiguous work remains staged. No call, query, timeout or permission limit was increased. A narrow exact-cutoff repair retains independent measurements, followed by the existing scope, measurement, feature, intent, binding and actual-search checks.
+
+Controlled **local orchestration diagnostics**, using the same actual sensor goal and existing connections, observed:
+
+| Provider | Fresh 0.13 baseline | Compact candidate, two trials |
+| --- | --- | --- |
+| Ollama | 73.6 s / 2 model calls | 43.3 s and 36.1 s / 1 call each |
+| AITK | 121.0 s / 3 model calls | 49.1 s and 48.0 s / 1 call each |
+
+The AITK connection retained its native readback-confirmed 16,000-token allowance. These small samples include transport, polling and native validation; warm/cache/load differences were not controlled. They are not a latency guarantee, statistical benchmark or installed-browser acceptance.
+
+Fresh **installed-handler** journeys on Enterprise 10.2.8 / Studio 1.23.12 used actual process-health and per-OID network-response observations, a one-hour scope, two named pages/purposes, four searches, row-driven entity filters and a return button. A selected-table calculation edit added a visibly projected distinct-host or recorded-peak metric; formatting and a local exact trend edit followed.
+
+| Provider / role / dataset | Create | Calculation edit | Formatting | Exact local trend edit |
+| --- | --- | --- | --- | --- |
+| Ollama / standard user / process observations | 41.2 s, 1 call | 21.3 s, 2 calls | 11.8 s, 1 call | 0.17 s, 0 calls |
+| AITK / administrator / process observations | 50.8 s, 1 call | 44.0 s, 1 call | 37.4 s, 1 call | 0.27 s, 0 calls |
+| AITK / administrator / network readings | 40.1 s, 1 call | 42.8 s, 1 call | 36.2 s, 1 call | 0.26 s, 0 calls |
+
+All three final journeys passed original-goal checks, focused preservation, draft/conversation reopen, a separate blank draft, peer draft denial and exact private native-copy readback. The Ollama calculation edit used feedback to expose a metric initially hidden by an explicit table projection. Native searches and bounded previews remain distinct: high-volume searches and tables exceeding 200 results are labeled partial.
+
+The **ordinary-user browser journey** additionally created the network dashboard through New dashboard, an instance-derived source suggestion, Inspect fields and Build. It refined selected elements through chat, visibly added/formatted the peak column, navigated row → details → overview, saved in Search & Reporting, opened the native editor and returned without changes. The native definition matched the saved preimage, had private owner ACLs and no Constellation script dependency; a peer user could not read it. Rename, duplicate, recoverable delete/restore, separate-blank creation, reopen and refresh were exercised. Browser timing was not captured with the same precision as the handler matrix.
+
+Pre-fix failures are retained in the private evidence and are not counted as first-attempt successes. The review found and corrected hidden new table columns, an alias check that misread ordinary “as a readable date” wording, and a formatting-only tool incorrectly offered during calculation edits. An AITK edit also exhausted native syntax recovery during an earlier candidate; a diagnostic replay succeeded, but that does not explain the original stochastic failure. Overlong optional suggestion cards consumed model repairs in another candidate; invalid cards are now rejected/omitted without skipping any core validator or spending an extra inference call. A separate test attempt hit the expected draft conflict when the test browser and script wrote the same draft concurrently; it was rerun in isolation. One bounded preview dispatch failed during multi-tab testing and succeeded on refresh; its native cause remains unconfirmed. It is not a proven automatic-recovery result.
+
+Four final generated definitions passed separate **authored synthetic transformation probes** under ordinary-user search permissions. Known fictional entities/hosts/response values verified summary distinct-host/peak metrics, nonempty default details and both entity selections. These read-only probes substituted only their own search input; real dashboards were not changed and result rows were not sent to models. A separate exact coupled-cutoff probe on both lab versions verified the null mask, 150°F inclusion, invariance to hotter excluded values and retention of independent Wi-Fi events across aggregate functions.
+
+### Ordinary-user AITK boundary
+
+The temporary user had invocation permission and was additionally tested with configuration-list permission; AI configuration edit, credential read/edit and administrator authority remained denied. Native AITK still reported that the existing private connection was unavailable. The installed app now returns a fixed actionable `aitk_connection_unavailable` error using only that caller's failed job. It does not expose native logs, retry blindly, copy credentials or grant roles. Both temporary AITK capabilities were removed before the final plain-user Ollama checks. A usable ordinary-user AITK connection remains required for that full-flow gate; administrator-only successes above do not close it. Both disposable accounts and the temporary AI role were removed after testing; private review copies were retained under the original account, and its provider and prior-opened preference were restored.
+
+The final 0.14.0 archive has SHA-256 `4341319976810d42c7bd4e57d847804e6a79e85a5fc58d7a60ca5bc7410e5d83`. It was installed on both recorded Enterprise targets without restart and passed the local precert result above. The complete operational-data/role journey ran on the older target. This remains a development preview: longer AITK edits, stochastic failures, partial/resource-limited previews, ordinary-user AITK setup, unaided user trials, broader native/role/version coverage and SHC/Cloud qualification still block a general 1.0 claim.

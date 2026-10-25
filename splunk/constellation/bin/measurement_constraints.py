@@ -10,6 +10,7 @@ import math
 import re
 from provider_service import ProviderError
 from search_scope import scoped_suffix
+from population_guard import validate_populations
 
 FIELD = r'[A-Za-z_][A-Za-z0-9_]*'
 
@@ -19,7 +20,7 @@ def temperature_constraints(prompt, brief, profile):
     text = '\n'.join([brief.get('purpose', ''), brief.get('requirements', ''), prompt])
     # Most recent explicit upper bound wins. Do not derive units from model IDs,
     # event values, chart titles, or an ambiguous Celsius/Fahrenheit conversion.
-    fahrenheit = bool(re.search(r'\bfahrenheit\b|°\s*F\b|\d\s+F\b', text, re.I))
+    fahrenheit = bool(re.search(r'\bfahrenheit\b|°\s*F\b|\d\s*F\b', text, re.I))
     if not fahrenheit: return []
     limit = None
     for clause in re.split(r'[\n!?;]|\.(?=\s|$)', text):
@@ -48,6 +49,40 @@ def mask_command(rule):
     return 'eval ' + field + '=if(' + field + '<=' + limit + ',' + field + ',null())'
 
 
+def pipeline_commands(suffix):
+    """Retain exact command spans; quoted pipes and native token filters stay put."""
+    starts, quoted, token, escaped = [], None, False, False
+    for index, char in enumerate(suffix):
+        if escaped: escaped = False; continue
+        if char == '\\': escaped = True; continue
+        if quoted:
+            if char == quoted: quoted = None
+        elif token:
+            if char == '$': token = False
+        elif char in ('"', "'"): quoted = char
+        elif char == '$': token = True
+        elif char == '|': starts.append(index)
+    if quoted or token or escaped or (starts and suffix[:starts[0]].strip()): return []
+    return [(start, end, suffix[start+1:end].strip()) for start, end in zip(starts, starts[1:] + [len(suffix)])]
+
+
+def without_redundant_cutoff(suffix, rule):
+    """Only a complete, exact upper-bound command before aggregation qualifies."""
+    removed = []
+    for start, end, command in pipeline_commands(suffix):
+        if re.match(r'(?:stats|timechart|chart|eventstats|streamstats)\b', command, re.I): break
+        match = re.fullmatch(r'(?:where|search)\s+(.+)', command, re.I)
+        if not match: continue
+        predicate = match[1].strip()
+        if predicate.startswith('(') and predicate.endswith(')'): predicate = predicate[1:-1].strip()
+        field = "(?:" + re.escape(rule['field']) + "|'" + re.escape(rule['field']) + "')"
+        bound = re.fullmatch(field + r'\s*<=\s*(-?\d+(?:\.\d+)?)', predicate)
+        if not bound: bound = re.fullmatch(r'(-?\d+(?:\.\d+)?)\s*>=\s*' + field, predicate)
+        if bound and float(bound[1]) == rule['maximum']: removed.append((start, end))
+    for start, end in reversed(removed): suffix = suffix[:start] + suffix[end:]
+    return suffix
+
+
 def normalize_measurements(document, previous, profile):
     rules = profile.get('measurementConstraints', []) if profile else []
     if not rules: return []
@@ -58,7 +93,17 @@ def normalize_measurements(document, previous, profile):
         if source.get('type') != 'ds.search': continue
         suffix = scoped_suffix(query, profile)
         if suffix is None: continue  # The scope validator supplies its own error.
-        syntax = re.sub(r'"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'', '""', suffix)
+        coupled = False
+        if profile.get('independentMeasurements'):
+            try: validate_populations(query, profile)
+            except ProviderError as error:
+                if error.code != 'population_coupling': raise
+                coupled = True
+        def field_syntax(value):
+            def mask(match):
+                return ' ' + match[0][1:-1] + ' ' if match[0].startswith("'") and match[0][1:-1] in {r['field'] for r in rules} else ' ' * len(match[0])
+            return re.sub(r'"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'', mask, value)
+        syntax = field_syntax(suffix)
         commands = []
         for rule in rules:
             field = rule['field']
@@ -66,9 +111,14 @@ def normalize_measurements(document, previous, profile):
             command = mask_command(rule)
             # Remove only our exact generated clause, then restore it at the
             # boundary. Entity-filter compilation may have moved it one pipe.
-            suffix = re.sub(r'\|\s*' + re.escape(command) + r'(?=\s*(?:\||$))', '', suffix)
-            before = re.split(r'\|\s*(?:stats|timechart|chart)\b', suffix, maxsplit=1, flags=re.I)[0]
-            before = re.sub(r'"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'', '""', before)
+            for start, end, candidate in reversed(pipeline_commands(suffix)):
+                if candidate == command: suffix = suffix[:start] + suffix[end:]
+            if coupled: suffix = without_redundant_cutoff(suffix, rule)
+            before_parts = []
+            for _start, _end, part in pipeline_commands(suffix):
+                if re.match(r'(?:stats|timechart|chart)\b', part, re.I): break
+                before_parts.append(part)
+            before = field_syntax('|'.join(before_parts))
             if re.search(r'\b(?:eval|rename|rex|spath|fillnull)\b[^|]*\b' + re.escape(field) + r'\b', before, re.I):
                 raise ProviderError('Preserve the verified ' + field + ' measurement before aggregation. The server excludes values above ' +
                     format(rule['maximum'], '.15g') + ' F by setting only that measurement to null. Do not overwrite, fill or re-extract it before aggregation; compute derived output aliases in stats/timechart instead. Other measurements retain their events.', 422, 'measurement_constraint')

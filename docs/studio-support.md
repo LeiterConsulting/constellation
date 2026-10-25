@@ -1,6 +1,6 @@
 # Studio authoring and runtime support
 
-This is the working support contract for the 0.13.0 development slice. Broad document authoring is implemented; complete native parity is not yet qualified. The preview uses the embedded Splunk Dashboard Framework and preserves the original Studio definition for export and native save.
+This is the working support contract for the 0.14.0 development slice. Broad document authoring is implemented; complete native parity is not yet qualified. The preview uses the embedded Splunk Dashboard Framework and preserves the original Studio definition for export and native save.
 
 | Area | Current behavior | Qualification / boundary |
 | --- | --- | --- |
@@ -77,3 +77,8 @@ An explicit independent-measurement request enables a conservative shared-aggreg
 Explicit upper Fahrenheit exclusions bound to verified numeric temperature fields compile at the measurement boundary for changed scoped SPL. All ordinary null-ignoring aggregates share that population, while other event measurements remain available. Exactly-at-limit values are retained. Existing query scopes/untouched imports are preserved; general units, derived expressions and SPL2/chain business semantics remain outside this narrow guarantee. See [architecture](architecture.md#measurement-and-formatting-contracts-013).
 
 Selected SPL table edits receive verified output-field/type metadata. Explicit table-only formatting uses an evidence-dependent typed action preserving the aggregation, aliases, bindings and row field. Missing/already-readable columns are not invented. Shared-source formatting and broader semantic changes require ordinary native editing; the typed action fails safely. Changed searches revalidate existing bindings even when chart configuration is unchanged.
+
+
+## Visible table metrics
+
+An explicit new aggregate alias requested for a selected table must appear in the verified search output and in its explicit `frameBySeriesNames` projection. Validation supplies repair feedback when the query calculates the metric but the table hides it. This narrow check recognizes simple aggregate expressions with `AS` aliases; it is not a general natural-language correctness proof. Explicit hidden/helper work and unchanged imported definitions are preserved. Native field existence, query scope, formatting and interaction checks still apply.

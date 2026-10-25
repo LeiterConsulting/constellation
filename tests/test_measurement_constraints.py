@@ -6,6 +6,7 @@ from authoring_actions import compile_actions
 from measurement_constraints import normalize_measurements, temperature_constraints, mask_command
 from provider_service import ProviderError
 from studio_contract import apply_changes
+from population_guard import validate_populations
 
 PROFILE = {'scope': {'index': 'fixture_index', 'language': 'spl', 'earliest': '-24h'},
            'baseQuery': 'search index="fixture_index"',
@@ -67,3 +68,48 @@ class MeasurementConstraintTests(unittest.TestCase):
         self.assertEqual(changed['dataSources']['summary']['future'], {'retained': True})
         self.assertEqual(changed['dataSources']['summary']['options']['future'], 17)
         self.assertEqual(doc, before)
+
+    def test_exact_coupled_cutoff_compiles_without_a_model_retry(self):
+        profile = dict(self.profile(), independentMeasurements=True)
+        profile['fields'] = PROFILE['fields'] + [{'name': 'entity', 'numeric': False}]
+        for condition in ('where temperature_f<=150', 'search temperature_f <= 150.0', "where ('temperature_f'<=150)", 'where 150>=temperature_f'):
+            query = PROFILE['baseQuery'] + ' | search entity=$entity|s$ | ' + condition + ' | stats avg(temperature_f) AS mean latest(signal) AS signal BY entity'
+            doc = {'dataSources': {'summary': {'type': 'ds.search', 'options': {'query': query}}}}
+            with self.subTest(condition=condition):
+                normalized = json.loads(normalize_measurements(doc, {}, profile)[0]['value'])
+                self.assertNotIn(condition, normalized)
+                self.assertIn('temperature_f<=150,temperature_f,null()', normalized)
+                self.assertIn('search entity=$entity|s$', normalized)
+                self.assertIn('latest(signal) AS signal BY entity', normalized)
+                validate_populations(normalized, profile)
+
+    def test_unknown_predicates_unchanged_imports_and_shared_population_are_not_widened(self):
+        for condition in ('where temperature_f<=140', 'where temperature_f<=150 AND signal>-80', 'where temperature_f<=150 OR signal>-80'):
+            profile = dict(self.profile(), independentMeasurements=True)
+            query = PROFILE['baseQuery'] + ' | ' + condition + ' | stats avg(temperature_f) latest(signal)'
+            doc = {'dataSources': {'summary': {'type': 'ds.search', 'options': {'query': query}}}}
+            normalized = json.loads(normalize_measurements(doc, {}, profile)[0]['value'])
+            self.assertIn(condition, normalized)
+            with self.assertRaises(ProviderError): validate_populations(normalized, profile)
+            self.assertEqual(normalize_measurements(doc, copy.deepcopy(doc), profile), [])
+        profile = dict(self.profile(), independentMeasurements=False)
+        normalized = json.loads(normalize_measurements(doc, {}, profile)[0]['value'])
+        self.assertIn(condition, normalized)
+
+    def test_quoted_pipes_and_mask_text_stay_literal_and_cannot_hide_overwrites(self):
+        literal = '| eval temperature_f=if(temperature_f<=150,temperature_f,null())'
+        query = PROFILE['baseQuery'] + ' | eval note="' + literal + '" | stats latest(temperature_f) latest(signal)'
+        doc = {'dataSources': {'summary': {'type': 'ds.search', 'options': {'query': query}}}}
+        normalized = json.loads(normalize_measurements(doc, {}, self.profile())[0]['value'])
+        self.assertIn('note="' + literal + '"', normalized)
+        self.assertEqual(normalized.count(literal), 2)
+        query = PROFILE['baseQuery'] + ' | eval note="| stats" | eval temperature_f=coalesce(temperature_f,0) | stats avg(temperature_f)'
+        doc['dataSources']['summary']['options']['query'] = query
+        with self.assertRaisesRegex(ProviderError, 'Do not overwrite'): normalize_measurements(doc, {}, self.profile())
+
+    def test_quoted_verified_fields_and_no_space_fahrenheit_use_the_same_mask(self):
+        profile = self.profile('Exclude temperatures over 150F.')
+        query = PROFILE['baseQuery'] + " | stats avg(eval('temperature_f')) AS mean"
+        doc = {'dataSources': {'summary': {'type': 'ds.search', 'options': {'query': query}}}}
+        normalized = json.loads(normalize_measurements(doc, {}, profile)[0]['value'])
+        self.assertIn('temperature_f<=150', normalized)

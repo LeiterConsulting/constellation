@@ -5,6 +5,7 @@ import re
 from provider_service import ProviderError
 from studio_contract import model_document, validate_document
 from studio_features import feature_contract, validate_features
+from table_projection import validate_requested_columns
 from model_capabilities import attachment_parts
 from prompt_suggestions import SUGGESTION_SCHEMA, normalize_suggestions
 from data_service import DataService
@@ -230,6 +231,9 @@ inside page structure, never both. Set layout structure type:'input' for inputs.
 expressions such as $showNotes$ = 'true' ? 'false' : 'true' for a toggle, and
 $showNotes$ = 'true' for a visibility condition. Use the supplied native feature contract.
 Absolute canvas width 1200 is a useful baseline. Avoid text overlap and tiny plots.
+When adding a requested table metric, update both its search and any explicit
+options.table frameBySeriesNames projection so the new column is visible. Preserve
+existing columns and drilldown keys.
 Use semantic/default colors and transparent backgrounds; readable in light/dark themes.
 Respect environment version/features. Network graphs/new custom visualization framework
 require the stated feature. Existing custom/unknown configuration is preserved, but
@@ -336,6 +340,7 @@ class AgentService:
         profile = data.profile(scope) if scope else None
         if profile:
             profile['measurementConstraints'] = temperature_constraints(prompt, brief, profile)
+            profile['independentMeasurements'] = data.independent_populations
         table_receipt = data.focused_table_receipt(document, focus.get('id'), profile) if profile and focus['kind'] == 'visualization' else None
         if profile and not profile['sampledRows']:
             return {'revision': revision, 'message': 'No rows were found in the selected data and time range. Choose another dataset or a wider range to continue.',
@@ -353,6 +358,8 @@ class AgentService:
         if profile: context['dataProfile'] = profile
         if table_receipt: context['focusedSourceReceipt'] = table_receipt
         format_only = table_receipt and not attachments and formatting_only(prompt, focus.get('id'), document)
+        if table_receipt and not format_only:
+            context['tableEditing'] = 'formatTable is unavailable for this broader edit. Start with the verified existing search. Add requested calculations through search/native query edits and update explicit table projections to show requested new fields. Format new aliases with final SPL eval after aggregation if needed.'
         if format_only:
             context['formattingOnly'] = 'Format only existing numeric columns through formatTable. Omit absent or already-readable timestamps. Do not add aggregates, columns, search or binding edits.'
         guidance = retrieve_guidance(prompt, document, environment, real_data=bool(profile))
@@ -368,7 +375,7 @@ class AgentService:
             # Other requests retain the full native contract, not this schema.
             request['text']['format']['schema'] = copy.deepcopy(SCHEMA)
             request['text']['format']['schema']['properties']['changes']['items'] = TABLE_FORMAT_ACTION
-        elif not table_receipt:
+        else:
             request['text']['format']['schema'] = copy.deepcopy(SCHEMA)
             request['text']['format']['schema']['properties']['changes']['items']['anyOf'] = [
                 action for action in request['text']['format']['schema']['properties']['changes']['items']['anyOf']
@@ -378,6 +385,7 @@ class AgentService:
         budget = AuthoringBudget(saved, context)
         budget.prepare(request, document)
         repair, validation_notes = False, []
+        suggestions_omitted = False
         proposal = PendingProposal(document)
         next_purposes = purposes
         for attempt in range(MAX_MODEL_CALLS):
@@ -403,9 +411,17 @@ class AgentService:
                 result = json.loads(text)
                 if set(result) != {'message', 'changes', 'suggestions'} or not isinstance(result['message'], str) or len(result['message']) > 6000:
                     raise ProviderError('The model response did not match the expected edit format.')
-                result['suggestions'] = normalize_suggestions(result['suggestions'])
+                try:
+                    result['suggestions'] = normalize_suggestions(result['suggestions'])
+                except ProviderError:
+                    # Reject invalid optional cards; never spend a model repair
+                    # on them or skip any dashboard/search validation.
+                    result['suggestions'] = []
+                    suggestions_omitted = True
                 if format_only and (not isinstance(result['changes'], list) or any(not isinstance(action, dict) or action.get('op') != 'formatTable' for action in result['changes'])):
                     raise ProviderError('This turn only formats the selected table. Return formatTable with its existing numeric columns from focusedSourceReceipt, omitting absent or already-readable fields. Do not rebuild its aggregation or bindings.')
+                if not format_only and isinstance(result['changes'], list) and any(isinstance(action, dict) and action.get('op') == 'formatTable' for action in result['changes']):
+                    raise ProviderError('formatTable is unavailable for this broader edit. Preserve the verified aggregation, add the requested calculation through a search/native query edit and display new output columns in the table projection. Use final SPL eval after aggregation for any requested formatting.')
                 validate_data_claims(result, profile)
                 raw_actions = budget.actions(result['changes'], proposal.document)
                 compiled = compile_actions(proposal.document, raw_actions, profile, table_receipt)
@@ -424,6 +440,7 @@ class AgentService:
                             raise ProviderError('Real Splunk data is the default. Do not introduce sample data unless the user explicitly requested it; ask them to choose a real dataset.')
                 self.progress('search', attempt + 1)
                 receipts = data.validate_searches(draft, document, profile) if profile else []
+                validate_requested_columns(prompt, body.get('selected', ''), draft, receipts)
                 # Newly introduced network graphs must match the target feature set.
                 for key, viz in draft['visualizations'].items():
                     if viz.get('type', '').lower() == 'splunk.networkgraph' and document['visualizations'].get(key, {}).get('type') != viz['type'] and not environment['features']['networkGraph']:
@@ -459,6 +476,7 @@ class AgentService:
                 if profile and attempt == 0:
                     profile = data.profile(scope)
                     profile['measurementConstraints'] = temperature_constraints(prompt, brief, profile)
+                    profile['independentMeasurements'] = data.independent_populations
                 # Keep failed output and validation feedback as untrusted user content.
                 budget.feedback(request, {
                     'recoveryFeedback': {'validationError': feedback, 'dataProfile': profile,
@@ -475,6 +493,7 @@ class AgentService:
                              *(['Inspected selected dataset fields', 'Tested ' + str(len(receipts)) + ' bounded searches'] if profile else []),
                              *['Guidance: ' + item['title'] for item in guidance],
                              *(['Built in ' + str(budget.stages) + ' internal stages; applied together'] if budget.stages > 1 else []),
+                             *(['Omitted invalid optional next-step suggestions'] if suggestions_omitted else []),
                              'Validated ' + str(len(result['changes'])) + ' Studio changes'],
                 'dataContext': profile['scope'] if profile else None, 'searchReceipts': receipts,
                 'knowledgeSources': [{key: item[key] for key in ('id', 'title', 'source')} for item in guidance],

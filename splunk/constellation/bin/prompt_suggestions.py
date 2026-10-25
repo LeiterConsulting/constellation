@@ -3,7 +3,9 @@ from provider_service import ProviderError
 
 KINDS = ('idea', 'data', 'comparison', 'interaction', 'layout', 'refine')
 SUGGESTION_SCHEMA = {'type': 'object', 'properties': {
-    'label': {'type': 'string'}, 'prompt': {'type': 'string'}, 'reason': {'type': 'string'},
+    'label': {'type': 'string', 'minLength': 1, 'maxLength': 60},
+    'prompt': {'type': 'string', 'minLength': 1, 'maxLength': 1200},
+    'reason': {'type': 'string', 'maxLength': 200},
     'kind': {'type': 'string', 'enum': list(KINDS)}},
     'required': ['label', 'prompt', 'reason', 'kind'], 'additionalProperties': False}
 

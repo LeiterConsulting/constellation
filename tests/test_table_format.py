@@ -106,3 +106,23 @@ class TableFormatTests(unittest.TestCase):
             'definition': blank()['definition'], 'dataContext': blank()['dataContext']})
         actions = provider.requests[0]['text']['format']['schema']['properties']['changes']['items']['anyOf']
         self.assertFalse(any(action['properties']['op']['enum'] == ['formatTable'] for action in actions))
+
+
+    def test_broader_selected_table_edit_does_not_offer_format_action_and_repairs_ignored_schema(self):
+        from agent_service import AgentService
+        from test_reliability_journey import Provider, reply
+        from compatibility import feature_profile
+        class FullRuntime(Runtime):
+            def environment(self): return {'version': '10.2.8', 'features': feature_profile('10.2.8', [])}
+            def datasets(self): return {'indexes': [{'name': 'fixture_index'}]}
+            def execute(self, query, earliest):
+                return {'results': [{'field': f, 'count': '20', 'numeric_count': '20'} for f in ('temperature_f', 'signal')]}
+        provider = Provider([reply([{'op': 'formatTable', 'id': 'table', 'columns': [{'field': 'mean', 'kind': 'number', 'precision': 1}]}]), reply([])])
+        result = AgentService(provider, FullRuntime()).assist({'prompt': 'Add a new peak metric to this selected table.', 'revision': 0,
+            'definition': document(), 'selected': 'table', 'dataContext': PROFILE['scope']})
+        actions = provider.requests[0]['text']['format']['schema']['properties']['changes']['items']['anyOf']
+        self.assertFalse(any(action['properties']['op']['enum'] == ['formatTable'] for action in actions))
+        context = json.loads(provider.requests[0]['input'][0]['content'][0]['text'])
+        self.assertIn('unavailable', context['tableEditing'])
+        self.assertEqual(result['recovery']['modelCalls'], 2)
+        self.assertIn('broader edit', result['validationNotes'][0])
