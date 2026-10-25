@@ -30,6 +30,27 @@ class TableFormatTests(unittest.TestCase):
         self.assertFalse(formatting_only('Round only this selected table and add the maximum.', 'table', document()))
         self.assertFalse(formatting_only('Create a formatted sensor table.', 'table', document()))
 
+    def test_preservation_clauses_do_not_hide_later_positive_calculations(self):
+        prefix = 'Format only this selected summary table: round counts. '
+        for clause in ('Do not add absent columns.', "Don't add new fields.", 'Never delete existing columns.'):
+            self.assertTrue(formatting_only(prefix + clause, 'table', document()))
+            for active in (' Add max(signal) AS peak.', ' But calculate a maximum.', ' Sort by count.'):
+                self.assertFalse(formatting_only(prefix + clause + active, 'table', document()))
+
+    def test_misplaced_action_is_rejected_without_rewriting_imported_unknown_options(self):
+        from studio_features import validate_features
+        doc = document(); changed = copy.deepcopy(doc)
+        changed['visualizations']['table']['options']['formatTable'] = {'columns': []}
+        with self.assertRaisesRegex(ProviderError, 'not a native table option'):
+            validate_features(changed, doc, {})
+        imported = copy.deepcopy(changed)
+        changed['visualizations']['table']['title'] = 'A new title'
+        changed['visualizations']['table']['options']['futureOption'] = {'preserve': True}
+        validate_features(changed, imported, {})
+        changed['visualizations']['table']['options']['formatTable'] = None
+        with self.assertRaisesRegex(ProviderError, 'not a native table option'):
+            validate_features(changed, imported, {})
+
     def test_output_metadata_has_types_and_no_values_and_compiler_preserves_upstream(self):
         doc = document(); before = copy.deepcopy(doc)
         service = DataService(Runtime())
@@ -81,9 +102,10 @@ class TableFormatTests(unittest.TestCase):
             def execute(self, query, earliest):
                 return {'results': [{'field': f, 'count': '20', 'numeric_count': '20'} for f in ('temperature_f', 'signal')]}
         doc = document(); before = copy.deepcopy(doc)
-        provider = Provider([reply([{'op': 'search', 'id': 'summary', 'pipeline': '| stats count AS missing'}]),
+        provider = Provider([reply([{'op': 'set', 'path': '/visualizations/table/options/formatTable',
+                                    'value': json.dumps({'id': 'table', 'columns': [{'field': 'seen', 'kind': 'datetime', 'precision': 0}]})}]),
                              reply([{'op': 'formatTable', 'id': 'table', 'columns': [{'field': 'mean', 'kind': 'number', 'precision': 1}, {'field': 'seen', 'kind': 'datetime', 'precision': 0}]}])])
-        result = AgentService(provider, FullRuntime()).assist({'prompt': 'Polish only this selected summary table: round temperatures to one decimal and format last seen as a date.',
+        result = AgentService(provider, FullRuntime()).assist({'prompt': 'Polish only this selected summary table: round temperatures to one decimal and format last seen as a date. Do not add absent columns.',
             'revision': 0, 'definition': doc, 'selected': 'table', 'brief': {'purpose': GOAL}, 'dataContext': PROFILE['scope']})
         self.assertEqual(result['recovery']['modelCalls'], 2)
         context = json.loads(provider.requests[0]['input'][0]['content'][0]['text'])
@@ -93,6 +115,7 @@ class TableFormatTests(unittest.TestCase):
         self.assertIn('formatTable', result['validationNotes'][0])
         changed = apply_changes(doc, result['changes'])
         self.assertEqual(changed['visualizations'], doc['visualizations'])
+        self.assertIn('seen=strftime(seen,', changed['dataSources']['summary']['options']['query'])
         self.assertIn('stats avg(temperature_f) AS mean latest(signal) AS signal latest(_time) AS seen BY entity', changed['dataSources']['summary']['options']['query'])
         self.assertIn('temperature_f<=150', changed['dataSources']['summary']['options']['query'])
         self.assertEqual(doc, before)

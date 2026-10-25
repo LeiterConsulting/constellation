@@ -4,7 +4,7 @@ A conversational canvas for creating and editing **Splunk Dashboard Studio** das
 
 Describe an operational question, choose data available to your Splunk user, and watch a dashboard take shape. Select a chart, input or page to refine it through chat. Start from a blank canvas, an existing Studio definition, or an image/PDF reference when the selected provider supports it.
 
-**Status: 0.14.1 development preview.** This is a new codebase, separate from Splunk Dashboard Generator. It is not a production release or Splunk Cloud certified app. The repository is currently private and is being prepared for a future public release.
+**Status: 0.14.2 development preview.** This is a new codebase, separate from Splunk Dashboard Generator. It is not a production release or Splunk Cloud certified app. The repository is currently private and is being prepared for a future public release.
 
 ## What works today
 
@@ -37,7 +37,7 @@ npm run dev -- --port 5178
 
 Open the local URL printed by Vite. Standalone mode demonstrates the canvas and authored example data; provider Settings, live Splunk searches, server-backed drafts and native saves require an installed Splunk app.
 
-The package is written to `artifacts/constellation-0.14.1.tgz`, with its digest in `artifacts/SHA256SUMS`. Build artifacts and dependencies are not committed. See [installation](docs/installation.md) to install the package and configure a provider in the app.
+The package is written to `artifacts/constellation-0.14.2.tgz`, with its digest in `artifacts/SHA256SUMS`. Build artifacts and dependencies are not committed. See [installation](docs/installation.md) to install the package and configure a provider in the app.
 
 ## Compatibility and boundaries
 
@@ -45,7 +45,7 @@ Selected flows have been exercised on Splunk Enterprise **10.2.8** with Studio *
 
 Search previews use the current user's permissions and a read-only command subset. They are bounded to a selected 15-minute, 1-hour, 24-hour or 7-day window, at most **200 rows / 5 seconds per query**, and eight sources in the preview. Tracked jobs label completed queries, partial output, failures and stale snapshots. Counts and aggregates can still be partial; a completed query is not proof of analytical correctness. Preserve the distinction between native Studio rendering, bounded preview results and a validated dashboard definition.
 
-Multi-page actual-data creation and focused edits have been exercised through OpenAI, Ollama and AITK. The current repeated AITK tests retain a 16,000-token budget on the existing GPT-5 mini connection; the prior 2,000-token setting could return no completion. A sufficient output budget does not eliminate validation failures or latency. Settings distinguishes small connection tests from full authoring checks and exposes reported or unknown limits. These are bounded provider/model/environment checks, not a general success-rate claim or 1.0 acceptance. Compact creation now reduces avoidable output and staging for bounded two-page goals while retaining every validation gate. Ordinary-user Ollama checks now include process and network observations; the AITK 6.1 ordinary-user retest resolved connection visibility but failed at native stored-credential access. AITK 6.2 post-restart verification remains pending. Settings includes an administrator setup guide; this access gate remains open. See [validation](docs/validation.md) and the [qualification protocol](docs/provider-qualification.md).
+Multi-page actual-data creation and focused edits have been exercised through OpenAI, Ollama and AITK. The current repeated AITK tests retain a 16,000-token budget on the existing GPT-5 mini connection; the prior 2,000-token setting could return no completion. A sufficient output budget does not eliminate validation failures or latency. Settings distinguishes small connection tests from full authoring checks and exposes reported or unknown limits. These are bounded provider/model/environment checks, not a general success-rate claim or 1.0 acceptance. Compact creation now reduces avoidable output and staging for bounded two-page goals while retaining every validation gate. Ordinary-user Ollama checks now include process and network observations; the AITK 6.1 and 6.2 invocation/list-only author tests resolved connection visibility but failed at native stored-credential access. A temporary credential-read grant enabled functional checks and was removed; it does not establish an inference-only author role. Settings includes an administrator setup guide; this access gate remains open. See [validation](docs/validation.md) and the [qualification protocol](docs/provider-qualification.md).
 
 ## Data and credentials
 

@@ -57,6 +57,10 @@ def validate_features(document, previous, environment):
         for key, item in document.get(root, {}).items():
             if not isinstance(item, dict): raise ProviderError('Studio items must be objects.')
             before = previous.get(root, {}).get(key, {})
+            if root == 'visualizations' and item.get('type') == 'splunk.table':
+                options, old_options = item.get('options', {}), before.get('options', {})
+                if 'formatTable' in options and ('formatTable' not in old_options or options['formatTable'] != old_options['formatTable']):
+                    raise ProviderError('formatTable is an authoring action, not a native table option. Return an op:formatTable action using the selected table and its verified focusedSourceReceipt. For new tables or broader calculation edits, format output aliases with final SPL eval after aggregation. Do not save options.formatTable; Studio ignores it.')
             if root == 'visualizations' and item.get('type', '').startswith('splunk.'):
                 for label in ('title', 'description'):
                     value = item.get('options', {}).get(label)

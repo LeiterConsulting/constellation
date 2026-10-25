@@ -20,7 +20,11 @@ def formatting_only(prompt, selected, document):
     if not re.search(r'\b(?:round|format|formatting|decimal|precision)\b', prompt, re.I): return False
     # Require an explicit selected/this-table-only scope, not a classifier guess.
     if not re.search(r'\bonly\b[^.!?:]{0,70}\b(?:this|selected)\b[^.!?:]{0,70}\btable\b', prompt, re.I): return False
-    if re.search(r'\b(?:add|create|remove|delete|replace|recalculate|calculate|filter|regroup|rename|sort|convert units)\b', prompt, re.I): return False
+    # Explicit no-new/no-deleted-column clauses preserve the existing table;
+    # they are not requests to calculate or change its schema. Only mask this
+    # narrow noun phrase so a later positive calculation still vetoes the tool.
+    intent = re.sub(r"\b(?:do\s+not|don['’]t|never)\s+(?:add|create|remove|delete)\s+(?:(?:any|new|absent|missing|extra|existing)\s+)*(?:columns?|fields?)\b", '', prompt, flags=re.I)
+    if re.search(r'\b(?:add|create|remove|delete|replace|recalculate|calculate|filter|regroup|rename|sort|convert units)\b', intent, re.I): return False
     return True
 
 

@@ -98,3 +98,7 @@ Offer `formatTable` only for an explicit formatting-only turn, and enforce that 
 ## 0.14.1 AITK setup guidance
 
 No draft, connection or native-dashboard migration is needed. The guide is informational; upgrading does not alter AITK connection sharing, provider credentials, roles or capabilities. A new fixed `aitk_secret_access_denied` response identifies recognized native credential authorization failures. Recheck native and Constellation tests as the intended author after an administrator changes AITK access; the upgrade does not resolve that native permission boundary.
+
+## 0.14.2 formatting recovery
+
+Draft schema remains 3. Reject new or modified authoring-only `options.formatTable` properties rather than silently saving an option Studio ignores. Preserve unchanged imported/native properties and unrelated work. The narrow no-new/no-deleted-column phrase handling in `table_format.py` must not hide a subsequent positive calculation or layout request. Keep the existing model-call/time budgets and verify the actual native timestamp display after repair; source/readback validity alone is insufficient.

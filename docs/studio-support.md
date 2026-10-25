@@ -1,5 +1,7 @@
 # Studio authoring and runtime support
 
+Table formatting uses a verified authoring action that compiles to a final SPL `eval` against existing aggregate output fields. `formatTable` is not a native visualization option: newly introduced or changed `options.formatTable` objects are rejected with repair feedback, while unchanged imported properties are preserved. Check the visible timestamp/number result in native Studio in addition to definition readback.
+
 This is the working support contract for the 0.14.0 development slice. Broad document authoring is implemented; complete native parity is not yet qualified. The preview uses the embedded Splunk Dashboard Framework and preserves the original Studio definition for export and native save.
 
 | Area | Current behavior | Qualification / boundary |

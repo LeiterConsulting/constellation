@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.14.2 — Verified table formatting recovery
+
+- Keep explicit “do not add/remove columns” preservation clauses on the formatting-only route while retaining broader-edit checks for subsequent calculations.
+- Reject new or changed `options.formatTable` objects: the authoring action must compile into executable native SPL, not an option Studio ignores. Preserve unchanged imported properties.
+- Add a regression for the misplaced action, bounded repair and readable timestamp output. Record AITK 6.2 access and native-rendering checks separately from inference-only author qualification.
+
 ## 0.14.1 — AITK setup guidance preview
 
 - Add a collapsed AITK setup guide in Settings with native connection/search links, author-versus-maintainer permissions, capacity checks and a synthetic intended-user test.

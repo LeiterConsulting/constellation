@@ -1,12 +1,12 @@
 # Validation status
 
-Snapshot: **0.14.1 development preview, October 25, 2026**. This file is a sanitized summary. Private lab addresses, credentials, screenshots, transcripts, raw search data and detailed runtime receipts are excluded from the repository.
+Snapshot: **0.14.2 development preview, October 25, 2026**. This file is a sanitized summary. Private lab addresses, credentials, screenshots, transcripts, raw search data and detailed runtime receipts are excluded from the repository.
 
 ## Local verification
 
 | Check | Observed result |
 | --- | --- |
-| Python unit suites | 211 tests passed on Python 3.9 and 3.13, including private AITK diagnostics, credential-denial classification and non-disclosure boundaries. |
+| Python unit suites | 213 tests passed on Python 3.9 and 3.13, including formatting-only preservation intent, misplaced native-action rejection, bounded repair and private AITK diagnostics. |
 | Frontend unit suites | 59 tests passed, including the synthetic setup search and native URL-prefix boundaries. |
 | TypeScript and production build | Passed; bundle-size warning remains. |
 | Deterministic app package | Generated with SHA-256 receipt. |
@@ -208,6 +208,34 @@ With explicit administrative authorization, the connection's write ACL was narro
 
 The final package was installed on Enterprise 10.4.4 / Studio 1.26.6 without a restart. Browser checks covered collapsed-by-default help, keyboard expansion, scrolling, native links, unsaved provider-choice dismissal and return focus to Settings. A dark-theme check exposed inherited native code styles with poor contrast; explicit Splunk theme colors fixed inline capabilities and the sample search, and the final installed view was inspected again. This is representative desktop verification, not a complete accessibility or responsive-device audit.
 
-During the exercise the other target was upgraded by its administrator to AITK 6.2.0 and PSC 4.3.5. Both installed versions were read back before one authorized Splunk restart. Web/management services did not return during the bounded readiness wait; the host remained reachable but existing SSH key access was unavailable. Post-restart AITK 6.2 inference, final-package installation on that target, removal of the disposable accounts/role and final preference readback remain pending native service recovery. The credential-read grant had already been removed before the restart. Do not treat package version metadata or inspection of the 6.2 source paths as live qualification of its running workers.
+During the exercise the other target was upgraded by its administrator to AITK 6.2.0 and PSC 4.3.5. Both installed versions were read back before one authorized Splunk restart. Web/management services did not return during the bounded readiness wait; the host remained reachable but existing SSH key access was unavailable. The credential-read grant had already been removed before the restart. The operator later started/checked the native service from its console; current REST readback confirmed recovery, AITK 6.2.0 / PSC 4.3.5 and a ready KV Store running 8.0.26. The reported 4.2 startup warning did not match the then-running binary; no KV migration was performed. The exact final 0.14.1 archive was installed on the recovered target without another restart. See the 0.14.2 follow-up below for the completed access tests, native-formatting regression and cleanup. Package metadata or source inspection alone was not counted as live qualification.
 
 The final 0.14.1 archive has SHA-256 `c9a95b564e2c2d1af73e74afa37e45384e77aadc9a7c52bb26f7ddb78251e326` (434 files; 5,352,110 bytes). The Python payload matches the source bytes and the archive excludes macOS metadata. Local checks are summarized above; AppInspect remains precert, not Cloud certification. The previous multi-provider dashboard matrices were not repeated for this Settings/diagnostic change. The ordinary-user AITK access model and the remaining 1.0 gates remain open.
+
+
+## 0.14.2 AITK access and native formatting — October 25, 2026
+
+After service recovery, AITK 6.2.0 / PSC 4.3.5 reproduced HTTP 403 / `aitk_secret_access_denied` for the non-admin author with invocation and configuration-list permission. A temporary credential-read grant again allowed a small structured response. Native connection sharing, model and the 16,000-token budget remained unchanged. KV Store reported ready and its running binary reported 8.0.26, despite the operator's earlier 4.2 startup warning. No KV Store migration or additional restart was performed.
+
+The first 0.14.1 AITK 6.2 process-observation run passed backend creation/edit checks and exact native readback, but the owning user's native browser still displayed an epoch value in the selected summary table. The model had stored an inert `options.formatTable` object; Studio ignored it. Its negative “do not add absent columns” clause also incorrectly moved the request out of the restricted formatting route. That attempt is retained as a native-formatting failure, despite its accepted API response and the otherwise passing structural/property checks.
+
+The 0.14.2 fix recognizes narrowly specified negative column-preservation clauses while retaining vetoes for subsequent positive calculations. New or changed `options.formatTable` objects are rejected with actionable repair feedback; unchanged imported properties remain intact. An offline scripted-provider regression reproduces the misplaced option and repairs it to the verified action and actual final SPL `strftime` expression. This is deterministic recovery evidence, separate from live-model results.
+
+A fresh installed AITK 6.2 journey ran with the same goal, selected model and temporary credential-reading non-admin author:
+
+| Step | Elapsed time / model calls | Result |
+| --- | --- | --- |
+| Actual-data two-page creation | 77.8 s / 2 | Repaired two native search-syntax failures within the existing budget; pages, purposes, four real-data charts, row filters and return navigation passed. |
+| Selected summary metric | 37.3 s / 1 | Added and visibly projected a distinct-host count; unrelated elements were preserved. |
+| Selected table formatting | 31.8 s / 1 | Compiled numeric/date formatting to final SPL; no inert formatting option remained. |
+| Selected chart type/title | 0.18 s / 0 | Used the existing exact local edit path. |
+
+The installed API flow also passed draft/conversation reopening, a separate new blank draft, resuming the original, peer denial and exact private native readback. A separate six-row synthetic transformation probe, without ingestion or result rows sent to inference, verified host counts and default/selected-entity detail results. This is one bounded run, not a success-rate or latency benchmark. Creation/focused-model edits used the installed API; the complete conversational browser creation path was not repeated.
+
+The test runner saved an ordinary private Studio view through native REST. As its owning non-admin user, the browser confirmed readable timestamps and the added count column, row-to-detail token navigation, Return to Overview, opening the normal native editor, and returning to view with Save disabled and no edits. Administrator URL lookup did not resolve the other user's private view; it was rendered only after signing in as its owner. Native output used the normal Search & Reporting route and did not require the Constellation canvas at runtime. The Save to Splunk frontend dialog was not newly exercised in this run.
+
+Temporary credential-read permission was removed after each run. Both disposable accounts, six private configuration stanzas, two native test views and the temporary role were removed with deletion readback; the generated password file was deleted. The original administrator browser session, connection settings and active-draft preference were restored/verified. The authorized connection write restriction to `admin` / `mltk_admin` remains, as does its existing read scope and 16,000-token budget.
+
+The final 0.14.2 archive has SHA-256 `355acc6e728e0dad09fe76af19a7d1d917aebd554b1fd694b01104b97f034251` (434 files; 5,352,431 bytes). All 44 Python sources match the package bytes; no macOS metadata is included. It was installed on both recorded Enterprise targets without restart. AppInspect precert returned the local result above. The complete new AITK journey ran on Enterprise 10.2.8 / Studio 1.23.12; the other provider matrices and the full newer-target journey were not repeated.
+
+**1.0 remains unqualified.** The supported, inference-only access model for ordinary AITK authors remains unresolved: a credential-reading role is not equivalent. Longer/stochastic authoring, broader native/role/version coverage, unaided-user trials, deployment/upgrade/SHC and Cloud distribution gates remain. The native-formatting defect is closed for the verified flow; do not generalize that to every table option or natural-language request.

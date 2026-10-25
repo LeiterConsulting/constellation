@@ -109,6 +109,8 @@ For changed scoped SPL searches, the compiler places `eval FIELD=if(FIELD<=LIMIT
 
 Before a selected SPL table edit, the server obtains a bounded output-field/type receipt through the current-user validation lifecycle and request-local cache. Only metadata, not values, enters model context. `formatTable` compiles number/date formatting into a final eval against existing numeric output aliases. It preserves the upstream aggregation, bindings, row-navigation fields and unknown properties, and rejects absent/nonnumeric columns or a shared chart source. An explicit table-only formatting request uses a restricted action schema, with runtime enforcement if a provider ignores that schema. Creation does not offer this existing-table-only action. Broader edits retain the full native authoring contract. Search changes revalidate existing visualization bindings even when the visualization itself is unchanged. Feedback identifies the actual missing/empty aliases and points recovery toward verified output fields.
 
+The formatting-only classifier masks narrowly specified negative column/field preservation phrases, such as “do not add absent columns”; a later positive add/calculate/sort request still vetoes that route. `studio_features.py` also rejects newly introduced or modified `options.formatTable` properties, with feedback identifying the supported action or final SPL alternative. An unchanged imported property is retained. A saved/read-back option is not proof of native execution or of the requested visible format; verify timestamp and numeric display in Studio.
+
 
 ## Bounded creation latency (0.14)
 
