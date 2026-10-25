@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.16.0 - 2026-10-25
+
+- Harden shared AITK inference after an independent agent security review: verify connection/collection writers, trusted owners/execution namespace and native legacy precedence before submitting a job.
+- Add owner-only OpenAI key custody and fixed inference/model-discovery routes. Ordinary authors need no credential-store capabilities; saved keys never return to the main app or browser.
+- Add explicit native transport timeouts and preserve current-user search/draft/native-save authority. Keep main/control handlers separate from both privileged entries.
+- Repair an exact invalid timechart axis from verified `_time` output, then rerun validation without spending another model call. Keep failed-turn atomicity and existing recovery budgets.
+- Clarify the collapsed AITK setup guide and security/deployment boundaries. See [review](docs/security-review.md) and [validation](docs/validation.md) for evidence and remaining gates.
+
 ## 0.15.0 — Shared AITK inference
 
 - Add an opt-in, administrator-controlled inference handler so authorized dashboard authors do not need stored-credential or AITK configuration access. Keep data searches and persistence under the author’s permissions.

@@ -55,7 +55,7 @@ class ConnectionStore:
         return self.encrypted.key_access()
 
     def write(self, config):
-        if config.get('api_key'):
+        if config.get('api_key') or config.get('key_configured'):
             self.encrypted.write(config)
             self.preferences.clear()
         else:

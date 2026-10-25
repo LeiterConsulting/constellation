@@ -1,6 +1,6 @@
 """Current-session discovery and bounded read-only preview searches."""
 import re
-from urllib.parse import quote
+from urllib.parse import quote, parse_qsl
 import json
 from provider_service import ProviderError
 from compatibility import feature_profile
@@ -98,8 +98,9 @@ def search_feedback(message):
 
 
 class SearchService:
-    def __init__(self, user, token):
+    def __init__(self, user, token, request_timeout=20):
         self.user, self.token = user, token
+        self.request_timeout = request_timeout
         self.namespace = '/servicesNS/' + quote(user, safe='') + '/constellation'
 
     def shared_aitk_status(self):
@@ -133,8 +134,11 @@ class SearchService:
     def request(self, path, method='GET', fields=None, optional=False):
         import splunk.rest
         try:
-            _, raw = splunk.rest.simpleRequest(path, sessionKey=self.token, method=method,
-                getargs={'output_mode': 'json', 'count': '100'}, postargs=fields, raiseAllErrors=True)
+            resource, _, query = path.partition('?')
+            parameters = {'output_mode': 'json', 'count': '100'}
+            parameters.update(parse_qsl(query, keep_blank_values=True))
+            _, raw = splunk.rest.simpleRequest(resource, sessionKey=self.token, method=method,
+                getargs=parameters, postargs=fields, raiseAllErrors=True, timeout=self.request_timeout)
             return json.loads(raw)
         except Exception as error:
             status = str(getattr(error, 'statusCode', ''))
@@ -150,7 +154,7 @@ class SearchService:
         if not job_path.startswith(prefix) or not re.fullmatch(r'[A-Za-z0-9_.-]{1,300}', job_path[len(prefix):]):
             raise ProviderError('The AITK diagnostic job is invalid.')
         import splunk.rest
-        _, raw = splunk.rest.simpleRequest(job_path + '/search.log', sessionKey=self.token, raiseAllErrors=True)
+        _, raw = splunk.rest.simpleRequest(job_path + '/search.log', sessionKey=self.token, raiseAllErrors=True, timeout=self.request_timeout)
         return raw.decode('utf-8', 'replace')[:1_000_000] if isinstance(raw, bytes) else str(raw)[:1_000_000]
 
     def environment(self, probe=False):

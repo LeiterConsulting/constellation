@@ -61,6 +61,11 @@ if handler_path in files:
         inference_module = 'aitk_inference_handler_' + handler_id
         files['constellation/bin/' + inference_module + '.py'] = files.pop(inference_path)
         files[restmap_path] = files[restmap_path].replace(b'aitk_inference_handler.py', (inference_module + '.py').encode()).replace(b'aitk_inference_handler.', (inference_module + '.').encode())
+    private_path = 'constellation/bin/openai_private_handler.py'
+    if private_path in files:
+        private_module = 'openai_private_handler_' + handler_id
+        files['constellation/bin/' + private_module + '.py'] = files.pop(private_path)
+        files[restmap_path] = files[restmap_path].replace(b'openai_private_handler.py', (private_module + '.py').encode()).replace(b'openai_private_handler.', (private_module + '.').encode())
 files['constellation/default/data/ui/views/renderer_baseline.xml'] = xml.encode()
 for package in ['dashboard-core','dashboard-presets','dashboard-context','dashboard-state','dashboard-layouts','dashboard-inputs','datasources','react-ui','themes','react-icons','splunk-utils']:
     license_file = ROOT / 'node_modules' / '@splunk' / package / 'LICENSE'

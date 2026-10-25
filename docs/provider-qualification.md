@@ -30,12 +30,12 @@ An absent Wi-Fi table column is not a failed independence test; apply that check
 
 ## Remaining release decisions
 
-The [recorded matrices](validation.md) shows substantial improvement, but does **not** establish 1.0 readiness. One edit still required a development fix and explicit retry; slower-provider authoring can take over a minute. Independent probes found incorrect analytical populations in definitions the earlier validators had accepted.
+The [recorded matrices](validation.md) show substantial improvement, but do **not** establish 1.0 readiness. The final 0.16 non-admin sensor journey passed through all three providers after a failed Ollama attempt exposed a time-axis binding defect. Slower-provider authoring can still take over a minute. Historical independent probes also found incorrect analytical populations in definitions the earlier validators had accepted. Keep those failures visible alongside the final reruns.
 
 1. Demonstrate repeatable creation and focused editing within useful latency across the advertised provider/model combinations. Preserve failure evidence; do not increase retry/time limits merely to make a sample green.
 2. Extend the sensor regression to representative operational datasets, missing fields, sparse data, partial searches and business-rule review. Run unaided user trials; measure completion and required intervention.
 3. Finish the declared native feature/version matrix, accessibility/reflow and realistic document/search resource checks. Preserve native-only/unsupported labels outside the qualified scope.
-4. Complete ordinary-user provider setup and AITK connection/capability checks, upgrade/rollback and draft recovery for supported deployments. SHC concurrency remains a separate deployment qualification.
+4. Extend the completed ordinary-user provider/credential checks to fresh installations and representative roles; qualify upgrade/rollback and draft recovery for supported deployments. Re-review the privileged handlers when authority or AITK resolution changes. SHC concurrency remains a separate deployment qualification.
 5. Review AppInspect warnings and define the Enterprise support floor and distribution/license policy. Local precert is not Cloud certification; making GitHub public is a separate explicit decision.
 
 Prioritize task-level provider/model qualification and useful progress/cancellation during longer calls before adding more dashboard controls. Extend the narrow population guard to representative business rules, derived fields and complex predicates with independent evidence. Keep those gates separate from a passing small model test.

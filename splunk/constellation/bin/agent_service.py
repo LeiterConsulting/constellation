@@ -439,7 +439,18 @@ class AgentService:
                         if source.get('type') == 'ds.test' and not re.search(r'\b(?:illustrative|synthetic|mock|fake|sample data)\b', prompt, re.I):
                             raise ProviderError('Real Splunk data is the default. Do not introduce sample data unless the user explicitly requested it; ask them to choose a real dataset.')
                 self.progress('search', attempt + 1)
-                receipts = data.validate_searches(draft, document, profile) if profile else []
+                try:
+                    receipts = data.validate_searches(draft, document, profile) if profile else []
+                except ProviderError as error:
+                    if error.code in ('recovery_budget', 'author_cancelled', 'author_expired'): raise
+                    from time_axis import verified_time_axes
+                    axes = verified_time_axes(draft, document, data.receipts)
+                    if not axes: raise
+                    draft = proposal.stage(axes)
+                    result['changes'] = proposal.changes
+                    # Reuse this turn's actual search cache; every binding and
+                    # other validation still runs before accepting the edit.
+                    receipts = data.validate_searches(draft, document, profile)
                 validate_requested_columns(prompt, body.get('selected', ''), draft, receipts)
                 # Newly introduced network graphs must match the target feature set.
                 for key, viz in draft['visualizations'].items():

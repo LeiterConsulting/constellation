@@ -38,6 +38,25 @@ The endpoint accepts bounded prompt text only. It cannot take SPL, a provider UR
 
 The default policy is disabled. To revoke shared inference, disable it or remove the author role/capability. Recheck active requests and policy access after changes. Limits and cancellation state are local to a search head; clustered deployments and Cloud approval remain separate qualification gates. `passSystemAuth=true` requires manual security review even when local AppInspect precert passes.
 
+## Protect connection metadata
+
+Shared inference currently supports modern AITK 6.1/6.2 connection records for OpenAI, Anthropic, AzureOpenAI, Groq, Gemini, Bedrock and Ollama. These records contain their endpoint/model settings. AI Tier, hosted and legacy connection resolution need separate dependency review and are blocked on this privileged path. This is a configuration trust check, not live qualification of every listed provider.
+
+An administrator must verify all of the following before the shared model test:
+
+- Both the execution username and connection owner must be trusted maintainers. The connection uses App or global sharing, and its owner holds `admin` or `mltk_admin` (directly or through an inherited role). Its write ACL contains only those maintainer roles. Read sharing may include intended authors.
+- Both `aitk_llm_connection` and `mltk_ai_commander_collection` KV collection configurations are owned by `nobody` in `Splunk_ML_Toolkit`, use App/global sharing, and grant writes only to `admin` and/or `mltk_admin`. Some vendor defaults include `power`; that broader write grant is rejected even when the individual connection looks restricted.
+- There is exactly one modern record for the approved name, with no saved legacy connection of that same name. A legacy name takes precedence in native AITK resolution, so Constellation rejects the ambiguity.
+
+Use Splunk's normal authenticated REST management interface as administrator to inspect these exact configuration endpoints and their `/acl` children:
+
+```text
+/servicesNS/nobody/Splunk_ML_Toolkit/storage/collections/config/aitk_llm_connection
+/servicesNS/nobody/Splunk_ML_Toolkit/storage/collections/config/mltk_ai_commander_collection
+```
+
+If necessary, POST `perms.write=admin,mltk_admin` together with the existing `owner`, `sharing` and `perms.read` values to each `/acl` endpoint, then read it back. Splunk can clear omitted permission fields; explicitly preserve read access. Back up the original ACL before changing it and review effects on existing AITK maintainers. The connection's own write sharing is managed in AITK. Do not edit vendor files or grant authors storage-password access. Constellation reads only metadata and fails before job submission when these checks cannot be established. AITK upgrades can change or reset these permissions; repeat the check afterward.
+
 ## Direct/native AITK access
 
 Share the connection at **App** scope in AITK. Give read access to the roles intended to build dashboards, and reserve write access for connection maintainers. “Everyone” write access is not needed merely to use a connection; review that scope under your organization's policy.

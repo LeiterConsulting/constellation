@@ -50,7 +50,8 @@ class InferenceBoundaryTests(unittest.TestCase):
                 with self.assertRaises(ProviderError): policy(Privileged(), CONTEXT)
 
     def test_status_does_not_return_executor_or_tokens(self):
-        result = execute(Caller(), Privileged(), {'action': 'status'})
+        with patch('aitk_connection_policy.verify_connection'):
+            result = execute(Caller(), Privileged(), {'action': 'status'})
         self.assertEqual(result, {'available': True, 'connection': 'Approved connection'})
         self.assertNotIn('token', json.dumps(result))
 
@@ -60,20 +61,27 @@ class InferenceBoundaryTests(unittest.TestCase):
             with self.assertRaises(ProviderError): execute(Caller(), privileged, {'action': 'status'})
             read.assert_not_called()
 
+    def test_caller_without_search_is_denied_before_privileged_metadata_reads(self):
+        privileged = Privileged()
+        with patch.object(Caller, 'request', return_value={'entry': [{'content': dict(CONTEXT, capabilities=[CAPABILITY])}]}), patch.object(privileged, 'request') as read:
+            with self.assertRaises(ProviderError): execute(Caller(), privileged, {'action': 'status'})
+            read.assert_not_called()
+
     def test_caller_cannot_choose_spl_url_executor_job_or_another_connection(self):
         base = {'action': 'complete', 'connection': ENTRY['content']['connection'], 'prompt': 'Fixture request'}
         cases = [dict(base, **{key: 'untrusted'}) for key in ('search', 'sid', 'execution_user', 'url', 'system_authtoken')]
         cases += [dict(base, connection='Other'), dict(base, action='credentials'), dict(base, prompt=''), dict(base, prompt='a' * 250001)]
-        with patch('provider_adapters.AITKClient.complete_prompt') as call:
+        with patch('provider_adapters.AITKClient.complete_prompt') as call, patch('aitk_connection_policy.verify_connection'):
             for body in cases:
                 with self.subTest(body_keys=list(body)), self.assertRaises(ProviderError): execute(Caller(), Privileged(), body)
             call.assert_not_called()
 
     def test_worker_is_separate_and_only_gets_fixed_connection_and_text(self):
-        with tempfile.TemporaryDirectory() as root, patch('provider_adapters.AITKClient.complete_prompt', return_value={'status': 'completed'}) as call:
+        with tempfile.TemporaryDirectory() as root, patch('provider_adapters.AITKClient.complete_prompt', return_value={'status': 'completed'}) as call, patch('aitk_connection_policy.verify_connection') as verify:
             result = execute(Caller(), Privileged(), {'action': 'complete', 'connection': 'Approved connection', 'prompt': 'Fixture'}, root)
             self.assertEqual(result['status'], 'completed')
             call.assert_called_once_with('Approved connection', 'Fixture', encoded=True, delete_job=True)
+            verify.assert_called_once()
             self.assertEqual(list(Path(root).glob('*.json')), [])
 
     def test_encoded_query_cannot_expand_macros_tokens_or_spl_from_prompt(self):
@@ -93,6 +101,12 @@ class InferenceBoundaryTests(unittest.TestCase):
         encoded = query.split('urldecode("', 1)[1].split('")', 1)[0]
         self.assertEqual(unquote(encoded), prompt)
         self.assertEqual(runtime.calls[-1][1], 'DELETE')
+
+    def test_privileged_worker_uses_ten_second_native_transports(self):
+        with tempfile.TemporaryDirectory() as root, patch('aitk_connection_policy.verify_connection'), \
+             patch('search_service.SearchService') as worker, patch('provider_adapters.AITKClient.complete_prompt'):
+            execute(Caller(), Privileged(), {'action': 'complete', 'connection': 'Approved connection', 'prompt': 'Fixture'}, root)
+            worker.assert_called_once_with('fixture-executor', 'fixture-system-token', request_timeout=10)
 
     def test_form_rejects_duplicate_fields_and_oversize_before_execution(self):
         self.assertEqual(form_body({'payload': urlencode({'action': 'complete', 'prompt': 'café + &'})})['prompt'], 'café + &')
@@ -116,7 +130,7 @@ class InferenceBoundaryTests(unittest.TestCase):
         import configparser
         conf = configparser.ConfigParser(); conf.read(Path(__file__).resolve().parents[1] / 'splunk/constellation/default/restmap.conf')
         enabled = [name for name in conf.sections() if conf[name].getboolean('passSystemAuth')]
-        self.assertEqual(enabled, ['script:constellation_aitk'])
+        self.assertEqual(enabled, ['script:constellation_aitk', 'script:constellation_openai'])
         self.assertEqual(conf[enabled[0]]['capability'], 'search and constellation_use_aitk')
         self.assertTrue(conf[enabled[0]].getboolean('requireAuthentication'))
 

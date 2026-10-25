@@ -2,13 +2,15 @@
 
 This is the historical sharing audit. See [current validation](validation.md) and [provider qualification](provider-qualification.md) for the subsequent repeated-provider tests, model budgets and remaining 1.0 gates.
 
+The 0.16 follow-up completes a bounded non-admin sensor journey across all three providers and an independent agent source review of the privileged boundaries. Owner-only OpenAI setup no longer requires ordinary authors to hold credential-store permissions. The older permission restrictions and provider failures below describe the 0.9 review, not the current implementation. Deployment/security, broader usability and production qualification remain open.
+
 **Ready for a guided private pilot with the setup below. Broad production readiness remains unqualified.** This review was completed on October 24, 2026. It covers representative end-to-end journeys and workspace controls; it does not establish every Dashboard Studio option, provider, role or deployment topology.
 
 ## What the next user receives
 
 The handoff bundle contains the installable app, its SHA-256 checksum and reviewed documentation. Start with the [user guide](user-guide.md) and [installation instructions](installation.md). Credentials, connection configuration, drafts, live datasets and browser evidence are excluded. The repository remains private; no first-party open-source license has been selected.
 
-An administrator installs the app. The user needs permission to search the intended data and create private knowledge objects. Direct OpenAI key storage requires administrator-reviewed Splunk credential-store permissions. The app explains and blocks key entry when that authority is missing; it does not grant capabilities. Keyless Ollama preferences work under the standard user role. For ordinary AITK authors, 0.15 adds an administrator-approved shared connection with only the constellation_use_aitk author capability and normal search access. The direct/native path retains its command and credential requirements. Review [provider setup](providers.md) before inviting someone.
+An administrator installs the app. The user needs permission to search the intended data and create private knowledge objects. Direct OpenAI key storage uses the owner-only handler; normal authors do not receive credential-store capabilities. Saved keys remain encrypted and are never returned to the app form. Keyless Ollama preferences work under the standard user role. For ordinary AITK authors, 0.15 adds an administrator-approved shared connection with only the constellation_use_aitk author capability and normal search access. The direct/native path retains its command and credential requirements. Review [provider setup](providers.md) before inviting someone.
 
 ## Coverage and fixes
 
@@ -37,4 +39,4 @@ Source inspection and offline tests supplement browser coverage for invalid edit
 
 Use an assisted pilot first: connect an approved provider, choose one known dataset, create a small dashboard, refine it, reopen it and save a native copy. Share that native copy using normal Splunk permissions and verify access with the recipient's actual role. Destination-app context affects search permissions and dependencies. Draft links stay owner-private; they are not collaboration links.
 
-Remaining gates include unaided user trials, representative provider success-rate/latency coverage, privileged shared-AITK review, clean first-install/rollback qualification, broader roles and administrator boundaries, accessibility/reflow, search-head-cluster concurrency, realistic scale, bundle reduction and the native option/source/refresh/custom-visualization matrix. Local AppInspect passed with warnings; it is not Splunk Cloud certification. Test counts, versions and exact artifact qualification are in [validation](validation.md).
+Remaining gates include unaided user trials, representative provider success-rate/latency coverage, deployment security review, clean first-install/rollback qualification, broader roles and administrator boundaries, accessibility/reflow, search-head-cluster concurrency, realistic scale, bundle reduction and the native option/source/refresh/custom-visualization matrix. Local AppInspect passed with warnings; it is not Splunk Cloud certification. Test counts, versions and exact artifact qualification are in [validation](validation.md).

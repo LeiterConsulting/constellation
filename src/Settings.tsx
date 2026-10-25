@@ -71,7 +71,7 @@ export default function Settings({ onClose, onSaved, returnFocus }: Props) {
       {provider === 'openai' ? <>
         <Muted>https://api.openai.com/v1</Muted>
         {!secure ? <Message type="warning">Open through HTTPS to enter a key.</Message> : null}
-        {!canStoreKey ? <Message type="info">OpenAI setup requires permission to manage encrypted credentials in Splunk. Ask your administrator to review this access, or choose Ollama or an authorized AITK connection. Constellation does not grant roles.</Message> : null}
+        {!canStoreKey ? <Message type="info">Private OpenAI storage is unavailable. Ask your administrator to check the Constellation installation, or choose another configured provider.</Message> : null}
         <ControlGroup label={hasKey ? 'Replace API key (optional)' : 'API key'} help="Stored encrypted in Splunk with owner-restricted permissions. The saved key is never returned to this form.">
           <Text type="password" autoComplete="new-password" value={apiKey} onChange={(_event, { value }) => { setApiKey(value); invalidateTest(); }} disabled={!secure || !canStoreKey || busy || loading || !loaded} canClear/>
         </ControlGroup>

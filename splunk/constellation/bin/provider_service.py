@@ -78,6 +78,10 @@ these capabilities. Use only supplied tile IDs. Empty id/title are required for 
 empty id is required for rename. Ask one focused question if the intended title is ambiguous.'''
 
 
+def has_key(config):
+    return bool(config.get('api_key') or config.get('key_configured'))
+
+
 class ProviderService:
     def __init__(self, store, client=None, runtime=None, ollama=None):
         from provider_adapters import OllamaClient, AITKClient
@@ -112,12 +116,12 @@ class ProviderService:
         if provider == 'ollama' and saved.get('base_url') and saved.get('model'):
             try: details = self.ollama.call(saved['base_url'], 'show', {'model': saved['model']})
             except ProviderError: metadata_error = True
-        configured = bool(saved.get('api_key')) if provider == 'openai' else bool(saved.get('base_url') if provider == 'ollama' else saved.get('connection'))
+        configured = has_key(saved) if provider == 'openai' else bool(saved.get('base_url') if provider == 'ollama' else saved.get('connection'))
         try: modalities = self.capabilities(saved, details)
         except ProviderError as error: modalities = {'images': False, 'pdf': False, 'reason': str(error), 'source': ''}
         all_saved = self.store.read() or {}
         connections = all_saved.get('connections', {})
-        summaries = {'openai': {'model': all_saved.get('model', ''), 'keyConfigured': bool(all_saved.get('api_key'))}}
+        summaries = {'openai': {'model': all_saved.get('model', ''), 'keyConfigured': has_key(all_saved)}}
         for name in ('ollama', 'aitk'):
             config = connections.get(name, {})
             summaries[name] = {k: config.get(k, '') for k in ('model', 'base_url', 'connection')}
@@ -127,7 +131,7 @@ class ProviderService:
             except ProviderError: shared = {'available': False, 'connection': '', 'unavailable': True}
         return {'provider': provider, 'baseUrl': 'https://api.openai.com/v1' if provider == 'openai' else saved.get('base_url', ''),
                 'model': saved.get('model', ''), 'connection': saved.get('connection', ''),
-                'keyConfigured': bool(saved.get('api_key')) if provider == 'openai' else False,
+                'keyConfigured': has_key(saved) if provider == 'openai' else False,
                 'configured': configured, 'connections': summaries, 'capabilities': modalities, 'aitkAccess': shared,
                 'readiness': report(provider, details, metadata_error),
                 'keyStorage': self.store.key_access() if hasattr(self.store, 'key_access') else None}
@@ -146,8 +150,9 @@ class ProviderService:
             if not isinstance(key, str) or len(key) > 8192 or any(char.isspace() for char in key):
                 raise ProviderError('Enter a valid API key without spaces or line breaks.')
             key = key or saved.get('api_key', '')
-            if not key: raise ProviderError('Enter an OpenAI API key.')
-            saved.update({'api_key': key, 'model': model})
+            if not key and not has_key(saved): raise ProviderError('Enter an OpenAI API key.')
+            if key: saved['api_key'] = key
+            saved['model'] = model
             if 'active_provider' in saved: saved['active_provider'] = 'openai'
         else:
             if body.get('apiKey'): raise ProviderError('Credentials for this route are not entered here.')
@@ -166,7 +171,7 @@ class ProviderService:
 
     def configured(self, require_model=True):
         saved = self.selected()
-        if saved['provider'] == 'openai' and not saved.get('api_key'):
+        if saved['provider'] == 'openai' and not has_key(saved):
             raise ProviderError('Add your OpenAI key in Settings first.', 409)
         if saved['provider'] == 'ollama' and not saved.get('base_url'):
             raise ProviderError('Add an Ollama endpoint in Settings first.', 409)
@@ -184,14 +189,14 @@ class ProviderService:
         elif saved['provider'] == 'aitk':
             raise ProviderError('Select a named connection from AI Toolkit. Its configured model is used unchanged.', 409)
         else:
-            result = self.client.call(saved['api_key'], 'models')
+            result = self.client.call(saved.get('api_key', ''), 'models')
             models = [item.get('id') for item in result.get('data', []) if isinstance(item, dict)]
         return {'models': sorted({model for model in models if isinstance(model, str) and len(model) <= 200})[:500], 'capabilityVerified': False}
 
     def complete(self, saved, request):
         if saved.get('provider', 'openai') == 'ollama': return self.ollama.complete(saved, request)
         if saved.get('provider') == 'aitk': return self.aitk.complete(saved, request)
-        return self.client.call(saved['api_key'], 'responses', request)
+        return self.client.call(saved.get('api_key', ''), 'responses', request)
 
     def respond(self, prompt, context, test=False):
         saved = self.configured()

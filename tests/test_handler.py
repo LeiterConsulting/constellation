@@ -17,6 +17,7 @@ splunk.rest = rest
 with patch.dict(sys.modules, {'splunk':splunk,'splunk.rest':rest,'splunk.persistconn':types.ModuleType('splunk.persistconn'),'splunk.persistconn.application':application}):
     import constellation_handler as handler
     import aitk_inference_handler as inference_handler
+    import openai_private_handler as private_handler
 
 
 class HandlerBoundaryTests(unittest.TestCase):
@@ -32,7 +33,7 @@ class HandlerBoundaryTests(unittest.TestCase):
     def test_unknown_methods_are_rejected(self):
         self.assertEqual(self.request(method='DELETE')['status'],404)
     def test_unconfigured_settings_have_no_secret(self):
-        with patch.object(handler.CredentialStore,'read',return_value=None):
+        with patch.object(handler.OpenAIStoreProxy,'read',return_value=None):
             result=self.request()
         self.assertEqual(result['status'],200)
         self.assertFalse(result['payload']['keyConfigured'])
@@ -47,7 +48,7 @@ class HandlerBoundaryTests(unittest.TestCase):
         self.assertEqual(result['aitkAccess'], {'available': False, 'connection': '', 'unavailable': True})
         self.assertNotIn('fixture-native-error', json.dumps(result))
     def test_internal_exceptions_are_never_echoed(self):
-        with patch.object(handler.CredentialStore,'read',side_effect=ValueError('fixture-secret-value')):
+        with patch.object(handler.OpenAIStoreProxy,'read',side_effect=ValueError('fixture-secret-value')):
             result=self.request()
         self.assertEqual(result['status'],500)
         self.assertNotIn('fixture-secret-value',json.dumps(result))
@@ -83,6 +84,8 @@ class SharedInferenceHandlerTests(unittest.TestCase):
         def check(caller, privileged, body):
             self.assertEqual(caller.token, 'fixture-caller')
             self.assertEqual(privileged.token, 'fixture-system')
+            self.assertEqual(caller.request_timeout, 10)
+            self.assertEqual(privileged.request_timeout, 10)
             self.assertEqual(body, {'action': 'status'})
             return {'available': False, 'connection': ''}
         with patch('aitk_inference.execute', side_effect=check): result = self.request()
@@ -100,7 +103,7 @@ class SharedInferenceHandlerTests(unittest.TestCase):
 
     def test_each_entry_module_has_one_persistent_class_for_native_loader(self):
         import ast
-        for module in (handler, inference_handler):
+        for module in (handler, inference_handler, private_handler):
             tree = ast.parse(Path(module.__file__).read_text())
             classes = [node for node in tree.body if isinstance(node, ast.ClassDef)
                        and any(isinstance(base, ast.Name) and base.id == 'PersistentServerConnectionApplication' for base in node.bases)]
@@ -128,6 +131,23 @@ assert hasattr(module,'AitkInferenceHandler')
         self.assertEqual(call.call_args.kwargs['sessionKey'], 'fixture-caller')
         self.assertNotIn('fixture-private-error', str(error.exception))
         self.assertEqual(error.exception.status, 403)
+
+    def test_search_and_aitk_diagnostics_have_bounded_native_transport_timeouts(self):
+        runtime = handler.SearchService('fixture-user', 'fixture-caller', request_timeout=10)
+        with patch.dict(sys.modules, {'splunk': splunk, 'splunk.rest': rest}), patch.object(rest, 'simpleRequest', return_value=({}, '{}'), create=True) as call:
+            runtime.request('/services/authentication/current-context')
+            self.assertEqual(call.call_args.kwargs['timeout'], 10)
+            runtime.aitk_job_log('/servicesNS/fixture-user/Splunk_ML_Toolkit/search/jobs/fixture_sid')
+            self.assertEqual(call.call_args.kwargs['timeout'], 10)
+
+    def test_metadata_query_parameters_are_sent_through_native_getargs(self):
+        runtime = handler.SearchService('fixture-user', 'fixture-caller')
+        with patch.dict(sys.modules, {'splunk': splunk, 'splunk.rest': rest}), patch.object(rest, 'simpleRequest', return_value=({}, '[]'), create=True) as call:
+            self.assertEqual(runtime.request('/servicesNS/nobody/Splunk_ML_Toolkit/storage/collections/data/aitk_llm_connection?query=%7B%22name%22%3A%22Fixture%22%7D&limit=2&fields=name,provider,acl'), [])
+            self.assertNotIn('?', call.call_args.args[0])
+            self.assertEqual(call.call_args.kwargs['getargs']['query'], '{"name":"Fixture"}')
+            self.assertEqual(call.call_args.kwargs['getargs']['fields'], 'name,provider,acl')
+            self.assertEqual(call.call_args.kwargs['getargs']['limit'], '2')
 
 
 class CredentialIsolationTests(unittest.TestCase):

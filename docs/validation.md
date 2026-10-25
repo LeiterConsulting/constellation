@@ -1,16 +1,18 @@
 # Validation status
 
-Snapshot: **0.15.0 development preview, October 25, 2026**. This file is a sanitized summary. Private lab addresses, credentials, screenshots, transcripts, raw search data and detailed runtime receipts are excluded from the repository.
+Snapshot: **0.16.0 development preview, October 25, 2026**. This file is a sanitized summary. Private lab addresses, credentials, screenshots, transcripts, raw search data and detailed runtime receipts are excluded from the repository.
+
+See the [0.16 security and three-provider follow-up](#0160-security-and-non-admin-three-provider-flow--october-25-2026) for current live coverage. Earlier sections retain their historical failures and qualification boundaries.
 
 ## Local verification
 
 | Check | Observed result |
 | --- | --- |
-| Python unit suites | 234 tests passed on Python 3.9 and 3.13, including shared-inference identity/policy/transport/encoding/admission boundaries, isolated native-entry loading, cancellation and existing authoring recovery. |
+| Python unit suites | 262 tests passed on Python 3.9 and 3.13, including AITK dependency trust, owner-only OpenAI custody, native-entry separation, cancellation and verified time-axis recovery. |
 | Frontend unit suites | 59 tests passed, including the synthetic setup search and native URL-prefix boundaries. |
 | TypeScript and production build | Passed; bundle-size warning remains. |
 | Deterministic app package | Generated with SHA-256 receipt. |
-| Splunk AppInspect 4.3.1, precert | 0 errors, 0 failures, 0 future failures, 7 warnings, 1 skipped, 107 successes, 137 not applicable on the tested app archive. |
+| Splunk AppInspect 4.3.1, precert | 0 errors, 0 failures, 0 future failures, 7 warnings, 1 skipped, 116 successes, 128 not applicable on the tested app archive. |
 
 The AppInspect result applies to the tested development archive. The seven warnings cover Splunk UI/framework telemetry detection, Python migration, Cloud-role compatibility and a public-IP example inside the bundled network-chart schema. The detected address was traced to a third-party documentation example, not lab configuration. Review the full local report before distributing a new archive. Repository/CI changes alone do not establish a fresh AppInspect result. This is not Splunk Cloud certification, a security audit or production qualification.
 
@@ -266,3 +268,47 @@ The final archive has SHA-256 `c5a50775fe71b71296b92ac8935fc2f81591993e392fced9d
 Cleanup removed three disposable accounts (including the final package-check author), ten owner-private configuration stanzas and two private native views, with deletion readback. The generated password file was deleted; the original administrator browser session, connection preferences and active-draft preference were restored/verified. The managed policy and dedicated inference-only author role remain available for explicit administrator assignment, with no users left assigned to that role. The policy remains writable only by administrators. The other target retains its default-disabled shared policy; its complete AITK journey was not qualified.
 
 The stored-credential blocker is closed for the tested **Constellation-managed** author path. Native/direct AITK remains credential-dependent. **1.0 is still unqualified:** broader model/role/version/stochastic journeys, independent privileged-boundary review, unaided-user trials, realistic load, deployment/rollback/SHC and Cloud distribution gates remain. No provider key was copied or replaced, and no external runtime or vendor-file patch was introduced.
+
+## 0.16.0 security and non-admin three-provider flow — October 25, 2026
+
+A fresh agent independently reviewed the privileged AITK baseline, relevant AITK 6.2 resolution/ACL code, the patches and the new owner-only OpenAI boundary. The review found conditional connection-dependency trust, execution-owner and native deadline gaps, plus inaccurate security documentation. Those findings were addressed; follow-up source review found no remaining actionable issue in the reviewed patches. This is an independent agent source review, not an external audit or Cloud approval. See [findings and disposition](security-review.md).
+
+Shared AITK now checks both fixed backing collection ACLs, the modern connection record's write ACL/trusted owner, its supported provider resolution, a trusted execution namespace and legacy-first name collisions before dispatch. The lab's collection write ACLs were narrowed to `admin` / `mltk_admin`; owner, sharing and read scope were preserved. Connection/model/credential settings and its verified 16,000-token allowance were retained. Vendor files and ordinary-author credential privileges were not changed.
+
+Direct OpenAI has a separate owner-only handler. The verified caller determines its encrypted record and namespace; metadata never contains a saved key. The user explicitly authorized in-memory reuse of an existing key for one disposable author's private record and its deletion afterward. Initial save and same-key replacement passed; malformed replacement preserved the record. The ordinary author remained denied direct native credential reads, including its own record. Browser Settings showed an empty optional replacement field, discovered models and passed the structured model test. The main/control handlers still do not receive system authentication.
+
+### Final installed core journey
+
+All three providers used the same non-admin author on Enterprise 10.2.8 / Studio 1.23.12, starting from empty definitions with actual sensor data and the last-24-hour scope. The author inherited `user` plus only `constellation_use_aitk`; credential read/edit, administrator, native AITK command/list/configuration authority remained absent.
+
+| Provider / tested model | Two-page creation | Selected peak calculation | Selected table formatting | Local chart type/title |
+| --- | --- | --- | --- | --- |
+| OpenAI / `gpt-6-luna` | 21.01 s / 1 call | 7.73 s / 1 call | 5.65 s / 1 call | 0.34 s / 0 calls |
+| Ollama / `qwen3-coder:latest` | 78.90 s / 2 calls | 24.63 s / 1 call | 18.01 s / 1 call | 0.26 s / 0 calls |
+| AITK 6.2 / GPT-5 mini | 51.55 s / 1 call | 31.45 s / 1 call | 26.44 s / 1 call | 0.28 s / 0 calls |
+
+Each final journey passed two named pages/purposes, four actual-data charts, device-row filtering of both detail sources, a placed return button, visible `peak_f`, numeric/date formatting and preservation of unrelated native properties. It also passed private draft/conversation save/reopen, a separate blank draft, resuming the original, peer denial and exact private native-copy readback. These are small regression samples, not a success-rate estimate or controlled latency benchmark. Creation/model-authored edits were exercised through the installed API; the common browser controls were exercised separately below.
+
+An earlier Ollama creation failed after 137.77 seconds and three calls, retaining the blank draft. Invalid time-axis bindings used `time` although successful search output exposed `_time`. A narrow metadata-based repair now stages only that exact changed binding, within the normal edit budget, then reruns the same scope, search and binding validators. It preserves valid `time` fields, unknown/imported expressions and unrelated work. The final rerun above passed with two calls; failure evidence is retained privately and is not counted as a first-attempt success. No validation or resource limit was weakened. The 120-second orchestration budget is checked between operations and cannot interrupt an already-running provider call.
+
+Separate read-only synthetic transformation probes passed on each final definition under the ordinary author's search permissions. Increasing already-excluded temperatures did not change temperature outputs; exactly 150°F remained included. Wi-Fi measurements on those rows still affected Wi-Fi outputs. Default details and both fictional device selections produced appropriate data. Fixtures were not ingested, real definitions were not replaced and result rows were not sent to models. This qualifies the tested transformations, not arbitrary business rules or SPL2 semantics.
+
+### Browser, native output and cancellation
+
+All three generated native views rendered both pages, readable table dates and the added peak column, and supported row/token drilldown and return. Each opened in the normal Studio editor with Save disabled before any edits, then returned to view without changes. The output runs through ordinary Search & Reporting and does not depend on the Constellation canvas or agent handler.
+
+The common Constellation browser follow-up reopened the final AITK draft, selected its table on the canvas and renamed it through chat. Independent comparison found only that title changed. Contextual suggestions appeared, dock/float worked and preview row/detail/return navigation rendered both actual-data trends. **Save to Splunk** selected Search & Reporting and created a verified private native copy; its exact definition/owner/privacy matched independent readback and it rendered normally. A separate blank draft, rename, duplicate, recoverable Trash/restore and original-draft reopening passed. Refresh and a fresh sign-out/sign-in retained the ten-message conversation and definition. Representative desktop checks do not establish every UI option, accessibility or narrow-screen reflow.
+
+Installed Stop checks observed the actual model stage for all three providers. OpenAI acknowledged in 0.050 seconds and settled as cancelled after 20.291 seconds; Ollama acknowledged in 0.040 seconds and settled after 45.073 seconds. Neither returned an applicable dashboard change. Direct upstream requests can complete and bill after Stop. AITK acknowledged in 0.039 seconds, settled after 0.073 seconds and deleted the observed privileged synthetic job; the ordinary author was denied direct access to that job. These are observations under this workload, not cancellation timing guarantees.
+
+A combined synthetic napkin/two-page PDF request also passed the new OpenAI transport/modality boundary and returned structured recognition of both layouts. This is an input/transport check, not a fresh full PDF-to-dashboard creation journey. AITK remains text-only; unsupported file/model combinations are rejected before transmission.
+
+### Live security checks and cleanup
+
+Peer shared inference, arbitrary SPL/connection substitution, forged run handles, credential/role/policy access, capability without the allowed role, revoked capability and disabled policy were rejected. Both backing collections were temporarily widened one at a time to reproduce an unsafe write ACL: preflight rejected each before inference, then the secured ACL was restored exactly. An ordinary execution namespace was also rejected and the approved policy restored. Owner-only OpenAI checks rejected owner/path/URL/system-token substitution, unsupported operations/models/tools/remote files and invalid key replacement without returning the key. Peer key metadata remained empty; private native/draft access was denied.
+
+Cleanup removed both disposable accounts, seventeen owner-private configuration stanzas, six private native test views and the single temporary encrypted key, with deletion readback. The generated password file was removed. The original administrator browser session, connection settings, active-draft preference and draft list were restored/verified. The dedicated inference-only role remains with no assigned users; the approved administrator policy and secured AITK backing ACLs remain. The other Enterprise target keeps shared inference disabled.
+
+The complete matrix/browser checks used archive SHA-256 `53fd7a558f43860fd95a21ac7b0d11f9e56188d82584a0867f35f2ad310b48c0`. Publication review then removed terminal blank lines from two Python modules. All 53 Python ASTs remain identical; the final archive has SHA-256 `632a1948c1b44456d8f523ad8c955280f083c3348bf3c88d1276483d4900fb39` (446 files; 5,363,685 bytes). All Python sources match its payload; no macOS metadata, local configuration or bytecode is included. That exact archive was installed on both recorded Enterprise versions without restart and received a fresh AppInspect precert result as summarized above. A third disposable non-admin author repeated owner-only OpenAI setup, direct-own-key denial and successful structured model tests for all three providers on the final archive; its account, encrypted key and password file were also removed. The complete journey was not repeated for the whitespace-only finalization, and the newer target's full journey remains unqualified.
+
+**1.0 remains unqualified.** Slow/stochastic authoring, representative sparse/partial/operational datasets and provider/model sampling, unaided-user trials, broader native/role/version coverage, accessibility/reflow, realistic load, first-install/upgrade/rollback/SHC and distribution/Cloud gates remain. The source review and bounded non-admin results close specific observed blockers; they do not establish general production readiness.

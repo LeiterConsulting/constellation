@@ -28,8 +28,8 @@ class AitkInferenceHandler(PersistentServerConnectionApplication):
             if (method, action) == ('GET', 'status'): body = {'action': 'status'}
             elif (method, action) == ('POST', 'infer'): body = form_body(request)
             else: raise ProviderError('This inference endpoint or method is unavailable.', 404)
-            caller = SearchService(session['user'], session['authtoken'])
-            privileged = SearchService('nobody', token)
+            caller = SearchService(session['user'], session['authtoken'], request_timeout=10)
+            privileged = SearchService('nobody', token, request_timeout=10)
             result = execute(caller, privileged, body)
             return {'status': 200, 'payload': result, 'headers': {'Cache-Control': 'no-store'}}
         except ProviderError as error:

@@ -56,3 +56,12 @@ class ConnectionStoreTests(unittest.TestCase):
         encrypted.write.side_effect = None; encrypted.read.return_value = secret
         store.write(secret)
         self.assertIsNone(prefs.read()); self.assertEqual(store.read(), secret)
+
+    def test_saved_key_presence_marker_keeps_switches_in_encrypted_storage(self):
+        encrypted, prefs = Mock(), Preferences()
+        prefs.write({'active_provider': 'aitk', 'connections': {}})
+        store = ConnectionStore(encrypted, prefs)
+        config = {'key_configured': True, 'model': 'fixture', 'active_provider': 'ollama', 'connections': {'ollama': {'model': 'fixture'}}}
+        store.write(config)
+        encrypted.write.assert_called_once_with(config)
+        self.assertIsNone(prefs.read())

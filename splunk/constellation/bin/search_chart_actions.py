@@ -30,7 +30,7 @@ CHART_ACTION = {'type': 'object', 'properties': {
     'chartType': {'type': 'string', 'enum': list(CHART_TYPES)},
     'title': {'type': 'string'}, 'description': {'type': 'string'},
     'sourceId': {'type': 'string', 'description': 'The exact search action id or an existing source ID.'},
-    'x': {'type': 'string', 'description': 'Output field for the time/category axis; empty for a table or single value.'},
+    'x': {'type': 'string', 'description': 'Exact output field for the time/category axis. SPL timechart emits _time, not time. Empty for a table or single value.'},
     'y': {'type': 'array', 'items': {'type': 'string'}, 'description': 'Numeric output fields, or ordered visible fields for a table. One field for a single value; an empty table list shows all output fields.'}},
     'required': ['op', 'id', 'chartType', 'title', 'description', 'sourceId', 'x', 'y'], 'additionalProperties': False}
 
