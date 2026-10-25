@@ -121,10 +121,14 @@ class ProviderService:
         for name in ('ollama', 'aitk'):
             config = connections.get(name, {})
             summaries[name] = {k: config.get(k, '') for k in ('model', 'base_url', 'connection')}
+        shared = None
+        if hasattr(self.runtime, 'shared_aitk_status'):
+            try: shared = self.runtime.shared_aitk_status()
+            except ProviderError: shared = {'available': False, 'connection': '', 'unavailable': True}
         return {'provider': provider, 'baseUrl': 'https://api.openai.com/v1' if provider == 'openai' else saved.get('base_url', ''),
                 'model': saved.get('model', ''), 'connection': saved.get('connection', ''),
                 'keyConfigured': bool(saved.get('api_key')) if provider == 'openai' else False,
-                'configured': configured, 'connections': summaries, 'capabilities': modalities,
+                'configured': configured, 'connections': summaries, 'capabilities': modalities, 'aitkAccess': shared,
                 'readiness': report(provider, details, metadata_error),
                 'keyStorage': self.store.key_access() if hasattr(self.store, 'key_access') else None}
 

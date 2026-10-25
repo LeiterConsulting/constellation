@@ -16,3 +16,12 @@ export = none
 [constellation_connections]
 access = read : [ ], write : [ ]
 export = none
+
+[constellation_aitk]
+access = read : [ admin ], write : [ admin ]
+export = none
+
+[constellation_aitk/inference]
+owner = nobody
+access = read : [ admin ], write : [ admin ]
+export = none

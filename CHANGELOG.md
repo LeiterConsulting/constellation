@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.15.0 — Shared AITK inference
+
+- Add an opt-in, administrator-controlled inference handler so authorized dashboard authors do not need stored-credential or AITK configuration access. Keep data searches and persistence under the author’s permissions.
+- Pin connection, execution namespace and role audience; encode prompt bytes into a fixed synthetic pipeline. Bound concurrency, completion size and time, reclaim partial/expired crash receipts, preserve cooperative Stop, and attempt privileged-job cleanup on exit.
+- Separate native handler entry modules/cache identities, expose the approved connection in Settings, and document setup, revocation and privileged review requirements. Keep direct/native AITK behavior separate.
+
 ## 0.14.2 — Verified table formatting recovery
 
 - Keep explicit “do not add/remove columns” preservation clauses on the formatting-only route while retaining broader-edit checks for subsequent calculations.

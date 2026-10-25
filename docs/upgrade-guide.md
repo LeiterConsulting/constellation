@@ -1,5 +1,9 @@
 # Updating Constellation
 
+## 0.15 shared AITK inference
+
+Draft schema remains 3; no existing connection or dashboard is migrated. The new inference handler is disabled by policy until an administrator explicitly configures `constellation_aitk.conf` and authorizes selected roles. Existing ordinary users receive no new capability automatically; the administrator role can assign the new capability. Keep `passSystemAuth` disabled on main/control handlers and enabled only on the dedicated inference handler; never expose a general elevated search/REST interface. Requalify caller identity, capability and policy ACL checks, prompt encoding, cancellation, concurrency, result non-disclosure and direct password-store denial before deployment. Review this privileged boundary during AppInspect/manual security review; local precert is not Cloud approval. Package cache identities include the secondary handler and its helper code. The policy has a reload trigger, configuration specification and search-head replication inclusion; distributed cancellation, quotas and concurrent changes still require separate cluster qualification.
+
 Constellation ships as one Splunk app. Provider access, discovery, retrieval and authoring run inside its current-user REST handler. Updates must not introduce an external service or require users to migrate their dashboards to a different platform.
 
 ## Change the smallest boundary

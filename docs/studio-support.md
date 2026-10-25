@@ -1,5 +1,7 @@
 # Studio authoring and runtime support
 
+The opt-in shared AITK handler separates inference authority from ordinary authors' search and credential permissions. It requires an administrator-owned policy and an explicit inference capability; default/direct AITK behavior remains current-user. This is an app-native privileged boundary requiring security review, not a claim that AITK's native `ai` command no longer needs credential access. Qualification results are recorded separately in [validation](validation.md).
+
 Table formatting uses a verified authoring action that compiles to a final SPL `eval` against existing aggregate output fields. `formatTable` is not a native visualization option: newly introduced or changed `options.formatTable` objects are rejected with repair feedback, while unchanged imported properties are preserved. Check the visible timestamp/number result in native Studio in addition to definition readback.
 
 This is the working support contract for the 0.14.0 development slice. Broad document authoring is implemented; complete native parity is not yet qualified. The preview uses the embedded Splunk Dashboard Framework and preserves the original Studio definition for export and native save.

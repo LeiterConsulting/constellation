@@ -1,12 +1,12 @@
 # Validation status
 
-Snapshot: **0.14.2 development preview, October 25, 2026**. This file is a sanitized summary. Private lab addresses, credentials, screenshots, transcripts, raw search data and detailed runtime receipts are excluded from the repository.
+Snapshot: **0.15.0 development preview, October 25, 2026**. This file is a sanitized summary. Private lab addresses, credentials, screenshots, transcripts, raw search data and detailed runtime receipts are excluded from the repository.
 
 ## Local verification
 
 | Check | Observed result |
 | --- | --- |
-| Python unit suites | 213 tests passed on Python 3.9 and 3.13, including formatting-only preservation intent, misplaced native-action rejection, bounded repair and private AITK diagnostics. |
+| Python unit suites | 234 tests passed on Python 3.9 and 3.13, including shared-inference identity/policy/transport/encoding/admission boundaries, isolated native-entry loading, cancellation and existing authoring recovery. |
 | Frontend unit suites | 59 tests passed, including the synthetic setup search and native URL-prefix boundaries. |
 | TypeScript and production build | Passed; bundle-size warning remains. |
 | Deterministic app package | Generated with SHA-256 receipt. |
@@ -239,3 +239,30 @@ Temporary credential-read permission was removed after each run. Both disposable
 The final 0.14.2 archive has SHA-256 `355acc6e728e0dad09fe76af19a7d1d917aebd554b1fd694b01104b97f034251` (434 files; 5,352,431 bytes). All 44 Python sources match the package bytes; no macOS metadata is included. It was installed on both recorded Enterprise targets without restart. AppInspect precert returned the local result above. The complete new AITK journey ran on Enterprise 10.2.8 / Studio 1.23.12; the other provider matrices and the full newer-target journey were not repeated.
 
 **1.0 remains unqualified.** The supported, inference-only access model for ordinary AITK authors remains unresolved: a credential-reading role is not equivalent. Longer/stochastic authoring, broader native/role/version coverage, unaided-user trials, deployment/upgrade/SHC and Cloud distribution gates remain. The native-formatting defect is closed for the verified flow; do not generalize that to every table option or natural-language request.
+
+## 0.15.0 shared AITK inference — October 25, 2026
+
+The app now provides an opt-in shared-inference handler, separate from the unchanged direct/native AITK path. Only that handler receives Splunk's platform system token. An administrator-owned policy pins one named connection, execution namespace and role audience; ordinary authors need `constellation_use_aitk` and their normal data-search access. The system token remains privileged: the fixed endpoint code and administrator-only policy are the security boundary, not the namespace username. This needs manual deployment/security review and is not Cloud approval.
+
+On Enterprise 10.2.8 / Studio 1.23.12 with AITK 6.2.0 / PSC 4.3.5, the disposable non-admin author inherited the normal user role and added only the new inference capability. Effective permissions excluded `list_storage_passwords`, `edit_storage_passwords`, `admin_all_objects`, native AITK invocation, discovery and configuration edit. No temporary credential-read grant was used. The existing connection/model and 16,000-token budget were retained, with credentials remaining in AITK.
+
+The installed API process-observation journey passed two-page creation (41.5 seconds / one model call), selected distinct-host metric editing (34.6 seconds / one call), selected table formatting (21.1 seconds / one call) and local chart editing (0.32 seconds / no call). Query output and table projection, unrelated-property preservation, row/detail/return navigation, draft/conversation reopen, a separate blank draft, resuming the original, peer denial and exact private native readback passed. These are one bounded run's observations, not benchmarks. An earlier run encountered a real revision conflict because the browser and runner opened the same draft; the app rejected the stale write, and the complete rerun used separate drafts.
+
+The browser then completed the ordinary author's full freezer journey:
+
+- New blank dashboard → choose actual `esp32` data / last 24 hours → inspect fields → create Overview and Device details with four real-data visualizations, explicit purposes and device drilldowns.
+- Select the overview trend on the canvas and refine its type/title through chat. Select the summary and request temperature/count/RSSI rounding and readable last-seen time, retaining the no-new-columns constraint.
+- Verify only the selected table's source changed during formatting, while every other native property remained identical. Native SPL contains actual final date formatting, without an inert visualization option.
+- Follow a device row to both filtered detail charts, return to Overview, and float/redock the conversation.
+- Save through the frontend's **Save to Splunk** dialog into Search & Reporting. As the owning non-admin user, verify the ordinary Studio view, readable date/count fields, row drilldown/return and normal native Edit/View with Save disabled before any edits. Readback exactly matched the draft; a peer was denied.
+- Create a separate blank test draft; rename, duplicate, move the duplicate to recoverable Trash and restore it. Reopen the freezer draft, refresh, sign out/in again and resume its conversation. Use the focus list for another conversational chart edit, then Undo to restore the original definition. Editing clears the old native association rather than claiming a new copy was saved; the existing native view remained intact and still matched the restored definition.
+
+Separate seven-row synthetic transformation checks, executed as the ordinary author without ingestion or result rows sent to inference, passed for all four generated sources. Increasing values already above 150°F did not change any temperature result. Wi-Fi values on those excluded-temperature rows still affected Wi-Fi results. Default and selected-device detail results were nonempty and changed appropriately. This verifies the specific generated SPL transformations, not general derived-field/SPL2 semantics or analytical completeness of bounded previews.
+
+Access tests rejected a peer, an unapproved connection, caller-supplied SPL, forged run handles, credential reads, role edits and policy read/write attempts. The capability without the configured role was insufficient. Removing the capability or disabling the policy blocked new inference; both were restored afterward. The ordinary author could not directly read the privileged native inference job. Stop acknowledged in 0.035 seconds, returned `author_cancelled` after 0.275 seconds and deleted that observed job. An earlier cancellation probe used a display name instead of a SID and exited before sending Stop; it was corrected and is not counted as app cancellation evidence. Admission/encoding/error-isolation boundaries also have offline synthetic regressions; cluster quotas and load behavior were not qualified.
+
+The final archive has SHA-256 `c5a50775fe71b71296b92ac8935fc2f81591993e392fced9de17230395799edf` (439 files; 5,357,248 bytes). All 46 Python sources match its bytes, and macOS metadata is excluded. It was installed on both recorded Enterprise targets without restart. After the final error-guidance/packaging changes and crash-receipt recovery fix, ordinary-author model tests and credential denial were repeated against the final package. The wrong-connection guidance was also verified. The complete journey was not repeated again for those final-only changes. Offline tests verify reclamation of partial, malformed and expired admission receipts. Local AppInspect precert returned zero errors/failures/future failures and seven warnings. Python 3.9/3.13 suites, frontend tests and production build passed; the existing bundle-size warning remains.
+
+Cleanup removed three disposable accounts (including the final package-check author), ten owner-private configuration stanzas and two private native views, with deletion readback. The generated password file was deleted; the original administrator browser session, connection preferences and active-draft preference were restored/verified. The managed policy and dedicated inference-only author role remain available for explicit administrator assignment, with no users left assigned to that role. The policy remains writable only by administrators. The other target retains its default-disabled shared policy; its complete AITK journey was not qualified.
+
+The stored-credential blocker is closed for the tested **Constellation-managed** author path. Native/direct AITK remains credential-dependent. **1.0 is still unqualified:** broader model/role/version/stochastic journeys, independent privileged-boundary review, unaided-user trials, realistic load, deployment/rollback/SHC and Cloud distribution gates remain. No provider key was copied or replaced, and no external runtime or vendor-file patch was introduced.

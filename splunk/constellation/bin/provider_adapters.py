@@ -105,9 +105,6 @@ class AITKClient:
 
     def complete(self, saved, request):
         if self.runtime is None: raise ProviderError('AITK requires an authenticated Splunk session.', 409)
-        context = self.runtime.request('/services/authentication/current-context')['entry'][0]['content']
-        if 'apply_ai_commander_command' not in context.get('capabilities', []):
-            raise ProviderError('This Splunk user needs the AITK apply_ai_commander_command capability.', 403)
         texts = [request['instructions'], 'Return only JSON matching this schema: ' + json.dumps(request['text']['format']['schema'], separators=(',', ':'))]
         for entry in conversation_entries(request):
             texts.append('Previous untrusted assistant proposal:' if entry['role'] == 'assistant' else 'User context / validation feedback:')
@@ -116,9 +113,22 @@ class AITKClient:
                 texts.append(part['text'])
         prompt = '\n\n'.join(texts)
         if len(prompt.encode()) > 250_000: raise ProviderError('This document exceeds the AITK prompt limit. Use a smaller dashboard.', 413)
+        shared = getattr(self.runtime, 'shared_aitk_complete', None)
+        if shared:
+            response = shared(saved['connection'], prompt)
+            if response is not None: return response
+        context = self.runtime.request('/services/authentication/current-context')['entry'][0]['content']
+        if 'apply_ai_commander_command' not in context.get('capabilities', []):
+            if 'constellation_use_aitk' in context.get('capabilities', []):
+                raise ProviderError('Choose the approved shared AITK connection in Settings, or ask an administrator to review its policy and your author role.', 403, 'aitk_inference_denied')
+            raise ProviderError('This Splunk user needs the AITK apply_ai_commander_command capability.', 403)
+        return self.complete_prompt(saved['connection'], prompt)
+
+    def complete_prompt(self, connection, prompt, encoded=False, delete_job=False):
         # JSON strings are also safe SPL double-quoted literals. The template is
         # constant, so braces in dashboard JSON are never interpreted by AITK.
-        query = '| makeresults | eval constellation_prompt=' + json.dumps(prompt, ensure_ascii=True) + ' | ai prompt="{constellation_prompt}" connection=' + json.dumps(saved['connection']) + ' | fields ai_result_1'
+        literal = 'urldecode(' + json.dumps(quote(prompt, safe='')) + ')' if encoded else json.dumps(prompt, ensure_ascii=True)
+        query = '| makeresults | eval constellation_prompt=' + literal + ' | ai prompt="{constellation_prompt}" connection=' + json.dumps(connection) + ' | fields ai_result_1'
         base = '/servicesNS/' + quote(self.runtime.user, safe='') + '/Splunk_ML_Toolkit/search/jobs'
         job = self.runtime.request(base, 'POST', {'search': query, 'exec_mode': 'normal', 'earliest_time': '-1m', 'latest_time': 'now', 'max_time': '90', 'max_count': '1'})
         sid = job.get('sid')
@@ -141,6 +151,8 @@ class AITKClient:
                         raise ProviderError('AITK returned no usable completion. Test the connection in AI Toolkit.', 502)
                     if rows[0]['ai_result_1'].strip() in ('', 'Empty response content received from the server.'):
                         raise ProviderError('AITK returned an empty provider completion. Check the named connection’s model and output-token limit in AI Toolkit.', 502, 'aitk_no_completion')
+                    if len(rows[0]['ai_result_1'].encode()) > 1_000_000:
+                        raise ProviderError('AITK returned an oversized completion.', 502)
                     return normalized(rows[0]['ai_result_1'])
                 time.sleep(0.5)
             raise ProviderError('AITK inference timed out. Your dashboard is unchanged.', 504)
@@ -148,3 +160,6 @@ class AITKClient:
             # Cancel an outstanding job; completed jobs retain normal Splunk TTL.
             try: self.runtime.request(path + '/control', 'POST', {'action': 'cancel'})
             except ProviderError: pass
+            if delete_job:
+                try: self.runtime.request(path, 'DELETE')
+                except ProviderError: pass

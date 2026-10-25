@@ -54,6 +54,7 @@ class ProgressTests(unittest.TestCase):
         from provider_adapters import AITKClient
         from preview_jobs import PreviewJobs
         runtime=Mock(user='fixture-user',token='fixture-session',namespace='/servicesNS/fixture-user/constellation')
+        runtime.shared_aitk_complete.return_value = None
         runtime.check_cancel.side_effect=ProviderError('Stopped',409,'author_cancelled')
         runtime.request.side_effect=[{'entry':[{'content':{'capabilities':['apply_ai_commander_command']}}]}, {'sid':'fixture-sid'}, {}]
         request={'instructions':'synthetic','input':[], 'text':{'format':{'schema':{}}}}

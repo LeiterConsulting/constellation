@@ -20,6 +20,7 @@ def author(service, runtime, body):
     control = AuthoringProgress(runtime.user, runtime.token) if body.get('runHandle') else None
     progress = control.claim(body['runHandle']) if control else lambda *args: None
     runtime.check_cancel = lambda: progress()
+    runtime.aitk_run_handle = body.get('runHandle')
     try:
         result = AgentService(service, runtime, progress=progress).assist(body)
         progress('complete')

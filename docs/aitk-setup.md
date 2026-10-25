@@ -10,7 +10,35 @@ In **AI Toolkit → Connections**, create or select an LLM connection with an ap
 
 Check the model context window and **Max Tokens**. Some models spend part of that output allowance on reasoning. The tested GPT-5 mini connection used 16,000 tokens for selected multi-page journeys; this is a tested configuration, not a universal requirement or performance guarantee. Constellation cannot verify AITK's configured limits through this route. See [model capacity](providers.md#model-capacity-and-batching).
 
-## Give authors access without connection-maintenance authority
+## Shared inference without credential-read access
+
+For ordinary Constellation authors, use the opt-in shared inference handler rather than granting `list_storage_passwords`. AITK's direct token-backed `ai` command still retrieves credentials using its search caller. Constellation's separate inference handler uses [Splunk's documented `passSystemAuth` mechanism](https://help.splunk.com/en/splunk-enterprise/administer/admin-manual/10.2/configuration-file-reference/10.2.8-configuration-file-reference/restmap.conf). This is an explicit privileged app component, not an inference-only permission added to native AITK.
+
+An administrator must review [the security boundary](../SECURITY.md) and then:
+
+1. Configure and test the named connection in AITK as its maintainer. Retain the provider key there. Restrict connection writes and credential access to authorized maintainers; ordinary authors need neither connection-discovery nor configuration-edit authority for shared inference.
+2. Create a dedicated dashboard-author role inheriting only the normal data-search permissions its users need. Add **`constellation_use_aitk`**. Do not add `list_storage_passwords`, `edit_storage_passwords`, `admin_all_objects`, `edit_ai_commander_config` or the bundled `mltk_admin` role.
+3. As administrator, create `local/constellation_aitk.conf` in the installed app using this template. Substitute the exact connection, a stable existing AITK maintainer username as execution namespace, and the selected role name. Do not put tokens or passwords here.
+
+```ini
+[inference]
+enabled = true
+connection = Approved connection
+execution_user = aitk-maintainer
+allowed_roles = dashboard-authors
+```
+
+Preserve the shipped app-owned `nobody` stanza and its administrator-only write ACL. The same values can be updated through Splunk's normal `configs/conf-constellation_aitk/inference` REST endpoint as administrator. A personal shadow stanza, author-writable policy, absent/disabled policy, missing capability or role mismatch cannot authorize inference. No author capability is granted automatically. The configured execution username selects a namespace; it does **not** reduce the system token's authority. The fixed endpoint code is the privilege boundary and needs review. No external service, account password stored by Constellation or vendor-file patch is required.
+
+4. Sign in as an intended author, open **Settings → Splunk AITK**, choose the approved connection and run **Test model**. The shared-connection message identifies this route. Then create/edit a real-data dashboard, stop a run, reopen the draft and save a native copy. Confirm direct storage/password access, policy writes, other connections and another user's private drafts remain denied.
+
+Policy and role changes block new inference requests; an already running request can finish within its bounded wait. Use Stop and normal platform controls for in-flight work.
+
+The endpoint accepts bounded prompt text only. It cannot take SPL, a provider URL, execution identity or job ID from the client. It constructs one constant synthetic search, returns only the model completion, bounds concurrency/time, checks signed cancellation and attempts to cancel/delete the privileged job on exit; native TTL applies if cleanup fails. Actual data discovery/search validation and draft/native storage retain the ordinary user's authority. Native audit/search history may still retain prompt-bearing records; deleting a job is not an assurance of zero retention.
+
+The default policy is disabled. To revoke shared inference, disable it or remove the author role/capability. Recheck active requests and policy access after changes. Limits and cancellation state are local to a search head; clustered deployments and Cloud approval remain separate qualification gates. `passSystemAuth=true` requires manual security review even when local AppInspect precert passes.
+
+## Direct/native AITK access
 
 Share the connection at **App** scope in AITK. Give read access to the roles intended to build dashboards, and reserve write access for connection maintainers. “Everyone” write access is not needed merely to use a connection; review that scope under your organization's policy.
 
@@ -47,4 +75,4 @@ If it succeeds, return to Constellation, save the named connection and run **Tes
 | Stored credential access denied | Review the native AITK secret-access error for the intended author. Keep the key in AITK and resolve the installed version's supported access configuration; changing connection sharing alone may not solve this. |
 | Empty response or capacity/quota error | Review actual model settings, reasoning/output allowance, context capacity and provider quota; repeat the native and Constellation tests after correction. |
 
-Constellation returns fixed guidance for recognized failures, using only the caller's failed AITK job. It does not return native log text, copy provider keys, widen roles or blindly retry permission failures. See [current verification limits](validation.md#0142-aitk-access-and-native-formatting--october-25-2026).
+Constellation returns fixed guidance for recognized failures, using only the caller's failed AITK job. It does not return native log text, copy provider keys, widen roles or blindly retry permission failures. See [current verification limits](validation.md#0150-shared-aitk-inference--october-25-2026).

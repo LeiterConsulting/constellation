@@ -21,6 +21,7 @@ Provider messages, retrieved guidance, uploaded documents and indexed content ar
 | Workspace and contextual chat | `src/App.tsx`, `prompts.ts`, `Preview.tsx`, `ElementFocus.tsx`, `PageManager.tsx`. |
 | Data selection and previews | `src/DataChooser.tsx`, `useSearchPreview.ts`, `previewJobs.ts`; `data_service.py`, `search_service.py`, `preview_jobs.py`, `search_scope.py`. |
 | Provider transport, limits and modality policy | `provider_service.py`, `provider_adapters.py`, `provider_messages.py`, `model_readiness.py`, `model_capabilities.py`, `connection_store.py`. |
+| Shared AITK authority | `aitk_inference.py`, `aitk_inference_handler.py`, separate REST stanza and administrator-only `constellation_aitk.conf` policy. |
 | Orchestration and validation | `agent_service.py`, `recovery_service.py`, `studio_contract.py`, `studio_features.py`, `agent_feedback.py`. |
 | Measurement exclusions and table formatting | `measurement_constraints.py`, `population_guard.py`, `table_format.py`, `table_projection.py`, `data_service.py`. |
 | Scoped creation and internal batching | `creation_prompt.py`, `search_chart_actions.py`, `creation_strategy.py`, `authoring_budget.py`. |
@@ -32,6 +33,8 @@ Provider messages, retrieved guidance, uploaded documents and indexed content ar
 Python module names in the table are relative to `splunk/constellation/bin/`.
 
 ## Persistence and authority
+
+Optional shared AITK inference is a separate privileged boundary in `aitk_inference.py` and `AitkInferenceHandler`. Only its REST stanza receives Splunk's per-request system authentication; main/control handlers retain caller tokens exclusively. The default-disabled, app-owned `constellation_aitk.conf` policy must be writable only by administrators and pins one connection, execution user and role audience. The real caller must hold `constellation_use_aitk`, `search` and a configured role. No client can supply SPL, provider URLs, execution users or job identifiers. Prompt bytes are percent-encoded into a constant one-row `urldecode`/`ai` search; indexed searches never run in that worker. Output is limited to a normalized completion; tokens, native logs and job IDs are not returned. Slots are bounded to two per user/eight per search head with expiring metadata; cancellation rechecks the caller's signed authoring handle. Job cancellation/deletion is attempted on exit; native TTL and audit/history retention remain. Actual-data validation, drafts and native saves continue under caller permissions. See [administrator setup and review boundaries](aitk-setup.md#shared-inference-without-credential-read-access).
 
 Draft schema 3 separates the native definition from conversation, page purposes and session state. The current implementation uses private per-user custom configuration, a 200-record bound shared with Trash and an 11.5 MB snapshot bound. Future schemas cannot be overwritten by an older client. Interrupted inference is retained as pending user input and is not silently replayed.
 

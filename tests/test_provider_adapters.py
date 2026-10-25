@@ -84,6 +84,26 @@ class AdapterTests(unittest.TestCase):
         with self.assertRaises(ProviderError) as error:AITKClient(Runtime()).complete({'connection':'fixture'},REQUEST)
         self.assertEqual(error.exception.status,403)
 
+    def test_shared_inference_does_not_require_native_or_credential_capabilities(self):
+        class Runtime:
+            def request(self, *args): raise AssertionError('No direct job or credential request expected')
+            def shared_aitk_complete(self, connection, prompt):
+                self.received = connection, prompt
+                return {'status': 'completed', 'output': []}
+        runtime = Runtime()
+        self.assertEqual(AITKClient(runtime).complete({'connection': 'approved'}, REQUEST)['status'], 'completed')
+        self.assertEqual(runtime.received[0], 'approved')
+        self.assertIn('Fixture context', runtime.received[1])
+
+    def test_unavailable_shared_connection_does_not_suggest_credential_or_native_grants(self):
+        class Runtime:
+            def shared_aitk_complete(self, *args): return None
+            def request(self, *args): return {'entry': [{'content': {'capabilities': ['constellation_use_aitk']}}]}
+        with self.assertRaises(ProviderError) as error: AITKClient(Runtime()).complete({'connection': 'not-approved'}, REQUEST)
+        self.assertEqual(error.exception.code, 'aitk_inference_denied')
+        self.assertIn('approved shared AITK connection', str(error.exception))
+        self.assertNotIn('apply_ai_commander_command', str(error.exception))
+
 class NativeContractTests(unittest.TestCase):
     def document(self):
         return {'visualizations':{'notes':{'type':'splunk.markdown','containerOptions':{'visibility':{'showConditions':['notes_on']}}}},

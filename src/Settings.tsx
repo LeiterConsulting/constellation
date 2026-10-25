@@ -78,8 +78,12 @@ export default function Settings({ onClose, onSaved, returnFocus }: Props) {
       </> : provider === 'ollama' ? <ControlGroup label="Ollama server" help="An origin reachable from the Splunk server, such as http://server:11434. Localhost means the Splunk host. HTTPS certificates are verified.">
         <Text value={endpoint} onChange={(_event, { value }) => { setEndpoint(value); invalidateTest(); }} disabled={busy || loading || !loaded}/>
       </ControlGroup> : <ControlGroup label="AITK connection name" help="Use an existing LLM connection from AI Toolkit → Connections. AITK keeps its credentials and configured model; your Splunk permissions apply.">
-        <Text value={connection} onChange={(_event, { value }) => { setConnection(value); invalidateTest(); }} disabled={busy || loading || !loaded}/>
+        <ComboBox value={connection} onChange={(_event, { value }) => { setConnection(value); invalidateTest(); }} disabled={busy || loading || !loaded} noOptionsMessage="Enter the exact connection name provided by your administrator.">
+          {saved?.aitkAccess?.available ? <ComboBox.Option value={saved.aitkAccess.connection}/> : null}
+        </ComboBox>
       </ControlGroup>}
+      {provider === 'aitk' && saved?.aitkAccess?.available && connection === saved.aitkAccess.connection ? <Message type="info">Shared AITK is available. You can use this connection without access to stored credentials.</Message> : null}
+      {provider === 'aitk' && saved?.aitkAccess?.unavailable ? <Message type="warning">Shared AITK availability could not be checked. Test the connection or ask your administrator to review it.</Message> : null}
       {provider !== 'aitk' ? <ControlGroup label="Model" help="Load models or enter an exact ID. Test the connection and a small structured response before building.">
         <ComboBox value={model} onChange={(_event, { value }) => { setModel(value); invalidateTest(); }} disabled={busy || loading || !loaded} noOptionsMessage="Enter a model ID, or load available models.">
           {models.map(id => <ComboBox.Option key={id} value={id}/>)}

@@ -55,7 +55,12 @@ if handler_path in files:
     handler_module = 'constellation_handler_' + handler_id
     files['constellation/bin/' + handler_module + '.py'] = handler_source
     restmap_path = 'constellation/default/restmap.conf'
-    files[restmap_path] = files[restmap_path].replace(b'constellation_handler.py', (handler_module + '.py').encode()).replace(b'constellation_handler.ConstellationHandler', (handler_module + '.ConstellationHandler').encode())
+    files[restmap_path] = files[restmap_path].replace(b'constellation_handler.py', (handler_module + '.py').encode()).replace(b'constellation_handler.', (handler_module + '.').encode())
+    inference_path = 'constellation/bin/aitk_inference_handler.py'
+    if inference_path in files:
+        inference_module = 'aitk_inference_handler_' + handler_id
+        files['constellation/bin/' + inference_module + '.py'] = files.pop(inference_path)
+        files[restmap_path] = files[restmap_path].replace(b'aitk_inference_handler.py', (inference_module + '.py').encode()).replace(b'aitk_inference_handler.', (inference_module + '.').encode())
 files['constellation/default/data/ui/views/renderer_baseline.xml'] = xml.encode()
 for package in ['dashboard-core','dashboard-presets','dashboard-context','dashboard-state','dashboard-layouts','dashboard-inputs','datasources','react-ui','themes','react-icons','splunk-utils']:
     license_file = ROOT / 'node_modules' / '@splunk' / package / 'LICENSE'

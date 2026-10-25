@@ -102,6 +102,34 @@ class SearchService:
         self.user, self.token = user, token
         self.namespace = '/servicesNS/' + quote(user, safe='') + '/constellation'
 
+    def shared_aitk_status(self):
+        # Missing capability/endpoint preserves the existing current-user route.
+        result = self.request('/servicesNS/nobody/constellation/constellation/aitk/status', optional=True)
+        return result if result.get('available') else {'available': False, 'connection': ''}
+
+    def shared_aitk_complete(self, connection, prompt):
+        status = self.shared_aitk_status()
+        if not status.get('available') or status.get('connection') != connection: return None
+        fields = {'action': 'complete', 'connection': connection, 'prompt': prompt}
+        if getattr(self, 'aitk_run_handle', None): fields['runHandle'] = self.aitk_run_handle
+        # Longer than the bounded AITK worker wait; never expose the system token here.
+        import splunk.rest
+        try:
+            response, raw = splunk.rest.simpleRequest('/servicesNS/nobody/constellation/constellation/aitk/infer',
+                sessionKey=self.token, method='POST', getargs={'output_mode': 'json'}, postargs=fields,
+                timeout=105, raiseAllErrors=False)
+            result = json.loads(raw)
+        except Exception:
+            raise ProviderError('Shared AITK inference could not be completed.', 502, 'aitk_inference_unavailable') from None
+        if str(response.get('status', '200')) in ('401', '403'):
+            raise ProviderError('Shared AITK access was denied. Ask an administrator to review your author role and connection policy.', 403, 'aitk_inference_denied')
+        if 'error' in result:
+            # Only fixed, app-owned errors leave the dedicated handler.
+            raise ProviderError(result['error'], int(result.get('status', 502)), result.get('code', 'aitk_inference_failed'))
+        if result.get('status') != 'completed' or not isinstance(result.get('output'), list):
+            raise ProviderError('Shared AITK returned no usable completion.', 502, 'aitk_no_completion')
+        return result
+
     def request(self, path, method='GET', fields=None, optional=False):
         import splunk.rest
         try:

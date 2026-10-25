@@ -16,6 +16,7 @@ rest.RESTException = RESTException
 splunk.rest = rest
 with patch.dict(sys.modules, {'splunk':splunk,'splunk.rest':rest,'splunk.persistconn':types.ModuleType('splunk.persistconn'),'splunk.persistconn.application':application}):
     import constellation_handler as handler
+    import aitk_inference_handler as inference_handler
 
 
 class HandlerBoundaryTests(unittest.TestCase):
@@ -24,7 +25,7 @@ class HandlerBoundaryTests(unittest.TestCase):
     def request(self, **changes):
         value={'method':'GET','path_info':'settings','session':{'user':'fixture-user','authtoken':'fixture-session'}}
         value.update(changes)
-        with patch('connection_store.ConnectionPreferences.read', return_value=None), patch.object(handler.CredentialStore, 'key_access', return_value={'canWrite': True}):
+        with patch('connection_store.ConnectionPreferences.read', return_value=None), patch.object(handler.CredentialStore, 'key_access', return_value={'canWrite': True}), patch.object(handler.SearchService, 'shared_aitk_status', return_value={'available': False, 'connection': ''}):
             return self.handler.handle(json.dumps(value))
     def test_authentication_is_required(self):
         self.assertEqual(self.request(session={})['status'],401)
@@ -36,6 +37,15 @@ class HandlerBoundaryTests(unittest.TestCase):
         self.assertEqual(result['status'],200)
         self.assertFalse(result['payload']['keyConfigured'])
         self.assertEqual(result['headers']['Cache-Control'],'no-store')
+
+    def test_optional_shared_metadata_failure_does_not_break_other_settings(self):
+        from test_provider_service import Store
+        from provider_service import ProviderService, ProviderError
+        runtime = handler.SearchService('fixture-user', 'fixture-session')
+        with patch.object(runtime, 'shared_aitk_status', side_effect=ProviderError('fixture-native-error', 503)):
+            result = ProviderService(Store(), runtime=runtime).settings()
+        self.assertEqual(result['aitkAccess'], {'available': False, 'connection': '', 'unavailable': True})
+        self.assertNotIn('fixture-native-error', json.dumps(result))
     def test_internal_exceptions_are_never_echoed(self):
         with patch.object(handler.CredentialStore,'read',side_effect=ValueError('fixture-secret-value')):
             result=self.request()
@@ -54,6 +64,70 @@ class HandlerBoundaryTests(unittest.TestCase):
         store=handler.CredentialStore('fixture-user','fixture-session')
         with patch.object(handler.splunk.rest,'simpleRequest',side_effect=RESTException(404),create=True):
             self.assertIsNone(store.read())
+
+
+class SharedInferenceHandlerTests(unittest.TestCase):
+    def setUp(self): self.handler = inference_handler.AitkInferenceHandler('driver', 'args')
+
+    def request(self, **changes):
+        value = {'method': 'GET', 'path_info': 'status', 'system_authtoken': 'fixture-system',
+                 'session': {'user': 'fixture-user', 'authtoken': 'fixture-caller'}}
+        value.update(changes)
+        return self.handler.handle(json.dumps(value))
+
+    def test_platform_session_and_system_auth_are_required(self):
+        self.assertEqual(self.request(session={})['status'], 401)
+        self.assertEqual(self.request(system_authtoken='')['status'], 503)
+
+    def test_worker_and_caller_tokens_are_separated_and_never_returned(self):
+        def check(caller, privileged, body):
+            self.assertEqual(caller.token, 'fixture-caller')
+            self.assertEqual(privileged.token, 'fixture-system')
+            self.assertEqual(body, {'action': 'status'})
+            return {'available': False, 'connection': ''}
+        with patch('aitk_inference.execute', side_effect=check): result = self.request()
+        self.assertEqual(result['status'], 200)
+        self.assertNotIn('fixture-system', json.dumps(result))
+        self.assertNotIn('fixture-caller', json.dumps(result))
+        self.assertEqual(result['headers']['Cache-Control'], 'no-store')
+
+    def test_unknown_routes_and_native_exceptions_do_not_disclose_details(self):
+        self.assertEqual(self.request(method='POST', path_info='search')['status'], 404)
+        with patch('aitk_inference.execute', side_effect=RuntimeError('fixture-secret')):
+            result = self.request()
+        self.assertEqual(result['status'], 500)
+        self.assertNotIn('fixture-secret', json.dumps(result))
+
+    def test_each_entry_module_has_one_persistent_class_for_native_loader(self):
+        import ast
+        for module in (handler, inference_handler):
+            tree = ast.parse(Path(module.__file__).read_text())
+            classes = [node for node in tree.body if isinstance(node, ast.ClassDef)
+                       and any(isinstance(base, ast.Name) and base.id == 'PersistentServerConnectionApplication' for base in node.bases)]
+            self.assertEqual(len(classes), 1)
+
+    def test_inference_entry_bootstraps_app_modules_in_isolated_python(self):
+        import subprocess
+        program = '''import importlib.util,sys,types
+splunk=types.ModuleType('splunk'); app=types.ModuleType('splunk.persistconn.application')
+app.PersistentServerConnectionApplication=object
+sys.modules.update({'splunk':splunk,'splunk.persistconn':types.ModuleType('splunk.persistconn'),'splunk.persistconn.application':app})
+spec=importlib.util.spec_from_file_location('fixture_entry',sys.argv[1]); module=importlib.util.module_from_spec(spec)
+spec.loader.exec_module(module)
+assert hasattr(module,'AitkInferenceHandler')
+'''
+        result = subprocess.run([sys.executable, '-I', '-c', program, inference_handler.__file__], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_shared_transport_uses_caller_token_and_sanitizes_native_denial(self):
+        runtime = handler.SearchService('fixture-user', 'fixture-caller')
+        with patch.dict(sys.modules, {'splunk': splunk, 'splunk.rest': rest}), \
+             patch.object(runtime, 'shared_aitk_status', return_value={'available': True, 'connection': 'approved'}), \
+             patch.object(rest, 'simpleRequest', return_value=({'status': '403'}, '{"messages":[{"text":"fixture-private-error"}]}'), create=True) as call:
+            with self.assertRaises(handler.ProviderError) as error: runtime.shared_aitk_complete('approved', 'Fixture')
+        self.assertEqual(call.call_args.kwargs['sessionKey'], 'fixture-caller')
+        self.assertNotIn('fixture-private-error', str(error.exception))
+        self.assertEqual(error.exception.status, 403)
 
 
 class CredentialIsolationTests(unittest.TestCase):
