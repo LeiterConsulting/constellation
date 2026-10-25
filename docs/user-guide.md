@@ -22,6 +22,8 @@ Ollama reports model context metadata when available; the app requests up to 32,
 
 Test an AITK connection as the Splunk user who will build dashboards; administrator success does not prove ordinary-user access. The tested GPT-5 mini AITK connection used 16,000 tokens for multi-page creation; its earlier 2,000-token setting could return no completion. This is a tested configuration, not a universal model recommendation. A larger budget does not guarantee fast or correct authoring. Review the [provider qualification results](provider-qualification.md) when choosing a connection.
 
+For shared AITK setup, expand **AITK setup guide** in Settings. It links to native Connections and Search, separates author and maintainer permissions, and explains a stored-credential denial separately from connection visibility. Give your administrator the [AITK setup instructions](aitk-setup.md) if you cannot complete the intended-user test.
+
 Smaller two-page goals through AITK can attempt one compact complete proposal. Larger/ambiguous AITK goals and Ollama models with unknown or smaller context windows use an internal foundation and completion stage. Verified Ollama windows of 32,768 tokens or more attempt the full typed proposal first, reserving both repairs. The stages share the existing recovery budget, reuse verified searches and apply together only after validation. The agent receives reported limits and retains the durable brief while trimming older rolling history when the conservative Ollama input estimate requires it. These safeguards reduce avoidable failures; they do not guarantee that every model can author every dashboard.
 
 ## Sketches and PDFs

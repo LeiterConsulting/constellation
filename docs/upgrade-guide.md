@@ -94,3 +94,7 @@ AITK job diagnostics must remain restricted to the authenticated user's owned jo
 
 
 Offer `formatTable` only for an explicit formatting-only turn, and enforce that action availability for schema-ignoring adapters too. Broader calculation requests use native/search edits and must visibly project requested fields. Invalid optional suggestion cards are discarded, not displayed, executed or repaired through another model call. Core document, intent, feature, scope, output-field and native-search validation remains mandatory for the candidate.
+
+## 0.14.1 AITK setup guidance
+
+No draft, connection or native-dashboard migration is needed. The guide is informational; upgrading does not alter AITK connection sharing, provider credentials, roles or capabilities. A new fixed `aitk_secret_access_denied` response identifies recognized native credential authorization failures. Recheck native and Constellation tests as the intended author after an administrator changes AITK access; the upgrade does not resolve that native permission boundary.

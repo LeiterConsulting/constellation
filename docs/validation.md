@@ -1,13 +1,13 @@
 # Validation status
 
-Snapshot: **0.14.0 development preview, October 25, 2026**. This file is a sanitized summary. Private lab addresses, credentials, screenshots, transcripts, raw search data and detailed runtime receipts are excluded from the repository.
+Snapshot: **0.14.1 development preview, October 25, 2026**. This file is a sanitized summary. Private lab addresses, credentials, screenshots, transcripts, raw search data and detailed runtime receipts are excluded from the repository.
 
 ## Local verification
 
 | Check | Observed result |
 | --- | --- |
-| Python unit suites | 209 tests passed on Python 3.9 and 3.13, including creation budgets, quoted-pipeline exclusions, independent populations, table projection/action availability and private AITK diagnostics. |
-| Frontend unit suites | 57 tests passed. |
+| Python unit suites | 211 tests passed on Python 3.9 and 3.13, including private AITK diagnostics, credential-denial classification and non-disclosure boundaries. |
+| Frontend unit suites | 59 tests passed, including the synthetic setup search and native URL-prefix boundaries. |
 | TypeScript and production build | Passed; bundle-size warning remains. |
 | Deterministic app package | Generated with SHA-256 receipt. |
 | Splunk AppInspect 4.3.1, precert | 0 errors, 0 failures, 0 future failures, 7 warnings, 1 skipped, 107 successes, 137 not applicable on the tested app archive. |
@@ -194,3 +194,20 @@ Four final generated definitions passed separate **authored synthetic transforma
 The temporary user had invocation permission and was additionally tested with configuration-list permission; AI configuration edit, credential read/edit and administrator authority remained denied. Native AITK still reported that the existing private connection was unavailable. The installed app now returns a fixed actionable `aitk_connection_unavailable` error using only that caller's failed job. It does not expose native logs, retry blindly, copy credentials or grant roles. Both temporary AITK capabilities were removed before the final plain-user Ollama checks. A usable ordinary-user AITK connection remains required for that full-flow gate; administrator-only successes above do not close it. Both disposable accounts and the temporary AI role were removed after testing; private review copies were retained under the original account, and its provider and prior-opened preference were restored.
 
 The final 0.14.0 archive has SHA-256 `4341319976810d42c7bd4e57d847804e6a79e85a5fc58d7a60ca5bc7410e5d83`. It was installed on both recorded Enterprise targets without restart and passed the local precert result above. The complete operational-data/role journey ran on the older target. This remains a development preview: longer AITK edits, stochastic failures, partial/resource-limited previews, ordinary-user AITK setup, unaided user trials, broader native/role/version coverage and SHC/Cloud qualification still block a general 1.0 claim.
+
+
+## 0.14.1 AITK setup and shared-connection retest — October 25, 2026
+
+Settings now includes a collapsed AITK setup guide with native Connections/Search links, compatible PSC/restart checks, model/output-budget guidance, separate author/maintainer permissions and a constant synthetic test using the entered connection name. Invalid names fall back to a placeholder in the displayed example. No guide action grants roles, reads keys or executes the example automatically. The administrator instructions are included in the private handoff bundle.
+
+After App sharing made the existing AITK 6.1 connection visible, a fresh disposable non-admin author with invocation permission still failed at native secret retrieval. Adding configuration-list permission did not resolve it. Both the native synthetic search and installed Constellation test reproduced the denial. The new handler recognizes this failure as HTTP 403 / `aitk_secret_access_denied`, with fixed guidance and no native log content.
+
+A bounded temporary `list_storage_passwords` grant made the installed small structured-response test pass; it was immediately removed and exact prior role capabilities were verified. Credential edit, AI configuration edit and administrator authority were not granted. This demonstrates a native credential-read dependency on that route; it does not establish an inference-only author role or full ordinary-user dashboard acceptance. The native 6.1 package review agreed with the observed caller-authorized credential read. No vendor source or secret values are included here.
+
+With explicit administrative authorization, the connection's write ACL was narrowed from everyone to `admin` and `mltk_admin`. Its read scope was retained. Exact readback confirmed that only the write-role list changed; model, credential reference, 16,000-token allowance and unrelated properties were preserved. No API-key replacement was needed.
+
+The final package was installed on Enterprise 10.4.4 / Studio 1.26.6 without a restart. Browser checks covered collapsed-by-default help, keyboard expansion, scrolling, native links, unsaved provider-choice dismissal and return focus to Settings. A dark-theme check exposed inherited native code styles with poor contrast; explicit Splunk theme colors fixed inline capabilities and the sample search, and the final installed view was inspected again. This is representative desktop verification, not a complete accessibility or responsive-device audit.
+
+During the exercise the other target was upgraded by its administrator to AITK 6.2.0 and PSC 4.3.5. Both installed versions were read back before one authorized Splunk restart. Web/management services did not return during the bounded readiness wait; the host remained reachable but existing SSH key access was unavailable. Post-restart AITK 6.2 inference, final-package installation on that target, removal of the disposable accounts/role and final preference readback remain pending native service recovery. The credential-read grant had already been removed before the restart. Do not treat package version metadata or inspection of the 6.2 source paths as live qualification of its running workers.
+
+The final 0.14.1 archive has SHA-256 `c9a95b564e2c2d1af73e74afa37e45384e77aadc9a7c52bb26f7ddb78251e326` (434 files; 5,352,110 bytes). The Python payload matches the source bytes and the archive excludes macOS metadata. Local checks are summarized above; AppInspect remains precert, not Cloud certification. The previous multi-provider dashboard matrices were not repeated for this Settings/diagnostic change. The ordinary-user AITK access model and the remaining 1.0 gates remain open.

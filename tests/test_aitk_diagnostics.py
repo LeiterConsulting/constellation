@@ -29,6 +29,21 @@ class DiagnosticsTests(unittest.TestCase):
             self.assertEqual(failure_guidance(r, path)[1], 502)
         self.assertEqual(r.calls, [])
 
+    def test_native_credential_denial_has_fixed_guidance_without_native_content(self):
+        for suffix in ["response: {'status': 403, 'message': 'AuthorizationFailed'}", 'Forbidden', 'access denied']:
+            r = self.runtime('ERROR Failed to fetch secret. ' + suffix + ' fixture-sensitive-value')
+            message, status, code = failure_guidance(r, '/servicesNS/fixture-author/Splunk_ML_Toolkit/search/jobs/job')
+            self.assertEqual((status, code), (403, 'aitk_secret_access_denied'))
+            self.assertIn('AITK setup guide in Settings', message)
+            self.assertNotIn('fixture-sensitive-value', message)
+            self.assertNotIn('AuthorizationFailed', message)
+
+    def test_secret_transport_errors_and_unrelated_denials_stay_generic(self):
+        for text in ['Failed to fetch secret. status: 500', '403 unrelated\nFailed to fetch secret. timeout',
+                     'Failed to fetch secret. timeout\n403 unrelated', 'AuthorizationFailed unrelated']:
+            r = self.runtime(text)
+            self.assertEqual(failure_guidance(r, '/servicesNS/fixture-author/Splunk_ML_Toolkit/search/jobs/job')[2], 'aitk_inference_failed')
+
     def test_unknown_error_remains_generic_and_log_failure_does_not_replace_error(self):
         r = self.runtime('private prompt fixture-only')
         self.assertNotIn('fixture-only', failure_guidance(r, '/servicesNS/fixture-author/Splunk_ML_Toolkit/search/jobs/job')[0])

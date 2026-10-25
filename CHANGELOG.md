@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.14.1 — AITK setup guidance preview
+
+- Add a collapsed AITK setup guide in Settings with native connection/search links, author-versus-maintainer permissions, capacity checks and a synthetic intended-user test.
+- Distinguish native stored-credential access denial from an unavailable connection, using fixed guidance without exposing logs or changing permissions.
+- Include administrator setup instructions in the private handoff documentation. The ordinary-user AITK credential-access gate remains open; this is not 1.0 qualification.
+
 ## 0.13.0 — Measurement and table recovery preview
 
 - Compile explicit Fahrenheit temperature exclusions at the measurement boundary for changed scoped SPL, protecting ordinary aggregates including latest while preserving independent Wi-Fi events.

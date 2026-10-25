@@ -19,6 +19,8 @@ def failure_guidance(runtime, job_path):
     text = text[:1_000_000].lower()
     if 'no configuration found for llm connection' in text:
         return ('This AITK connection is unavailable to your Splunk user. Ask its owner to provide a connection you can use, then test it again. Your dashboard is unchanged.', 403, 'aitk_connection_unavailable')
+    if re.search(r'failed to fetch secret[^\n]{0,300}(?:\b403\b|authorizationfailed|forbidden|access denied)', text):
+        return ('AITK was denied access to its stored credential for this request. Ask an AITK administrator to review access for your Splunk user. Open the AITK setup guide in Settings for the test steps.', 403, 'aitk_secret_access_denied')
     if 'insufficient quota' in text or 'insufficient_quota' in text:
         return ('The AITK provider has insufficient quota. Ask the connection owner to check its provider account.', 429, 'aitk_provider_quota')
     if 'context_length_exceeded' in text or 'maximum context length' in text:

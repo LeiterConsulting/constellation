@@ -34,7 +34,7 @@ Open **Settings**, choose a provider, save its connection and run **Test model**
 
 - **OpenAI:** enter the key in the app, load or enter a model ID, save and test. The endpoint is fixed to the official OpenAI API.
 - **Ollama:** enter an origin reachable from the Splunk server, choose an installed model and test. `localhost` refers to the Splunk host, not the browser's computer.
-- **AITK:** configure and test an LLM connection in Splunk AI Toolkit first, then enter its name in Constellation. The current user's capability and connection access apply.
+- **AITK:** expand **AITK setup guide** in Settings or follow the [administrator instructions](aitk-setup.md). Configure and test a shared connection as the intended author before entering its name here. Native command, connection and stored-credential permissions apply.
 
 See [providers](providers.md) for route-specific requirements. No provider key or local environment file is needed to run the offline unit suites. There is no supported `.env` credential setup for the installed app.
 

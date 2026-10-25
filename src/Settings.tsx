@@ -8,6 +8,7 @@ import Modal from '@splunk/react-ui/Modal';
 import Message from '@splunk/react-ui/Message';
 import { providerRequest, secureSettingsOrigin, type ProviderSettings, type ProviderName, type ModelReadinessReport } from './api';
 import ModelReadiness from './ModelReadiness';
+import AitkSetupGuide from './AitkSetupGuide';
 import { Actions, Muted } from './styles';
 
 interface Props { onClose: () => void; onSaved: (settings: ProviderSettings) => void; returnFocus: React.RefObject<HTMLElement | null>; }
@@ -97,6 +98,7 @@ export default function Settings({ onClose, onSaved, returnFocus }: Props) {
       <Muted>Testing sends a small request and may incur provider charges. Chat sends dashboard configuration, recent conversation, index metadata, and supported attachments you send. Search result rows stay in Splunk and your browser.</Muted>
       {provider === 'aitk' ? <Muted>Text only on this route. Prompts use synthetic AITK search jobs and follow Splunk’s search retention.</Muted> : provider === 'ollama' ? <Muted>Images require advertised vision capability. PDFs are blocked on this route.</Muted> : null}
       <Message type={error ? 'error' : 'info'}><span role="status">{loading ? 'Loading connection…' : busy ? 'Working…' : status}</span></Message>
+      {provider === 'aitk' ? <AitkSetupGuide connection={connection}/> : null}
       {readiness && !busy ? <ModelReadiness report={readiness}/> : null}
     </Modal.Body>
     <Modal.Footer><Button onClick={() => { setApiKey(''); onClose(); }} disabled={busy}>Close</Button></Modal.Footer>
