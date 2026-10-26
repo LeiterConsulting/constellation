@@ -191,6 +191,9 @@ class AgentPresentationTests(unittest.TestCase):
         self.assertEqual(presentation_message('Moved the chart and added buttons, using typed layout actions as required.','Move this chart',True),'Moved the chart and added buttons.')
         self.assertEqual(presentation_message(raw,'Explain the query validation errors',True),raw)
         self.assertEqual(presentation_message(raw,'Build this dashboard',False),raw)
+        internal='Updated object IDs. Overview compares totals. Details shows the selected queue. Binding references are now correct.'
+        self.assertEqual(presentation_message(internal,'Build two pages',True),'Overview compares totals. Details shows the selected queue.')
+        self.assertEqual(presentation_message(internal,'Explain the object IDs and references',True),internal)
 
 class ScopeIntentTests(unittest.TestCase):
     def test_supported_explicit_creation_windows_and_ambiguous_comparisons(self):

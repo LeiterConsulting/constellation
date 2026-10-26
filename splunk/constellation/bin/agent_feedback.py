@@ -15,13 +15,13 @@ def validate_data_claims(result, profile):
 
 def presentation_message(message, prompt, repaired):
     """Keep retry mechanics in Activity unless the user asked for technical detail."""
-    if not repaired or re.search(r'\b(?:explain|debug|show|why)\b[^.!?]{0,120}\b(?:SPL2?|queries|query|JSON|schema|validation)\b', prompt, re.I):
+    if not repaired or re.search(r'\b(?:explain|debug|show|why)\b[^.!?]{0,120}\b(?:SPL2?|queries|query|JSON|schema|validation|IDs?|bindings?|references?)\b', prompt, re.I):
         return message
     sentences = re.split(r'(?<=[.!?])\s+', message)
     readable = []
     for sentence in sentences:
         sentence = re.sub(r',?\s+using typed (?:absolute[- ]?)?layout actions(?: as required)?(?=[.!?]|$)', '', sentence, flags=re.I)
-        if re.search(r'\b(?:supplied|provided)\b[^.!?]{0,100}\bbase\s*query\b|\bJSON Pointer\b|\b(?:validation|schema) (?:errors?|repairs?)\b', sentence, re.I):
+        if re.search(r'\b(?:supplied|provided)\b[^.!?]{0,100}\bbase\s*query\b|\bJSON Pointer\b|\b(?:validation|schema) (?:errors?|repairs?)\b|\b(?:page|panel|source|layout|visualization|object)\s+IDs?\b|\brow[- ]?link declarations?\b|\b(?:panel|binding) references?\b', sentence, re.I):
             continue
         readable.append(sentence)
     return ' '.join(readable).strip() or 'Updated your dashboard.'

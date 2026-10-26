@@ -1,0 +1,160 @@
+"""Compact proposals keep native compilation, search guards and atomic recovery."""
+import copy
+import json
+import unittest
+from test_drafts_and_data import blank
+from test_reliability_journey import Provider, Runtime, reply
+from test_search_chart_actions import PROFILE
+from compact_creation import expand_compose, COMPOSE_ACTION, compact_goal, without_redundant_input_casts
+from authoring_actions import compile_actions, validate_chart_placement
+from authoring_budget import AuthoringBudget
+from agent_service import AgentService, SCHEMA
+from studio_contract import apply_changes
+from provider_service import ProviderError
+from page_service import proposed_purposes
+from token_service import resolve_query_tokens
+
+
+def panel(identifier='volume', kind='splunk.line', pipeline='| timechart bins=100 count AS count', x='_time', y=None):
+    return {'id': identifier, 'type': kind, 'title': 'Recorded observations', 'pipeline': pipeline, 'x': x, 'y': ['count'] if y is None else y}
+
+
+def compose():
+    return {'op': 'compose', 'title': 'Observed activity', 'description': 'Real selected data.',
+            'pages': [{'id': 'main', 'label': 'Overview', 'purpose': 'Summarize observations', 'columns': 1,
+                       'panels': [panel(), panel('devices', 'splunk.table', '| stats count BY device_name', '', ['device_name', 'count'])]},
+                      {'id': 'details', 'label': 'Device details', 'purpose': 'Investigate one device', 'columns': 2,
+                       'panels': [panel('detail'), panel('detail_count', 'splunk.singlevalue', '| stats count', '')]}],
+            'links': [{'from': 'devices', 'to': 'details', 'field': 'device_name'}]}
+
+
+class CompactCreationTests(unittest.TestCase):
+    def test_selective_navigation_and_explicit_button_constraints_keep_native_actions(self):
+        for suffix in ('Do not add a return button.','No back buttons.','Add a return button labelled "Home".','Use a named token.','Filter only one destination chart.','Put the summary table to the left of the trend.','Make the trend span both columns.'):
+            self.assertFalse(compact_goal({'request':'Build two pages. '+suffix}))
+        self.assertTrue(compact_goal({'request':'Build two pages with row navigation and a return button.'}))
+
+    def test_links_accept_only_unambiguous_declared_references(self):
+        original=blank()['definition'];profile=dict(PROFILE,fields=[{'name':'device_name'}]);action=compose()
+        action['links'][0].update(**{'from':'ds_devices','to':'layout_details'})
+        self.assertTrue(any(a['op']=='button' for a in expand_compose([action],original,profile)))
+        action['links'][0].update(to='Device details')
+        self.assertTrue(any(a['op']=='filter' for a in expand_compose([action],original,profile)))
+        action['links'][0].update(**{'from':'Recorded observations'})
+        with self.assertRaises(ProviderError):expand_compose([action],original,profile)
+
+    def test_link_containment_uses_only_a_unique_declared_table_and_parent_page(self):
+        original=blank()['definition'];profile=dict(PROFILE,fields=[{'name':'device_name'}]);action=compose()
+        action['links'][0].update(**{'from':'Overview','to':'ds_detail'})
+        result=apply_changes(original,compile_actions(original,[action],profile))
+        self.assertTrue(any(h['type']=='drilldown.switchToTab' and h['options']['tabId']=='layout_details' for h in result['visualizations']['devices']['eventHandlers']))
+        action['pages'][0]['panels'].append(panel('another','splunk.table','| stats count BY device_name','',['device_name','count']))
+        with self.assertRaises(ProviderError):expand_compose([action],original,profile)
+        action=compose();action['links'][0].update(to='missing_panel')
+        with self.assertRaises(ProviderError):expand_compose([action],original,profile)
+        action=compose();action['pages'][1]['label']='Recorded observations';action['links'][0].update(**{'from':'Recorded observations'})
+        with self.assertRaises(ProviderError):expand_compose([action],original,profile)
+
+    def test_numeric_identity_cast_repair_keeps_the_cutoff_guard_and_other_expressions(self):
+        profile=dict(PROFILE,fields=[{'name':'temperature_f','numeric':True},{'name':'wifi_rssi','numeric':True}],measurementConstraints=[{'field':'temperature_f','maximum':150,'unit':'F'}])
+        suffix='| eval temperature_f=tonumber(temperature_f), wifi_rssi=tonumber(wifi_rssi) | stats avg(temperature_f) AS temperature'
+        self.assertEqual(without_redundant_input_casts(suffix,profile),'| stats avg(temperature_f) AS temperature')
+        for expression in ('temperature_f=tonumber(temperature_f,16)','temperature_f=coalesce(tonumber(temperature_f),0)','temperature_f=tonumber(other)','temperature_f=tonumber(TEMPERATURE_F)','temperature_f=tonumber(temperature_f)+1','temperature_f=tonumber(temperature_f),wifi_rssi=unknown'):
+            query='| eval '+expression+' | stats avg(temperature_f) AS temperature'
+            self.assertEqual(without_redundant_input_casts(query,profile),query)
+        after='| stats avg(temperature_f) AS temperature_f | eval temperature_f=tonumber(temperature_f)'
+        self.assertEqual(without_redundant_input_casts(after,profile),after)
+        action=compose();action['links']=[];action['pages']=[dict(action['pages'][0],panels=[panel('temp','splunk.singlevalue',suffix,'',['temperature'])])]
+        result=apply_changes(blank()['definition'],compile_actions(blank()['definition'],[action],profile))
+        self.assertIn('temperature_f=if(temperature_f<=150,temperature_f,null())',result['dataSources']['ds_temp']['options']['query'])
+        action['pages'][0]['panels'][0]['pipeline']='| eval temperature_f=coalesce(temperature_f,0) | stats avg(temperature_f) AS temperature'
+        with self.assertRaises(ProviderError):compile_actions(blank()['definition'],[action],profile)
+
+    def test_expands_to_native_pages_filtered_sources_and_readable_buttons(self):
+        original = blank()['definition']; original['future'] = {'keep': True}; before = copy.deepcopy(original)
+        profile = dict(PROFILE, fields=[{'name': 'device_name'}])
+        actions = expand_compose([compose()], original, profile)
+        self.assertLess(len(json.dumps(compose())), len(json.dumps(actions)))
+        result = apply_changes(original, compile_actions(original, [compose()], profile))
+        self.assertEqual(result['future'], before['future']); self.assertEqual(original, before)
+        self.assertEqual([t['label'] for t in result['layout']['tabs']['items']], ['Overview', 'Device details'])
+        self.assertEqual(len(result['visualizations']), 4)
+        self.assertEqual(proposed_purposes(actions, {}, result)['layout_details'], 'Investigate one device')
+        for source in ('ds_detail', 'ds_detail_count'):
+            query = result['dataSources'][source]['options']['query']
+            self.assertIn('| search device_name=$select_details|s$', query)
+            self.assertIn('device_name="*"', resolve_query_tokens(query, result))
+            self.assertEqual(result['dataSources'][source]['options']['queryParameters'], {'earliest': '-24h', 'latest': 'now'})
+        self.assertTrue(any(h['type'] == 'drilldown.switchToTab' and h['options']['tabId'] == 'layout_main' for h in result['inputs']['back_0']['eventHandlers']))
+        validate_chart_placement(result, original)
+
+    def test_never_replaces_existing_user_content_or_non_spl(self):
+        original = blank()['definition']
+        for key in ('visualizations', 'dataSources', 'inputs'):
+            doc = copy.deepcopy(original); doc[key] = {'user_owned': {'future': True}}; before = copy.deepcopy(doc)
+            with self.assertRaises(ProviderError): compile_actions(doc, [compose()], PROFILE)
+            self.assertEqual(doc, before)
+        with self.assertRaises(ProviderError): expand_compose([compose()], original, dict(PROFILE, scope=dict(PROFILE['scope'], language='spl2')))
+        with self.assertRaises(ProviderError): expand_compose([compose(), {'op': 'remove', 'path': '/title', 'value': ''}], original, PROFILE)
+
+    def test_rejects_duplicates_wrong_destinations_and_unknown_fields_atomically(self):
+        mutations = [lambda a: a['pages'][1].update(id='main'),
+                     lambda a: a['pages'][1]['panels'][0].update(id='volume'),
+                     lambda a: a['pages'][0].update(columns=True),
+                     lambda a: a['pages'][0]['panels'][0].update(id='../unsafe'),
+                     lambda a: a['pages'][0]['panels'][0].update(url='https://example.invalid'),
+                     lambda a: a['links'][0].update(to='main'),
+                     lambda a: a['links'][0].update(**{'from': 'volume'}),
+                     lambda a: a.update(owner='another_user')]
+        original = blank()['definition']; before = copy.deepcopy(original)
+        for mutation in mutations:
+            action = compose(); mutation(action)
+            with self.subTest(action=action), self.assertRaises(ProviderError): compile_actions(original, [action], PROFILE)
+        self.assertEqual(original, before)
+
+    def test_expansion_keeps_preview_and_edit_bounds(self):
+        action = compose(); action['pages'][0]['panels'] = [panel('p' + str(i)) for i in range(8)]
+        with self.assertRaises(ProviderError): expand_compose([action], blank()['definition'], PROFILE)
+        action = compose(); action['links'][0]['field'] = 'unverified'
+        with self.assertRaises(ProviderError): compile_actions(blank()['definition'], [action], dict(PROFILE, fields=[{'name': 'device_name'}]))
+
+    def test_agent_still_runs_actual_output_binding_and_recovery_checks(self):
+        action = compose(); action['pages'] = [dict(action['pages'][0], panels=[panel('volume', 'splunk.table', '| stats count', '', ['missing'])]),
+            dict(action['pages'][1], panels=[panel('detail', 'splunk.table', '| stats count', '', ['count'])])]; action['links'] = []
+        fix = {'op': 'set', 'path': '/visualizations/volume/options/table', 'value': '> primary | frameBySeriesNames("count")'}
+        class CompactProvider(Provider):
+            def configured(self): return {'provider':'aitk','model':'fixture'}
+        original = blank()['definition']; provider = CompactProvider([reply([action]), reply([fix])]); runtime = Runtime()
+        result = AgentService(provider, runtime).assist({'prompt': 'Build two pages of activity counts', 'revision': 0, 'definition': original, 'dataContext': blank()['dataContext']})
+        self.assertEqual(result['recovery']['modelCalls'], 2); self.assertEqual(result['recovery']['queryChecks'], 1)
+        self.assertTrue(result['validationNotes']); self.assertFalse(original['visualizations'])
+        self.assertEqual(result['pagePurposes']['layout_main'], action['pages'][0]['purpose'])
+        self.assertEqual(provider.requests[0]['text']['format']['schema']['properties']['changes']['items'], COMPOSE_ACTION)
+        schema = provider.requests[1]['text']['format']['schema']['properties']['changes']['items']['anyOf']
+        self.assertNotIn(COMPOSE_ACTION, schema)
+        self.assertIn('volume', apply_changes(original, result['changes'])['visualizations'])
+
+    def test_advanced_actions_remain_available_and_staged_candidates_cannot_compose(self):
+        context = {'request': 'Build two pages', 'canvasState': 'blank', 'history': [], 'dataProfile': PROFILE}
+        request = {'instructions': 'Preserve native features', 'text': {'format': {'schema': copy.deepcopy(SCHEMA)}}, 'input': [{'content': []}]}
+        budget = AuthoringBudget({'provider': 'aitk'}, context); budget.prepare(request, blank()['definition'])
+        self.assertEqual(request['text']['format']['schema']['properties']['changes']['items'], COMPOSE_ACTION)
+        candidate = copy.deepcopy(blank()['definition']); candidate['visualizations']['user_chart'] = {'type': 'splunk.markdown'}
+        budget.prepare(request, candidate)
+        choices = request['text']['format']['schema']['properties']['changes']['items']['anyOf']
+        self.assertNotIn(COMPOSE_ACTION, choices); self.assertTrue(any(c['properties']['op']['enum'] == ['set', 'remove'] for c in choices))
+        advanced = AuthoringBudget({'provider':'aitk'},dict(context,request='Build two pages with a map and dropdown'))
+        advanced.prepare(request, blank()['definition'])
+        self.assertIn('anyOf', request['text']['format']['schema']['properties']['changes']['items'])
+
+    def test_ollama_full_repair_restores_the_existing_output_allowance(self):
+        context={'request':'Build two pages','canvasState':'blank','history':[],'dataProfile':PROFILE,'modelLimits':{'contextTokens':32768,'outputTokens':8500}}
+        request={'instructions':'Preserve native features','text':{'format':{'schema':copy.deepcopy(SCHEMA)}},'input':[{'content':[]}]}
+        budget=AuthoringBudget({'provider':'ollama'},context);budget.prepare(request,blank()['definition'])
+        self.assertEqual(request['max_output_tokens'],3500)
+        self.assertEqual(json.loads(request['input'][0]['content'][0]['text'])['modelLimits']['outputTokens'],3500)
+        self.assertEqual(context['modelLimits']['outputTokens'],8500)
+        budget.feedback(request,{'recoveryFeedback':{'candidateDefinition':blank()['definition'],'editsApplyTo':'original'},'rejectedOutput':'{}'})
+        self.assertEqual(request['max_output_tokens'],8500)
+        self.assertEqual(json.loads(request['input'][0]['content'][0]['text'])['modelLimits']['outputTokens'],8500)
+        self.assertNotIn(COMPOSE_ACTION,request['text']['format']['schema']['properties']['changes']['items']['anyOf'])

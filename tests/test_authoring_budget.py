@@ -27,8 +27,11 @@ class AuthoringBudgetTests(unittest.TestCase):
         budget=AuthoringBudget({'provider':'aitk'},context);budget.prepare(request,blank()['definition'])
         decoded=json.loads(request['input'][0]['content'][0]['text'])
         self.assertEqual(decoded['dashboardBrief'],context['dashboardBrief'])
-        self.assertEqual(decoded['nativeFeatures'],context['nativeFeatures'])
-        self.assertEqual(request['text']['format']['schema']['properties']['changes'],SCHEMA['properties']['changes'])
+        self.assertNotIn('nativeFeatures',decoded)
+        self.assertNotIn('catalog',decoded)
+        self.assertEqual(decoded['definition'],blank()['definition'])
+        from compact_creation import COMPOSE_ACTION
+        self.assertEqual(request['text']['format']['schema']['properties']['changes']['items'],COMPOSE_ACTION)
         self.assertEqual(SCHEMA,schema)
         self.assertEqual(request['text']['format']['schema']['properties']['suggestions']['maxItems'],1)
         self.assertIn('Never omit requested work',request['instructions'])
@@ -110,3 +113,16 @@ class AuthoringBudgetTests(unittest.TestCase):
         self.assertEqual(len(request['input']),2)
         value=json.loads(request['input'][-1]['content'][0]['text'])
         self.assertEqual(value['rejectedOutput'],'latest');self.assertEqual(value['recoveryFeedback']['candidateDefinition']['title'],'working candidate')
+
+    def test_valid_staged_document_replaces_duplicate_wire_proposal_only_after_staging(self):
+        from provider_messages import conversation_entries
+        budget=AuthoringBudget({'provider':'aitk'},{'request':'Build','canvasState':'blank','history':[]})
+        request={'instructions':'Fixture','text':{},'max_output_tokens':8500,'input':[{'role':'user','content':[{'type':'input_text','text':'original goal'}]}]}
+        candidate={'title':'Keep me','visualizations':{'existing':{'future':{'keep':True}}}}
+        envelope={'rejectedOutput':'previous verbose proposal','recoveryFeedback':{'candidateDefinition':candidate,'editsApplyTo':'candidate','validationError':'Fix one binding'}}
+        budget.feedback(request,envelope)
+        feedback=json.loads(request['input'][-1]['content'][0]['text'])
+        self.assertEqual(feedback['rejectedOutput'],'');self.assertEqual(feedback['recoveryFeedback']['candidateDefinition'],candidate)
+        self.assertNotIn('assistant',[entry['role'] for entry in conversation_entries(request)])
+        envelope['recoveryFeedback']['editsApplyTo']='original';budget.feedback(request,envelope)
+        self.assertIn('previous verbose proposal',json.dumps(request))

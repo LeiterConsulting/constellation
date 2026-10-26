@@ -25,6 +25,17 @@ class Runtime:
 
 
 class TableFormatTests(unittest.TestCase):
+    def test_generation_schema_contains_only_the_verified_selected_numeric_fields(self):
+        from table_format import verified_format_action, TABLE_FORMAT_ACTION
+        receipt={'table':'table','fields':[{'name':'mean','numeric':True},{'name':'entity','numeric':True},{'name':'seen','numeric':False},{'name':'unverified'},{'name':'bad name','numeric':True}]}
+        original=copy.deepcopy(TABLE_FORMAT_ACTION)
+        action=verified_format_action(receipt,document())
+        self.assertEqual(action['properties']['id']['enum'],['table'])
+        self.assertEqual(action['properties']['columns']['items']['properties']['field']['enum'],['mean'])
+        self.assertEqual(TABLE_FORMAT_ACTION,original)
+        receipt['fields']=[{'name':'seen','numeric':False}]
+        with self.assertRaises(ProviderError) as error:verified_format_action(receipt,document())
+        self.assertEqual(error.exception.code,'table_output_unverified')
     def test_narrow_formatting_scope_does_not_capture_broader_edits(self):
         self.assertTrue(formatting_only('Polish only this selected summary table: round temperatures to one decimal.', 'table', document()))
         self.assertFalse(formatting_only('Round only this selected table and add the maximum.', 'table', document()))
@@ -110,7 +121,13 @@ class TableFormatTests(unittest.TestCase):
         self.assertEqual(result['recovery']['modelCalls'], 2)
         context = json.loads(provider.requests[0]['input'][0]['content'][0]['text'])
         self.assertEqual(provider.requests[0]['text']['format']['schema']['properties']['changes']['items']['properties']['op']['enum'], ['formatTable'])
+        self.assertEqual(provider.requests[0]['text']['format']['schema']['properties']['changes']['items']['properties']['columns']['items']['properties']['field']['enum'], ['mean','seen','signal'])
         self.assertTrue(context['focusedSourceReceipt']['fields'][1]['numeric'])
+        self.assertEqual(context['focus']['id'], 'table')
+        self.assertIn('150', json.dumps(context['dashboardBrief']))
+        self.assertFalse(set(context).intersection({'definition', 'catalog', 'nativeFeatures', 'retrievedGuidance'}))
+        self.assertLess(len(provider.requests[0]['instructions']), 2000)
+        self.assertNotIn('COMPLETE THE ORIGINAL GOAL', provider.requests[0]['instructions'])
         self.assertNotIn('20.123', json.dumps(provider.requests))
         self.assertIn('formatTable', result['validationNotes'][0])
         changed = apply_changes(doc, result['changes'])

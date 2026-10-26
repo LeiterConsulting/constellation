@@ -13,7 +13,7 @@ def ollama_context(details):
 
 def report(provider, details=None, metadata_error=False, usage=None):
     usage = usage if isinstance(usage, dict) else {}
-    limits = [] if provider == 'aitk' else [{'label': 'Maximum requested output', 'value': 'Up to 8,500 tokens for creation; 6,500 for edits. Internal foundations use 3,500; context budgeting can reduce these limits.'}]
+    limits = [] if provider == 'aitk' else [{'label': 'Maximum requested output', 'value': 'Up to 8,500 tokens for creation; 6,500 for edits. Internal foundations and compact Ollama drafts use 3,500; context budgeting can reduce these limits.'}]
     warnings = []
     if provider == 'aitk':
         limits.append({'label': 'Model and token limits', 'value': 'Managed by the named AI Toolkit connection; not verified by Constellation.'})

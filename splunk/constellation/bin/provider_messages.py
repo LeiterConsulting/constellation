@@ -15,7 +15,8 @@ def conversation_entries(request):
                     and isinstance(feedback.get('rejectedOutput'), str) and len(feedback['rejectedOutput']) <= 100000):
                 # This is the previous untrusted model proposal, not a tool result
                 # or an accepted change. The next user turn supplies validation.
-                yield {'role': 'assistant', 'content': [{'type': 'input_text', 'text': feedback['rejectedOutput']}]}
+                if feedback['rejectedOutput']:
+                    yield {'role': 'assistant', 'content': [{'type': 'input_text', 'text': feedback['rejectedOutput']}]}
                 content.append(dict(part, text=json.dumps({key: value for key, value in feedback.items() if key != 'rejectedOutput'})))
             else: content.append(part)
         yield {'role': entry.get('role', 'user'), 'content': content}

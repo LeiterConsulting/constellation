@@ -3,7 +3,7 @@ import json
 import re
 import copy
 from provider_service import ProviderError
-from page_service import BUTTON_MIN_HEIGHT
+from page_service import BUTTON_MIN_HEIGHT, button_label_width
 
 
 def normalize_structure(action, document):
@@ -48,19 +48,25 @@ def fit_button_labels(document, previous):
         old = {item.get('item'): item.get('position') for item in old_pages.get(page_id, {}).get('structure', [])}
         for item in page.get('structure', []):
             identifier, position = item.get('item'), item.get('position', {})
-            if document.get('inputs', {}).get(identifier, {}).get('type') != 'input.button' or position == old.get(identifier): continue
-            if not all(type(position.get(key)) in (int, float) for key in ('x', 'y', 'w', 'h')) or position['h'] >= BUTTON_MIN_HEIGHT: continue
-            height = page.get('options', {}).get('height')
-            if not isinstance(height, (int, float)) or position['y'] + BUTTON_MIN_HEIGHT > height: continue
+            control = document.get('inputs', {}).get(identifier, {})
+            old_label = previous.get('inputs', {}).get(identifier, {}).get('options', {}).get('label')
+            label = control.get('options', {}).get('label')
+            if control.get('type') != 'input.button' or position == old.get(identifier) and label == old_label: continue
+            if not all(type(position.get(key)) in (int, float) for key in ('x', 'y', 'w', 'h')): continue
+            width = max(position['w'], button_label_width(label));height = max(position['h'], BUTTON_MIN_HEIGHT)
+            if width == position['w'] and height == position['h']: continue
+            bounds = page.get('options', {})
+            if (not all(isinstance(bounds.get(key), (int, float)) for key in ('width', 'height'))
+                    or position['x'] + width > bounds['width'] or position['y'] + height > bounds['height']): continue
             blocked = False
             for other in page.get('structure', []):
                 other_id, rectangle = other.get('item'), other.get('position', {})
                 chart = document.get('visualizations', {}).get(other_id, document.get('inputs', {}).get(other_id, {}))
                 if other_id == identifier or chart.get('type') in decorative: continue
                 if not all(type(rectangle.get(key)) in (int, float) for key in ('x', 'y', 'w', 'h')): continue
-                if (position['x'] < rectangle['x'] + rectangle['w'] and rectangle['x'] < position['x'] + position['w'] and
-                        position['y'] < rectangle['y'] + rectangle['h'] and rectangle['y'] < position['y'] + BUTTON_MIN_HEIGHT): blocked = True
+                if (position['x'] < rectangle['x'] + rectangle['w'] and rectangle['x'] < position['x'] + width and
+                        position['y'] < rectangle['y'] + rectangle['h'] and rectangle['y'] < position['y'] + height): blocked = True
             if not blocked:
-                position['h'] = BUTTON_MIN_HEIGHT
+                position.update(w=width, h=height)
                 changed = True
     return layout if changed else None

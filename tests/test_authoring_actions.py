@@ -40,6 +40,20 @@ class TypedLayoutTests(unittest.TestCase):
         doc['visualizations']['chart'] = {'type': 'splunk.line'}
         doc['layout']['structure'].append({'item': 'chart', 'position': {'x': 20, 'y': 80, 'w': 200, 'h': 200}})
         self.assertIsNone(fit_button_labels(doc, {}))
+    def test_literal_button_width_is_fitted_without_moving_neighbours_or_untouched_work(self):
+        from geometry_normalization import fit_button_labels
+        doc={'visualizations':{},'inputs':{'back':{'type':'input.button','options':{'label':'Return to Overview'},'future':'keep'}},'layout':{'type':'absolute','options':{'width':1200,'height':400},'structure':[{'item':'back','position':{'x':20,'y':20,'w':150,'h':80}}]}}
+        self.assertIsNone(fit_button_labels(doc,copy.deepcopy(doc)))
+        fitted=fit_button_labels(doc,{})
+        self.assertGreaterEqual(fitted['structure'][0]['position']['w'],192)
+        self.assertEqual(doc['layout']['structure'][0]['position']['w'],150)
+        old=copy.deepcopy(doc);old['inputs']['back']['options']['label']='Back'
+        self.assertIsNotNone(fit_button_labels(doc,old))
+        doc['visualizations']['neighbour']={'type':'splunk.line'}
+        doc['layout']['structure'].append({'item':'neighbour','position':{'x':175,'y':20,'w':200,'h':200}})
+        self.assertIsNone(fit_button_labels(doc,{}))
+        doc['inputs']['back']['options']['label']='$dynamic$'
+        self.assertIsNone(fit_button_labels(doc,{}))
     def test_typed_geometry_in_native_structure_is_compiled_without_inventing_positions(self):
         original = self.document()
         geometry = self.action()['items']

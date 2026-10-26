@@ -83,6 +83,30 @@ def without_redundant_cutoff(suffix, rule):
     return suffix
 
 
+def without_misplaced_cutoff(suffix, rule):
+    """An exact raw-field cutoff after an aggregate is not a valid SPL WHERE.
+
+    The same verified exclusion is supplied at the measurement boundary. Never
+    move a global filter, remove compound predicates or rewrite an output alias.
+    """
+    field = re.escape(rule['field'])
+    tail = r'\s+(?i:where)\s+' + field + r'\s*<=\s*(-?\d+(?:\.\d+)?)\s*$'
+    replacements = []
+    for start, end, command in pipeline_commands(suffix):
+        if not re.match(r'(?:stats|timechart|chart)\b', command, re.I): continue
+        match = re.search(tail, command)
+        if not match or float(match[1]) != rule['maximum']: continue
+        prefix = command[:match.start()]
+        # Here the predicate names an input measurement, not an aggregate alias
+        # or grouping field. Ambiguous/output-level conditions require repair.
+        grouping = re.search(r'(?i:\bBY\b)(.*)', prefix)
+        if (re.search(r'(?i:\bAS\s+)[\'\"]?' + field + r'\b', prefix)
+                or grouping and re.search(r'\b' + field + r'\b', grouping[1])): continue
+        replacements.append((start, end, '| ' + prefix.rstrip() + ' '))
+    for start, end, value in reversed(replacements): suffix = suffix[:start] + value + suffix[end:]
+    return suffix
+
+
 def normalize_measurements(document, previous, profile):
     rules = profile.get('measurementConstraints', []) if profile else []
     if not rules: return []
@@ -93,6 +117,8 @@ def normalize_measurements(document, previous, profile):
         if source.get('type') != 'ds.search': continue
         suffix = scoped_suffix(query, profile)
         if suffix is None: continue  # The scope validator supplies its own error.
+        original_suffix = suffix
+        for rule in rules: suffix = without_misplaced_cutoff(suffix, rule)
         coupled = False
         if profile.get('independentMeasurements'):
             try: validate_populations(query, profile)
@@ -123,8 +149,8 @@ def normalize_measurements(document, previous, profile):
                 raise ProviderError('Preserve the verified ' + field + ' measurement before aggregation. The server excludes values above ' +
                     format(rule['maximum'], '.15g') + ' F by setting only that measurement to null. Do not overwrite, fill or re-extract it before aggregation; compute derived output aliases in stats/timechart instead. Other measurements retain their events.', 422, 'measurement_constraint')
             commands.append(command)
-        if commands:
-            normalized = profile['baseQuery'].strip() + ' | ' + ' | '.join(commands) + ' ' + suffix.strip()
+        if commands or suffix != original_suffix:
+            normalized = profile['baseQuery'].strip() + (' | ' + ' | '.join(commands) if commands else '') + ' ' + suffix.strip()
             if normalized != query:
                 changes.append({'op': 'set', 'path': '/dataSources/' + identifier.replace('~', '~0').replace('/', '~1') + '/options/query', 'value': json.dumps(normalized)})
     return changes

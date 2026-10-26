@@ -11,6 +11,7 @@ from search_chart_actions import SEARCH_ACTION, CHART_ACTION, TOKEN_ACTION, comp
 from search_chart_actions import FILTER_ACTION, DASHBOARD_ACTION, compile_filter, compile_dashboard, normalize_row_filters
 from table_format import TABLE_FORMAT_ACTION, compile_table_format
 from measurement_constraints import normalize_measurements
+from compact_creation import COMPOSE_ACTION, expand_compose
 
 LEGACY_CHANGE = {'type': 'object', 'properties': {
     'op': {'type': 'string', 'enum': ['set', 'remove']},
@@ -36,7 +37,7 @@ PAGE_ACTION['properties']['op'] = {'type': 'string', 'enum': ['page']}
 PAGE_ACTION['properties']['purpose'] = {'type': 'string', 'maxLength': 1200}
 PAGE_ACTION['properties']['moveItems'] = {'type': 'boolean', 'description': 'Move these items off their previous pages when true; otherwise allow reuse.'}
 PAGE_ACTION['required'].extend(['purpose', 'moveItems'])
-ACTION_SCHEMA = {'anyOf': [LEGACY_CHANGE, DASHBOARD_ACTION, SEARCH_ACTION, CHART_ACTION, TOKEN_ACTION, FILTER_ACTION, TABLE_FORMAT_ACTION, LAYOUT_ACTION, PAGE_ACTION, LINK_ACTION, BUTTON_ACTION]}
+ACTION_SCHEMA = {'anyOf': [COMPOSE_ACTION, LEGACY_CHANGE, DASHBOARD_ACTION, SEARCH_ACTION, CHART_ACTION, TOKEN_ACTION, FILTER_ACTION, TABLE_FORMAT_ACTION, LAYOUT_ACTION, PAGE_ACTION, LINK_ACTION, BUTTON_ACTION]}
 
 
 def validate_chart_placement(document, previous):
@@ -68,6 +69,7 @@ def validate_chart_placement(document, previous):
 
 
 def compile_actions(document, actions, profile=None, table_receipt=None):
+    actions = expand_compose(actions, document, profile)
     if not isinstance(actions, list) or len(actions) > 64: raise ProviderError('Use at most 64 authoring actions.')
     layout = copy.deepcopy(document['layout'])
     defaults, token_changes = copy.deepcopy(document.get('defaults', {})), False

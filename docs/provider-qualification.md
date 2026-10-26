@@ -30,7 +30,7 @@ An absent Wi-Fi table column is not a failed independence test; apply that check
 
 ## Remaining release decisions
 
-The [recorded matrices](validation.md) show substantial improvement, but do **not** establish 1.0 readiness. The final 0.16 non-admin sensor journey passed through all three providers after a failed Ollama attempt exposed a time-axis binding defect. Slower-provider authoring can still take over a minute. Historical independent probes also found incorrect analytical populations in definitions the earlier validators had accepted. Keep those failures visible alongside the final reruns.
+The [recorded matrices](validation.md) show substantial improvement, but do **not** establish 1.0 readiness. The final 0.16 non-admin sensor journey passed through all three providers after a failed Ollama attempt exposed a time-axis binding defect. The 0.17 follow-up adds repeated process-observation and network-response work through Ollama and managed AITK. Slower-provider authoring and automatic repairs can still take over a minute. Historical independent probes also found incorrect analytical populations in definitions the earlier validators had accepted. Keep those failures visible alongside the final reruns.
 
 1. Demonstrate repeatable creation and focused editing within useful latency across the advertised provider/model combinations. Preserve failure evidence; do not increase retry/time limits merely to make a sample green.
 2. Extend the sensor regression to representative operational datasets, missing fields, sparse data, partial searches and business-rule review. Run unaided user trials; measure completion and required intervention.

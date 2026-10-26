@@ -18,6 +18,31 @@ class MeasurementConstraintTests(unittest.TestCase):
     def profile(self, prompt=GOAL):
         return dict(PROFILE, measurementConstraints=temperature_constraints(prompt, {}, PROFILE))
 
+    def test_exact_misplaced_raw_cutoff_is_supplied_at_the_boundary_without_filtering_other_measurements(self):
+        profile=self.profile()
+        for pipeline in ('| timechart bins=100 avg(temperature_f) AS mean WHERE temperature_f<=150',
+                         '| stats avg(temperature_f) AS mean latest(signal) AS signal BY entity WHERE temperature_f<=150.0',
+                         '| timechart bins=100 avg(signal) AS signal WHERE temperature_f<=150'):
+            query=PROFILE['baseQuery']+' '+pipeline;doc={'dataSources':{'summary':{'type':'ds.search','options':{'query':query}}}}
+            normalized=json.loads(normalize_measurements(doc,{},profile)[0]['value'])
+            self.assertNotIn('WHERE',normalized)
+            if 'avg(temperature_f)' in pipeline:self.assertIn(mask_command(profile['measurementConstraints'][0]),normalized)
+            else:self.assertNotIn('temperature_f',normalized)
+            self.assertEqual(normalize_measurements(doc,copy.deepcopy(doc),profile),[])
+
+    def test_misplaced_repair_preserves_other_limits_compounds_literals_and_output_fields(self):
+        from measurement_constraints import without_misplaced_cutoff
+        rule=self.profile()['measurementConstraints'][0]
+        for pipeline in ('| stats avg(temperature_f) AS mean WHERE temperature_f<=140',
+                         '| stats avg(temperature_f) AS mean WHERE temperature_f<=150 AND signal>-80',
+                         '| stats avg(temperature_f) AS mean WHERE temperature_f<=150 OR signal>-80',
+                         '| stats avg(temperature_f) AS temperature_f WHERE temperature_f<=150',
+                         '| stats avg(temperature_f) AS "temperature_f" WHERE temperature_f<=150',
+                         '| stats count BY entity temperature_f WHERE temperature_f<=150',
+                         '| stats values("WHERE temperature_f<=150") AS label',
+                         '| timechart count BY entity WHERE count IN TOP10'):
+            self.assertEqual(without_misplaced_cutoff(pipeline,rule),pipeline)
+
     def test_explicit_units_verified_fields_and_latest_requirement(self):
         brief = {'purpose': GOAL, 'requirements': ''}
         self.assertEqual(temperature_constraints('Round this table', brief, PROFILE), [{'field': 'temperature_f', 'maximum': 150, 'unit': 'F'}])

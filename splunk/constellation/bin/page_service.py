@@ -18,6 +18,12 @@ LINK_ACTION = {'type': 'object', 'properties': {
 BUTTON_MIN_HEIGHT = 80
 
 
+def button_label_width(label):
+    """Conservative default-font room for a literal native button label."""
+    if not isinstance(label, str) or not label or '$' in label: return 0
+    return 48 + sum(8 if ord(char) < 128 else 16 for char in label)
+
+
 def validate_purposes(purposes, document):
     layouts = document.get('layout', {}).get('layoutDefinitions', {})
     if not isinstance(purposes, dict) or len(purposes) > 30 or any(key not in layouts or not isinstance(value, str) or len(value) > 1200 for key, value in purposes.items()):
@@ -111,6 +117,7 @@ def compile_button(document, action):
     if any(type(value) is not int or not (0 if key in ('x','y') else 1) <= value <= 20000 for key,value in position.items()):
         raise ProviderError('Button positions require nonnegative integer x/y and positive w/h.')
     position['h'] = max(BUTTON_MIN_HEIGHT, position['h'])
+    position['w'] = max(button_label_width(action['label']), position['w'])
     options = page.get('options', {})
     if position['x'] + position['w'] > options.get('width', 1200):
         raise ProviderError('Fit navigation button ' + action['id'][:120] + ' within the width of page ' + action['pageId'][:120] + '.')

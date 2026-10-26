@@ -5,7 +5,7 @@ import re
 from provider_service import ProviderError
 from studio_contract import model_document, validate_document
 from studio_features import feature_contract, validate_features
-from table_projection import validate_requested_columns
+from table_projection import validate_requested_columns, verified_requested_projection
 from model_capabilities import attachment_parts
 from prompt_suggestions import SUGGESTION_SCHEMA, normalize_suggestions
 from data_service import DataService
@@ -21,7 +21,7 @@ from creation_prompt import CREATION_INSTRUCTIONS
 from focused_prompt import FOCUSED_INSTRUCTIONS
 from population_guard import independent_measurements
 from measurement_constraints import temperature_constraints
-from table_format import formatting_only, TABLE_FORMAT_ACTION
+from table_format import formatting_only, TABLE_FORMAT_ACTION, FORMAT_INSTRUCTIONS, verified_format_action
 from quick_edit import quick_edit
 from model_readiness import CREATE_OUTPUT_TOKENS, EDIT_OUTPUT_TOKENS
 from authoring_budget import AuthoringBudget
@@ -364,7 +364,7 @@ class AgentService:
             context['formattingOnly'] = 'Format only existing numeric columns through formatTable. Omit absent or already-readable timestamps. Do not add aggregates, columns, search or binding edits.'
         guidance = retrieve_guidance(prompt, document, environment, real_data=bool(profile))
         context['retrievedGuidance'] = guidance
-        instructions = (CREATION_INSTRUCTIONS if profile and context['canvasState'] == 'blank' else
+        instructions = (FORMAT_INSTRUCTIONS if format_only else CREATION_INSTRUCTIONS if profile and context['canvasState'] == 'blank' else
                         FOCUSED_INSTRUCTIONS if focus['kind'] in ('visualization', 'input') else INSTRUCTIONS)
         request = {'model': saved['model'], 'store': False, 'instructions': instructions,
                    'input': [{'role': 'user', 'content': [{'type': 'input_text', 'text': json.dumps(context)}] + attachments}],
@@ -374,7 +374,7 @@ class AgentService:
             # Reduce the action space for this explicit presentation-only turn.
             # Other requests retain the full native contract, not this schema.
             request['text']['format']['schema'] = copy.deepcopy(SCHEMA)
-            request['text']['format']['schema']['properties']['changes']['items'] = TABLE_FORMAT_ACTION
+            request['text']['format']['schema']['properties']['changes']['items'] = verified_format_action(table_receipt, document)
         else:
             request['text']['format']['schema'] = copy.deepcopy(SCHEMA)
             request['text']['format']['schema']['properties']['changes']['items']['anyOf'] = [
@@ -450,6 +450,12 @@ class AgentService:
                     result['changes'] = proposal.changes
                     # Reuse this turn's actual search cache; every binding and
                     # other validation still runs before accepting the edit.
+                    receipts = data.validate_searches(draft, document, profile)
+                projection = verified_requested_projection(prompt, body.get('selected', ''), draft, receipts)
+                if projection:
+                    draft = proposal.stage(projection)
+                    result['changes'] = proposal.changes
+                    validate_features(draft, document, environment)
                     receipts = data.validate_searches(draft, document, profile)
                 validate_requested_columns(prompt, body.get('selected', ''), draft, receipts)
                 # Newly introduced network graphs must match the target feature set.

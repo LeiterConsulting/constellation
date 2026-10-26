@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.17.0 - 2026-10-25
+
+- Reduce first-draft output for bounded two-page Ollama/AITK goals through a compact proposal that expands to existing scoped search/chart/page/navigation actions. Ordinary chart layouts receive readable spacing without model-authored pixel repetition; advanced native edits remain available.
+- Use dedicated guidance and an exact eligible-field schema for table-only formatting, with the document retained server-side for compilation and all normal validation. Fail before inference when no numeric output can be verified.
+- Compile narrow verified table-projection repairs and exact misplaced temperature-cutoff corrections without spending another model call. Keep independent measurements and all normal search/binding checks.
+- Fit literal navigation-button labels into clear canvas space; preserve neighbouring geometry and untouched imported controls.
+- Keep focused editing separate from creation-stage instructions. Repair from the exact staged candidate without sending a duplicate copy of its old wire proposal. Keep model-visible output limits synchronized with compact and repair requests.
+- Retain model/query/time limits, current-user execution, atomic failure behavior, native output and the existing canvas/conversation interface. Repeated real-data qualification and remaining 1.0 gates are recorded in [validation](docs/validation.md).
+
 ## 0.16.0 - 2026-10-25
 
 - Harden shared AITK inference after an independent agent security review: verify connection/collection writers, trusted owners/execution namespace and native legacy precedence before submitting a job.
