@@ -60,6 +60,11 @@ class AuthoringBudget:
         if self.compact:
             request['instructions'] = COMPACT_INSTRUCTIONS
             request['text']['format']['schema']['properties']['changes']['items'] = copy.deepcopy(COMPOSE_ACTION)
+            # compact_goal admits only an explicit two-page request. Encode that
+            # obligation in the constrained output instead of accepting a one-
+            # page proposal whose links name an absent destination.
+            pages = request['text']['format']['schema']['properties']['changes']['items']['properties']['pages']
+            pages.update(minItems=2, maxItems=2)
             request['text']['format']['schema']['properties']['changes']['maxItems'] = 1
         if self.creation and context.get('dataProfile'):
             request['instructions'] += '\n\n' + CONCISE_CREATION
@@ -104,6 +109,11 @@ class AuthoringBudget:
 
     def actions(self, actions, document):
         """Keep page identity stable when completing this turn's new foundation."""
+        if getattr(self, 'compact', False) and isinstance(actions, list):
+            for action in actions:
+                if isinstance(action, dict) and action.get('op') == 'compose':
+                    if not isinstance(action.get('pages'), list) or len(action['pages']) != 2:
+                        raise ProviderError('This request requires two complete pages, including every row-link destination.')
         actions = expand_compose(actions, document, self.context.get('dataProfile'))
         if self.phase == 'foundation' and isinstance(actions, list):
             from search_chart_actions import compile_dashboard

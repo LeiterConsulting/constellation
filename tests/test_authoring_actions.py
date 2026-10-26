@@ -141,3 +141,34 @@ class InputPlacementTests(unittest.TestCase):
         validate_chart_placement(document,copy.deepcopy(document))
         document['inputs']['back']['containerOptions']={'visibility':{'showConditions':['details']}}
         validate_chart_placement(document,original)
+
+class NativeCanvasBoundsTests(unittest.TestCase):
+    def document(self):
+        return {'visualizations':{'table':{'type':'splunk.table'}},'layout':{'type':'absolute','options':{'width':1200,'height':420,'future':'keep'},'structure':[{'item':'table','position':{'x':20,'y':20,'w':570,'h':360},'future':{'keep':True}}]}}
+    def test_moved_chart_requires_declared_canvas_to_contain_it(self):
+        before=self.document();doc=copy.deepcopy(before);doc['layout']['structure'][0]['position'].update(y=400,w=1160)
+        with self.assertRaisesRegex(ProviderError,'760 high') as error:validate_chart_placement(doc,before)
+        self.assertEqual(error.exception.code,'layout_bounds')
+        doc['layout']['options']['height']=780;validate_chart_placement(doc,before)
+        self.assertEqual(doc['layout']['structure'][0]['future'],{'keep':True})
+    def test_shrinking_canvas_cannot_newly_clip_unchanged_chart(self):
+        before=self.document();doc=copy.deepcopy(before);doc['layout']['options']['height']=200
+        with self.assertRaises(ProviderError):validate_chart_placement(doc,before)
+    def test_unchanged_imported_clipping_and_decorative_layers_remain_untouched(self):
+        doc=self.document();doc['layout']['structure'][0]['position']['y']=400
+        validate_chart_placement(doc,copy.deepcopy(doc))
+        before=copy.deepcopy(doc);doc['layout']['options']['height']=500;validate_chart_placement(doc,before)
+        doc['visualizations']['table']['type']='splunk.rectangle';validate_chart_placement(doc,{})
+    def test_bounded_recovery_can_grow_canvas_without_publishing_clipped_candidate(self):
+        from test_reliability_journey import Provider,Runtime,reply
+        from test_drafts_and_data import blank
+        from agent_service import AgentService
+        before=self.document();before.update(title='Fixture',dataSources={'s':{'type':'ds.search','options':{'query':'search index="fixture_index" | stats count','queryParameters':{'earliest':'-24h','latest':'now'}}}})
+        before['visualizations']['table'].update(title='Observations',dataSources={'primary':'s'},options={'table':'> primary | frameBySeriesNames("count")'})
+        move={'op':'set','path':'/layout/structure/0/position','value':json.dumps({'x':20,'y':400,'w':1160,'h':360})}
+        grow={'op':'set','path':'/layout/options/height','value':'780'}
+        provider=Provider([reply([move]),reply([grow])]);original=copy.deepcopy(before)
+        result=AgentService(provider,Runtime()).assist({'prompt':'Make this selected table full width below its old position, preserving queries.','definition':before,'revision':0,'selected':'table','dataContext':blank()['dataContext']})
+        fixed=apply_changes(before,result['changes']);validate_chart_placement(fixed,before)
+        self.assertEqual(result['recovery']['modelCalls'],2);self.assertEqual(fixed['layout']['options']['height'],780)
+        self.assertEqual(before,original);self.assertEqual(fixed['dataSources'],before['dataSources'])

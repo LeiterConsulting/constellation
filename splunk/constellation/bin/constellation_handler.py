@@ -23,7 +23,8 @@ def author(service, runtime, body):
     runtime.aitk_run_handle = body.get('runHandle')
     try:
         result = AgentService(service, runtime, progress=progress).assist(body)
-        progress('complete')
+        if control: control.complete(body['runHandle'], result)
+        else: progress('complete')
         return result
     except Exception:
         progress('failed')

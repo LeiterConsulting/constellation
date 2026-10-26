@@ -129,7 +129,7 @@ class CompactCreationTests(unittest.TestCase):
         self.assertEqual(result['recovery']['modelCalls'], 2); self.assertEqual(result['recovery']['queryChecks'], 1)
         self.assertTrue(result['validationNotes']); self.assertFalse(original['visualizations'])
         self.assertEqual(result['pagePurposes']['layout_main'], action['pages'][0]['purpose'])
-        self.assertEqual(provider.requests[0]['text']['format']['schema']['properties']['changes']['items'], COMPOSE_ACTION)
+        self.assertEqual(provider.requests[0]['text']['format']['schema']['properties']['changes']['items']['properties']['pages']['minItems'], 2)
         schema = provider.requests[1]['text']['format']['schema']['properties']['changes']['items']['anyOf']
         self.assertNotIn(COMPOSE_ACTION, schema)
         self.assertIn('volume', apply_changes(original, result['changes'])['visualizations'])
@@ -138,7 +138,7 @@ class CompactCreationTests(unittest.TestCase):
         context = {'request': 'Build two pages', 'canvasState': 'blank', 'history': [], 'dataProfile': PROFILE}
         request = {'instructions': 'Preserve native features', 'text': {'format': {'schema': copy.deepcopy(SCHEMA)}}, 'input': [{'content': []}]}
         budget = AuthoringBudget({'provider': 'aitk'}, context); budget.prepare(request, blank()['definition'])
-        self.assertEqual(request['text']['format']['schema']['properties']['changes']['items'], COMPOSE_ACTION)
+        self.assertEqual(request['text']['format']['schema']['properties']['changes']['items']['properties']['pages']['maxItems'], 2)
         candidate = copy.deepcopy(blank()['definition']); candidate['visualizations']['user_chart'] = {'type': 'splunk.markdown'}
         budget.prepare(request, candidate)
         choices = request['text']['format']['schema']['properties']['changes']['items']['anyOf']
@@ -158,3 +158,13 @@ class CompactCreationTests(unittest.TestCase):
         self.assertEqual(request['max_output_tokens'],8500)
         self.assertEqual(json.loads(request['input'][0]['content'][0]['text'])['modelLimits']['outputTokens'],8500)
         self.assertNotIn(COMPOSE_ACTION,request['text']['format']['schema']['properties']['changes']['items']['anyOf'])
+
+    def test_compact_page_requirement_also_applies_to_schema_ignoring_adapters(self):
+        context={'request':'Build two pages','canvasState':'blank','history':[],'dataProfile':PROFILE}
+        budget=AuthoringBudget({'provider':'aitk'},context)
+        request={'instructions':'Preserve','text':{'format':{'schema':copy.deepcopy(SCHEMA)}},'input':[{'content':[]}]}
+        budget.prepare(request,blank()['definition'])
+        action=compose();action['pages']=action['pages'][:1];action['links']=[]
+        original=copy.deepcopy(blank()['definition'])
+        with self.assertRaises(ProviderError):budget.actions([action],original)
+        self.assertEqual(original,blank()['definition'])

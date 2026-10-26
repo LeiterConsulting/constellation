@@ -31,7 +31,10 @@ class AuthoringBudgetTests(unittest.TestCase):
         self.assertNotIn('catalog',decoded)
         self.assertEqual(decoded['definition'],blank()['definition'])
         from compact_creation import COMPOSE_ACTION
-        self.assertEqual(request['text']['format']['schema']['properties']['changes']['items'],COMPOSE_ACTION)
+        expected=copy.deepcopy(COMPOSE_ACTION)
+        expected['properties']['pages'].update(minItems=2,maxItems=2)
+        self.assertEqual(request['text']['format']['schema']['properties']['changes']['items'],expected)
+        self.assertEqual(COMPOSE_ACTION['properties']['pages']['minItems'],1)
         self.assertEqual(SCHEMA,schema)
         self.assertEqual(request['text']['format']['schema']['properties']['suggestions']['maxItems'],1)
         self.assertIn('Never omit requested work',request['instructions'])

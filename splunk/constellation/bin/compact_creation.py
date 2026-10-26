@@ -35,6 +35,7 @@ Return JSON with message,changes,suggestions. changes contains ONE compose actio
 {id,type,title,pipeline,x,y}]}],links:[{from,to,field}]}.
 Every page and panel ID must be globally unique, start with a letter and contain
 only letters, numbers or underscores. Preserve requested page labels and purposes.
+Replace the blank "New dashboard" title with a useful title for the user's goal.
 Use bare IDs such as overview,details,temp; do not add layout_ or ds_ prefixes.
 Do not repeat source IDs, positions or separate navigation actions. The server
 assigns readable positions, source IDs ds_PANELID and page IDs layout_PAGEID.

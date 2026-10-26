@@ -52,3 +52,5 @@ While the agent works, the conversation shows its actual stage and elapsed time.
 Stop inspection in the data chooser retains your goal and data selection; a late inspection cannot start a build. The bounded server inspection may still finish.
 
 The source/time button above the canvas opens preview range, change-data, refresh/pause and Search details. Complete/partial/stale evidence still describes bounded preview results. Expand Focus in the conversation for the keyboard-accessible element list, or use Select element on the canvas. Float, Dock and Hide retain their existing behavior.
+
+If the model finishes but the original response stalls, the app can receive the same validated change through its short-lived delivery channel. It does not repeat the model request. Stop still discards late changes. Delivery recovery is available only in the original session on the same search head; private drafts remain the way to resume work across sessions.

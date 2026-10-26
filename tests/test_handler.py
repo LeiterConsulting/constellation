@@ -149,6 +149,17 @@ assert hasattr(module,'AitkInferenceHandler')
             self.assertEqual(call.call_args.kwargs['getargs']['fields'], 'name,provider,acl')
             self.assertEqual(call.call_args.kwargs['getargs']['limit'], '2')
 
+    def test_204_is_pending_only_for_owned_preview_result_reads(self):
+        runtime = handler.SearchService('fixture-user', 'fixture-caller')
+        path = runtime.namespace + '/search/v2/jobs/123.4/results'
+        with patch.dict(sys.modules, {'splunk': splunk, 'splunk.rest': rest}), patch.object(rest, 'simpleRequest', return_value=({'status':'204'}, b''), create=True) as call:
+            self.assertEqual(runtime.request(path, 'POST', {'count':'201'}), {'resultsPending':True})
+            self.assertEqual(call.call_count,1)
+            for resource, method in ((path,'GET'), (path.rsplit('/',2)[0],'POST'), ('/services/server/info','GET')):
+                with self.assertRaises(handler.ProviderError): runtime.request(resource,method)
+        with patch.dict(sys.modules, {'splunk': splunk, 'splunk.rest': rest}), patch.object(rest, 'simpleRequest', return_value=({'status':'200'}, b''), create=True):
+            with self.assertRaises(handler.ProviderError): runtime.request(path,'POST')
+
 
 class CredentialIsolationTests(unittest.TestCase):
     def setUp(self):

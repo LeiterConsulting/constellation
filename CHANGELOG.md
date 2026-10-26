@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.18.0 - 2026-10-26
+
+- Treat native HTTP 204 preview results as pending and poll the same owned job within the existing deadline, rather than misclassifying the response as invalid SPL.
+- Bind every run read/mutation to its stored session owner as well as the handle signature; reject a foreign nonce re-signed with a caller-owned key.
+- Recover an already validated authoring reply through the independent control route when original REST delivery stalls. Keep session-bound access, five-minute expiry, bounded private storage, acknowledgement cleanup and Stop protection; never replay inference.
+- Correct narrowly recognized missing commas between complete post-aggregate table-formatting assignments, retaining native query validation and unrelated work.
+- Reject changed native rectangles or canvas shrinkage that newly clips data charts/inputs; provide exact canvas dimensions for bounded repair while preserving unchanged imports.
+- Require both requested pages in compact constrained output and server-side validation, preventing an avoidable missing-destination repair.
+- Keep current-user search and persistence permissions, provider adapters and atomic dashboard validation intact.
+
 ## 0.17.0 - 2026-10-25
 
 - Reduce first-draft output for bounded two-page Ollama/AITK goals through a compact proposal that expands to existing scoped search/chart/page/navigation actions. Ordinary chart layouts receive readable spacing without model-authored pixel repetition; advanced native edits remain available.

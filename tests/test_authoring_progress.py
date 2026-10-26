@@ -5,7 +5,7 @@ from pathlib import Path
 import sys
 import tempfile
 import unittest
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'splunk/constellation/bin'))
 from authoring_progress import AuthoringProgress, TTL
 from provider_service import ProviderError
@@ -65,6 +65,67 @@ class ProgressTests(unittest.TestCase):
         with unittest.mock.patch.object(jobs,'start',return_value={'handle':'fixture'}), unittest.mock.patch.object(jobs,'cancel') as cancel:
             with self.assertRaises(ProviderError): jobs.execute('| makeresults','-15m')
             cancel.assert_called_once_with('fixture')
+
+    def test_completed_reply_is_private_session_bound_and_never_reexecutes(self):
+        handle=self.start();self.control.claim(handle)
+        reply={'revision':7,'changes':[{'op':'set','path':'/title','value':'"Synthetic title"'}]}
+        self.control.complete(handle,reply);self.control.release(handle)
+        body={'action':'result','handle':handle}
+        self.assertEqual(self.control.operation(body),{'available':True,'reply':reply})
+        self.assertEqual(self.control.operation(body),{'available':True,'reply':reply})
+        path=Path(self.control.path(handle)+'.reply')
+        self.assertEqual(path.stat().st_mode & 0o777,0o600)
+        self.assertNotIn('Synthetic title',Path(self.control.path(handle)).read_text())
+        for user,token in [('other','fixture-session'),('fixture-user','other')]:
+            with self.assertRaises(ProviderError):AuthoringProgress(user,token,self.tmp.name).operation(body)
+        for operation in (lambda:self.control.claim(handle),lambda:self.control.complete(handle,reply)):
+            with self.assertRaises(ProviderError):operation()
+        self.control.operation({'action':'ack','handle':handle})
+        self.assertFalse(path.exists());self.assertEqual(self.control.operation(body),{'available':False})
+
+    def test_stop_expiry_and_capacity_do_not_leave_retrievable_late_edits(self):
+        handle=self.start();report=self.control.claim(handle)
+        self.assertEqual(self.control.operation({'action':'result','handle':handle}),{'available':False})
+        self.control.operation({'action':'cancel','handle':handle})
+        with self.assertRaises(ProviderError):self.control.complete(handle,{'changes':[]})
+        self.control.release(handle)
+        handle=self.start();self.control.claim(handle);self.control.complete(handle,{'changes':[]});self.control.release(handle)
+        self.control.operation({'action':'cancel','handle':handle})
+        self.assertFalse(Path(self.control.path(handle)+'.reply').exists())
+        with self.assertRaises(ProviderError):self.control.operation({'action':'result','handle':handle})
+        handle=self.start();self.control.claim(handle);self.control.complete(handle,{'changes':[]});self.control.release(handle)
+        self.now+=TTL+1
+        with self.assertRaises(ProviderError):self.control.operation({'action':'result','handle':handle})
+        self.assertFalse(Path(self.control.path(handle)+'.reply').exists())
+        handle=self.start();self.control.claim(handle)
+        with patch('authoring_delivery.MAX_REPLY_BYTES',1):self.control.complete(handle,{'changes':[]})
+        self.control.release(handle)
+        self.assertEqual(self.control.operation({'action':'poll','handle':handle})['stage'],'complete')
+        self.assertEqual(self.control.operation({'action':'result','handle':handle}),{'available':False})
+        handle=self.start();self.control.claim(handle)
+        with patch('authoring_delivery.MAX_CACHE_BYTES',1):self.control.complete(handle,{'changes':[]})
+        self.assertEqual(self.control.operation({'action':'result','handle':handle}),{'available':False})
+
+    def test_delivery_disk_failure_does_not_reject_original_valid_reply(self):
+        handle=self.start();self.control.claim(handle)
+        with patch('authoring_delivery.publish',side_effect=OSError('private OS detail')):
+            self.control.complete(handle,{'changes':[]})
+        self.assertEqual(self.control.operation({'action':'poll','handle':handle})['stage'],'complete')
+
+    def test_own_key_cannot_sign_a_learned_foreign_nonce_to_access_its_record(self):
+        handle=self.start();self.control.claim(handle);self.control.complete(handle,{'changes':[],'message':'private fixture'});self.control.release(handle)
+        path=Path(self.control.path(handle));before=path.read_bytes();reply=Path(str(path)+'.reply').read_bytes();nonce=handle.split(':')[0]
+        for user,token in [('other','fixture-session'),('fixture-user','other-session')]:
+            other=AuthoringProgress(user,token,self.tmp.name,lambda:self.now)
+            forged=nonce+':'+other.sign(nonce)
+            for action in ('poll','result','ack','cancel'):
+                with self.assertRaises(ProviderError) as error:other.operation({'action':action,'handle':forged})
+                self.assertEqual(error.exception.status,403)
+            for operation in (lambda:other.claim(forged),lambda:other.check(forged,'failed'),lambda:other.complete(forged,{'changes':[]})):
+                with self.assertRaises(ProviderError) as error:operation()
+                self.assertEqual(error.exception.status,403)
+            other.release(forged)
+            self.assertEqual(path.read_bytes(),before);self.assertEqual(Path(str(path)+'.reply').read_bytes(),reply)
 
 
 class QuickEditTests(unittest.TestCase):

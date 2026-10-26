@@ -87,6 +87,8 @@ class PreviewJobs:
             return {'state': 'running'}
         # Results are POSTed so count is applied by both supported v2 endpoints.
         result = self.runtime.request(path + '/results', 'POST', {'count': str(ROWS + 1), 'offset': '0'})
+        if result.get('resultsPending') is True:
+            return {'state': 'running'}
         errors = [m for m in result.get('messages', []) if m.get('type') in ('ERROR', 'FATAL')]
         if errors:
             raise ProviderError('The preview search failed. ' + search_feedback(' '.join(str(m.get('text', '')) for m in errors)), 422, 'preview_failed')

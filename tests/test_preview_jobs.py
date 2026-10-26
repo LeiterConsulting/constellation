@@ -83,3 +83,25 @@ class PreviewJobTests(unittest.TestCase):
         runtime = JobRuntime(); runtime.messages = [{'type':'WARN','text':'PRIVATE upstream warning'}]
         result = runtime.preview({'query':'| makeresults'})
         self.assertEqual(result['state'],'partial'); self.assertNotIn('PRIVATE',json.dumps(result))
+
+    def test_ready_job_with_pending_results_is_polled_without_redispatch(self):
+        runtime=JobRuntime(); original=runtime.request; pending=[True,True,False]
+        def request(path,method='GET',fields=None,optional=False):
+            if path.endswith('/results') and pending.pop(0):
+                runtime.calls.append((path,method,fields));return {'resultsPending':True}
+            return original(path,method,fields,optional)
+        runtime.request=request
+        with patch('preview_jobs.time.sleep'):
+            result=runtime.preview({'query':'| makeresults'})
+        self.assertEqual(result['state'],'complete')
+        self.assertEqual(sum(path.endswith('/jobs') for path,_,_ in runtime.calls),1)
+        self.assertEqual(sum(path.endswith('/results') for path,_,_ in runtime.calls),3)
+        self.assertEqual(runtime.calls[-1][2],{'action':'cancel'})
+
+    def test_pending_results_exhaust_existing_deadline_and_cancel(self):
+        runtime=JobRuntime(); original=runtime.request
+        runtime.request=lambda path,*args,**kwargs: {'resultsPending':True} if path.endswith('/results') else original(path,*args,**kwargs)
+        with patch('preview_jobs.time.monotonic',side_effect=[0,0,10]),patch('preview_jobs.time.sleep'):
+            with self.assertRaises(ProviderError) as error:runtime.preview({'query':'| makeresults'})
+        self.assertEqual(error.exception.code,'preview_timeout')
+        self.assertEqual(runtime.calls[-1][2],{'action':'cancel'})

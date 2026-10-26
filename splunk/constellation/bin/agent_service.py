@@ -426,6 +426,10 @@ class AgentService:
                 raw_actions = budget.actions(result['changes'], proposal.document)
                 compiled = compile_actions(proposal.document, raw_actions, profile, table_receipt)
                 draft = proposal.stage(compiled)
+                if profile:
+                    from formatting_syntax import selected_table_syntax
+                    separators = selected_table_syntax(draft, document, body.get('selected', ''))
+                    if separators: draft = proposal.stage(separators)
                 result['changes'] = proposal.changes
                 next_purposes = proposed_purposes(raw_actions, next_purposes, draft)
                 validate_features(draft, document, environment)

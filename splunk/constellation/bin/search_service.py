@@ -84,6 +84,8 @@ def read_only_query(query, language='spl'):
 def search_feedback(message):
     """Classify native diagnostics without forwarding bodies, query literals or tokens."""
     text = message.lower()
+    if 'evalcommand' in text:
+        return 'Correct the eval expression. Separate multiple field assignments with commas; preserve the verified aggregation, aliases and selected query scope.'
     for patterns, feedback in (
         (('number of wildcards', 'empty field specifier'), 'Avoid empty aggregate field specifiers. In SPL, event counts use count AS alias without parentheses; other aggregate functions need verified fields.'),
         (('unknown search command', 'unknown command'), 'Remove or replace an unknown search command using the supported read-only subset.'),
@@ -137,8 +139,16 @@ class SearchService:
             resource, _, query = path.partition('?')
             parameters = {'output_mode': 'json', 'count': '100'}
             parameters.update(parse_qsl(query, keep_blank_values=True))
-            _, raw = splunk.rest.simpleRequest(resource, sessionKey=self.token, method=method,
+            response, raw = splunk.rest.simpleRequest(resource, sessionKey=self.token, method=method,
                 getargs=parameters, postargs=fields, raiseAllErrors=True, timeout=self.request_timeout)
+            # A finalized job can briefly report readiness before its results
+            # endpoint supplies a body. 204 is pending, never an empty result or
+            # invalid SPL. Only the owned preview-results reader handles it.
+            results = self.namespace + '/search/v2/jobs/'
+            if (str(response.get('status')) == '204' and method == 'POST'
+                    and resource.startswith(results)
+                    and re.fullmatch(r'[A-Za-z0-9_.-]{1,200}/results', resource[len(results):])):
+                return {'resultsPending': True}
             return json.loads(raw)
         except Exception as error:
             status = str(getattr(error, 'statusCode', ''))

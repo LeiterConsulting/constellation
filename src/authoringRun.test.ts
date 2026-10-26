@@ -34,4 +34,39 @@ describe('authoring lifecycle', () => {
     await expect(run).resolves.toMatchObject({message:'Ready'});
     expect(progressLabel({stage:'repair',seconds:4,events:[{stage:'repair',seconds:4,attempt:2}]})).toContain('request 2 of 3');
   });
+  it('recovers a completed reply when author REST delivery stalls, without replay', async () => {
+    vi.useFakeTimers();const controller=new AbortController();const progress=vi.fn();
+    const reply={revision:4,changes:[],message:'Validated'};
+    const request=vi.fn((action,body)=>action==='author'?new Promise(()=>{}):Promise.resolve(body.action==='start'?{handle:'fixture',events:[],stage:'queued',seconds:0}:body.action==='result'?{available:true,reply}:{events:[],stage:'complete',seconds:5}));
+    const run=authoringRun({revision:4},controller.signal,progress,request as typeof providerRequest);
+    await vi.advanceTimersByTimeAsync(500);
+    await expect(run).resolves.toEqual(reply);
+    expect(request.mock.calls.filter(([action])=>action==='author')).toHaveLength(1);
+    expect(request.mock.calls.some(([,body])=>body.action==='ack')).toBe(true);
+    expect(request.mock.calls.some(([,body])=>body.action==='cancel')).toBe(false);
+    expect(progressLabel({stage:'complete',seconds:5,events:[]})).toBe('Receiving dashboard changes');
+  });
+  it('discards a recovered reply arriving after Stop', async () => {
+    vi.useFakeTimers();const controller=new AbortController();const result=deferred<unknown>();const completion=deferred<unknown>();
+    const request=vi.fn((action,body)=>action==='author'?completion.promise:body.action==='result'?result.promise:Promise.resolve(body.action==='start'?{handle:'fixture',events:[],stage:'queued',seconds:0}:{events:[],stage:'complete',seconds:3}));
+    const run=authoringRun({},controller.signal,vi.fn(),request as typeof providerRequest);
+    await vi.advanceTimersByTimeAsync(500);controller.abort();result.resolve({available:true,reply:{changes:[]}});completion.resolve({changes:[]});
+    await expect(run).rejects.toMatchObject({name:'AbortError'});
+    expect(request.mock.calls.some(([,body])=>body.action==='ack')).toBe(false);
+  });
+  it('recovers an already completed reply after immediate response loss', async () => {
+    const controller=new AbortController();const reply={revision:8,changes:[],message:'Validated'};
+    const request=vi.fn((action,body)=>action==='author'?Promise.reject(new Error('synthetic response loss')):Promise.resolve(body.action==='start'?{handle:'fixture',events:[],stage:'queued',seconds:0}:body.action==='result'?{available:true,reply}:{}));
+    await expect(authoringRun({revision:8},controller.signal,vi.fn(),request as typeof providerRequest)).resolves.toEqual(reply);
+    expect(request.mock.calls.filter(([action])=>action==='author')).toHaveLength(1);
+    expect(request.mock.calls.some(([,body])=>body.action==='ack')).toBe(true);
+    expect(request.mock.calls.some(([,body])=>body.action==='cancel')).toBe(false);
+  });
+  it('retains the original failure when no completed reply exists', async () => {
+    const controller=new AbortController();const failure=new Error('synthetic original failure');
+    const request=vi.fn((action,body)=>action==='author'?Promise.reject(failure):Promise.resolve(body.action==='start'?{handle:'fixture',events:[],stage:'queued',seconds:0}:{available:false}));
+    await expect(authoringRun({},controller.signal,vi.fn(),request as typeof providerRequest)).rejects.toBe(failure);
+    expect(request.mock.calls.filter(([action])=>action==='author')).toHaveLength(1);
+    expect(request.mock.calls.some(([,body])=>body.action==='cancel')).toBe(true);
+  });
 });

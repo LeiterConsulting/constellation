@@ -2,6 +2,7 @@
 import copy
 import json
 import re
+import math
 from provider_service import ProviderError
 from page_service import LINK_ACTION, BUTTON_ACTION, BUTTON_MIN_HEIGHT, compile_link, compile_button
 from studio_contract import apply_changes
@@ -41,15 +42,22 @@ ACTION_SCHEMA = {'anyOf': [COMPOSE_ACTION, LEGACY_CHANGE, DASHBOARD_ACTION, SEAR
 
 
 def validate_chart_placement(document, previous):
-    """Reject newly introduced chart collisions, preserving imported overlays."""
+    """Reject newly introduced clipping/collisions, preserving imported overlays."""
     static = {'splunk.markdown', 'splunk.richtext', 'splunk.rectangle', 'splunk.ellipse', 'splunk.image'}
     layout = document.get('layout', {})
     old_layout = previous.get('layout', {})
     pages = layout.get('layoutDefinitions') or {'legacy': layout}
     old_pages = old_layout.get('layoutDefinitions') or {'legacy': old_layout}
+    def declared(bounds):
+        return all(type(bounds.get(key)) in (int, float) and math.isfinite(bounds[key]) and bounds[key] > 0 for key in ('width', 'height'))
+    def inside(position, bounds):
+        return (declared(bounds) and all(type(position.get(key)) in (int, float) and math.isfinite(position[key]) for key in ('x','y','w','h'))
+                and position['x'] >= 0 and position['y'] >= 0 and position['w'] > 0 and position['h'] > 0
+                and position['x'] + position['w'] <= bounds['width'] and position['y'] + position['h'] <= bounds['height'])
     for page_id, page in pages.items():
         if page.get('type') != 'absolute': continue
         old_positions = {item.get('item'): item.get('position') for item in old_pages.get(page_id, {}).get('structure', [])}
+        bounds, old_bounds = page.get('options', {}), old_pages.get(page_id, {}).get('options', {})
         charts = []
         for item in page.get('structure', []):
             identifier, position = item.get('item'), item.get('position', {})
@@ -57,6 +65,14 @@ def validate_chart_placement(document, previous):
             # Decorative backgrounds and intentionally conditional layers can overlap.
             if not chart or chart.get('type') in static or chart.get('containerOptions', {}).get('visibility'): continue
             if not all(isinstance(position.get(key), (int, float)) for key in ('x', 'y', 'w', 'h')): continue
+            moved = position != old_positions.get(identifier)
+            newly_clipped = inside(position, old_bounds) and not inside(position, bounds)
+            if declared(bounds) and (moved or newly_clipped) and not inside(position, bounds):
+                width = max(bounds['width'], position['x'] + position['w'])
+                height = max(bounds['height'], position['y'] + position['h'])
+                raise ProviderError('Keep changed charts and inputs inside the page canvas. Page ' + str(page_id)[:100] +
+                    ' clips ' + str(identifier)[:100] + '. Grow its canvas to at least ' + format(width, '.15g') +
+                    ' wide by ' + format(height, '.15g') + ' high, or correct the rectangle using nonnegative positions and positive sizes. Preserve unrelated items.', 422, 'layout_bounds')
             if chart.get('type') == 'input.button' and position != old_positions.get(identifier) and position['h'] < BUTTON_MIN_HEIGHT:
                 raise ProviderError('Give native Studio button inputs at least 80 pixels of height so their labels are visible: ' + identifier)
             charts.append((identifier, position))

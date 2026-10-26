@@ -118,3 +118,13 @@ No draft, connection or native-dashboard migration is needed. The guide is infor
 ## 0.14.2 formatting recovery
 
 Draft schema remains 3. Reject new or modified authoring-only `options.formatTable` properties rather than silently saving an option Studio ignores. Preserve unchanged imported/native properties and unrelated work. The narrow no-new/no-deleted-column phrase handling in `table_format.py` must not hide a subsequent positive calculation or layout request. Keep the existing model-call/time budgets and verify the actual native timestamp display after repair; source/readback validity alone is insufficient.
+
+## 0.18 delivery and native readiness
+
+No draft/provider/native-dashboard migration is required. Keep validated reply storage in `authoring_delivery.py`, separate from progress receipts and private drafts. Requalify session isolation, one-use execution claims, Stop races, expiry/acknowledgement, cache-pressure fallback and original-response loss whenever changing this boundary. Replies may contain sensitive dashboard/SPL content; retain restrictive files, bounded local storage and no logging. This search-head-local mechanism does not establish cluster routing or durable jobs.
+
+Only an owned preview-results HTTP 204 is pending. Do not generalize that case into successful empty output, invalid-response acceptance, extra job dispatches or retries of author/provider POSTs. Compact creation's two-page schema obligation is also checked for schema-ignoring adapters; general composition and advanced native contracts retain their existing bounds.
+
+Keep separator normalization separate in `formatting_syntax.py`: it must consume the entire eval command as supported self-formatters before inserting missing commas. Never extend it to unknown expressions or rewrite a shared/unchanged source. Add syntax-ambiguity fixtures and actual-query checks for each extension; native validation remains mandatory.
+
+Absolute-page placement validation now covers changed native geometry and newly introduced clipping from canvas shrinkage. Keep those checks separate from decoration/conditional-layer and unchanged-import preservation. Requalify moved-table visibility against actual DOM rectangles and native Studio, not just source readback; a structurally valid native definition can still clip in the preview.

@@ -1,8 +1,9 @@
 """Ephemeral stage receipts and cooperative stop, confined to this search head.
 
-No prompts, definitions, credentials, results or provider errors are stored. A
+No prompts, definitions, credentials, results or provider errors are in receipts. A
 session-signed handle authorizes one execution; short control requests run in a
-separate persistconn driver so inference cannot block polling or Stop.
+separate persistconn driver so inference cannot block polling or Stop. A separate
+bounded private reply file supports delivery recovery, with the same handle/expiry.
 """
 import fcntl
 import hashlib
@@ -14,6 +15,7 @@ import secrets
 import time
 from contextlib import contextmanager
 from provider_service import ProviderError
+import authoring_delivery as delivery
 
 STAGES = {'queued', 'inspect', 'profile', 'model', 'validate', 'search', 'repair', 'complete', 'failed', 'cancelled'}
 TERMINAL = {'complete', 'failed', 'cancelled'}
@@ -51,6 +53,7 @@ class AuthoringProgress:
         except (FileNotFoundError, ValueError):
             raise ProviderError('This authoring request expired. Your draft is preserved.', 410, 'author_expired') from None
         if result['expires'] <= self.clock():
+            delivery.discard(path)
             raise ProviderError('This authoring request expired. Your draft is preserved.', 410, 'author_expired')
         return result
 
@@ -58,6 +61,15 @@ class AuthoringProgress:
         # Readers/writers share the lock; no partially written receipt is read.
         fd = os.open(path, os.O_CREAT | os.O_TRUNC | os.O_WRONLY, 0o600)
         with os.fdopen(fd, 'w') as target: json.dump(state, target)
+
+    def owned(self, path):
+        state = self.read(path)
+        # A caller can know its own native session key. A signature made with
+        # that key for a learned foreign nonce must not authorize that record.
+        owner = state.get('owner')
+        if not isinstance(owner, str) or not hmac.compare_digest(owner, self.sign('owner')):
+            raise ProviderError('This authoring request is unavailable to this session.', 403)
+        return state
 
     def operation(self, body):
         action = body.get('action')
@@ -70,6 +82,7 @@ class AuthoringProgress:
                     path = os.path.join(self.root, name)
                     try: state = self.read(path)
                     except ProviderError:
+                        delivery.discard(path)
                         os.unlink(path)
                         continue
                     total += 1
@@ -83,10 +96,15 @@ class AuthoringProgress:
                 self.write(self.path(handle), state)
                 return {'handle': handle, **self.public(state)}
             path = self.path(body.get('handle'))
-            state = self.read(path)
+            state = self.owned(path)
             if action == 'cancel':
-                if state['stage'] not in TERMINAL: self.stage(state, 'cancelled', 0)
+                if state['stage'] not in ('failed', 'cancelled'): self.stage(state, 'cancelled', 0)
+                delivery.discard(path)
                 self.write(path, state)
+            elif action == 'result':
+                if state['stage'] == 'cancelled': self.cancelled()
+                return delivery.retrieve(path) if state['stage'] == 'complete' else {'available': False}
+            elif action == 'ack': delivery.discard(path)
             elif action != 'poll': raise ProviderError('Choose a valid authoring control action.')
             return self.public(state)
 
@@ -102,7 +120,7 @@ class AuthoringProgress:
     def claim(self, handle):
         path = self.path(handle)
         with self.locked():
-            state = self.read(path)
+            state = self.owned(path)
             if state['stage'] == 'cancelled': self.cancelled()
             if state['claimed']: raise ProviderError('This authoring request has already started. It cannot be replayed.', 409)
             state['claimed'] = True
@@ -112,7 +130,7 @@ class AuthoringProgress:
     def check(self, handle, stage=None, attempt=0):
         path = self.path(handle)
         with self.locked():
-            state = self.read(path)
+            state = self.owned(path)
             if state['stage'] == 'cancelled': self.cancelled()
             if stage:
                 self.stage(state, stage, attempt)
@@ -120,10 +138,22 @@ class AuthoringProgress:
 
     def release(self, handle):
         with self.locked():
-            try: state = self.read(self.path(handle))
+            try: state = self.owned(self.path(handle))
             except ProviderError: return
             state['finished'] = True
             self.write(self.path(handle), state)
+
+    def complete(self, handle, reply):
+        with self.locked():
+            path = self.path(handle)
+            state = self.owned(path)
+            if state['stage'] == 'cancelled': self.cancelled()
+            if not state['claimed'] or state.get('finished') or state['stage'] in TERMINAL:
+                raise ProviderError('This authoring request cannot be completed again.', 409)
+            try: delivery.publish(self, path, state, reply)
+            except OSError: pass  # Original REST delivery still works without a cache.
+            self.stage(state, 'complete', 0)
+            self.write(path, state)
 
     @staticmethod
     def cancelled():
