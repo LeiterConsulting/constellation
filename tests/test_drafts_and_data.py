@@ -166,7 +166,7 @@ class DataGroundingTests(unittest.TestCase):
         source['options']['query']='search index="fixture_index" | stats count'
         document['visualizations']={'kpi':{'type':'splunk.singlevalue','dataSources':{'primary':'count'},'options':{'majorValue':"> primary | seriesByName('invented') | lastPoint()"}}}
         document['layout']={'type':'absolute','structure':[{'item':'kpi','type':'block'}]}
-        with self.assertRaisesRegex(ProviderError,'missing or empty'): service.validate_searches(document,{},profile)
+        with self.assertRaisesRegex(ProviderError,'missing output'): service.validate_searches(document,{},profile)
         document['visualizations']['kpi']['options']['majorValue']=42
         with self.assertRaisesRegex(ProviderError,'constant sample'): service.validate_searches(document,{},profile)
     def test_real_data_charts_need_explicit_sources_and_page_placement(self):

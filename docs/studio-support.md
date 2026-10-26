@@ -88,3 +88,6 @@ Selected SPL table edits receive verified output-field/type metadata. Explicit t
 ## Visible table metrics
 
 An explicit new aggregate alias requested for a selected table must appear in the verified search output and in its explicit `frameBySeriesNames` projection. Validation supplies repair feedback when the query calculates the metric but the table hides it. This narrow check recognizes simple aggregate expressions with `AS` aliases; it is not a general natural-language correctness proof. Explicit hidden/helper work and unchanged imported definitions are preserved. Native field existence, query scope, formatting and interaction checks still apply.
+
+
+Sparse output: declared empty SPL columns may remain visible when conservative provenance connects them to inspected inputs, including a masked measurement followed by supported aggregation/formatting. A missing alias or unverified input still fails validation. This nullable-output exception does not qualify general SPL2 transformations or complete dataset coverage. Partial raw previews keep their native full query; the preview cap must not be compiled into a `head` or aggregation merely to hide partial status.

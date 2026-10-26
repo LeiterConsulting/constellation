@@ -5,11 +5,51 @@ other chart conversions use normal model authoring and validation.
 """
 import json
 import re
+import copy
 from studio_contract import apply_changes
+
+
+def full_width_table(prompt, document, selected):
+    """Exact two-chart placement, without asking inference to rebuild a page."""
+    match = re.fullmatch(r'Make only this selected summary table full width below the trend(?: on ([^.!?]+))?\. '
+                         r'Keep its existing height and every query, column, page, drilldown and other element unchanged\.'
+                         r'(?: Grow the ([^.!?]+) canvas height if needed to contain the moved table\.)?', prompt, re.I)
+    if not match or document['visualizations'][selected].get('type') != 'splunk.table': return None
+    layout = document.get('layout', {})
+    pages = [(key, page) for key, page in layout.get('layoutDefinitions', {}).items()
+             if any(item.get('item') == selected for item in page.get('structure', []))]
+    if len(pages) != 1: return None
+    page_id, page = pages[0]
+    label = next((tab.get('label') for tab in layout.get('tabs', {}).get('items', []) if tab.get('layoutId') == page_id), None)
+    if any(name and (not isinstance(label, str) or name.casefold() != label.casefold()) for name in match.groups()): return None
+    items = page.get('structure', [])
+    if page.get('type') != 'absolute' or len(items) != 2: return None
+    other = next((item for item in items if item.get('item') != selected), None)
+    if not other: return None
+    charts = [document['visualizations'].get(item.get('item'), {}) for item in items]
+    if document['visualizations'].get(other.get('item'), {}).get('type') not in ('splunk.line', 'splunk.area', 'splunk.column'): return None
+    if any(chart.get('containerOptions', {}).get('visibility') for chart in charts): return None
+    bounds = page.get('options', {})
+    if any(type(bounds.get(key)) is not int or not 40 < bounds[key] <= 20000 for key in ('width', 'height')): return None
+    if any(type(item.get('position', {}).get(key)) is not int for item in items for key in ('x', 'y', 'w', 'h')): return None
+    index = next(i for i, item in enumerate(items) if item.get('item') == selected)
+    position = copy.deepcopy(items[index]['position'])
+    position.update(x=20, y=other['position']['y'] + other['position']['h'] + 20, w=bounds['width'] - 40)
+    height = max(bounds['height'], position['y'] + position['h'] + 20)
+    if height > 20000: return None
+    base = '/layout/layoutDefinitions/' + page_id.replace('~', '~0').replace('/', '~1')
+    changes = [{'op': 'set', 'path': base + '/structure/' + str(index) + '/position', 'value': json.dumps(position)}]
+    if height != bounds['height']: changes.append({'op': 'set', 'path': base + '/options/height', 'value': json.dumps(height)})
+    from authoring_actions import validate_chart_placement
+    result = apply_changes(document, changes)
+    validate_chart_placement(result, document)
+    return changes
 
 
 def quick_edit(prompt, document, selected, attachments):
     if attachments or not isinstance(selected, str) or selected not in document['visualizations']: return None
+    placement = full_width_table(prompt, document, selected)
+    if placement: return placement
     viz = document['visualizations'][selected]
     title = re.fullmatch(r'Rename only (?:this |the )?selected chart to "([^"\n]{1,200})"\.?', prompt, re.I)
     change = re.fullmatch(r'Change only this selected chart to an (area|line) chart and rename it "([^"\n]{1,200})"\. Preserve its search, page placement, interactions and every other element\.', prompt, re.I)

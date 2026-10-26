@@ -11,6 +11,23 @@ from provider_service import ProviderError
 
 
 class TypedLayoutTests(unittest.TestCase):
+    def test_plain_existing_native_structure_ids_and_kinds_are_encoded_without_other_changes(self):
+        doc=self.document();doc['visualizations']['first']={'type':'splunk.line'}
+        doc['layout']['layoutDefinitions']['layout_main']['structure']=[{'item':'first','type':'block','position':{'x':20,'y':20,'w':400,'h':300},'future':'keep'}]
+        before=copy.deepcopy(doc);base='/layout/layoutDefinitions/layout_main/structure/0/'
+        actions=[{'op':'set','path':base+'item','value':'first'},{'op':'set','path':base+'type','value':'block'},{'op':'set','path':base+'position/w','value':'600'}]
+        changes=compile_actions(doc,actions);result=apply_changes(doc,changes)
+        self.assertEqual(doc,before);self.assertEqual(result['layout']['layoutDefinitions']['layout_main']['structure'][0]['future'],'keep')
+        expected=copy.deepcopy(before);expected['layout']['layoutDefinitions']['layout_main']['structure'][0]['position']['w']=600
+        self.assertEqual(result,expected);validate_chart_placement(result,doc)
+    def test_structure_text_normalization_does_not_accept_unknown_ids_kinds_or_malformed_json(self):
+        from geometry_normalization import normalize_structure_text
+        doc=self.document();doc['visualizations']['first']={'type':'splunk.line'}
+        doc['layout']['layoutDefinitions']['layout_main']['structure']=[{'item':'first','type':'block'}]
+        base='/layout/layoutDefinitions/layout_main/structure/0/'
+        for path,value in ((base+'item','unknown'),(base+'type','unknown'),(base+'item','"broken'),(base+'position','first'),('/layout/layoutDefinitions/layout_main/structure/9/item','first'),('/visualizations/first/options/type','block')):
+            action={'op':'set','path':path,'value':value}
+            self.assertEqual(normalize_structure_text(action,doc),action)
     def test_exact_button_alias_becomes_native_handlers_without_touching_imported_properties(self):
         from input_normalization import normalize_button_actions
         handler = {'type': 'drilldown.setToken', 'options': {'tokens': [{'token': 'showNotes', 'value': 'true'}]}}

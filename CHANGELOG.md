@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.19.0 - 2026-10-26
+
+- Inspect existing-search fields in verbose mode under the same current-user, scope, time, row and resource limits; regular previews retain fast mode.
+- Keep allowlisted completion metadata on dataset profiles and show a concise partial-sample notice in the existing data dialog.
+- Retain declared all-null output columns only when conservative SPL provenance traces them to inspected fields; reject missing aliases and unverified nullable calculations without replacing missing measurements with zero.
+- Route affirmative completion claims on an unchanged blank real-data canvas through bounded recovery.
+- Normalize only known existing native structure IDs/kinds supplied as plain text, keeping layout/binding validation and unknown properties intact. Give specific chart-shape and layout-edit repair guidance.
+- Apply the exact selected-table full-width/below-trend operation locally on eligible two-chart pages, preserving unrelated work and validating canvas bounds. Ambiguous or complex requests retain normal authoring.
+- Revise recognized self-rounding in a table’s trailing pure formatting steps when changing precision, so an earlier whole-number round cannot silently defeat a later decimal-format request. Preserve intervening filters/calculations.
+- Keep each workspace URL bound to its current private draft so refresh cannot switch to another session’s most recently opened draft.
+- Keep draft schema 3, provider permissions and model/search/time budgets unchanged. Transport investigation and sparse/partial-data qualification are recorded in [validation](docs/validation.md); the historical REST delivery cause remains unconfirmed.
+
 ## 0.18.0 - 2026-10-26
 
 - Treat native HTTP 204 preview results as pending and poll the same owned job within the existing deadline, rather than misclassifying the response as invalid SPL.

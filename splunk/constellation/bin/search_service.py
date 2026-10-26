@@ -203,7 +203,13 @@ class SearchService:
         earliest = body.get('earliest', '-15m')
         if earliest not in TIME_RANGES:
             raise ProviderError('Choose a supported bounded preview time range.')
-        result = self.execute(query, earliest)
+        if body.get('fieldDiscovery') is True:
+            # Raw searches in fast mode omit fields not referenced by the SPL.
+            # Inspection needs extracted metadata, under the same job limits.
+            from preview_jobs import PreviewJobs
+            result = PreviewJobs(self).execute(query, earliest, field_discovery=True)
+        else:
+            result = self.execute(query, earliest)
         result['language'] = language
         return result
 

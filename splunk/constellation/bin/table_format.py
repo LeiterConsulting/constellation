@@ -89,7 +89,9 @@ def compile_table_format(action, document, receipt):
             raise ProviderError('Use number precision 0 to 6, or datetime precision 0.')
         assignments.append(field + '=' + ('round(' + field + ',' + str(precision) + ')' if kind == 'number' else 'strftime(' + field + ',"%Y-%m-%d %H:%M:%S %Z")'))
         seen.add(field)
-    # Appending a final eval preserves every existing output name, data source
+    from formatting_syntax import revise_tail_rounding
+    query = revise_tail_rounding(query, {column['field']: column['precision'] for column in action['columns'] if column['kind'] == 'number'})
+    # A final eval preserves every existing output name, data source
     # property, binding and handler. It adds no aggregation or invented column.
     return {'op': 'set', 'path': '/dataSources/' + source_id.replace('~', '~0').replace('/', '~1') + '/options/query',
             'value': json.dumps(query + ' | eval ' + ', '.join(assignments))}

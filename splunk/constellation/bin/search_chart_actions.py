@@ -143,8 +143,12 @@ def compile_chart(action, document):
         raise ProviderError('A typed chart needs id, chartType, title, description, sourceId, x and y.')
     key, source = identifier(action['id']), identifier(action['sourceId'])
     kind, x, y = action['chartType'], action['x'], action['y']
-    if kind not in CHART_TYPES or not isinstance(x, str) or not isinstance(y, list) or len(y) > 8:
-        raise ProviderError('Use a supported typed chart with explicit output fields.')
+    if kind not in CHART_TYPES:
+        raise ProviderError('Chart ' + key + ': chartType must be one of ' + ', '.join(CHART_TYPES) +
+                            '. To move or resize an existing chart, change only its /layout position and canvas bounds; do not rebuild the chart.')
+    if not isinstance(x, str) or not isinstance(y, list) or len(y) > 8:
+        raise ProviderError('Chart ' + key + ': x must be a string and y an array of at most 8 output field names. '
+                            'To move or resize an existing chart, change only its /layout position and canvas bounds; preserve its bindings.')
     if any(not isinstance(field, str) or not 1 <= len(field) <= 200 or any(ord(c) < 32 for c in field) for field in ([x] if x else []) + y):
         raise ProviderError('Use nonempty output field names under 200 characters for chart bindings.')
     if (kind == 'splunk.table' and x) or (kind == 'splunk.singlevalue' and (x or len(y) != 1)) or (kind not in ('splunk.table', 'splunk.singlevalue') and (not x or not y)):

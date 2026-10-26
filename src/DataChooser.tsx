@@ -68,7 +68,7 @@ export default function DataChooser({ discovery, initial, initialGoal = '', onBu
       <ControlGroup label="Time range"><Select value={scope.earliest} disabled={busy} onChange={(_event, { value }) => change({ ...scope, earliest: value as DataScope['earliest'] })}>
         {previewRanges.map(range => <Select.Option key={range.value} {...range}/>)}</Select></ControlGroup>
       <ControlGroup label="What should this dashboard help you understand?"><TextArea value={goal} disabled={busy} onChange={(_event, { value }) => setGoal(value)} rowsMin={2}/></ControlGroup>
-      {profile ? <><Muted role="status">Found {profile.fields.length} fields in a bounded sample of {profile.sampledRows} rows.</Muted>
+      {profile ? <><Muted role="status">Found {profile.fields.length} fields in a bounded sample of {profile.sampledRows} rows.{profile.completion?.state === 'partial' ? ' This sample is partial; it does not establish complete counts.' : ''}</Muted>
         <details><summary>Field details</summary><Muted>{profile.fields.map(field => field.name).join(', ')}. This sample does not establish a business definition or complete coverage.</Muted></details></> : null}
       {error ? <Message type="error">{error}</Message> : null}
       {busy ? <Muted role="status">{stage === 'build' ? 'Building your dashboard…' : 'Inspecting the selected data…'}</Muted> : null}

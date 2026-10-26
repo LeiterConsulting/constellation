@@ -97,10 +97,12 @@ class TableFormatTests(unittest.TestCase):
                 result['fields'] = [f for f in result['fields'] if f['name'] != 'mean']
                 for row in result['results']: row.pop('mean')
                 return result
-        with self.assertRaisesRegex(ProviderError, 'missing or empty output fields mean\\.') as caught:
+        with self.assertRaisesRegex(ProviderError, 'missing output fields mean\\.') as caught:
             DataService(Missing()).validate_searches(doc, previous, PROFILE)
-        self.assertNotIn('missing or empty output fields entity', str(caught.exception))
-        self.assertIn('formatTable', str(caught.exception))
+        self.assertNotIn('missing output fields entity', str(caught.exception))
+        self.assertIn('preserve the verified aggregation and aliases', str(caught.exception))
+        self.assertIn('NEW metric, add its calculation', str(caught.exception))
+        self.assertNotIn('Use formatTable', str(caught.exception))
 
     def test_invalid_format_proposal_recovers_with_verified_columns_without_rebuilding_query(self):
         from agent_service import AgentService

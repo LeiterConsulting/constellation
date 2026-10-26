@@ -44,6 +44,40 @@ def repair_query(query):
     return query
 
 
+def revise_tail_rounding(query, precisions):
+    """Revise only self-rounds in a trailing run of pure formatting evals.
+
+    Appending round(value,1) after round(value,0) cannot restore precision.
+    Never cross a filter, calculation, projection or unknown expression: earlier
+    rounding there can affect the population or other derived measurements.
+    """
+    offset = 0 if query.lstrip().startswith('|') else 2
+    parsed = '| ' + query if offset else query
+    changes = []
+    for start, end, command in reversed(list(pipeline_commands(parsed))):
+        header = re.match(r'(?i:eval)\s+', command)
+        if not header: break
+        position, assignments = header.end(), []
+        while position < len(command):
+            assignment = ASSIGNMENT.match(command, position)
+            if not assignment: break
+            assignments.append(assignment)
+            if assignment.end() == len(command): position = len(command); break
+            gap = re.match(r'\s*,\s*', command[assignment.end():])
+            if not gap or assignment.end() + gap.end() == len(command): break
+            position = assignment.end() + gap.end()
+        if not assignments or position != len(command): break
+        fixed = command
+        for assignment in reversed(assignments):
+            field = assignment[1]
+            if field in precisions and re.fullmatch(FIELD + r'\s*=\s*(?i:round)\(.*\)', assignment[0]):
+                fixed = fixed[:assignment.start()] + field + '=round(' + field + ',' + str(precisions[field]) + ')' + fixed[assignment.end():]
+        if fixed != command:
+            changes.append((start-offset, end-offset, parsed[start:end].replace(command, fixed, 1)))
+    for start, end, value in changes: query = query[:start] + value + query[end:]
+    return query
+
+
 def selected_table_syntax(document, previous, selected):
     table = document.get('visualizations', {}).get(selected, {})
     old = previous.get('visualizations', {}).get(selected, {})

@@ -6,9 +6,26 @@ from provider_service import ProviderError
 from page_service import BUTTON_MIN_HEIGHT, button_label_width
 
 
+def normalize_structure_text(action, document):
+    """Encode only known native item IDs/kinds on existing structure entries."""
+    if action.get('op') != 'set': return action
+    match = re.fullmatch(r'(/layout/(?:layoutDefinitions/[^/]+/)?structure)/(\d+)/(item|type)', str(action.get('path', '')))
+    value = action.get('value')
+    if not match or not isinstance(value, str): return action
+    try: json.loads(value);return action
+    except ValueError: pass
+    parent = document
+    for key in match[1].strip('/').split('/'):
+        parent = parent.get(key.replace('~1', '/').replace('~0', '~')) if isinstance(parent, dict) else None
+    if not isinstance(parent, list) or int(match[2]) >= len(parent): return action
+    eligible = value in ('block', 'input') if match[3] == 'type' else value in document.get('visualizations', {}) or value in document.get('inputs', {})
+    if not eligible or value.lstrip().startswith(('"', '{', '[')): return action
+    return dict(action, value=json.dumps(value))
+
+
 def normalize_structure(action, document):
     if action.get('op') != 'set' or not re.fullmatch(r'/layout/(?:layoutDefinitions/[^/]+/)?structure', str(action.get('path', ''))):
-        return action
+        return normalize_structure_text(action, document)
     try: items = json.loads(action.get('value', ''))
     except (ValueError, TypeError): return action
     keys = {'id', 'kind', 'x', 'y', 'w', 'h'}

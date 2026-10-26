@@ -4,7 +4,7 @@ A conversational canvas for creating and editing **Splunk Dashboard Studio** das
 
 Describe an operational question, choose data available to your Splunk user, and watch a dashboard take shape. Select a chart, input or page to refine it through chat. Start from a blank canvas, an existing Studio definition, or an image/PDF reference when the selected provider supports it.
 
-**Status: 0.18.0 development preview.** This is a new codebase, separate from Splunk Dashboard Generator. It is not a production release or Splunk Cloud certified app. The repository is currently private and is being prepared for a future public release.
+**Status: 0.19.0 development preview.** This is a new codebase, separate from Splunk Dashboard Generator. It is not a production release or Splunk Cloud certified app. The repository is currently private and is being prepared for a future public release.
 
 ## What works today
 
@@ -37,7 +37,7 @@ npm run dev -- --port 5178
 
 Open the local URL printed by Vite. Standalone mode demonstrates the canvas and authored example data; provider Settings, live Splunk searches, server-backed drafts and native saves require an installed Splunk app.
 
-The package is written to `artifacts/constellation-0.18.0.tgz`, with its digest in `artifacts/SHA256SUMS`. Build artifacts and dependencies are not committed. See [installation](docs/installation.md) to install the package and configure a provider in the app.
+The package is written to `artifacts/constellation-0.19.0.tgz`, with its digest in `artifacts/SHA256SUMS`. Build artifacts and dependencies are not committed. See [installation](docs/installation.md) to install the package and configure a provider in the app.
 
 ## Compatibility and boundaries
 
@@ -49,7 +49,7 @@ Multi-page actual-data creation and focused edits have been exercised through Op
 
 0.16 hardens opt-in shared AITK inference and adds owner-only OpenAI key handling. A non-admin author completed the two-page sensor creation/edit/native-save journey through all three providers without credential-store permissions. Shared AITK requires protected connection metadata and a trusted execution owner; actual data searches and persistence retain the author's permissions. A fresh [independent agent source review](docs/security-review.md) found no remaining actionable issue in the reviewed patches. Deployment review and Cloud/cluster acceptance remain separate gates. See [AITK setup](docs/aitk-setup.md), [validation](docs/validation.md) and the [qualification protocol](docs/provider-qualification.md).
 
-0.18 adds bounded recovery of validated replies when original delivery stalls, handles pending native search results and removes an avoidable compact-creation repair. Focused table-formatting and canvas-bounds guards retain native validation and the existing model/time limits. The [latest qualification](docs/validation.md#0180-native-readiness-delivery-and-repeated-three-provider-flow--october-26-2026) records repeated ordinary-user tests across OpenAI, Ollama and AITK, along with the remaining 1.0 gates.
+0.19 improves existing-search field discovery, retains verified nullable measurements and makes partial inspection explicit in the existing data dialog. It also repairs narrowly recognized layout text encoding and improves validation feedback without adding controls or increasing recovery budgets. The [latest qualification](docs/validation.md#0190-sparse-partial-data-and-transport-investigation--october-26-2026) records ordinary-user checks and remaining 1.0 gates. The historical REST delivery cause remains unconfirmed; validated-reply retrieval mitigates lost delivery without replaying inference.
 
 ## Data and credentials
 

@@ -6,6 +6,7 @@ from search_service import read_only_query, TIME_RANGES
 from token_service import resolve_query_tokens, validate_wildcard_filters
 from search_scope import scoped_suffix
 from population_guard import validate_populations
+from search_evidence import sample_completion, empty_columns, verified_null_columns
 
 
 def spl_literal(value):
@@ -37,12 +38,13 @@ class DataService:
         if earliest not in TIME_RANGES: raise ProviderError('Choose one of the supported preview time ranges.')
         if body.get('query'):
             query, language = body['query'], body.get('language', 'spl')
-            result = self.runtime.preview({'query': resolve_query_tokens(query, self.document, self.tokens), 'language': language, 'earliest': earliest})
+            result = self.runtime.preview({'query': resolve_query_tokens(query, self.document, self.tokens), 'language': language, 'earliest': earliest, 'fieldDiscovery': True})
             if not result['results'] and result.get('state') == 'partial':
                 raise ProviderError('The sample stopped before completion. No absence of data was established; simplify the existing search or retry.', 422, 'profile_partial')
             fields = []
             for entry in result['fields'][:60]:
                 name = entry['name']
+                if name in ('_raw', '_cd', '_bkt', '_serial'): continue
                 values = [row[name] for row in result['results'] if row.get(name) not in (None, '')]
                 numeric = 0
                 for value in values:
@@ -51,7 +53,8 @@ class DataService:
                 fields.append({'name': name, 'numeric': bool(values) and numeric == len(values), 'present': len(values)})
             return {'scope': {'query': query, 'language': language, 'earliest': earliest}, 'baseQuery': query,
                     'fields': fields, 'sampledRows': len(result['results']), 'bounded': True,
-                    'note': 'Field types are inferred from bounded search results. Values are not included in model context.'}
+                    'completion': sample_completion(result),
+                    'note': 'Field types are inferred from a bounded sample, not complete source coverage. Partial samples cannot prove absence or complete counts. Values are excluded from model context.'}
         index, sourcetype = body.get('index'), body.get('sourcetype', '')
         catalog = self.runtime.datasets()
         if not isinstance(index, str) or index not in {item['name'] for item in catalog['indexes']}:
@@ -76,7 +79,8 @@ class DataService:
             fields.insert(0, {'name': '_time', 'numeric': True, 'present': sampled})
         return {'scope': {'index': index, 'sourcetype': sourcetype, 'earliest': earliest, 'language': 'spl'},
                 'baseQuery': base, 'fields': fields[:60], 'sampledRows': max([f['present'] for f in fields] or [0]),
-                'bounded': True, 'note': 'Field metadata from at most 200 recent events and 5 seconds of search. Event values are excluded.'}
+                'bounded': True, 'completion': sample_completion(result),
+                'note': 'Field metadata from at most 200 recent events and 5 seconds, not complete source coverage. Partial samples cannot prove absence or complete counts. Event values are excluded.'}
 
     def resolve_query(self, document, identifier, seen=None):
         seen = set() if seen is None else seen
@@ -190,10 +194,15 @@ class DataService:
             fields = [field['name'] for field in result['fields']]
             # Successful filtered searches can legitimately have no matches. In
             # particular, zero statistical outliers must not reject other panels.
-            usable[identifier] = ({field for field in fields if any(row.get(field) not in (None, '', []) for row in result['results'])}
-                                  if result['results'] else None)
+            # A returned column can be entirely null in sparse data or after a
+            # measurement exclusion. Its schema still supports a native binding;
+            # never invent a replacement value or reject it as an absent alias.
+            empty = empty_columns(fields, result['results'])
+            nullable = verified_null_columns(self.resolve_query(document, identifier)[0], language, profile) if empty else set()
+            usable[identifier] = (set(fields) - set(empty)) | (set(empty) & nullable) if result['results'] else set(fields) if fields else None
             receipts.append({'source': identifier, 'language': language, 'rows': len(result['results']),
                              'fields': fields, 'earliest': profile['scope']['earliest'], 'bounded': True, 'completion': result.get('evidence', {'state': 'unknown'}),
+                             'emptyFields': empty,
                              'status': 'partial' if result.get('state') == 'partial' else 'results' if result['results'] else 'empty'})
         for identifier, visualization in document.get('visualizations', {}).items():
             source_id = visualization.get('dataSources', {}).get('primary')
@@ -219,8 +228,8 @@ class DataService:
                         query, _language = self.resolve_query(document, source_id)
                         hint = (' A timechart BY clause creates split-series columns instead of the aggregation alias. For one combined or already-filtered trend, remove BY and keep the alias; do not invent a different field.'
                                 if re.search(r'\btimechart\b[^|]*\bby\b', query, re.I) else '')
-                        problems.append('Visualization ' + identifier[:100] + ', channel ' + channel + ', source ' + source_id[:100] + ': missing or empty output fields ' + ', '.join(missing)[:180] + '. Tested output fields: ' + ', '.join(sorted(usable[source_id]))[:300] + '.' + hint +
-                            (' For formatting, preserve the verified aggregation and aliases. Use formatTable with numeric fields from focusedSourceReceipt; omit absent columns. Restore its verified query first if a failed proposal rebuilt it.' if channel == 'table' else ''))
+                        problems.append('Visualization ' + identifier[:100] + ', channel ' + channel + ', source ' + source_id[:100] + ': missing output fields ' + ', '.join(missing)[:180] + '. Tested output fields: ' + ', '.join(sorted(usable[source_id]))[:300] + '.' + hint +
+                            (' Table projections must match the search output. For a requested NEW metric, add its calculation with the exact alias to the selected search before projecting it. Preserve existing columns and row-navigation fields. For formatting alone, preserve the verified aggregation and aliases.' if channel == 'table' else ''))
         if problems:
             raise ProviderError('\n'.join(problems[:16])[:10000])
         return receipts

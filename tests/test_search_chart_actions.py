@@ -16,6 +16,16 @@ def page():
     return {'op':'page','layoutId':'layout_main','label':'Overview','purpose':'Understand activity','moveItems':False,'width':1200,'height':600,'items':[{'id':'trend','kind':'block','x':20,'y':20,'w':1160,'h':400}]}
 
 class SearchChartActionTests(unittest.TestCase):
+    def test_invalid_chart_shapes_give_specific_repair_guidance_without_mutating_work(self):
+        original=blank()['definition'];before=copy.deepcopy(original)
+        for action,expected in ((chart('table'), 'chartType must be one of splunk.line'),
+                                (chart(y='count'), 'y an array of at most 8'),
+                                (chart(x=[]), 'x must be a string'),
+                                (chart(y=['field']*9), 'at most 8')):
+            with self.subTest(action=action),self.assertRaisesRegex(ProviderError,expected) as error:
+                compile_actions(original,[action],PROFILE)
+            self.assertIn('move or resize',str(error.exception))
+            self.assertEqual(original,before)
     def test_raw_native_binding_text_is_encoded_and_still_checked_against_actual_fields(self):
         doc=apply_changes(blank()['definition'],compile_actions(blank()['definition'],[{'op':'search','id':'events','pipeline':'| stats count'},chart('splunk.table','',['count']),page()],PROFILE))
         raw={'op':'set','path':'/visualizations/trend/options/table','value':'> primary | frameBySeriesNames("count")'}

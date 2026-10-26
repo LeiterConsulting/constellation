@@ -128,3 +128,20 @@ Only an owned preview-results HTTP 204 is pending. Do not generalize that case i
 Keep separator normalization separate in `formatting_syntax.py`: it must consume the entire eval command as supported self-formatters before inserting missing commas. Never extend it to unknown expressions or rewrite a shared/unchanged source. Add syntax-ambiguity fixtures and actual-query checks for each extension; native validation remains mandatory.
 
 Absolute-page placement validation now covers changed native geometry and newly introduced clipping from canvas shrinkage. Keep those checks separate from decoration/conditional-layer and unchanged-import preservation. Requalify moved-table visibility against actual DOM rectangles and native Studio, not just source readback; a structurally valid native definition can still clip in the preview.
+
+
+## 0.19 sparse and partial data
+
+No draft, native-dashboard or connection migration is required. `search_evidence.py` owns metadata-only completeness and conservative null-output provenance. Existing-query field inspection uses verbose extraction only, preserving exact scope/current-user execution, the five-second limit and the 201-row peek/200-row returned cap; ordinary previews remain fast. Do not broaden searches or increase limits to discover more fields.
+
+A declared empty output may bind only when its selected SPL suffix traces it to inspected fields through recognized transformations. Merely returning an aggregate alias does not verify a misspelled input. Unsupported syntax and SPL2 retain the ordinary repair path. Native execution, scope, measurement, output-binding and intent checks still apply; never turn excluded/missing measurements into zero. Keep empty-field metadata separate from result values and from complete coverage claims.
+
+`geometry_normalization.py` may JSON-encode only a known existing item ID or block/input kind at an existing native structure entry. It must not infer IDs, geometry or arbitrary native values. Preserve bounds/collision checks and unknown properties. `agent_feedback.py` rejects narrowly recognized affirmative completion claims on unchanged blank real-data canvases; this is not a general proof of message truthfulness.
+
+`quick_edit.py` also handles an exact selected-summary-table full-width/below-trend grammar on a single eligible two-chart absolute page. It preserves the table height and unknown properties, keeps the neighbour fixed, grows canvas height as needed and validates placement. Additional goals, files, conditional/multiple placements or ambiguous geometry fall back to ordinary authoring. Requalify the exact grammar and preservation checks when extending it; do not infer broad layout intent.
+
+Nullable provenance also recognizes the narrow aggregate `avg(eval(if(field<=number,field,null()))) AS alias` form (and its listed ordinary aggregate/comparison variants), requiring the same inspected field in the predicate and value. Different fields, unknown predicates, misspelled inputs and arbitrary nested expressions retain normal repair. The query is never rewritten by this evidence helper.
+
+Workspace activation and initial persistence retain the current private draft ID in the URL. Refresh must resolve that explicit ID before the account's most-recent-draft preference; opening another tab must not redirect an existing tab to a different draft. Data-derived `form.*` parameters are still removed during activation, and ordinary owner checks remain authoritative. No draft migration or sharing change is involved.
+
+`formatting_syntax.revise_tail_rounding` updates requested self-rounds only in trailing eval commands made entirely of recognized self-round/strftime assignments. This lets a precision increase replace earlier rounding instead of rounding an already-rounded value. It stops at any filter, calculation, projection or unknown expression. Do not extend this to semantic pipeline rewrites without independent numeric/population checks; arbitrary earlier precision loss remains outside this narrow compiler. Native execution and existing field/scope/binding checks still run.

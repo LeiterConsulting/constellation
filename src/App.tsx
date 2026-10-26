@@ -114,14 +114,15 @@ export default function App({ initialColorScheme }: { initialColorScheme: 'light
   [revision.definition, brief, messages, prompt, attachments, tokens, activeTab, selected, proposals, contextKey, activity, saved, dataContext, searches.enabled, pagePurposes, thinking]);
   const persistence = useDraftPersistence(draftId, snapshot, storageReady);
   const activate = (definition: StudioDefinition, restored?: DraftRecord, keepLibrary = false) => {
-    window.history.replaceState(window.history.state, '', cleanDashboardUrl(window.location.href));
+    const nextDraftId = restored?.id || newDraftId();
+    window.history.replaceState(window.history.state, '', workspaceLink(window.location.href, nextDraftId));
     generation.current?.abort(); generation.current = null; setThinking(false); searches.reset();
     setInputError(''); setImportError('');
     setHistory([]); setFuture([]); setCollapsed(false);setSelecting(false);
     const number = revisionRef.current.number + 1;
     const state = restored?.state;
     if (restored) persistence.adopt(restored);
-    setDraftId(restored?.id || newDraftId());
+    setDraftId(nextDraftId);
     setRevision({ number, definition }); setSelected(validFocus(definition,state?.selected || '')?state?.selected || '':'');
     setPagePurposes(state?.pagePurposes||{}); setBrief(state?.brief || { purpose: '', requirements: '' }); setDetailsOpen(false);
     navigationFocus.current=state?.tokens?.default?.constellation_focus;
@@ -142,7 +143,8 @@ export default function App({ initialColorScheme }: { initialColorScheme: 'light
     requestAnimationFrame(() => composerInput.current?.focus());
   };
   useEffect(() => {
-    window.history.replaceState(window.history.state, '', cleanDashboardUrl(window.location.href));
+    window.history.replaceState(window.history.state, '', initialRoute.current.draft
+      ? workspaceLink(window.location.href, initialRoute.current.draft) : cleanDashboardUrl(window.location.href));
     if (!isSplunk()) return;
     const controller = new AbortController();
     void providerRequest<ProviderSettings>('settings', undefined, controller.signal).then(setConnection).catch(() => { /* Settings explains connection errors on request. */ });
@@ -167,6 +169,9 @@ export default function App({ initialColorScheme }: { initialColorScheme: 'light
     })();
     return () => { controller.abort(); generation.current?.abort(); };
   }, []);
+  useEffect(() => {
+    if (storageReady && isSplunk()) window.history.replaceState(window.history.state, '', workspaceLink(window.location.href, draftId));
+  }, [draftId, storageReady]);
   useEffect(() => {
     const node = conversationElement.current;
     if (!node || collapsed) return;

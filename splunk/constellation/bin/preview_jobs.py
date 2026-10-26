@@ -47,11 +47,11 @@ class PreviewJobs:
             raise ProviderError('This preview expired. Refresh searches to run it again.', 410, 'preview_expired')
         return self.base + '/' + sid, earliest
 
-    def start(self, query, earliest):
+    def start(self, query, earliest, field_discovery=False):
         result = self.runtime.request(self.base, 'POST', {
             'search': query, 'exec_mode': 'normal', 'earliest_time': earliest, 'latest_time': 'now',
             'max_time': str(SECONDS), 'max_count': str(ROWS + 1), 'auto_finalize_ec': '10000',
-            'auto_cancel': '30', 'timeout': '60', 'adhoc_search_level': 'fast', 'allow_partial_results': 'false'})
+            'auto_cancel': '30', 'timeout': '60', 'adhoc_search_level': 'verbose' if field_discovery else 'fast', 'allow_partial_results': 'false'})
         sid = result.get('sid')
         if not isinstance(sid, str) or not re.fullmatch(r'[A-Za-z0-9_.-]{1,200}', sid):
             raise ProviderError('Splunk did not return a preview job.', 503)
@@ -113,8 +113,8 @@ class PreviewJobs:
                 'limits': {'rows': ROWS, 'seconds': SECONDS, 'earliest': earliest, 'latest': 'now'},
                 'warning': ' '.join(reasons)}
 
-    def execute(self, query, earliest):
-        handle = self.start(query, earliest)['handle']
+    def execute(self, query, earliest, field_discovery=False):
+        handle = (self.start(query, earliest, field_discovery=True) if field_discovery else self.start(query, earliest))['handle']
         try:
             deadline = time.monotonic() + 9
             while time.monotonic() < deadline:

@@ -2,9 +2,22 @@
 import copy,json,unittest,sys
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/"splunk/constellation/bin"))
-from formatting_syntax import repair_query,selected_table_syntax
+from formatting_syntax import repair_query,selected_table_syntax,revise_tail_rounding
 from studio_contract import apply_changes
 class FormattingSyntaxTests(unittest.TestCase):
+ def test_increased_precision_revises_every_self_round_in_the_pure_formatting_tail(self):
+  base='search index="fixture_index" | stats max(value) AS peak avg(other) AS mean latest(_time) AS seen BY entity'
+  tail=' | eval peak=round(peak,0), mean=round(mean,2) | eval seen=strftime(seen,"%Y|%m,%d") | eval peak=round(peak,1)'
+  expected=base+tail.replace('peak=round(peak,0)','peak=round(peak,1)')
+  self.assertEqual(revise_tail_rounding(base+tail,{'peak':1}),expected)
+  self.assertEqual(revise_tail_rounding(expected,{'peak':1}),expected)
+  self.assertEqual(revise_tail_rounding('| '+base+tail,{'peak':1}),'| '+expected)
+ def test_rounding_revision_never_crosses_a_semantic_step_or_unknown_assignment(self):
+  prefix='search index="fixture_index" | stats max(value) AS peak | eval peak=round(peak,0)'
+  for barrier in ('where peak>20','sort -peak','table peak','eval total=peak*2','eval peak=round(other,0)','eval peak=round(peak,0),'):
+   query=prefix+' | '+barrier+' | eval peak=round(peak,2)'
+   expected=prefix+' | '+barrier+' | eval peak=round(peak,1)'
+   self.assertEqual(revise_tail_rounding(query,{'peak':1}),expected,barrier)
  def test_agent_validates_corrected_query_before_accepting_without_another_model_call(self):
   from test_reliability_journey import Provider,Runtime,reply
   from test_drafts_and_data import blank

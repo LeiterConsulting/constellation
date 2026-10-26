@@ -54,3 +54,8 @@ Stop inspection in the data chooser retains your goal and data selection; a late
 The source/time button above the canvas opens preview range, change-data, refresh/pause and Search details. Complete/partial/stale evidence still describes bounded preview results. Expand Focus in the conversation for the keyboard-accessible element list, or use Select element on the canvas. Float, Dock and Hide retain their existing behavior.
 
 If the model finishes but the original response stalls, the app can receive the same validated change through its short-lived delivery channel. It does not repeat the model request. Stop still discards late changes. Delivery recovery is available only in the original session on the same search head; private drafts remain the way to resume work across sessions.
+
+
+A field inspection marked **partial** is a bounded sample, not a complete count or proof that a field is absent. Existing searches retain their exact scope. A requested temperature column can legitimately remain empty when every selected temperature is excluded; independent Wi-Fi values and event counts can still be present. Empty measurements are not replaced with zero. Inspect Search details and the selected time range before interpreting a snapshot.
+
+Each workspace keeps its own draft link. Refresh returns to that draft even if you open another draft in a different tab. Draft links still require the owning Splunk user; they do not grant access to another user.

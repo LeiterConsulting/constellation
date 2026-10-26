@@ -4,9 +4,9 @@ Constellation is a working development preview. Checked-in code and selected liv
 
 ## Current 1.0 qualification priorities
 
-The 0.18 qualification repeats ordinary-user creation and editing across all three providers on sensor, process-observation and network-response data. It targets native result readiness, validated-reply delivery and avoidable compact-creation repairs, with focused layout checks added after a browser test exposed clipping. Prior failures and exact verification boundaries remain in [validation](validation.md).
+The 0.19 qualification extends the ordinary-user provider journeys to naturally sparse sensor data and raw operational readings with partial previews. It fixes verified nullable output, existing-search discovery, trailing numeric formatting and draft identity across refreshes. Prior failed candidates and exact verification boundaries remain in [validation](validation.md).
 
-- Extend repeated provider/model trials beyond these small serial samples, including realistic load and failed upstream transports. Keep useful progress/cancellation and the current resource limits.
+- Capture a naturally failing REST request with matching client/server identifiers; the underlying delivery cause is still unknown. Extend provider/model trials beyond small serial samples, including realistic load and failed upstream transports. Keep useful progress/cancellation and the current resource limits.
 - Qualify business rules on representative operational, sparse and partial datasets, including derived fields, complex predicates and SPL2/chain semantics beyond the narrow Fahrenheit compiler.
 - Complete unaided-user, native feature/version, role/setup, accessibility/reflow, upgrade/rollback and deployment qualification. AITK on the second target remains unqualified.
 
@@ -47,4 +47,4 @@ Modules and migration contracts are described in [architecture](architecture.md)
 
 ## Latest qualification priorities
 
-Version 0.18 distinguishes a native results reader's HTTP 204 from invalid SPL, retrieves validated replies without inference replay, and requires both pages in compact creation. Narrow table-formatting normalization and canvas-bounds feedback retain native validation and existing repair budgets. These changes close specific observed failure paths; they do not prove every intermittent transport problem is solved. The underlying direct-REST delivery fault remains unidentified, while explicit original-reply suppression tests qualify the recovery path. Continue representative analytical, load, unaided-user, native-feature and deployment qualification before 1.0. The previous independent privileged-handler review does not cover the new delivery cache. See [current evidence](validation.md#0180-native-readiness-delivery-and-repeated-three-provider-flow--october-26-2026) and [security review](security-review.md).
+Version 0.19 adds sparse/partial-data regression evidence and targeted discovery, null-output, precision and refresh fixes. These changes do not establish general analytical correctness or identify the historical REST delivery cause. Keep the narrow compilers separate from arbitrary SPL/SPL2 semantics and retain exact provider/version/deployment qualification. The validated-reply cache still needs independent security/deployment review. See [current evidence](validation.md#0190-sparse-partial-data-and-transport-investigation--october-26-2026) and [security review](security-review.md).

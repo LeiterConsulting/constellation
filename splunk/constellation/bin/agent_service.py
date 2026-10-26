@@ -12,7 +12,7 @@ from data_service import DataService
 from knowledge_service import retrieve_guidance
 from authoring_actions import ACTION_SCHEMA, compile_actions, validate_chart_placement
 from scope_intent import inferred_range
-from agent_feedback import validate_data_claims, presentation_message
+from agent_feedback import validate_data_claims, presentation_message, validate_blank_claim
 from authoring_intent import validate_page_intent
 from recovery_service import RecoverySession, PendingProposal, MAX_MODEL_CALLS
 from dashboard_brief import authoring_brief
@@ -434,6 +434,7 @@ class AgentService:
                 next_purposes = proposed_purposes(raw_actions, next_purposes, draft)
                 validate_features(draft, document, environment)
                 validate_chart_placement(draft, document)
+                validate_blank_claim(result['message'], draft, document, profile)
                 if budget.phase == 'complete': validate_page_intent(prompt, result['message'], draft, document, focus, next_purposes)
                 if not profile:
                     for key, source in draft.get('dataSources', {}).items():
