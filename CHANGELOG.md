@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.19.1 - 2026-10-26
+
+- Resize the dashboard preview vertically to the space available beneath its controls, replacing the fixed 700-pixel renderer height.
+- Recalculate after window, toolbar, status and dock/float layout changes. Preserve native dashboard geometry, page state and scrolling for tall pages; keep a usable minimum height in very short windows.
+
 ## 0.19.0 - 2026-10-26
 
 - Inspect existing-search fields in verbose mode under the same current-user, scope, time, row and resource limits; regular previews retain fast mode.

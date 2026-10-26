@@ -1,5 +1,9 @@
 # Updating Constellation
 
+## 0.19.1 preview sizing
+
+No draft, native-dashboard or connection migration is needed. Preview height is presentation-only and follows the remaining viewport with a 240-pixel minimum. Preserve native canvas dimensions and Framework scrolling; resizing must not remount dashboard context, reset page/tokens/focus or trigger new searches. Recheck docked, floating, hidden and narrow layouts, expanded controls and dynamic status/save links against the installed renderer.
+
 ## 0.17 compact authoring
 
 No draft, credential or native-dashboard migration is needed. `compact_creation.py` owns the short first-draft proposal for bounded two-page text-only Ollama/AITK goals on an empty verified SPL canvas: it expands to ordinary search, chart, page, token, filter, link and button actions. It has no execution authority and does not bypass structure, original-goal, scope, measurement, binding or current-user search checks. The complete expanded proposal remains within the same 64-edit, eight-preview-source and three-model-call limits. Ordinary actions remain available for explicit geometry, advanced features, SPL2 and edits to existing work. Row links compile verified entity filters, wildcard defaults and return buttons. Containment references resolve only a declared page with exactly one source table or a declared target panel’s parent page; ambiguity still fails. Keep this short wire format separate from native export and draft schemas; future features should extend the existing guarded compilation boundary. Model-visible output metadata must match each context-capped request, including restoration of the ordinary repair allowance.

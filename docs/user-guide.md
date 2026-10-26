@@ -14,6 +14,8 @@ For a summary-table cleanup, select the table and ask: “Polish only this selec
 
 The conversation can float, dock or hide. **More** holds source, JSON export, private draft links, environment details and theme. Import an existing Studio JSON file through the workspace's **Dashboards** dialog. The optional example uses illustrative data.
 
+The preview follows the available window width and height. Tall dashboard pages scroll inside it, preserving their saved proportions. Very short windows keep a minimum usable preview and allow the workspace to scroll.
+
 ## Model limits
 
 Settings shows potential context and output-budget issues, with **Model limits and test details** for the numbers and reported test usage. A successful test means the connection returned a small valid structured response. It does not establish dashboard-creation reliability or maximum context capacity. Changing the provider, model, endpoint, connection or key clears the previous test display.

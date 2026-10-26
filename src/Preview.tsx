@@ -9,6 +9,7 @@ import { RendererFrame, Muted } from './styles';
 import type { PreviewRows } from './agent';
 import ElementFocus from './ElementFocus';
 import { navigationTarget } from './pages';
+import { usePreviewHeight } from './usePreviewHeight';
 
 class RendererBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
   state = { failed: false };
@@ -31,6 +32,7 @@ interface Props {
 }
 export default memo(function Preview({ definition, revision, tokens, activeTab, onTokens, onTab, onSelect, searchResults, searchVersion, searchMessages, selected, selecting }: Props) {
   const frame=useRef<HTMLDivElement>(null);
+  const height=usePreviewHeight(frame);
   const preview = useMemo(() => {
     const result = previewDefinition(definition, searchResults, tokens, searchMessages);
     for (const [id, visualization] of Object.entries(result.visualizations)) {
@@ -55,11 +57,11 @@ export default memo(function Preview({ definition, revision, tokens, activeTab, 
     }
   } }), [definition, onSelect]);
   const renderKey = revision + ':' + searchVersion + ':' + JSON.stringify(searchMessages);
-  return <RendererFrame ref={frame}><RendererBoundary key={renderKey}>
+  return <RendererFrame ref={frame} style={{ height }} role="region" aria-label="Dashboard preview"><RendererBoundary key={renderKey}>
     <DashboardContextProvider key={renderKey} preset={EnterprisePreset} initialDefinition={preview}
       initialTokenBinding={tokens} initialTab={activeTab} onTokenBindingChange={onTokens}
       onActiveTabChange={onTab} dashboardPlugin={plugin}>
-      <><DashboardCore width="100%" height={700} />
+      <><DashboardCore width="100%" height="100%" />
       <ElementFocus definition={definition} activeTab={activeTab} selected={selected} selecting={selecting} frame={frame} onSelect={onSelect} bindings={tokens}/>
       </>
     </DashboardContextProvider>

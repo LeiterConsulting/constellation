@@ -54,6 +54,8 @@ Authoring allows at most three model calls and sixteen unique search checks per 
 
 The preview renders a clone through the actual Dashboard Framework. Native query definitions are preserved for export; screened results are substituted into the preview clone. Presentation edits reuse the query/language/range cache, while new or changed keys execute. Refresh clears the preview cache. Native rendering, schema validity, query execution and analytical correctness remain separate acceptance checks.
 
+`usePreviewHeight.ts` measures the remaining viewport beneath the preview's controls, reserving space for status/save links and canvas padding. Resize observation handles wrapping and dynamically inserted controls; document coordinates prevent page scrolling from increasing the renderer height. The Framework fills this viewport and retains native page scrolling. Window resizing does not remount dashboard context or rewrite saved Studio dimensions.
+
 Read [support](studio-support.md) for feature boundaries and [upgrade guide](upgrade-guide.md) for extension contracts.
 
 ## Brief, versions and search lifecycle

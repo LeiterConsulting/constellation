@@ -92,7 +92,7 @@ export const FloatingLauncher = styled.div`
   position: fixed; bottom: ${v.spacingLarge}; right: ${v.spacingLarge}; z-index: 11;
 `;
 export const RendererFrame = styled.div`
-  position:relative; min-height: 420px; width: 100%; overflow: hidden; border-radius: ${v.borderRadius};
+  position:relative; min-height: 240px; width: 100%; overflow: hidden; border-radius: ${v.borderRadius};
 `;
 export const Source = styled.pre`
   color: ${v.contentColorDefault};
