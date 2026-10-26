@@ -345,7 +345,7 @@ class AgentService:
         if profile and not profile['sampledRows']:
             return {'revision': revision, 'message': 'No rows were found in the selected data and time range. Choose another dataset or a wider range to continue.',
                     'changes': [], 'suggestions': [], 'repaired': False, 'activity': ['Inspected selected dataset; no rows in bounded sample'],
-                    'model': saved['model'], 'dataContext': profile['scope'], 'searchReceipts': []}
+                    'model': saved['model'], 'dataContext': profile['scope'], 'dataProfile': profile, 'searchReceipts': []}
         context = {'request': prompt, 'definition': model_document(document),
                    'canvasState': 'blank' if not document['visualizations'] and not document.get('dataSources') else 'dashboard',
                    'environment': environment, 'nativeFeatures': feature_contract(), 'catalog': catalog, 'history': safe_history,
@@ -517,7 +517,7 @@ class AgentService:
                              *(['Built in ' + str(budget.stages) + ' internal stages; applied together'] if budget.stages > 1 else []),
                              *(['Omitted invalid optional next-step suggestions'] if suggestions_omitted else []),
                              'Validated ' + str(len(result['changes'])) + ' Studio changes'],
-                'dataContext': profile['scope'] if profile else None, 'searchReceipts': receipts,
+                'dataContext': profile['scope'] if profile else None, 'dataProfile': profile, 'searchReceipts': receipts,
                 'knowledgeSources': [{key: item[key] for key in ('id', 'title', 'source')} for item in guidance],
                 'validationNotes': validation_notes,
                 'recovery': recovery.evidence(), 'pagePurposes': next_purposes,

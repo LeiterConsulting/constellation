@@ -2,6 +2,18 @@
 from provider_service import ProviderError
 
 KINDS = ('idea', 'data', 'comparison', 'interaction', 'layout', 'refine')
+SUGGESTION_INSTRUCTIONS = '''NEXT QUESTIONS: Offer at most three useful next steps, ranked by the user's
+next unanswered decision. Each card names a current metric, field, chart or page,
+specifies a concrete change, and explains its benefit for THIS dashboard. Prefer
+an interpretable baseline, measurement coverage, a focused filter or a meaningful
+detail-page investigation when the inspected schema and current layout support it.
+Use dashboardBrief, recent conversation, current selection and page purposes.
+Respect exclusions and requests such as no tables. Avoid completed requests,
+generic polish/refine cards, invented relationships, new uninspected datasets and
+assumed units or thresholds. Metadata is not evidence of a trend or anomaly.
+If a blocking question was asked, cards can offer concise ways to answer it.
+Return [] if the user declined suggestions or no useful next step exists.
+Cards are editable requests, never executed actions or promises of a save.'''
 SUGGESTION_SCHEMA = {'type': 'object', 'properties': {
     'label': {'type': 'string', 'minLength': 1, 'maxLength': 60},
     'prompt': {'type': 'string', 'minLength': 1, 'maxLength': 1200},

@@ -38,6 +38,8 @@ class AuthoringBudgetTests(unittest.TestCase):
         self.assertEqual(SCHEMA,schema)
         self.assertEqual(request['text']['format']['schema']['properties']['suggestions']['maxItems'],1)
         self.assertIn('Never omit requested work',request['instructions'])
+        self.assertIn('NEXT QUESTIONS',request['instructions'])
+        self.assertIn('inspected schema',request['instructions'])
     def test_verified_ollama_capacity_reserves_repairs_without_guessing_aitk_limits(self):
         context={'request':'Build two pages','canvasState':'blank','history':[],'dataProfile':PROFILE}
         for provider,capacity,phase in [('ollama',32768,'complete'),('ollama',262144,'complete'),('ollama',16384,'foundation'),('ollama',None,'foundation'),('aitk',32768,'complete'),('aitk',None,'complete')]:

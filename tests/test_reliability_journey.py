@@ -37,6 +37,9 @@ class ReliabilityJourneyTests(unittest.TestCase):
         provider = Provider([reply([{'op': 'set', 'path': '/visualizations/metric/title', 'value': '"Events"'}])])
         result = AgentService(provider, Runtime()).assist({'prompt': 'Give this a clearer title', 'revision': 0, 'definition': document, 'selected': 'metric'})
         self.assertEqual(result['dataContext']['earliest'], '-1h')
+        self.assertEqual(result['dataProfile']['scope'],result['dataContext'])
+        self.assertNotIn('results',result['dataProfile'])
+        self.assertNotIn('columns',result['dataProfile'])
         self.assertEqual(document['dataSources']['events'], source)
     def test_placement_feedback_uses_exact_ids_and_free_space_without_changing_the_candidate(self):
         from repair_hints import placement_hint

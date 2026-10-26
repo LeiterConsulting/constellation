@@ -7,6 +7,8 @@ from provider_service import ProviderError
 from studio_contract import model_document
 from creation_strategy import bounded_aitk_creation, CONCISE_CREATION
 from compact_creation import COMPOSE_ACTION, COMPACT_INSTRUCTIONS, compact_goal, empty_canvas, expand_compose
+from prompt_suggestions import SUGGESTION_INSTRUCTIONS
+from search_hints import HISTOGRAM_GUIDANCE
 
 
 def omit_compose(request):
@@ -83,6 +85,10 @@ class AuthoringBudget:
             context = {key: context[key] for key in ('request', 'definition', 'canvasState', 'environment', 'history', 'focus', 'pagePurposes', 'dashboardBrief', 'modelLimits', 'dataProfile') if key in context}
             if self.provider == 'ollama':
                 request['max_output_tokens'] = 3500
+        if self.creation:
+            request['instructions'] += '\n\n' + SUGGESTION_INSTRUCTIONS
+            if context.get('dataProfile', {}).get('scope', {}).get('language', 'spl') == 'spl':
+                request['instructions'] += '\n\n' + HISTOGRAM_GUIDANCE
         if context.get('formattingOnly'):
             # The only admitted action uses these verified output fields. The
             # exact document stays on the server for compilation/validation.
@@ -144,7 +150,7 @@ class AuthoringBudget:
         """Keep the current candidate and latest feedback, not every failed reply."""
         if getattr(self, 'compact', False):
             request['text']['format']['schema'] = copy.deepcopy(self.schema)
-            request['instructions'] = self.instructions + '\n\nRepair the original goal against the supplied uncommitted candidate. Use ordinary native/typed actions; keep working configuration and correct all validation feedback. Return compact JSON.'
+            request['instructions'] = self.instructions + '\n\nRepair the original goal against the supplied uncommitted candidate. Use ordinary native/typed actions; keep working configuration and correct all validation feedback. Return compact JSON.\n\n' + SUGGESTION_INSTRUCTIONS
             if self.provider == 'ollama':
                 reported = self.context.get('modelLimits', {}).get('contextTokens')
                 capacity = min(OLLAMA_CONTEXT_TOKENS, reported) if type(reported) is int and reported > 0 else OLLAMA_CONTEXT_TOKENS

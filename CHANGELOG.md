@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.20.0 - 2026-10-26
+
+- Replace index-name starter cards with outcome-oriented questions grounded in bounded current-user field inspection. Prefer the last selected dataset within the workspace session and inspect at most three candidate scopes, with short-lived in-memory reuse and cancellation.
+- Rank public dataset activity before internal logs within the existing metadata-search limit, so internal sourcetypes cannot crowd useful datasets out of the starting shortlist.
+- Prepare starter questions directly in the editable conversation, showing the selected data/time context. Keep data selection available and preserve an already-written question when opening it.
+- Offer field-backed questions after manual inspection and preserve the grain of existing aggregate searches rather than inventing a time axis.
+- Use conversation, standing requirements and current element/page context for follow-ons. Replace generic or empty cards with concrete eligible baselines, filters, detail navigation and measurement-coverage requests; avoid exact repeats and honor declined suggestions.
+- Retain the displayed follow-ons across refreshes using the existing private draft format. Keep a failed request ready in the composer without overwriting newer unsent text, and wait for connection loading before allowing submission.
+- Strengthen creation/focused/table-edit next-step guidance while retaining focused prompt-size limits, model/search budgets, permissions, validation and draft schema 3. Field metadata returned after authoring stays separate from persisted drafts and result values.
+- Prefer explicit-width numeric histogram bins for bounded SPL previews and give specific automatic-binning timeout feedback. Preserve the original distribution request, source, population and range; do not rewrite queries or relax validation.
+
 ## 0.19.1 - 2026-10-26
 
 - Resize the dashboard preview vertically to the space available beneath its controls, replacing the fixed 700-pixel renderer height.

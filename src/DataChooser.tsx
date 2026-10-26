@@ -8,6 +8,7 @@ import TextArea from '@splunk/react-ui/TextArea';
 import { providerRequest } from './api';
 import { previewRanges, type DataDiscovery, type DataProfile, type DataScope } from './data';
 import { Actions, Muted } from './styles';
+import { datasetQuestions } from './datasetQuestions';
 
 export default function DataChooser({ discovery, initial, initialGoal = '', onBuild, onClose, returnFocus }: {
   discovery: DataDiscovery | null; initial?: DataScope | null; initialGoal?: string;
@@ -40,7 +41,7 @@ export default function DataChooser({ discovery, initial, initialGoal = '', onBu
       if (!result.sampledRows) { setError('No rows found in this time range. Choose another dataset or range.'); return; }
       if (build) {
         setStage('build');
-        const request = goal.trim() || 'Build a useful dashboard from this selected Splunk data. Show event volume over time and the most useful breakdowns justified by its verified fields. Use actual searches and no illustrative data.';
+        const request = goal.trim() || datasetQuestions(result)[0]?.prompt || 'Build a focused dashboard that answers a useful question supported by this inspected search. Preserve its output grain, use verified fields and actual searches, and ask for any missing business definitions. Do not add illustrative data.';
         await onBuild(result.scope, request); onClose();
       }
     } catch (failure) { if (turn === generation.current) setError(failure instanceof Error ? failure.message : 'Data could not be inspected.'); }
@@ -69,6 +70,7 @@ export default function DataChooser({ discovery, initial, initialGoal = '', onBu
         {previewRanges.map(range => <Select.Option key={range.value} {...range}/>)}</Select></ControlGroup>
       <ControlGroup label="What should this dashboard help you understand?"><TextArea value={goal} disabled={busy} onChange={(_event, { value }) => setGoal(value)} rowsMin={2}/></ControlGroup>
       {profile ? <><Muted role="status">Found {profile.fields.length} fields in a bounded sample of {profile.sampledRows} rows.{profile.completion?.state === 'partial' ? ' This sample is partial; it does not establish complete counts.' : ''}</Muted>
+        {datasetQuestions(profile).length ? <Actions aria-label="Questions for the selected data">{datasetQuestions(profile).map(idea => <Button key={idea.label} disabled={busy} onClick={() => setGoal(idea.prompt)}>{idea.label}</Button>)}</Actions> : null}
         <details><summary>Field details</summary><Muted>{profile.fields.map(field => field.name).join(', ')}. This sample does not establish a business definition or complete coverage.</Muted></details></> : null}
       {error ? <Message type="error">{error}</Message> : null}
       {busy ? <Muted role="status">{stage === 'build' ? 'Building your dashboard…' : 'Inspecting the selected data…'}</Muted> : null}

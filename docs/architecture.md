@@ -19,6 +19,7 @@ Provider messages, retrieved guidance, uploaded documents and indexed content ar
 | Boundary | Main implementation |
 | --- | --- |
 | Workspace and contextual chat | `src/App.tsx`, `prompts.ts`, `Preview.tsx`, `ElementFocus.tsx`, `PageManager.tsx`. |
+| Starting questions | `src/datasetQuestions.ts`, `useStarterIdeas.ts`; existing current-user `profile` endpoint. |
 | Data selection and previews | `src/DataChooser.tsx`, `useSearchPreview.ts`, `previewJobs.ts`; `data_service.py`, `search_service.py`, `preview_jobs.py`, `search_scope.py`. |
 | Provider transport, limits and modality policy | `provider_service.py`, `provider_adapters.py`, `provider_messages.py`, `model_readiness.py`, `model_capabilities.py`, `connection_store.py`. |
 | Shared AITK authority | `aitk_inference.py`, `aitk_inference_handler.py`, separate REST stanza and administrator-only `constellation_aitk.conf` policy. |
@@ -57,6 +58,16 @@ The preview renders a clone through the actual Dashboard Framework. Native query
 `usePreviewHeight.ts` measures the remaining viewport beneath the preview's controls, reserving space for status/save links and canvas padding. Resize observation handles wrapping and dynamically inserted controls; document coordinates prevent page scrolling from increasing the renderer height. The Framework fills this viewport and retains native page scrolling. Window resizing does not remount dashboard context or rewrite saved Studio dimensions.
 
 Read [support](studio-support.md) for feature boundaries and [upgrade guide](upgrade-guide.md) for extension contracts.
+
+## Starting questions and follow-ons (0.20)
+
+The blank workspace inspects at most three candidate scopes sequentially through the existing current-user field-profile endpoint. It prefers the last selected scope within that workspace session, then distinct recently active event indexes. Discovery ranks public activity before internal logs inside its existing 120-row metadata shortlist. Metric indexes and catalog-only names do not become field-backed claims. The browser reuses metadata in memory for up to five minutes between inspection runs; it is not shared or persisted. Leaving the blank workspace aborts waiting and prevents further inspections; a native search already running retains its existing resource limits. No inference call is needed to prepare starter cards.
+
+`datasetQuestions.ts` supplies conservative schema-based templates for measurements, response times, entity comparisons and outcomes. It does not infer business meaning from index names, inspect event values, assume failure status values, establish units/relationships or claim analytical findings. Primary temperature fields are distinguished from named summary fields; aggregate-only output retains its existing grain and cannot imply a time axis. An unsuitable or failed profile can yield no card. Selecting a question chooses its scope and fills the composer without starting inference or opening another form.
+
+`prompts.ts` combines optional model cards with eligible local follow-ons, using brief, recent user requests, focus and active page. Exact repeats, known generic filler and explicitly declined suggestions are omitted. This is a bounded preference/eligibility heuristic, not complete natural-language understanding. Suggestion keys include conversation and standing intent, preventing stale proposals after those change. Displayed cards persist in the existing suggestion sidecar; oversized retry text stays in the composer and conversation instead. Author replies can return their metadata-only profile for local eligibility; profiles and result caches remain outside draft snapshots. All selected suggestions execute only through the ordinary authoring, scope, query and native validators. Shared creation guidance and compact focused/format guidance preserve their existing model budgets.
+
+`search_hints.py` supplies controlled feedback when a timed-out changed SPL source uses automatic numeric `bin ... bins=N`. Creation guidance favors an explicit bin width in recorded units, or a verified summary/clarification when units are unknown. It does not rewrite searches, choose a business threshold, truncate events, expand the time range or increase preview limits. Other failures, fixed-span queries, quoted command text and SPL2 retain ordinary feedback. Native checks still decide acceptance.
 
 ## Brief, versions and search lifecycle
 

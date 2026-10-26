@@ -1,5 +1,11 @@
 # Updating Constellation
 
+## 0.20 starting questions
+
+No draft, native-dashboard or connection migration is required. Keep schema-based question templates in `datasetQuestions.ts`, bounded inspection/cache lifecycle in `useStarterIdeas.ts`, and follow-on eligibility/preferences in `prompts.ts`. They must not invent fields, assume business units/relationships, broaden the selected scope or execute a suggestion automatically. The optional author-response `dataProfile` contains the existing server-verified field metadata, never result cells, and is not persisted as a draft contract. Preserve older-client compatibility and the same validation/provider budgets. Requalify primary-versus-summary field selection, aggregate grain, stale scope/conversation invalidation, cancellation and repeated/declined suggestions when extending templates.
+
+Keep numeric-binning timeout guidance in `search_hints.py`, separate from query execution and normalization. A hint is advice for the same bounded repair loop, never a successful validation result. Preserve other errors/languages and native query/time limits; verify the suggested fixed-span search against actual data and its recorded units.
+
 ## 0.19.1 preview sizing
 
 No draft, native-dashboard or connection migration is needed. Preview height is presentation-only and follows the remaining viewport with a 240-pixel minimum. Preserve native canvas dimensions and Framework scrolling; resizing must not remount dashboard context, reset page/tokens/focus or trigger new searches. Recheck docked, floating, hidden and narrow layouts, expanded controls and dynamic status/save links against the installed renderer.

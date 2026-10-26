@@ -7,6 +7,7 @@ from token_service import resolve_query_tokens, validate_wildcard_filters
 from search_scope import scoped_suffix
 from population_guard import validate_populations
 from search_evidence import sample_completion, empty_columns, verified_null_columns
+from search_hints import preview_repair_hint
 
 
 def spl_literal(value):
@@ -25,7 +26,7 @@ class DataService:
         visible = {item['name'] for item in catalog['indexes']}
         activity, problem = [], ''
         try:
-            result = self.runtime.execute('| tstats count WHERE (index=* OR index=_internal) BY index sourcetype | sort - count | head 120', '-24h')
+            result = self.runtime.execute('| tstats count WHERE (index=* OR index=_internal) BY index sourcetype | eval priority=if(substr(index,1,1)="_",1,0) | sort priority - count | head 120 | fields index sourcetype count', '-24h')
             activity = [{'index': row['index'], 'sourcetype': str(row.get('sourcetype', ''))[:200], 'events': str(row.get('count', ''))[:30]}
                         for row in result['results'] if row.get('index') in visible]
         except ProviderError:
@@ -189,7 +190,8 @@ class DataService:
                            'earliest': profile['scope']['earliest'], 'bounded': True}
                 if error.code == 'search_scope': receipt['requiredPrefix'] = base
                 receipts.append(receipt)
-                problems.append('Source ' + identifier[:100] + ': ' + str(error)[:600])
+                hint = preview_repair_hint(source.get('options', {}).get('query'), 'spl' if source.get('type') == 'ds.search' else '', error.code)
+                problems.append('Source ' + identifier[:100] + ': ' + str(error)[:600] + (' ' + hint if hint else ''))
                 continue
             fields = [field['name'] for field in result['fields']]
             # Successful filtered searches can legitimately have no matches. In

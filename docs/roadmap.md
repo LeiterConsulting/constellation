@@ -12,6 +12,7 @@ The 0.19 qualification extends the ordinary-user provider journeys to naturally 
 
 ## Product improvements
 
+- Starting questions now use bounded field inspection and curated role-aware templates. Next, qualify their usefulness with unaided users and add verified field meaning, units, population and time coverage beyond those templates. Rank next requests by the unresolved question they answer, avoiding repetitive or already-completed work.
 - Improve first-draft analytical quality using verified field meaning, units, population and time coverage.
 - Verify related-dataset keys, grain, units and joins before suggesting comparisons.
 - Expand modular, versioned guidance and evaluate semantic retrieval within the Splunk app boundary.

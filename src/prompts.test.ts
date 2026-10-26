@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createBlank, createStarter, cleanDashboardUrl, validateDefinition } from './document';
-import { contextualPrompts, promptContextKey, instanceIdeas } from './prompts';
+import { contextualPrompts, nextSuggestions, promptContextKey, suggestionsDeclined } from './prompts';
+import { starterScopes } from './datasetQuestions';
 import { applyStudioChanges } from './agent';
 
 describe('fresh creation and contextual prompts', () => {
@@ -33,9 +34,11 @@ describe('fresh creation and contextual prompts', () => {
   it('promotes a reference or the selected chart using current context', () => {
     const doc = createStarter();
     expect(contextualPrompts(doc, 'viz_trend', 1)[0].label).toBe('Build from this reference');
+    doc.dataSources![String(doc.visualizations.viz_trend.dataSources?.primary)]={type:'ds.search',options:{query:'index=fixture | timechart bins=100 avg(latency) AS p95_ms'}};
+    doc.visualizations.viz_trend.options!.x="> primary | seriesByName('_time')";
     const focused = contextualPrompts(doc, 'viz_trend');
     expect(focused[0].reason).toContain(doc.visualizations.viz_trend.title);
-    expect(focused[0].prompt).toContain('selected chart');
+    expect(focused[0].label).toBe('Add a rolling baseline');
     expect(contextualPrompts(doc)[0].kind).toBe('data');
     expect(contextualPrompts(doc).some(prompt => prompt.kind === 'comparison')).toBe(true);
   });
@@ -51,15 +54,42 @@ describe('fresh creation and contextual prompts', () => {
     expect(promptContextKey(4, doc, '', undefined, { index:'orders',earliest:'-24h' })).not.toBe(promptContextKey(4, doc, '', undefined, { index:'orders',earliest:'-1h' }));
   });
   it('starts from instance-visible datasets and promotes public activity before internal logs', () => {
-    expect(instanceIdeas(null)).toEqual([]);
-    const ideas = instanceIdeas({ indexes: [{name:'orders',kind:'event'},{name:'_internal',kind:'event'}], status:'available', warning:'', note:'', activity:[
+    const scopes = starterScopes({ indexes: [{name:'orders',kind:'event'},{name:'_internal',kind:'event'}], status:'available', warning:'', note:'', activity:[
       {index:'_internal',sourcetype:'splunkd',events:'20000'},{index:'orders',sourcetype:'order_events',events:'100'},
     ] });
-    expect(ideas[0].scope?.index).toBe('orders'); expect(ideas[0].prompt).toContain('index=orders');
-    expect(ideas.every(idea => idea.prompt.includes('actual Splunk data'))).toBe(true);
-    expect(JSON.stringify(ideas)).not.toMatch(/museum|fictional|customer journey/i);
-    const catalogOnly = instanceIdeas({indexes:[{name:'orders',kind:'event'}],status:'available',warning:'',note:'',activity:[]});
-    expect(catalogOnly[0].label).toBe('Inspect orders');
-    expect(catalogOnly[0].reason).not.toContain('recent');
+    expect(scopes[0].index).toBe('orders');
+    expect(starterScopes({indexes:[{name:'orders',kind:'event'}],status:'available',warning:'',note:'',activity:[]})).toEqual([]);
+  });
+  it('replaces generic or empty proposals with concrete next requests and honors conversation preferences', () => {
+    const doc = createStarter();
+    doc.dataSources![String(doc.visualizations.viz_trend.dataSources?.primary)]={type:'ds.search',options:{query:'index=fixture | timechart bins=100 avg(latency) AS p95_ms'}};
+    doc.visualizations.viz_trend.options!.x="> primary | seriesByName('_time')";
+    const fallback = contextualPrompts(doc, 'viz_trend');
+    const weak = {label:'Refine this chart',prompt:'Make it better.',reason:'',kind:'refine' as const};
+    expect(nextSuggestions([weak],fallback,{})).toEqual(fallback);
+    const retry={label:'Retry your request',prompt:'Keep the original request',reason:'The prior draft is preserved.',kind:'refine' as const};
+    expect(nextSuggestions([retry],fallback,{})).toEqual([retry]);
+    expect(nextSuggestions([{label:'A focused request',prompt:'Do this',reason:'x'.repeat(220),kind:'refine'}],[],{})[0].reason).toHaveLength(200);
+    expect(nextSuggestions([],fallback,{}).length).toBeGreaterThan(0);
+    expect(nextSuggestions([],fallback,{messages:[{user:true,text:fallback[0].prompt}]})).toEqual([]);
+    expect(nextSuggestions([weak],fallback,{messages:[{user:true,text:'No more suggestions, please.'}]})).toEqual([]);
+    expect(suggestionsDeclined({messages:[{user:true,text:'No suggestions'},{user:true,text:'Show suggestions again'}]})).toBe(false);
+    expect(suggestionsDeclined({messages:['No suggestions','Rename the chart','Use an area chart','Keep this source','Make the title clearer'].map(text=>({user:true,text}))})).toBe(true);
+    const c={brief:{purpose:'Monitor the same data',requirements:'No tables'},messages:[{user:true,text:'Make it cinematic, no tables.'}]};
+    expect(contextualPrompts(doc,'',0,null,{},c).some(item=>item.label.includes('row'))).toBe(false);
+    expect(nextSuggestions([{label:'Add a summary table',prompt:'Add a summary table',reason:'Compare metrics.',kind:'data'}],[],c)).toEqual([]);
+  });
+  it('invalidates stale proposals when the conversation or standing requirements change', () => {
+    const doc=createStarter(), base=promptContextKey(1,doc,'viz_trend');
+    expect(promptContextKey(1,doc,'viz_trend',undefined,null,{messages:[{user:true,text:'Investigate missing readings'}]})).not.toBe(base);
+    expect(promptContextKey(1,doc,'viz_trend',undefined,null,{brief:{purpose:'Monitor readings',requirements:'Keep temperatures under 150°F'}})).not.toBe(base);
+    const colors=contextualPrompts(doc,'viz_trend',0,null,{}, {messages:[{user:true,text:'Change only this tile’s colors'}]});
+    expect(colors[0].prompt).toContain('every other tile unchanged');
+  });
+  it('helps answer blocking questions rather than proposing unrelated edits',()=>{
+    const doc=createStarter();
+    const units=contextualPrompts(doc,'viz_trend',0,null,{}, {messages:[{user:false,text:'Should temperatures use Fahrenheit or Celsius?'}]});
+    expect(units.map(item=>item.label)).toEqual(['Use Fahrenheit','Use Celsius']);
+    expect(contextualPrompts(doc,'viz_trend',0,null,{}, {messages:[{user:false,text:'Which service should this page investigate?'}]})).toEqual([]);
   });
 });
