@@ -186,7 +186,7 @@ def expand_compose(actions, document, profile):
             raise ProviderError('Use distinct compose page IDs and one or two columns.')
         if not isinstance(page['panels'], list) or not 1 <= len(page['panels']) <= 8:
             raise ProviderError('Give each compose page 1 to 8 panels, at most 8 total.')
-        items = [];width = 1160 if page['columns'] == 1 else 570
+        items = [];row=column=0
         for offset, panel in enumerate(page['panels']):
             exact(panel, PANEL['required']);key = identifier(panel['id'])
             if key in panels or len(panels) >= 8: raise ProviderError('Use distinct panel IDs and at most 8 charts total.')
@@ -194,9 +194,16 @@ def expand_compose(actions, document, profile):
             result.extend([{'op': 'search', 'id': 'ds_' + key, 'pipeline': without_redundant_input_casts(panel['pipeline'], profile)},
                            {'op': 'chart', 'id': key, 'chartType': panel['type'], 'title': panel['title'],
                             'description': '', 'sourceId': 'ds_' + key, 'x': panel['x'], 'y': panel['y']}])
-            items.append({'id': key, 'kind': 'block', 'x': 20 + (offset % page['columns']) * 590,
-                          'y': 20 + (offset // page['columns']) * 380, 'w': width, 'h': 360})
-        bottom = 20 + ((len(items) + page['columns'] - 1) // page['columns']) * 380
+            # Wide/all-column tables need a full row to keep their headers and
+            # values usable. This applies only to an ordinary NEW composition;
+            # existing user geometry and explicitly positioned work stay exact.
+            wide = page['columns']==1 or panel['type']=='splunk.table' and isinstance(panel['y'],list) and (not panel['y'] or len(panel['y'])>4)
+            if wide and column:row+=1;column=0
+            items.append({'id': key, 'kind': 'block', 'x': 20+column*590,
+                          'y': 20+row*380, 'w':1160 if wide else 570, 'h':360})
+            column+=page['columns'] if wide else 1
+            if column>=page['columns']:row+=1;column=0
+        bottom = 20+(row+bool(column))*380
         pages[pid] = bottom
         labels[pid] = page['label']
         result.append({'op': 'page', 'layoutId': 'layout_' + pid, 'label': page['label'], 'purpose': page['purpose'],

@@ -29,6 +29,17 @@ def compose():
 
 
 class CompactCreationTests(unittest.TestCase):
+    def test_wide_tables_occupy_a_clear_full_row_without_clipping_or_reordering_other_panels(self):
+        original=blank()['definition'];action=compose();action['links']=[]
+        wide=panel('wide','splunk.table','| stats count AS observations count AS expected count AS seen count AS total BY device_name','',['device_name','observations','expected','seen','total'])
+        action['pages']=[dict(action['pages'][0],columns=2,panels=[panel('first'),wide,panel('last')])]
+        result=apply_changes(original,compile_actions(original,[action],dict(PROFILE,fields=[{'name':'device_name'}])))
+        page=result['layout']['layoutDefinitions']['layout_main'];positions={i['item']:i['position']for i in page['structure']}
+        self.assertEqual(positions['wide']['w'],1160);self.assertEqual(positions['wide']['x'],20)
+        self.assertGreaterEqual(positions['wide']['y'],positions['first']['y']+positions['first']['h'])
+        self.assertGreaterEqual(positions['last']['y'],positions['wide']['y']+positions['wide']['h'])
+        validate_chart_placement(result,original)
+
     def test_selective_navigation_and_explicit_button_constraints_keep_native_actions(self):
         for suffix in ('Do not add a return button.','No back buttons.','Add a return button labelled "Home".','Use a named token.','Filter only one destination chart.','Put the summary table to the left of the trend.','Make the trend span both columns.'):
             self.assertFalse(compact_goal({'request':'Build two pages. '+suffix}))

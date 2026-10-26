@@ -380,7 +380,9 @@ class AgentService:
         if table_receipt: context['focusedSourceReceipt'] = table_receipt
         format_only = table_receipt and not attachments and formatting_only(prompt, focus.get('id'), document)
         row_only = row_navigation.eligible(prompt,document,focus.get('id'),profile,table_receipt,attachments)
-        if row_only: context['rowNavigationOnly'] = True
+        if row_only:
+            context['rowNavigationOnly'] = True
+            context['rowFields'] = row_navigation.row_fields(profile,table_receipt)
         if table_receipt and not format_only:
             context['tableEditing'] = 'formatTable is unavailable for this broader edit. Start with the verified existing search. Add requested calculations through search/native query edits and update explicit table projections to show requested new fields. Format new aliases with final SPL eval after aggregation if needed.'
         if format_only:
@@ -405,7 +407,7 @@ class AgentService:
                 action for action in request['text']['format']['schema']['properties']['changes']['items']['anyOf']
                 if action != TABLE_FORMAT_ACTION]
             if row_only:
-                request['text']['format']['schema']['properties']['changes']['items']['anyOf'] = [action for action in request['text']['format']['schema']['properties']['changes']['items']['anyOf'] if set(action['properties']['op']['enum']) <= row_navigation.OPS]
+                request['text']['format']['schema']['properties']['changes'].update(items=row_navigation.plan_schema(profile,table_receipt),minItems=1,maxItems=1)
         if saved['model'] in ('gpt-6-luna', 'gpt-6-astra'):
             request['reasoning'] = {'effort': 'medium' if context['canvasState'] == 'blank' else 'low'}
         budget = AuthoringBudget(saved, context)
@@ -449,8 +451,14 @@ class AgentService:
                 if not format_only and isinstance(result['changes'], list) and any(isinstance(action, dict) and action.get('op') == 'formatTable' for action in result['changes']):
                     raise ProviderError('formatTable is unavailable for this broader edit. Preserve the verified aggregation, add the requested calculation through a search/native query edit and display new output columns in the table projection. Use final SPL eval after aggregation for any requested formatting.')
                 validate_data_claims(result, profile)
+                if row_only:
+                    # A rejected new detail page is transient, not user work.
+                    # Recompile its corrected plan against the exact original;
+                    # query checks remain cached within the same recovery budget.
+                    proposal = PendingProposal(document)
+                    next_purposes = purposes
                 raw_actions = budget.actions(result['changes'], proposal.document)
-                if row_only: row_navigation.validate_actions(raw_actions,document,body.get('selected',''))
+                if row_only: raw_actions = row_navigation.expand_plan(raw_actions,document,body.get('selected',''),profile,table_receipt)
                 compiled = compile_actions(proposal.document, raw_actions, profile, table_receipt)
                 candidate = apply_changes(proposal.document, compiled)
                 isolated = isolate_selected_calculation(prompt, body.get('selected', ''), candidate, document)
@@ -495,6 +503,7 @@ class AgentService:
                     validate_features(draft, document, environment)
                     receipts = data.validate_searches(draft, document, profile)
                 validate_requested_columns(prompt, body.get('selected', ''), draft, receipts)
+                if row_only: row_navigation.validate_result(draft,document,body.get('selected',''))
                 # Newly introduced network graphs must match the target feature set.
                 for key, viz in draft['visualizations'].items():
                     if viz.get('type', '').lower() == 'splunk.networkgraph' and document['visualizations'].get(key, {}).get('type') != viz['type'] and not environment['features']['networkGraph']:

@@ -94,7 +94,8 @@ class AuthoringBudget:
             # exact document stays on the server for compilation/validation.
             context = {key: context[key] for key in ('request', 'focus', 'focusedSourceReceipt', 'formattingOnly', 'dashboardBrief', 'history', 'modelLimits') if key in context}
         if context.get('rowNavigationOnly'):
-            context = {key: context[key] for key in ('request','definition','environment','focus','focusedSourceReceipt','dataProfile','pagePurposes','dashboardBrief','history','modelLimits','rowNavigationOnly') if key in context}
+            context = {key: context[key] for key in ('request','focus','focusedSourceReceipt','dataProfile','dashboardBrief','history','modelLimits','rowNavigationOnly','rowFields') if key in context}
+            request['max_output_tokens'] = min(request['max_output_tokens'],3500)
         # A conservative estimate, not a tokenizer or a verified upstream limit.
         # Drop only rolling history; the durable brief and exact document remain.
         if self.provider == 'ollama':
@@ -151,6 +152,10 @@ class AuthoringBudget:
 
     def feedback(self, request, envelope):
         """Keep the current candidate and latest feedback, not every failed reply."""
+        if self.context.get('rowNavigationOnly'):
+            envelope = dict(envelope,recoveryFeedback={key:value for key,value in envelope.get('recoveryFeedback',{}).items() if key not in ('candidateDefinition','placementHint')},
+                            request='Return one complete corrected rowDetail plan for the same original request. The server recompiles this uncommitted detail page; never emit native or separate navigation actions.')
+            envelope['recoveryFeedback']['editsApplyTo']='original'
         if getattr(self, 'compact', False):
             request['text']['format']['schema'] = copy.deepcopy(self.schema)
             request['instructions'] = self.instructions + '\n\nRepair the original goal against the supplied uncommitted candidate. Use ordinary native/typed actions; keep working configuration and correct all validation feedback. Return compact JSON.\n\n' + SUGGESTION_INSTRUCTIONS

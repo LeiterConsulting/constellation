@@ -4,7 +4,7 @@ The opt-in shared AITK handler separates inference authority from ordinary autho
 
 Table formatting uses a verified authoring action that compiles to a final SPL `eval` against existing aggregate output fields. `formatTable` is not a native visualization option: newly introduced or changed `options.formatTable` objects are rejected with repair feedback, while unchanged imported properties are preserved. Check the visible timestamp/number result in native Studio in addition to definition readback.
 
-This is the working support contract for the 0.22.0 development preview. Broad document authoring is implemented; complete native parity is not yet qualified. The preview uses the embedded Splunk Dashboard Framework and preserves the original Studio definition for export and native save.
+This is the working support contract for the 0.23.0 development preview. Broad document authoring is implemented; complete native parity is not yet qualified. The preview uses the embedded Splunk Dashboard Framework and preserves the original Studio definition for export and native save.
 
 | Area | Current behavior | Qualification / boundary |
 | --- | --- | --- |
@@ -91,3 +91,9 @@ An explicit new aggregate alias requested for a selected table must appear in th
 
 
 Sparse output: declared empty SPL columns may remain visible when conservative provenance connects them to inspected inputs, including a masked measurement followed by supported aggregation/formatting. A missing alias or unverified input still fails validation. This nullable-output exception does not qualify general SPL2 transformations or complete dataset coverage. Partial raw previews keep their native full query; the preview cap must not be compiled into a `head` or aggregation merely to hide partial status.
+
+## Focused detail-page planning (0.23)
+
+The exact suggested row-detail request for an existing selected SPL table uses one evidence-scoped `rowDetail` plan. The model chooses a verified raw row field and one to three chart pipelines; the app assigns collision-free IDs, full-width chart rows, safe pre-aggregation filters, wildcard defaults, table navigation and a placed Back button to the original page. Existing sources, projections and page geometry remain exact. Every native, actual-query, output-field, scope and measurement guard still runs. Failed detail plans are recompiled against the original document within the unchanged turn budget; no partial new page is published. General edited requests, existing navigation, ambiguous row fields, files and SPL2 retain their existing paths and qualification boundaries.
+
+Wide tables in ordinary blank-canvas composition receive a full row rather than sharing a narrow column. Explicit geometry and existing dashboards retain their existing contracts. See [task benchmark](model-benchmark.md) for the synthetic regression protocol; a score does not authorize a model or establish native parity.

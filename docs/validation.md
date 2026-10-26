@@ -1,14 +1,14 @@
 # Validation status
 
-Snapshot: **0.22.0 development preview, October 26, 2026**. This file is a sanitized summary. Private lab addresses, credentials, screenshots, transcripts, raw search data and detailed runtime receipts are excluded from the repository.
+Snapshot: **0.23.0 development preview, October 26, 2026**. This file is a sanitized summary. Private lab addresses, credentials, screenshots, transcripts, raw search data and detailed runtime receipts are excluded from the repository.
 
-See the [0.22 new-author walkthrough](#0220-new-author-walkthrough--october-26-2026) for current changes, the [0.21 field-context qualification](#0210-field-meanings-recorded-units-and-missing-readings--october-26-2026), and the [0.19 sparse/partial-data qualification](#0190-sparse-partial-data-and-transport-investigation--october-26-2026) for the preceding complete dataset cohort. Earlier failures and qualification boundaries remain recorded.
+See the [0.23 detail-plan qualification](#0230-compiled-detail-plans-and-weighted-benchmark--october-26-2026), the [0.22 new-author walkthrough](#0220-new-author-walkthrough--october-26-2026) for current changes, the [0.21 field-context qualification](#0210-field-meanings-recorded-units-and-missing-readings--october-26-2026), and the [0.19 sparse/partial-data qualification](#0190-sparse-partial-data-and-transport-investigation--october-26-2026) for the preceding complete dataset cohort. Earlier failures and qualification boundaries remain recorded.
 
 ## Local verification
 
 | Check | Observed result |
 | --- | --- |
-| Python unit suites | 342 tests passed on Python 3.9 and 3.13, including unit-confirmation acknowledgements, one-page compact composition, chart shape constraints, focused typed navigation/preservation, timeout classification and retained authority/delivery/native regressions. |
+| Python unit suites | 349 tests passed on Python 3.9 and 3.13, including detail-plan compilation/repair/preservation, wide-table packing, benchmark hard gates/numeric oracles/concrete row filters and retained authority/delivery/native regressions. |
 | Frontend unit suites | 80 tests passed, including grounded starter ranking, referenced field/chain context, unit confirmation, valid/stale suggestion focus and retained delivery/Stop races. |
 | TypeScript and production build | Passed; bundle-size warning remains. |
 | Deterministic app package | Generated with SHA-256 receipt. |
@@ -24,6 +24,47 @@ The AppInspect result applies to the tested development archive. The seven warni
 | 10.4.4 | 1.26.6 | Native roundtrips, synthetic SPL/SPL2, PDF native interactions, Ollama edits, prior page/focus exercises and current row-budget check. |
 
 The full 0.7.1 creation/switch/reopen journey was run on the 10.2.8 target, not repeated in full on 10.4.4. AITK succeeded through an existing configured connection on one target; another target returned no usable completion. Do not infer instance-independent provider availability from app installation.
+
+## 0.23.0 compiled detail plans and weighted benchmark — October 26, 2026
+
+The exact suggested row-detail operation now asks the model for one analytical plan instead of coordinating searches, source IDs, tokens, page IDs, geometry, row links and Back placement. Current selected-table/output evidence gates the operation. The app allocates new IDs, adds safe filters before aggregation, compiles wildcard defaults and return navigation, and checks preservation plus all existing native/source/output/measurement validations. Failed new-page plans are rebuilt against the original definition within the unchanged recovery budget; no partial page is published. Ordinary broader requests retain their existing path.
+
+The unchanged network-response request that exhausted Ollama recovery in 0.22 passed with the new plan in **one call, four search checks and 41 seconds**. Two independent ordinary-user freezer cohorts then exercised empty-dashboard creation, the suggested row-detail follow-on, a selected maximum-temperature metric, table formatting and a presentation edit. The first cohort passed all five steps for all providers without model repairs. A wide native table was visibly cramped; new compact compositions now reserve a full row for wide tables. The full five-step cohort was repeated on the final archive below.
+
+| Final-archive real-data step | OpenAI `gpt-6-luna` | Ollama `qwen3-coder:latest` | AITK 6.2 existing managed connection |
+| --- | --- | --- | --- |
+| First page | 1 call, 2 checks, 20 s | 1 call, 2 checks, 17 s | 1 call, 2 checks, 23 s |
+| Row-detail follow-on | 1 call, 3 checks, 9 s | 1 call, 4 checks, 19 s | 2 calls, 5 checks, 49 s |
+| Selected temperature maximum | 1 call, 2 checks, 7 s | 1 call, 2 checks, 23 s | 1 call, 2 checks, 25 s |
+| Selected table formatting | 1 call, 2 checks, 6 s | 1 call, 2 checks, 9 s | 1 call, 2 checks, 19 s |
+| Selected chart presentation | Local, 0 calls/checks | Local, 0 calls/checks | Local, 0 calls/checks |
+| Separate blank/reopen and peer denial | Passed | Passed | Passed |
+| Preview row and Back navigation | Passed | Passed | Passed |
+| Native Search & Reporting copy | Exact private definition; render/row/Back passed | Exact private definition; render/row/Back passed | Exact private definition; render/row/Back passed |
+| Refresh continuation | Exact definition and ten-message conversation | Exact definition and ten-message conversation | Exact definition and ten-message conversation |
+
+AITK's final row-detail repair addressed a requested table column missing from the query output. The invalid candidate did not reach the canvas; the corrected plan preserved the original sources and page. No source-filter or Back-placement repair was needed in the qualified plan runs. A separate browser test selected Ollama's row-detail card, sent the unchanged prepared prompt, observed the live new page, exercised row/Back navigation, and checked Undo against the exact original definition followed by Redo/refresh. These are operated regression tests, not unaided usability acceptance or a population success-rate estimate.
+
+Independent read-only synthetic probes substituted an authored seven-reading source for each of the **14 final generated source transformations**. Increasing only already-excluded temperatures left all returned values unchanged. Changing Wi-Fi readings on those same excluded-temperature observations changed every tested Wi-Fi-average source. The benchmark's independent per-device numerical oracle separately checks missing-versus-zero counts, retained Wi-Fi counts and the exactly-150°F boundary. No indexed data was changed and no event rows were sent to inference or committed.
+
+The developer-only [task benchmark v1](model-benchmark.md) also ran all five cases through the installed final package. Reports retain fixture/grader/connection fingerprints, actual native checks, failure phase, call counts and elapsed times; no raw replies, hosts, rows or credentials are published. Weights emphasize deterministic outcomes and every applicable criterion is a hard gate.
+
+| Final synthetic suite | OpenAI | Ollama | AITK |
+| --- | --- | --- | --- |
+| Accepted and independently graded cases | 5/5 | 5/5 | 5/5 |
+| Weighted score / critical gates | 100 / passed | 100 / passed | 100 / passed |
+| First-response passes | 5/5 | 5/5 | 4/5 |
+| Largest contiguous tested creation batch | 4 panels | 4 panels | 4 panels |
+
+These tiny fixtures do not qualify context capacity, general analytical meaning, larger documents or deployment performance. The four-panel result is an advisory candidate; reports always retain `productionQualified:false` and do not alter runtime routing or permissions. AITK repaired a four-panel case in the final suite; an earlier accepted cohort repaired its one-panel case instead. Batch difficulty is not a monotonic function of size. Repeat on held-out cases, model/configuration changes, controlled cold/warm conditions and representative load before adopting limits. Recorded times are ad hoc observations, not a provider-speed benchmark.
+
+Exploratory benchmark failures are retained locally: its initial row grader supplied nested token objects instead of the app's scalar token map, causing a grader error for all three providers. That harness defect was corrected and covered by a concrete two-device token test before the accepted suites. It is not counted as a model or app failure. Pre-0.23 Ollama source/navigation failures remain in the prior section; successful reruns do not retroactively erase them.
+
+Final **0.23.0** is SHA-256 `dfc4f1b17be0e56408a5a1b9b393134eb133b704218fab7ff7822c34906a33b8`. It was installed on both recorded lab versions without restart. The full final cohort, benchmark and native interaction checks ran on Enterprise 10.2.8 / Studio 1.23.12. All 61 packaged Python modules and the browser build matched source; the archive excluded macOS/private extras. Fresh AppInspect 4.3.1 precert returned zero errors/failures/future failures, seven warnings and one skip. Local suites passed 349 Python tests on both 3.9/3.13 and 80 frontend tests; the existing build-size warning remains.
+
+All four disposable accounts, their private records/views/jobs and the one explicitly authorized copied OpenAI key were removed. Original administrator drafts/settings, the AITK inference policy and protected backing-collection writers were unchanged. AITK connection parameters, credentials and upstream model/token settings were not read or changed. The original browser login and user tabs were restored.
+
+Remaining 1.0 gates include broader rewritten/advanced page requests, existing navigation and SPL2; representative repeated model/context/load trials; unaided language/layout/accessibility review; the historical REST delivery cause; and broader upgrade/rollback, role, cluster and deployment qualification. AITK on the second target remains unqualified. This closes the tested suggested-row-detail blocker, not every possible multi-page request or native Studio feature.
 
 ## 0.22.0 new-author walkthrough — October 26, 2026
 

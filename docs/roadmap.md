@@ -4,9 +4,10 @@ Constellation is a working development preview. Checked-in code and selected liv
 
 ## Current 1.0 qualification priorities
 
-The 0.22 new-author walkthrough tests field-backed starting questions and suggested follow-ons from an empty dashboard. It removes circular unit confirmation, chooses a focused first page, narrows chart shapes and carries suggestion focus into the conversation. Keep failed creation and navigation attempts alongside successful reruns in [validation](validation.md).
+The 0.23 qualification replaces the exact suggested row-detail coordination task with one analytical plan and deterministic native navigation. Repeated ordinary-user flows and a weighted synthetic benchmark check the retained validation boundaries. Keep failed creation and navigation attempts alongside successful reruns in [validation](validation.md).
 
-- Make the suggested Ollama row-detail extension reliable without changing source-table queries or confusing Back placement. Final 0.22 replay still failed safely despite a valid first-page creation; keep it unqualified. AITK's clearer chart-ID contract passed one final replay, but needs repetition under representative load.
+- Extend the qualified exact row-detail follow-on beyond its current evidence/grammar boundary without weakening preservation or source validation. Version 0.23 passed repeated Ollama row-detail runs and final three-provider flows; arbitrary rewritten requests, existing navigation and broader page operations still need their own trials.
+- Grow the synthetic benchmark with held-out operational cases, model/configuration fingerprints and repetitions. Use first-response success and per-task failures to trial batching; never let a weighted total waive a critical failure or automatically authorize an unqualified model.
 - Capture a naturally failing REST request with matching client/server identifiers; the underlying delivery cause is still unknown. Extend provider/model trials beyond small serial samples, including realistic load and failed upstream transports. Keep useful progress/cancellation and the current resource limits.
 - Qualify business rules on representative operational, sparse and partial datasets, including derived fields, complex predicates and SPL2/chain semantics beyond the narrow Fahrenheit compiler.
 - Complete unaided-user, native feature/version, role/setup, accessibility/reflow, upgrade/rollback and deployment qualification. AITK on the second target remains unqualified.
@@ -49,4 +50,4 @@ Modules and migration contracts are described in [architecture](architecture.md)
 
 ## Latest qualification priorities
 
-Version 0.22 extends sparse/partial-data evidence with blank-dashboard starting questions, recorded-unit confirmation and focused follow-ons. These changes do not establish a provider-wide success rate, general analytical correctness or the historical REST delivery cause. Keep the narrow compilers separate from arbitrary SPL/SPL2 semantics and retain exact provider/version/deployment qualification. The validated-reply cache still needs independent security/deployment review. See [current evidence](validation.md) and [security review](security-review.md).
+Version 0.23 adds compiled row-detail plans and weighted synthetic regression evidence to the existing blank-dashboard, recorded-unit and field-context work. These changes do not establish a provider-wide success rate, general analytical correctness or the historical REST delivery cause. Keep the narrow compilers separate from arbitrary SPL/SPL2 semantics and retain exact provider/version/deployment qualification. The validated-reply cache still needs independent security/deployment review. See [current evidence](validation.md) and [security review](security-review.md).

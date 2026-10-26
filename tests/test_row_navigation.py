@@ -35,18 +35,47 @@ class RowNavigationTests(unittest.TestCase):
         {'op':'filter','sourceId':'detail','field':'entity','token':'selected_entity'},
         {'op':'link','sourceId':'summary','pageId':'details','targetId':'','field':'entity','token':'selected_entity'},
         {'op':'button','id':'back','label':'Back','pageId':'details','targetPageId':'layout_main','targetId':'','x':20,'y':350,'w':160,'h':80}]
+    def plan(self):return [{'op':'rowDetail','field':'entity','label':'Entity details','purpose':'Inspect one entity',
+                           'panels':[{'type':'splunk.table','title':'Entity readings','pipeline':'| stats count BY entity','x':'','y':['entity','count']}]}]
     def test_typed_turn_rejects_native_rebinding_then_validates_complete_filtered_navigation(self):
         original=self.document();original['visualizations']['summary']['futureSetting']={'keep':True}
-        provider=Provider([reply([{'op':'set','path':'/visualizations/summary/dataSources/primary','value':'events'}]),reply(self.actions())]);runtime=Runtime()
+        provider=Provider([reply([{'op':'set','path':'/visualizations/summary/dataSources/primary','value':'events'}]),reply(self.plan())]);runtime=Runtime()
         result=AgentService(provider,runtime).assist({'prompt':self.prompt(),'revision':0,'definition':original,'selected':'summary','dataContext':PROFILE['scope']})
         doc=apply_changes(original,result['changes']);row_navigation.validate_result(doc,original,'summary')
         self.assertEqual(result['recovery']['modelCalls'],2);self.assertEqual(len(doc['layout']['tabs']['items']),2)
-        choices=provider.requests[0]['text']['format']['schema']['properties']['changes']['items']['anyOf']
-        self.assertTrue(all(set(choice['properties']['op']['enum'])<=row_navigation.OPS for choice in choices))
+        choice=provider.requests[0]['text']['format']['schema']['properties']['changes']['items']
+        self.assertEqual(choice['properties']['op']['enum'],['rowDetail'])
+        self.assertEqual(choice['properties']['field']['enum'],['entity'])
         self.assertEqual(doc['dataSources']['events'],original['dataSources']['events'])
         self.assertEqual(doc['visualizations']['summary']['futureSetting'],{'keep':True})
-        self.assertIn('| search entity=$selected_entity|s$',doc['dataSources']['detail']['options']['query'])
+        source=next(value for key,value in doc['dataSources'].items()if key!='events')
+        self.assertRegex(source['options']['query'],r'\| search entity=\$detail_\w+_row\|s\$ \| stats')
         self.assertNotIn('PRIVATE_ROW_VALUE',json.dumps(provider.requests));self.assertNotIn('details',original['layout']['layoutDefinitions'])
+        context=json.loads(provider.requests[0]['input'][0]['content'][0]['text'])
+        self.assertNotIn('definition',context);self.assertEqual(context['rowFields'],['entity'])
+        self.assertEqual(provider.requests[0]['max_output_tokens'],3500)
+    def test_search_repair_recompiles_one_transient_page_preserving_namespace_and_unknown_work(self):
+        original=self.document();original['layout']['layoutDefinitions']['layout_main']['future']={'keep':True}
+        bad=self.plan();bad[0]['panels'][0]['y']=['missing_output']
+        provider=Provider([reply(bad),reply(self.plan())]);result=AgentService(provider,Runtime()).assist({'prompt':self.prompt(),'revision':0,'definition':original,'selected':'summary','dataContext':PROFILE['scope']})
+        final=apply_changes(original,result['changes']);row_navigation.validate_result(final,original,'summary')
+        self.assertEqual(len(final['layout']['tabs']['items']),2)
+        self.assertEqual(len(final['dataSources']),2)
+        self.assertEqual(final['layout']['layoutDefinitions']['layout_main'],original['layout']['layoutDefinitions']['layout_main'])
+        feedback=json.loads(provider.requests[1]['input'][-1]['content'][0]['text'])['recoveryFeedback']
+        self.assertEqual(feedback['editsApplyTo'],'original');self.assertNotIn('candidateDefinition',feedback)
+    def test_plan_has_no_authority_over_existing_sources_navigation_or_unverified_fields(self):
+        doc=self.document();profile=dict(PROFILE,fields=[{'name':'entity'},{'name':'numeric_key'}]);receipt={'fields':[{'name':'entity','numeric':False},{'name':'numeric_key','numeric':True},{'name':'unknown','numeric':False}]}
+        for patch in ({'field':'unknown'},{'field':'numeric_key'},{'sourceId':'events'},{'panels':[]},{'panels':self.plan()[0]['panels']*4}):
+            plan=self.plan();plan[0].update(patch)
+            with self.subTest(patch=patch),self.assertRaises(ProviderError):row_navigation.expand_plan(plan,doc,'summary',profile,receipt)
+        plan=self.plan();plan[0]['panels'][0]['pipeline']='| search entity=$existing|s$ | stats count BY entity'
+        with self.assertRaises(ProviderError):row_navigation.expand_plan(plan,doc,'summary',profile,receipt)
+        actions=row_navigation.expand_plan(self.plan(),doc,'summary',profile,receipt)
+        first=apply_changes(doc,compile_actions(doc,actions,profile))
+        # Namespace collisions use separate generated IDs; old sources/defaults stay exact.
+        second_actions=row_navigation.expand_plan(self.plan(),first,'summary',profile,receipt)
+        self.assertTrue(set(a['id']for a in actions if a['op']=='search').isdisjoint(a['id']for a in second_actions if a['op']=='search'))
     def test_evidence_and_exact_goal_are_required_and_incomplete_or_unrelated_work_is_rejected(self):
         doc=self.document();profile=dict(PROFILE,fields=[{'name':'entity'}]);receipt={'fields':[{'name':'entity','numeric':False}]}
         self.assertTrue(row_navigation.eligible(self.prompt(),doc,'summary',profile,receipt,[]))

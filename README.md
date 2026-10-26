@@ -4,7 +4,7 @@ A conversational canvas for creating and editing **Splunk Dashboard Studio** das
 
 Describe an operational question, choose data available to your Splunk user, and watch a dashboard take shape. Select a chart, input or page to refine it through chat. Start from a blank canvas, an existing Studio definition, or an image/PDF reference when the selected provider supports it.
 
-**Status: 0.22.0 development preview.** This is a new codebase, separate from Splunk Dashboard Generator. It is not a production release or Splunk Cloud certified app. The repository is currently private and is being prepared for a future public release.
+**Status: 0.23.0 development preview.** This is a new codebase, separate from Splunk Dashboard Generator. It is not a production release or Splunk Cloud certified app. The repository is currently private and is being prepared for a future public release.
 
 ## What works today
 
@@ -38,7 +38,7 @@ npm run dev -- --port 5178
 
 Open the local URL printed by Vite. Standalone mode demonstrates the canvas and authored example data; provider Settings, live Splunk searches, server-backed drafts and native saves require an installed Splunk app.
 
-The package is written to `artifacts/constellation-0.22.0.tgz`, with its digest in `artifacts/SHA256SUMS`. Build artifacts and dependencies are not committed. See [installation](docs/installation.md) to install the package and configure a provider in the app.
+The package is written to `artifacts/constellation-0.23.0.tgz`, with its digest in `artifacts/SHA256SUMS`. Build artifacts and dependencies are not committed. See [installation](docs/installation.md) to install the package and configure a provider in the app.
 
 ## Compatibility and boundaries
 
@@ -46,7 +46,7 @@ Selected flows have been exercised on Splunk Enterprise **10.2.8** with Studio *
 
 Search previews use the current user's permissions and a read-only command subset. They are bounded to a selected 15-minute, 1-hour, 24-hour or 7-day window, at most **200 rows / 5 seconds per query**, and eight sources in the preview. Tracked jobs label completed queries, partial output, failures and stale snapshots. Counts and aggregates can still be partial; a completed query is not proof of analytical correctness. Preserve the distinction between native Studio rendering, bounded preview results and a validated dashboard definition.
 
-Multi-page actual-data creation and focused edits have been exercised through OpenAI, Ollama and AITK. The tested AITK GPT-5 mini connection retains a 16,000-token budget; the prior 2,000-token setting could return no completion. Settings distinguishes a small connection test from full authoring and exposes reported or unknown limits. Compact creation reduces avoidable output while retaining all validation gates. These are bounded provider/model/environment checks, not a general success-rate or 1.0 acceptance claim.
+Multi-page actual-data creation and focused edits have been exercised through OpenAI, Ollama and AITK. Earlier AITK qualification verified a 16,000-token budget; a 2,000-token setting could return no completion. The app does not query or infer its current upstream model/token limits. Settings distinguishes a small connection test from full authoring and exposes reported or unknown limits. Compact creation reduces avoidable output while retaining all validation gates. These are bounded provider/model/environment checks, not a general success-rate or 1.0 acceptance claim.
 
 0.16 hardens opt-in shared AITK inference and adds owner-only OpenAI key handling. A non-admin author completed the two-page sensor creation/edit/native-save journey through all three providers without credential-store permissions. Shared AITK requires protected connection metadata and a trusted execution owner; actual data searches and persistence retain the author's permissions. A fresh [independent agent source review](docs/security-review.md) found no remaining actionable issue in the reviewed patches. Deployment review and Cloud/cluster acceptance remain separate gates. See [AITK setup](docs/aitk-setup.md), [validation](docs/validation.md) and the [qualification protocol](docs/provider-qualification.md).
 
@@ -70,6 +70,7 @@ The selected provider receives the prompt, recent conversation, dashboard defini
 | [Studio support](docs/studio-support.md) | Implemented behavior and remaining parity gates. |
 | [Development](docs/development.md) | Local commands, synthetic fixtures, CI and repository checks. |
 | [Validation](docs/validation.md) | Verified test scope and explicit limitations. |
+| [Task benchmark](docs/model-benchmark.md) | Weighted synthetic checks and evidence for model workload/batching decisions. |
 | [Provider qualification](docs/provider-qualification.md) | Repeated core journey, analytical probes and the 1.0 decision. |
 | [Upgrade guide](docs/upgrade-guide.md) | Compatibility profiles, provider adapters and draft migrations. |
 | [Product direction](docs/product-direction.md) | Interaction principles and product goals. |

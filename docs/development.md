@@ -55,3 +55,7 @@ Exercise the changed user journey through browser, REST handler, actual data, pr
 ## Maintenance boundaries
 
 Follow [architecture](architecture.md) and [upgrade guide](upgrade-guide.md). Provider changes belong behind adapters; compatibility rules belong in versioned contracts; session changes require migrations. Retain unknown native properties and fail atomically on invalid edits. A future Splunk version is an explicit qualification task, not an automatic consequence of changing a version comparison.
+
+## Model workload benchmark
+
+Use the opt-in [synthetic task benchmark](model-benchmark.md) to compare configured providers and batch sizes through the installed app. Offline suites test its grader without credentials. Live runs use the intended ordinary author and existing session; they do not configure credentials, save dashboards or bypass runtime validation. Keep numerical reports in ignored `.local`, record fixture/grader/app identity, and publish only reviewed summaries.

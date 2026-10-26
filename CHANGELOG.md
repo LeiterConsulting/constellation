@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.23.0 - 2026-10-26
+
+- Replace coordinated navigation actions for the exact selected-table row-detail follow-on with one small analytical plan. Compile IDs, pre-aggregation filters, wildcard defaults, page placement and Back navigation locally; preserve original sources, projections and page geometry.
+- Recompile failed transient detail plans against the original document and reuse successful search checks within unchanged model/search/time bounds. Require final navigation and preservation postconditions alongside actual query/output validation.
+- Keep detail-plan metadata compact and cap its requested output at 3,500 tokens. Preserve ordinary authoring for broader requests, files, existing navigation and SPL2.
+- Give wide tables a full row in ordinary new compact compositions; retain existing and explicit geometry.
+- Add a versioned, opt-in synthetic task benchmark with independent numeric/native checks, weighted deterministic results, noncompensating hard gates and separate first-response/call/latency evidence. Keep results advisory and the everyday UI unchanged.
+- Record repeated ordinary-user real-data provider flows, independent cutoff/Wi-Fi probes and native Studio checks. The qualified row-detail path improves; broader model/deployment/1.0 gates remain open.
+
 ## 0.22.0 - 2026-10-26
 
 - Rank the inspected starter shortlist by usable field evidence while retaining an explicitly preferred source. Keep the same three-scope inspection bound and editable prompts.
