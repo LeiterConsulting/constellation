@@ -4,15 +4,16 @@ Constellation is a working development preview. Checked-in code and selected liv
 
 ## Current 1.0 qualification priorities
 
-The 0.19 qualification extends the ordinary-user provider journeys to naturally sparse sensor data and raw operational readings with partial previews. It fixes verified nullable output, existing-search discovery, trailing numeric formatting and draft identity across refreshes. Prior failed candidates and exact verification boundaries remain in [validation](validation.md).
+The 0.22 new-author walkthrough tests field-backed starting questions and suggested follow-ons from an empty dashboard. It removes circular unit confirmation, chooses a focused first page, narrows chart shapes and carries suggestion focus into the conversation. Keep failed creation and navigation attempts alongside successful reruns in [validation](validation.md).
 
+- Make the suggested Ollama row-detail extension reliable without changing source-table queries or confusing Back placement. Final 0.22 replay still failed safely despite a valid first-page creation; keep it unqualified. AITK's clearer chart-ID contract passed one final replay, but needs repetition under representative load.
 - Capture a naturally failing REST request with matching client/server identifiers; the underlying delivery cause is still unknown. Extend provider/model trials beyond small serial samples, including realistic load and failed upstream transports. Keep useful progress/cancellation and the current resource limits.
 - Qualify business rules on representative operational, sparse and partial datasets, including derived fields, complex predicates and SPL2/chain semantics beyond the narrow Fahrenheit compiler.
 - Complete unaided-user, native feature/version, role/setup, accessibility/reflow, upgrade/rollback and deployment qualification. AITK on the second target remains unqualified.
 
 ## Product improvements
 
-- Starting questions now use bounded field inspection and curated role-aware templates. Next, qualify their usefulness with unaided users and add verified field meaning, units, population and time coverage beyond those templates. Rank next requests by the unresolved question they answer, avoiding repetitive or already-completed work.
+- Starting questions now rank a bounded inspected shortlist using usable field evidence, with unit provenance and sample coverage. Qualify their usefulness with unaided users and extend verified field meaning, units, population and time coverage beyond the current templates. Rank next requests by the unresolved question they answer, avoiding repetitive or already-completed work.
 - Improve first-draft analytical quality using verified field meaning, units, population and time coverage.
 - Verify related-dataset keys, grain, units and joins before suggesting comparisons.
 - Expand modular, versioned guidance and evaluate semantic retrieval within the Splunk app boundary.
@@ -48,4 +49,4 @@ Modules and migration contracts are described in [architecture](architecture.md)
 
 ## Latest qualification priorities
 
-Version 0.19 adds sparse/partial-data regression evidence and targeted discovery, null-output, precision and refresh fixes. These changes do not establish general analytical correctness or identify the historical REST delivery cause. Keep the narrow compilers separate from arbitrary SPL/SPL2 semantics and retain exact provider/version/deployment qualification. The validated-reply cache still needs independent security/deployment review. See [current evidence](validation.md#0190-sparse-partial-data-and-transport-investigation--october-26-2026) and [security review](security-review.md).
+Version 0.22 extends sparse/partial-data evidence with blank-dashboard starting questions, recorded-unit confirmation and focused follow-ons. These changes do not establish a provider-wide success rate, general analytical correctness or the historical REST delivery cause. Keep the narrow compilers separate from arbitrary SPL/SPL2 semantics and retain exact provider/version/deployment qualification. The validated-reply cache still needs independent security/deployment review. See [current evidence](validation.md) and [security review](security-review.md).

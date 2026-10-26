@@ -5,7 +5,7 @@ import re
 from model_readiness import CREATE_OUTPUT_TOKENS, EDIT_OUTPUT_TOKENS, OLLAMA_CONTEXT_TOKENS
 from provider_service import ProviderError
 from studio_contract import model_document
-from creation_strategy import bounded_aitk_creation, CONCISE_CREATION
+from creation_strategy import bounded_aitk_creation, explicit_page_count, CONCISE_CREATION
 from compact_creation import COMPOSE_ACTION, COMPACT_INSTRUCTIONS, compact_goal, empty_canvas, expand_compose
 from prompt_suggestions import SUGGESTION_INSTRUCTIONS
 from search_hints import HISTOGRAM_GUIDANCE
@@ -62,11 +62,11 @@ class AuthoringBudget:
         if self.compact:
             request['instructions'] = COMPACT_INSTRUCTIONS
             request['text']['format']['schema']['properties']['changes']['items'] = copy.deepcopy(COMPOSE_ACTION)
-            # compact_goal admits only an explicit two-page request. Encode that
-            # obligation in the constrained output instead of accepting a one-
-            # page proposal whose links name an absent destination.
+            # Encode the explicit small page count for schema-aware adapters;
+            # actions() also enforces it for schema-ignoring adapters.
             pages = request['text']['format']['schema']['properties']['changes']['items']['properties']['pages']
-            pages.update(minItems=2, maxItems=2)
+            count = explicit_page_count(context['request'])
+            pages.update(minItems=count, maxItems=count)
             request['text']['format']['schema']['properties']['changes']['maxItems'] = 1
         if self.creation and context.get('dataProfile'):
             request['instructions'] += '\n\n' + CONCISE_CREATION
@@ -93,6 +93,8 @@ class AuthoringBudget:
             # The only admitted action uses these verified output fields. The
             # exact document stays on the server for compilation/validation.
             context = {key: context[key] for key in ('request', 'focus', 'focusedSourceReceipt', 'formattingOnly', 'dashboardBrief', 'history', 'modelLimits') if key in context}
+        if context.get('rowNavigationOnly'):
+            context = {key: context[key] for key in ('request','definition','environment','focus','focusedSourceReceipt','dataProfile','pagePurposes','dashboardBrief','history','modelLimits','rowNavigationOnly') if key in context}
         # A conservative estimate, not a tokenizer or a verified upstream limit.
         # Drop only rolling history; the durable brief and exact document remain.
         if self.provider == 'ollama':
@@ -118,8 +120,9 @@ class AuthoringBudget:
         if getattr(self, 'compact', False) and isinstance(actions, list):
             for action in actions:
                 if isinstance(action, dict) and action.get('op') == 'compose':
-                    if not isinstance(action.get('pages'), list) or len(action['pages']) != 2:
-                        raise ProviderError('This request requires two complete pages, including every row-link destination.')
+                    count = explicit_page_count(self.context['request'])
+                    if not isinstance(action.get('pages'), list) or len(action['pages']) != count:
+                        raise ProviderError('This request requires ' + ('one complete page.' if count == 1 else 'two complete pages, including every row-link destination.'))
         actions = expand_compose(actions, document, self.context.get('dataProfile'))
         if self.phase == 'foundation' and isinstance(actions, list):
             from search_chart_actions import compile_dashboard

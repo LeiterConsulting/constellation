@@ -6,8 +6,10 @@ import { validFocus, pagesOf, type PagePurpose } from './pages';
 import { elementLabel } from './elementLabels';
 import { fieldTitle, profileFields } from './datasetQuestions';
 import { hasMissing, isMeasurement } from './fieldContext';
+import { referencedFields, unitConfirmation } from './promptEvidence';
 
-export interface PromptSuggestion { label: string; prompt: string; reason: string; kind: 'idea' | 'data' | 'comparison' | 'interaction' | 'layout' | 'refine'; }
+export interface PromptSuggestion { label: string; prompt: string; reason: string; kind: 'idea' | 'data' | 'comparison' | 'interaction' | 'layout' | 'refine'; focus?: string; }
+export const suggestionFocus = (suggestion: PromptSuggestion, definition: StudioDefinition) => typeof suggestion.focus==='string' && validFocus(definition,suggestion.focus) ? suggestion.focus : null;
 export interface InstanceIdea extends PromptSuggestion { scope?: DataScope; profile?: DataProfile; fields?: string[]; }
 export interface PromptContext {
   brief?: DashboardBrief; messages?: Pick<ChatMessage, 'user' | 'text'>[]; profile?: DataProfile | null;
@@ -37,6 +39,9 @@ export function contextualPrompts(definition: StudioDefinition, selected = '', a
     prompt: 'Use the attached reference to shape this dashboard. Interpret its layout and intent, choose appropriate native Studio visualizations, and explain any approximation. Use the selected real data; ask for missing fields instead of fabricating values.' }];
   const question = [...(context.messages || [])].reverse().find(message => !message.user)?.text.trim() || '';
   if (question.endsWith('?')) {
+    const field = context.profile?.fields.find(field => question.includes(field.name) && /recorded|stored|measured/i.test(question));
+    const confirmation = field && unitConfirmation(field);
+    if (confirmation) return [confirmation];
     if (/fahrenheit/i.test(question) && /celsius/i.test(question)) return ['Fahrenheit','Celsius'].map(unit => ({label:`Use ${unit}`,kind:'refine',reason:'Answer the temperature-units question so building can continue.',
       prompt:`Use ${unit} for temperatures on this dashboard. Continue the original request and keep its other requirements.`}));
     return [];
@@ -63,25 +68,27 @@ export function contextualPrompts(definition: StudioDefinition, selected = '', a
     prompt: 'Build a focused dashboard from the selected Splunk data and our conversation. Use verified fields, actual read-only searches and a useful visual hierarchy. Do not add illustrative data.' }];
   if (!charts.length) return [{ label: 'Choose data for this question', kind: 'idea', reason: 'Start with the decision this dashboard should support.',
     prompt: 'Help me choose data from this Splunk instance for my dashboard question. Suggest a visible index or ask for my existing search, then inspect its actual fields before building.' }];
-  const result: PromptSuggestion[] = [], fields = profileFields(context.profile);
+  const result: PromptSuggestion[] = [], fields = profileFields(context.profile ? {...context.profile,fields:referencedFields(definition,entries.map(([id])=>id),context.profile)} : null);
   const entity = fields.find(field => !field.numeric && /device|service|sensor|host|name|entity/i.test(field.name));
   const noTables = /\b(?:no|without)\s+(?:any\s+)?tables?\b|\b(?:do not|don['’]t)\s+(?:add|include|use)\s+(?:any\s+)?tables?\b/i.test(intentText(context));
   const preserve = ' Keep the current data, time range and standing requirements; preserve the rest of the dashboard.';
   if (charts.some(item => definition.dataSources?.[String(item.dataSources?.primary)]?.type === 'ds.test')) result.push({ label: 'Connect real data', kind: 'data', reason: chart ? `${elementLabel(definition,selected)} currently uses illustrative data.` : 'This design currently includes illustrative data.',
     prompt: 'Help me connect this design to real Splunk data. Identify the metrics and fields needed by the current charts. Ask for my existing searches or relevant field names before changing queries; preserve the layout while we connect them.' });
   const ambiguous = fields.find(field => isMeasurement(field) && field.context?.quantity && !field.context.unit);
+  const confirmation = fields.map(unitConfirmation).find(card => card !== null);
+  if (confirmation) result.push(confirmation);
   if (ambiguous) result.push({label:`Confirm ${fieldTitle(ambiguous.name)} units`.slice(0,60),kind:'refine',reason:'Recorded units have not been defined; comparisons and limits need that context.',
     prompt:`Help me confirm the recorded units and meaning of ${JSON.stringify(ambiguous.name)} before adding thresholds or conversions. Ask one short question, keep the current measurements unchanged, and retain my answer in the dashboard requirements.`});
   const lastRequest = recentRequests(context).at(-1) || '';
   if (chart && /\b(?:colou?rs?|palette|theme|contrast)\b/i.test(lastRequest)) result.unshift({label:'Give this tile a contrasting background',kind:'refine',reason:`Make ${elementLabel(definition, selected)} readable without changing the whole dashboard.`,
     prompt:'Change only the selected tile’s native background and text/series colors to create readable contrast. Keep labels, axes, legends and values readable. Keep the dashboard theme and every other tile unchanged.'});
   const table = entries.find(([, item]) => item.type === 'splunk.table' && !(item.eventHandlers as {type?:string}[] | undefined)?.some(handler => /switchToTab|setToken/.test(handler.type || '')));
-  if (table && !noTables) result.push({ label: 'Open a detail page from a row', kind: 'interaction', reason: `${elementLabel(definition, table[0])} can lead directly to an investigation.`,
+  if (table && !noTables) result.push({ label: 'Open a detail page from a row', kind: 'interaction', focus:table[0], reason: `${elementLabel(definition, table[0])} can lead directly to an investigation.`,
     prompt: `Make ${JSON.stringify(elementLabel(definition, table[0]))} open a focused detail page from a table row. Use an actual verified row field for a native token filter, apply that filter to the detail searches, and add return navigation.${preserve}` });
   const trend = entries.find(([, item]) => ['splunk.line', 'splunk.area'].includes(item.type) &&
     ['ds.search','ds.spl2','ds.chain'].includes(definition.dataSources?.[String(item.dataSources?.primary)]?.type || '') &&
     (String(item.options?.x).includes('_time') || context.results?.[String(item.dataSources?.primary)]?.fields.some(field => field.name === '_time')));
-  if (trend && !/\b(?:streamstats|rolling|moving average|baseline)\b/i.test(JSON.stringify(definition.dataSources?.[String(trend[1].dataSources?.primary)] || {}))) result.push({ label: 'Add a rolling baseline', kind: 'comparison', reason: `Give ${elementLabel(definition, trend[0])} a reference for judging change.`,
+  if (trend && !/\b(?:streamstats|rolling|moving average|baseline)\b/i.test(JSON.stringify(definition.dataSources?.[String(trend[1].dataSources?.primary)] || {}))) result.push({ label: 'Add a rolling baseline', kind: 'comparison', focus:trend[0], reason: `Give ${elementLabel(definition, trend[0])} a reference for judging change.`,
     prompt: `Add a rolling average to ${JSON.stringify(elementLabel(definition, trend[0]))}. Keep the original series and explain the averaging window.${preserve}` });
   const filters = Object.values((definition.inputs || {}) as Record<string,{type?:string}>).some(item => item.type && !['input.button','input.timerange'].includes(item.type));
   if (entity && !filters) result.push({label:`Focus on one ${fieldTitle(entity.name)}`.slice(0,60),kind:'interaction',reason:`Use ${entity.name} to narrow the view without losing the overview.`,
@@ -103,7 +110,9 @@ export function nextSuggestions(proposed: PromptSuggestion[], fallback: PromptSu
   const seen = new Set<string>(), completed = new Set(recentRequests(context).map(text => text.trim().toLocaleLowerCase()));
   const generic = /^(?:refine this (?:chart|dashboard)|make it (?:better|explorable)|sharpen the visual story|add a (?:useful drilldown|meaningful comparison)|improve (?:the|this) dashboard)$/i;
   const noTables = /\b(?:no|without)\s+(?:any\s+)?tables?\b|\b(?:do not|don['’]t)\s+(?:add|include|use)\s+(?:any\s+)?tables?\b/i.test(intentText(context));
-  return [...proposed, ...fallback].filter(item => {
+  const confirmations = fallback.filter(item => item.label.startsWith('Confirm recorded units:'));
+  const candidates = confirmations.length ? [...confirmations,...proposed.filter(item=>!/\b(?:confirm|verify|clarify|check)\b.{0,40}\bunits?\b/i.test(item.label)),...fallback.filter(item=>!confirmations.includes(item))] : [...proposed,...fallback];
+  return candidates.filter(item => {
     const key = item.prompt.trim().toLocaleLowerCase(), label = item.label.trim().toLocaleLowerCase();
     if (!key || item.prompt.length > 1200 || generic.test(label) || seen.has(key) || seen.has('label:' + label) || (completed.has(key) && !/^retry\b/i.test(label))) return false;
     if (noTables && /\btable\b/i.test(item.label) && !/\b(?:remove|replace|delete)\b/i.test(item.label)) return false;

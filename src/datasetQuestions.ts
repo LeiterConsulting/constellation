@@ -1,6 +1,16 @@
 import type { DataDiscovery, DataProfile, DataScope } from './data';
 import type { InstanceIdea } from './prompts';
 import { hasMissing, isMeasurement } from './fieldContext';
+import { dataScopeKey } from './data';
+
+/** Rank inspected evidence, preserving an explicitly preferred source and stable ties. */
+export function rankedStarterQuestions(profiles: DataProfile[], preferred?: DataScope | null): InstanceIdea[] {
+  return profiles.flatMap(profile=>datasetQuestions(profile).slice(0,1).map(idea=>{
+    const score=idea.kind==='refine' ? -1 : profile.fields.filter(field=>idea.fields?.includes(field.name)).reduce((total,field)=>
+      total+(field.context?.quantity ? field.context.unit ? 4 : 3 : field.context?.role==='identifier' ? 1 : field.context?.role==='category' ? .5 : 0),0);
+    return {idea,score:preferred&&dataScopeKey(preferred)===dataScopeKey(profile.scope)?1000:score};
+  })).map((entry,index)=>({...entry,index})).sort((a,b)=>b.score-a.score||a.index-b.index).slice(0,3).map(entry=>entry.idea);
+}
 
 export function starterScopes(discovery: DataDiscovery, preferred?: DataScope | null): DataScope[] {
   const events = new Set(discovery.indexes.filter(item => item.kind !== 'metric').map(item => item.name));
@@ -47,7 +57,7 @@ export function datasetQuestions(profile?: DataProfile | null): InstanceIdea[] {
   const unconfirmed = numeric.find(field => field.context?.role === 'unknown');
   const dataset = profile.scope.index || 'your search';
   const scope = profile.scope;
-  const prefix = 'Create a dashboard from the selected data. ';
+  const prefix = 'Create a one-page dashboard from the selected data. ';
   const guard = ' Use recorded units; ask me if units or limits are unclear.';
   const result: InstanceIdea[] = [];
   const add = (label: string, question: string, used: string[], kind: InstanceIdea['kind'] = 'data', benefit = 'See changes, current readings and their spread in one view.') => {

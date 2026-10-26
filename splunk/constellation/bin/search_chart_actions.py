@@ -36,12 +36,17 @@ CHART_ACTION = {'type': 'object', 'properties': {
 
 
 def chart_variant_schema(schema, discriminator='chartType'):
-    series, table = copy.deepcopy(schema), copy.deepcopy(schema)
-    series['properties'][discriminator]['enum'] = [kind for kind in schema['properties'][discriminator]['enum'] if kind != 'splunk.table']
-    series['properties']['y']['maxItems'] = 8
+    series, single, table = copy.deepcopy(schema), copy.deepcopy(schema), copy.deepcopy(schema)
+    series['properties'][discriminator]['enum'] = [kind for kind in schema['properties'][discriminator]['enum'] if kind not in ('splunk.table','splunk.singlevalue')]
+    series['properties']['x']['minLength'] = 1
+    series['properties']['y'].update(minItems=1,maxItems=8)
+    single['properties'][discriminator]['enum'] = ['splunk.singlevalue']
+    single['properties']['x']['enum'] = ['']
+    single['properties']['y'].update(minItems=1,maxItems=1)
     table['properties'][discriminator]['enum'] = ['splunk.table']
+    table['properties']['x']['enum'] = ['']
     table['properties']['y']['maxItems'] = 80
-    return {'anyOf': [series, table]}
+    return {'anyOf': [series, single, table]}
 
 CHART_ACTION_SCHEMA = chart_variant_schema(CHART_ACTION)
 

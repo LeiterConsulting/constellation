@@ -6,6 +6,7 @@ advanced native features retain the existing authoring actions.
 import re
 from provider_service import ProviderError
 from search_chart_actions import chart_variant_schema
+from creation_strategy import explicit_page_count
 
 PANEL = {'type': 'object', 'properties': {
     'id': {'type': 'string'},
@@ -80,7 +81,7 @@ sentences. At most one brief useful suggestion, or [].'''
 def compact_goal(context):
     """Ordinary small boards use composition; advanced/explicit layouts stay native."""
     prompt = context['request']
-    if not re.search(r'\b(?:two|2)\s+pages\b', prompt, re.I): return False
+    if explicit_page_count(prompt) is None: return False
     advanced = r'\b(?:grid|trellis|map|maps|choropleth|scatter|pie|gauge|funnel|sankey|network\s+graph|custom\s+visualization|dropdown|multiselect|cascad\w*|auto[- ]?refresh|conditional|visibility|markdown|image|sketch|PDF|SPL2|chain|pixels?|coordinates?|width|height|tokens?)\b|\bsplunk\.(?!line\b|area\b|column\b|bar\b|singlevalue\b|table\b)|\$'
     selective = r'\b(?:no|without)\s+(?:(?:return|back)\s+)?buttons?\b|\b(?:do not|don.t|never)\s+(?:add|create|include)[^.!?]{0,60}\bbutton\b|\bbutton[^.!?]{0,40}\b(?:named|labelled|labeled|called)\b|\b(?:only|just)\s+(?:one|this|the selected)\s+(?:detail|destination)'
     placement = r'\b(?:place|put|position)\b[^.!?]{0,60}\b(?:left|right|above|below|beside)\b|\bspan\s+(?:both|two|2)\s+columns\b'

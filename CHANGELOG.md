@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.22.0 - 2026-10-26
+
+- Rank the inspected starter shortlist by usable field evidence while retaining an explicitly preferred source. Keep the same three-scope inspection bound and editable prompts.
+- Start field-backed suggestions with one focused page; users can edit the request or extend it through conversation. Explicit bounded one-page Ollama/AITK creation now uses the existing compact native composer, retaining all execution and document validation.
+- Encode distinct axis, single-value and table shapes in ordinary/foundation/compact provider schemas: nonempty axes and series, exactly one single-value field, and empty-axis table projections. Runtime guards remain authoritative.
+- Replace circular unit-verification questions with an editable stored-unit declaration when a field-name hint exists. Pure confirmations of one observed field on an existing board update scoped context without inference or dashboard edits; other goals retain normal authoring.
+- Restrict local unit and missing-reading follow-ons to fields referenced by the current charts and their chain dependencies. Preserve other relevant model suggestions and user preferences.
+- Show updated field context clearly and retain model-request/search-check/time evidence in optional Activity for successful turns.
+- Recover narrowly recognizable native string encoding for existing source IDs and quoted table frame bindings. Unknown references, expressions and malformed structures retain validation/repair. Clarify that row links preserve the source table and use separate detail sources.
+- Select the target table or trend when choosing a local row-detail or baseline suggestion, with visible focus and editable wording. Ignore stale suggestion targets.
+- For the exact suggested row-detail request, use evidence-scoped typed tools and require a filtered destination and return navigation while preserving existing sources, projections and page geometry. General editing keeps its normal tool set.
+- Distinguish Ollama timeouts from endpoint/TLS connection failures without replaying an inference request.
+- Record first-use provider results and retained failures: final OpenAI multi-page/native flow passed; AITK completed the browser flow and a one-call final navigation replay; Ollama detail-page extension remains a 1.0 blocker.
+- Keep draft schema 3, provider authority, credential handling, search/model budgets and native output contracts unchanged.
+
 ## 0.21.0 - 2026-10-26
 
 - Calculate field presence, finite numeric values, missing rows and multivalue evidence from the same bounded current-user verbose preview for both indexes and existing searches. Use an inspection-only 201-row SPL limit and prioritize meaningful fields in wide schemas, retaining the original native/base query. Keep zero distinct from absent/nonnumeric readings; return metadata only.

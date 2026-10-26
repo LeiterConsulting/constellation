@@ -12,6 +12,7 @@ from search_chart_actions import SEARCH_ACTION, CHART_ACTION, CHART_ACTION_SCHEM
 from search_chart_actions import FILTER_ACTION, DASHBOARD_ACTION, compile_filter, compile_dashboard, normalize_row_filters
 from table_format import TABLE_FORMAT_ACTION, compile_table_format
 from measurement_constraints import normalize_measurements
+from native_text_encoding import normalize_reference_text
 from compact_creation import COMPOSE_ACTION, expand_compose
 
 LEGACY_CHANGE = {'type': 'object', 'properties': {
@@ -119,6 +120,7 @@ def compile_actions(document, actions, profile=None, table_receipt=None):
             action = {key: value for key, value in action.items() if key not in ('purpose', 'moveItems')}
             action['op'] = 'layout'
         if action.get('op') != 'layout':
+            action = normalize_reference_text(action, document)
             # These native properties are unambiguously text. Some providers
             # return their literal text instead of the JSON-encoded string.
             # Normalize that narrow case without accepting malformed objects,

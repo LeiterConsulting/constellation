@@ -5,10 +5,17 @@ import re
 MAX_COMPLETE_CONTEXT_BYTES = 36000
 
 
+def explicit_page_count(prompt):
+    """Only an unambiguous small page count can constrain compact composition."""
+    counts = {1 if match.lower() in ('one','1') else 2 for match in re.findall(r'\b(one|two|1|2)(?:-|\s+)pages?\b', prompt, re.I)}
+    if len(counts) != 1 or re.search(r'\b(?:three|four|five|six|seven|eight|nine|[3-9]|\d{2,})(?:-|\s+)pages?\b|\bmulti[- ]page\b', prompt, re.I): return None
+    return counts.pop()
+
+
 def bounded_aitk_creation(context):
     """A workload heuristic, never a claim about the connection's token window."""
     prompt = context['request']
-    if not context.get('dataProfile') or not re.search(r'\btwo\s+pages\b|\b2\s+pages\b', prompt, re.I): return False
+    if not context.get('dataProfile') or explicit_page_count(prompt) is None: return False
     # Ambiguous/larger page counts and explicitly large chart requests stage.
     if re.search(r'\b(?:three|four|five|six|seven|eight|nine|[3-9]|\d{2,})\s+pages\b|\b(?:seven|eight|nine|[7-9]|\d{2,})\s+(?:charts|panels|tiles|visualizations)\b', prompt, re.I): return False
     return len(json.dumps(context, ensure_ascii=True, separators=(',', ':')).encode()) <= MAX_COMPLETE_CONTEXT_BYTES

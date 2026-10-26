@@ -183,3 +183,14 @@ def recorded_unit_question(profile, prompt, brief):
     cards = [{'label':'Use ' + label,'prompt':name + ' is recorded in ' + label + '. Continue the original dashboard goal.',
               'reason':'Confirm the stored measurement unit; this does not convert values.','kind':'refine'} for label,_symbol in choices]
     return message,cards
+
+
+def unit_confirmation(profile, prompt):
+    """Only a complete declaration of one observed field's stored unit, no edit goal."""
+    for field in profile['fields']:
+        if field.get('context', {}).get('basis') != 'user': continue
+        units = '|'.join(re.escape(unit) for unit in sorted(UNIT_NAMES, key=len, reverse=True))
+        name = re.escape(field['name'])
+        if re.fullmatch(r'\s*["`\']?' + name + r'["`\']?\s+(?:is recorded in|is measured in|uses units of|units are)\s+(?:' + units + r')\s*\.?\s*', prompt, re.I):
+            return field['name'], field['context'].get('unit')
+    return None

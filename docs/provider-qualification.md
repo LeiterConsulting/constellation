@@ -12,6 +12,8 @@ Use a private test draft and the same authorized dataset, time range and require
 4. Save/reopen the private draft and conversation. Refresh a representative browser journey; check selected-element focus, page/filter state and contextual chat controls.
 5. Save a private native Studio copy in another Splunk app. Compare its exact definition/ACL with the draft, render both pages and exercise row/token navigation and return. Native output must work without the Constellation handler or script.
 
+For a new-author UX pass, also start with no prior field definitions: choose an inspected starting card (or use Choose Splunk data), send the editable first-page question, answer a recorded-unit confirmation, choose a suggested follow-on and verify its target focus before Send. Exercise both a local grounded card and a model-proposed next step when available. Do not replace a failed suggested prompt with a manually optimized prompt and count it as first-attempt success. Record any manual source selection separately from automatic discovery.
+
 Count creation failures and edits not attempted because creation failed. Separate server acceptance, independent requirement checks and browser/native results. Record first-response acceptance, automatic repair, elapsed time and model/search calls. Keep pre-fix attempts separate from post-fix reruns. Small repeated samples are regression evidence, not a population success-rate estimate or an unaided user trial.
 
 ## Independent transformation checks
@@ -30,7 +32,7 @@ An absent Wi-Fi table column is not a failed independence test; apply that check
 
 ## Remaining release decisions
 
-The [recorded matrices](validation.md) show substantial improvement, but do **not** establish 1.0 readiness. The 0.18 follow-up repeats non-admin sensor, process-observation and network-response creation/editing across all three providers on one final archive. It also exercises original-reply suppression, native readiness, focused canvas edits and independent analytical probes. Slower-provider authoring and automatic repairs can still take over a minute. Historical probes found incorrect analytical populations, and a browser check found clipping in definitions that source readback had accepted. Keep those failures visible alongside final reruns.
+The [recorded matrices](validation.md) show substantial improvement, but do **not** establish 1.0 readiness. The recorded 0.18–0.21 work covers non-admin sensor, process-observation and network-response journeys, sparse and partial outputs, field context, delivery recovery and native output. The 0.22 walkthrough adds a fresh-author starting-question and follow-on cohort; its failed candidates remain visible alongside affected-path reruns. Slower-provider authoring and automatic repairs can still take over a minute. Historical probes found incorrect analytical populations, and a browser check found clipping in definitions that source readback had accepted. Keep those failures visible alongside final reruns.
 
 1. Demonstrate repeatable creation and focused editing within useful latency across the advertised provider/model combinations. Preserve failure evidence; do not increase retry/time limits merely to make a sample green.
 2. Extend the sensor regression to representative operational datasets, missing fields, sparse data, partial searches and business-rule review. Run unaided user trials; measure completion and required intervention.

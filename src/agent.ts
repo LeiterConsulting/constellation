@@ -6,7 +6,7 @@ import { validateDefinition, type JsonObject, type Revision, type StudioDefiniti
 
 export interface StudioChange { op: 'set' | 'remove'; path: string; value: string; }
 export interface Attachment { name: string; data: string; }
-export interface AgentReply { brief?: DashboardBrief; revision: number; message: string; changes: StudioChange[]; suggestions: PromptSuggestion[]; repaired: boolean; activity: string[]; validationNotes?: string[]; recovery?: { modelCalls: number; queryChecks: number }; pagePurposes?: Record<string,string>; dataContext?: DataScope | null; dataProfile?: DataProfile | null; searchReceipts?: Array<{ source: string; fields: string[]; rows: number; earliest: string }>; }
+export interface AgentReply { brief?: DashboardBrief; revision: number; message: string; changes: StudioChange[]; suggestions: PromptSuggestion[]; repaired: boolean; activity: string[]; validationNotes?: string[]; recovery?: { modelCalls: number; queryChecks: number; seconds?: number }; pagePurposes?: Record<string,string>; dataContext?: DataScope | null; dataProfile?: DataProfile | null; searchReceipts?: Array<{ source: string; fields: string[]; rows: number; earliest: string }>; }
 export interface Environment {
   version: string; studioVersion: string; spl: string;
   spl2: { adhoc: string; modules: string };

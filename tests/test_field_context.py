@@ -2,7 +2,7 @@
 import copy,json,sys,unittest
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'splunk/constellation/bin'))
-from field_context import enrich_profile,sample_fields,validate_missing_measurements,recorded_unit_intent,recorded_unit_question
+from field_context import enrich_profile,sample_fields,validate_missing_measurements,recorded_unit_intent,recorded_unit_question,unit_confirmation
 from provider_service import ProviderError
 from data_service import DataService
 from dashboard_brief import authoring_brief
@@ -141,3 +141,23 @@ class FieldContextTests(unittest.TestCase):
         self.assertIn('temperature is recorded in fahrenheit.',context['request'])
         self.assertEqual(context['history'],history)
         self.assertEqual(reply['dataContext']['fieldDefinitions']['temperature']['unit'],'°F')
+
+    def test_explicit_existing_dashboard_unit_confirmation_needs_no_model_or_dashboard_edit(self):
+        from agent_service import AgentService
+        from provider_service import ProviderService
+        from test_agent_service import Client, Store, STARTER
+        class Runtime:
+            def environment(self): return {'version':'10.2.8','features':{}}
+            def datasets(self): return {'indexes':[{'name':'fixture'}]}
+            def preview(self, body): return {'fields':[{'name':'response_time_ms'}],'results':[{'response_time_ms':0}]}
+        doc=copy.deepcopy(STARTER);client=Client([])
+        reply=AgentService(ProviderService(Store(),client),Runtime()).assist({
+            'revision':0,'definition':doc,'prompt':'"response_time_ms" is recorded in milliseconds.',
+            'dataContext':{'index':'fixture','earliest':'-24h'}})
+        self.assertEqual(client.calls,[]);self.assertEqual(reply['changes'],[])
+        self.assertEqual(reply['recovery']['modelCalls'],0)
+        self.assertEqual(doc,STARTER)
+        self.assertEqual(reply['dataContext']['fieldDefinitions']['response_time_ms']['unit'],'ms')
+        self.assertEqual(reply['dataProfile']['fields'][0]['context']['basis'],'user')
+        for prompt in ('Is milliseconds correct for response_time_ms?', 'response_time_ms is recorded in milliseconds. Add a peak.', 'Display response_time_ms in seconds.'):
+            self.assertIsNone(unit_confirmation(reply['dataProfile'],prompt))

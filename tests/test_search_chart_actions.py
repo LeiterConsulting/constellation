@@ -16,9 +16,29 @@ def page():
     return {'op':'page','layoutId':'layout_main','label':'Overview','purpose':'Understand activity','moveItems':False,'width':1200,'height':600,'items':[{'id':'trend','kind':'block','x':20,'y':20,'w':1160,'h':400}]}
 
 class SearchChartActionTests(unittest.TestCase):
+    def test_known_reference_and_quoted_table_text_recover_encoding_without_guessing(self):
+        from native_text_encoding import normalize_reference_text
+        doc=apply_changes(blank()['definition'],compile_actions(blank()['definition'],[{'op':'search','id':'events','pipeline':'| stats count'},chart('splunk.table','',['count']),page()],PROFILE));before=copy.deepcopy(doc)
+        actions=[{'op':'set','path':'/visualizations/trend/dataSources/primary','value':'events'},
+                 {'op':'set','path':'/visualizations/trend/options/table','value':'"> primary | frameBySeriesNames("count")"'}]
+        changed=apply_changes(doc,compile_actions(doc,actions,PROFILE))
+        self.assertEqual(changed,doc);self.assertEqual(doc,before)
+        for path,value in (('/visualizations/trend/dataSources/primary','unknown'),('/visualizations/new/dataSources/primary','events'),('/visualizations/trend/options/table','"> primary | eval wrong=count"'),('/visualizations/trend/options/table','"> primary | frameBySeriesNames(count)"'),('/title','"broken JSON'),('/visualizations/trend/dataSources/primary','true')):
+            action={'op':'set','path':path,'value':value}
+            self.assertEqual(normalize_reference_text(action,doc),action)
+        # Encoding does not invent/verify an output column; ordinary validation retains that job.
+        encoded=normalize_reference_text({'op':'set','path':'/visualizations/trend/options/table','value':'"> primary | frameBySeriesNames("missing")"'},doc)
+        self.assertIn('missing',json.loads(encoded['value']))
+
     def test_chart_schema_encodes_the_same_eight_field_bound_as_runtime(self):
         from search_chart_actions import CHART_ACTION_SCHEMA,compile_chart
-        series,table=CHART_ACTION_SCHEMA['anyOf']
+        series,single,table=CHART_ACTION_SCHEMA['anyOf']
+        self.assertEqual(series['properties']['x']['minLength'],1)
+        self.assertEqual(series['properties']['y']['minItems'],1)
+        self.assertEqual(single['properties']['x']['enum'],[''])
+        self.assertEqual(single['properties']['y']['minItems'],1)
+        self.assertEqual(single['properties']['y']['maxItems'],1)
+        self.assertEqual(table['properties']['x']['enum'],[''])
         self.assertEqual(series['properties']['y']['maxItems'],8)
         self.assertEqual(table['properties']['y']['maxItems'],80)
         self.assertEqual(table['properties']['chartType']['enum'],['splunk.table'])

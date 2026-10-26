@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createBlank, createStarter, cleanDashboardUrl, validateDefinition } from './document';
-import { contextualPrompts, nextSuggestions, promptContextKey, suggestionsDeclined } from './prompts';
+import { contextualPrompts, nextSuggestions, promptContextKey, suggestionFocus, suggestionsDeclined } from './prompts';
 import { starterScopes } from './datasetQuestions';
 import { applyStudioChanges } from './agent';
 
@@ -39,6 +39,9 @@ describe('fresh creation and contextual prompts', () => {
     const focused = contextualPrompts(doc, 'viz_trend');
     expect(focused[0].reason).toContain(doc.visualizations.viz_trend.title);
     expect(focused[0].label).toBe('Add a rolling baseline');
+    expect(suggestionFocus(focused[0],doc)).toBe('viz_trend');
+    expect(suggestionFocus({...focused[0],focus:'deleted_chart'},doc)).toBeNull();
+    expect(suggestionFocus({...focused[0],focus:'https://untrusted.example/'},doc)).toBeNull();
     expect(contextualPrompts(doc)[0].kind).toBe('data');
     expect(contextualPrompts(doc).some(prompt => prompt.kind === 'comparison')).toBe(true);
   });
@@ -92,6 +95,7 @@ describe('fresh creation and contextual prompts', () => {
       {name:'pid',numeric:true,present:5,coverage:{missing:5,numeric:5,multivalue:0,basis:'sample_rows' as const},context:{role:'identifier' as const,basis:'field_name' as const}},
       {name:'temperature',numeric:true,present:6,coverage:{missing:4,numeric:6,multivalue:0,basis:'sample_rows' as const},context:{role:'measurement' as const,basis:'field_name' as const,quantity:'temperature'}},
     ]};
+    doc.dataSources![String(doc.visualizations.viz_trend.dataSources?.primary)]={type:'ds.search',options:{query:'search index=fixture | timechart avg(temperature) AS average_temperature'}};
     const cards=contextualPrompts(doc,'viz_trend',0,profile.scope,{}, {profile});
     expect(cards[0].label).toBe('Show how many readings support each metric');
     expect(cards.some(card=>card.label==='Confirm temperature units')).toBe(true);
@@ -103,5 +107,36 @@ describe('fresh creation and contextual prompts', () => {
     const units=contextualPrompts(doc,'viz_trend',0,null,{}, {messages:[{user:false,text:'Should temperatures use Fahrenheit or Celsius?'}]});
     expect(units.map(item=>item.label)).toEqual(['Use Fahrenheit','Use Celsius']);
     expect(contextualPrompts(doc,'viz_trend',0,null,{}, {messages:[{user:false,text:'Which service should this page investigate?'}]})).toEqual([]);
+  });
+  it('offers an editable stored-unit confirmation instead of a question the model cannot verify',()=>{
+    const doc=createStarter(), source=String(doc.visualizations.viz_trend.dataSources?.primary);
+    doc.dataSources![source]={type:'ds.search',options:{query:'search index=fixture | timechart avg(response_time_ms) AS average_ms'}};
+    const profile={scope:{index:'fixture',earliest:'-24h' as const},baseQuery:'search index=fixture',sampledRows:10,bounded:true,note:'Synthetic',fields:[
+      {name:'response_time_ms',numeric:true,present:10,context:{role:'measurement' as const,basis:'field_name' as const,quantity:'duration',unit:'ms'}},
+      {name:'unrelated_temperature',numeric:true,present:2,context:{role:'measurement' as const,basis:'field_name' as const,quantity:'temperature'},coverage:{missing:8,numeric:2,multivalue:0,basis:'sample_rows' as const}},
+    ]};
+    const fallback=contextualPrompts(doc,'viz_trend',0,profile.scope,{}, {profile});
+    const bad={label:'Confirm response-time units',prompt:'Is ms the correct recorded unit for response_time_ms?',reason:'Name hint.',kind:'refine' as const};
+    const cards=nextSuggestions([bad],fallback,{profile});
+    expect(cards[0].prompt).toBe('"response_time_ms" is recorded in milliseconds.');
+    expect(cards[0].reason).toContain('only if it is the stored unit');
+    expect(cards.some(card=>card.prompt===bad.prompt)).toBe(false);
+    expect(cards.some(card=>/unrelated|how many readings/.test(card.prompt))).toBe(false);
+    const question=contextualPrompts(doc,'viz_trend',0,profile.scope,{}, {profile,messages:[{user:false,text:'Can you confirm that response_time_ms is recorded in milliseconds?'}]});
+    expect(question[0].prompt).toBe(cards[0].prompt);
+    const confirmed={...profile,fields:profile.fields.map(field=>field.name==='response_time_ms'?{...field,context:{...field.context,basis:'user' as const}}:field)};
+    expect(contextualPrompts(doc,'viz_trend',0,profile.scope,{}, {profile:confirmed}).some(card=>card.label.startsWith('Confirm recorded'))).toBe(false);
+  });
+  it('uses chain dependencies for suggestion evidence and does not match a field inside a longer name',()=>{
+    const doc=createStarter(), source=String(doc.visualizations.viz_trend.dataSources?.primary);
+    doc.dataSources!.base={type:'ds.search',options:{query:'search index=fixture | stats avg(latency_ms) AS average'}};
+    doc.dataSources![source]={type:'ds.chain',options:{extend:'base',query:'| fields average'}};
+    const profile={scope:{index:'fixture',earliest:'-24h' as const},baseQuery:'search index=fixture',sampledRows:10,bounded:true,note:'Synthetic',fields:[
+      {name:'latency_ms',numeric:true,present:10,context:{role:'measurement' as const,basis:'field_name' as const,quantity:'duration',unit:'ms'}},
+      {name:'latency',numeric:true,present:5,context:{role:'measurement' as const,basis:'field_name' as const,quantity:'duration'},coverage:{missing:5,numeric:5,multivalue:0,basis:'sample_rows' as const}},
+    ]};
+    const cards=contextualPrompts(doc,'viz_trend',0,profile.scope,{}, {profile});
+    expect(cards.some(card=>card.prompt==='"latency_ms" is recorded in milliseconds.')).toBe(true);
+    expect(cards.some(card=>card.label==='Show how many readings support each metric')).toBe(false);
   });
 });

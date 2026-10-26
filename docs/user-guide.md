@@ -72,3 +72,8 @@ Describe recorded units and event meaning in your question, for example: `temper
 When the agent asks which units are recorded in one field, a short answer such as “Fahrenheit” confirms that field and continues the original goal. This defines the stored unit; it does not convert values. If several fields or display preferences are involved, name the field explicitly.
 
 Coverage describes only the returned sample. A real zero is present data; an absent or nonnumeric reading is separate. Missing values do not establish an outage or expected cadence. Ask for independent valid-reading counts alongside source-row counts to see which measurements support a metric. Constellation preserves unknown measurements as null rather than silently turning them into zero. Broader derived-expression and SPL2 interpretations still need review.
+
+
+The initial shortlist favors questions supported by recognizable inspected measurements over generic state/unknown-value questions. It covers at most three recent sources; use **Choose Splunk data** when your source is absent. Inspecting a selected index or existing search offers questions for that source. Starter questions build one focused page by default; edit the prepared request or ask for another page later.
+
+A **Confirm recorded units** suggestion prepares a declaration for review. Send it only if it describes the stored values, or edit it. Confirming one observed field on an existing dashboard updates its saved draft context without a model request or query edit. Optional **Activity** shows model requests, search validation checks and elapsed time; profiling is separate from those query-check counts.

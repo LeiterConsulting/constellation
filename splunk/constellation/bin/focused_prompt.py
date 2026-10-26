@@ -70,8 +70,8 @@ native navigation button. Its pageId is placement; targetPageId is destination.
 op:link {sourceId,pageId,targetId:"",field,token} adds native table-row navigation:
 pageId is the DESTINATION layout ID and field is a verified output field. Every
 requested destination search must use the same token. Preserve existing handlers.
-Use native set/remove for other supported features. retrievedGuidance supplies
-version-specific contracts; the supplied schema enumerates allowed actions.
+For existing-table row links, retain its source/query/columns; add separate detail sources.
+Use native set/remove for other schema-supported features.
 
 The server validates edits and actual read-only searches before committing. On
 recoveryFeedback, repair the SAME goal using precise validation errors and search

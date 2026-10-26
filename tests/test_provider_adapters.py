@@ -4,6 +4,7 @@ from pathlib import Path
 import sys
 import unittest
 from unittest.mock import patch
+from urllib.error import URLError
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'splunk/constellation/bin'))
 from provider_service import ProviderService, ProviderError
 from provider_adapters import OllamaClient, AITKClient, ollama_origin
@@ -23,6 +24,17 @@ class OllamaFixture(OllamaClient):
         return {'done':True,'message':{'content':'{"message":"Ready","operations":[]}'}}
 
 class AdapterTests(unittest.TestCase):
+    def test_ollama_timeout_is_distinct_from_connection_failure_without_replay_or_raw_error(self):
+        for failure,status,code in ((TimeoutError('fixture-secret'),504,'provider_timeout'),(URLError(TimeoutError('fixture-secret')),504,'provider_timeout'),(URLError('fixture-secret'),502,'provider_connection')):
+            class Opener:
+                calls=0
+                def open(self,*args,**kwargs):self.calls+=1;raise failure
+            opener=Opener()
+            with patch('provider_adapters.build_opener',return_value=opener),self.assertRaises(ProviderError)as error:
+                OllamaClient().call('http://127.0.0.1:11434','chat',{})
+            self.assertEqual((error.exception.status,error.exception.code),(status,code))
+            self.assertNotIn('fixture-secret',str(error.exception));self.assertEqual(opener.calls,1)
+
     def test_switching_retains_openai_secret_and_each_saved_connection(self):
         store=Store({'api_key':'fixture-only','model':'openai-fixture'})
         service=ProviderService(store,ollama=OllamaFixture())

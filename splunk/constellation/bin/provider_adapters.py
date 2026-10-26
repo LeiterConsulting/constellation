@@ -53,8 +53,14 @@ class OllamaClient:
                 return result
         except HTTPError as error:
             raise ProviderError('Ollama returned HTTP ' + str(error.code) + '. Check the endpoint and installed model.', 502) from None
-        except (URLError, OSError, ssl.SSLError, TimeoutError):
-            raise ProviderError('The Splunk server could not reach Ollama. Check its network listener and endpoint.', 502) from None
+        except (TimeoutError, socket.timeout):
+            raise ProviderError('Ollama did not finish within the request time limit. Your draft is preserved; the upstream request may still finish. Check model capacity before retrying.', 504, 'provider_timeout') from None
+        except URLError as error:
+            if isinstance(error.reason, (TimeoutError, socket.timeout)):
+                raise ProviderError('The Ollama connection timed out. Your draft is preserved; check model load and connectivity before retrying.', 504, 'provider_timeout') from None
+            raise ProviderError('The Splunk server could not reach Ollama. Check its network listener and endpoint.', 502, 'provider_connection') from None
+        except (OSError, ssl.SSLError):
+            raise ProviderError('The Splunk server could not reach Ollama. Check its network listener and endpoint.', 502, 'provider_connection') from None
         except (ValueError, TypeError):
             raise ProviderError('Ollama returned an unreadable response.', 502) from None
 

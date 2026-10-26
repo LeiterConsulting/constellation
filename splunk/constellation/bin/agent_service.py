@@ -1,5 +1,6 @@
 """Studio authoring with environment context, history, and guarded attachments."""
-from field_context import enrich_profile, recorded_unit_intent, recorded_unit_question
+from field_context import enrich_profile, recorded_unit_intent, recorded_unit_question, unit_confirmation
+import row_navigation
 import json
 import copy
 import re
@@ -91,8 +92,9 @@ layout ID. For op:button, pageId places the button and targetPageId is its desti
 targetId is optional (empty string); if nonempty it must be placed on that page.
 field/token are empty for direct button/chart navigation. For table row navigation
 give a verified field and a destination token; the compiler emits field-scoped native
-setToken and switchToTab actions. For filtered destination searches use $token|s$
-and define a safe input/default, commonly '*', so initial preview is executable.
+setToken and switchToTab actions. For existing-table row links, retain its
+source/query/columns; add separate detail sources. For filtered destination searches
+use $token|s$ and define a safe input/default, commonly '*', so initial preview is executable.
 An all-entities '*' default needs search FIELD=$token|s$; where FIELD=$token|s$ is
 literal equality and starts empty. Keep numeric exclusions in a separate where.
 The app focuses targetId on navigation; native Studio switches pages and sets tokens.
@@ -349,6 +351,12 @@ class AgentService:
             return {'revision': revision, 'message': 'No rows were found in the selected data and time range. Choose another dataset or a wider range to continue.',
                     'changes': [], 'suggestions': [], 'repaired': False, 'activity': ['Inspected selected dataset; no rows in bounded sample'],
                     'model': saved['model'], 'dataContext': profile['scope'], 'dataProfile': profile, 'searchReceipts': []}
+        confirmation = unit_confirmation(profile, prompt) if profile and document['visualizations'] and not attachments else None
+        if confirmation and confirmation[1]:
+            return {'revision': revision, 'message': 'Recorded ' + confirmation[0] + ' as ' + confirmation[1] + ' for this data source. This defines the stored unit; values and dashboard searches are unchanged.',
+                    'changes': [], 'suggestions': [], 'repaired': False, 'activity': ['Confirmed the recorded unit from your declaration; no model request was needed.'],
+                    'model': saved['model'], 'dataContext': profile['scope'], 'dataProfile': profile, 'searchReceipts': [],
+                    'recovery': recovery.evidence(), 'brief': brief, 'pagePurposes': purposes}
         question = recorded_unit_question(profile, prompt, brief) if profile else None
         if question:
             return {'revision': revision, 'message': question[0], 'changes': [], 'suggestions': question[1] if body.get('suggestionFormat') == 'cards' else [card['prompt'] for card in question[1]],
@@ -371,6 +379,8 @@ class AgentService:
         if profile: context['dataProfile'] = profile
         if table_receipt: context['focusedSourceReceipt'] = table_receipt
         format_only = table_receipt and not attachments and formatting_only(prompt, focus.get('id'), document)
+        row_only = row_navigation.eligible(prompt,document,focus.get('id'),profile,table_receipt,attachments)
+        if row_only: context['rowNavigationOnly'] = True
         if table_receipt and not format_only:
             context['tableEditing'] = 'formatTable is unavailable for this broader edit. Start with the verified existing search. Add requested calculations through search/native query edits and update explicit table projections to show requested new fields. Format new aliases with final SPL eval after aggregation if needed.'
         if format_only:
@@ -379,6 +389,7 @@ class AgentService:
         context['retrievedGuidance'] = guidance
         instructions = (FORMAT_INSTRUCTIONS if format_only else CREATION_INSTRUCTIONS if profile and context['canvasState'] == 'blank' else
                         FOCUSED_INSTRUCTIONS if focus['kind'] in ('visualization', 'input') else INSTRUCTIONS)
+        if row_only: instructions = row_navigation.INSTRUCTIONS
         request = {'model': saved['model'], 'store': False, 'instructions': instructions,
                    'input': [{'role': 'user', 'content': [{'type': 'input_text', 'text': json.dumps(context)}] + attachments}],
                    'max_output_tokens': CREATE_OUTPUT_TOKENS if context['canvasState'] == 'blank' else EDIT_OUTPUT_TOKENS,
@@ -393,6 +404,8 @@ class AgentService:
             request['text']['format']['schema']['properties']['changes']['items']['anyOf'] = [
                 action for action in request['text']['format']['schema']['properties']['changes']['items']['anyOf']
                 if action != TABLE_FORMAT_ACTION]
+            if row_only:
+                request['text']['format']['schema']['properties']['changes']['items']['anyOf'] = [action for action in request['text']['format']['schema']['properties']['changes']['items']['anyOf'] if set(action['properties']['op']['enum']) <= row_navigation.OPS]
         if saved['model'] in ('gpt-6-luna', 'gpt-6-astra'):
             request['reasoning'] = {'effort': 'medium' if context['canvasState'] == 'blank' else 'low'}
         budget = AuthoringBudget(saved, context)
@@ -437,11 +450,13 @@ class AgentService:
                     raise ProviderError('formatTable is unavailable for this broader edit. Preserve the verified aggregation, add the requested calculation through a search/native query edit and display new output columns in the table projection. Use final SPL eval after aggregation for any requested formatting.')
                 validate_data_claims(result, profile)
                 raw_actions = budget.actions(result['changes'], proposal.document)
+                if row_only: row_navigation.validate_actions(raw_actions,document,body.get('selected',''))
                 compiled = compile_actions(proposal.document, raw_actions, profile, table_receipt)
                 candidate = apply_changes(proposal.document, compiled)
                 isolated = isolate_selected_calculation(prompt, body.get('selected', ''), candidate, document)
                 if isolated: candidate = apply_changes(candidate, isolated)
                 validate_selected_calculation(prompt, body.get('selected', ''), candidate, document)
+                if row_only: row_navigation.validate_result(candidate,document,body.get('selected',''))
                 draft = proposal.stage(compiled + isolated)
                 if profile:
                     from formatting_syntax import selected_table_syntax

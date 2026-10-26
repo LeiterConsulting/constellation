@@ -168,3 +168,17 @@ Keep sample construction, semantic hints/declarations and zero-imputation feedba
 Recorded-unit clarification uses the same scoped definitions. Retain the single-question/single-field guard for short answers, distinguish stored units from display conversion, and resume the durable goal without treating older uncertainty as a competing instruction. Table output columns and numeric chart series have separate wire/runtime limits (80 and eight); keep ordinary, foundation and compact schemas aligned when extending either.
 
 The expanded exact table-placement grammar retains its previous narrow request wording and native validation. Qualify preservation and actual canvas visibility on pages with several rows; do not silently resolve decorative or conditional-layer ambiguity. Duplicate-placement feedback must preserve unknown native properties and unchanged imports.
+
+
+## 0.22 first-use and encoding contracts
+
+No connection, native-dashboard or draft migration runs. Keep the three-profile shortlist bound and explicit source preference when extending ranking. Unit-confirmation cards must show that a name hint needs the user's review; accepting a pure stored-unit declaration cannot convert values or rewrite searches. More complex requests and blank canvases retain normal authoring. Source/chain field matching is optional suggestion evidence only.
+
+Compact one-page creation requires an explicit unambiguous small page count, verified SPL data, an empty ordinary canvas and the existing context bound. Retain advanced/native fallbacks, exact count validation, all real search/output/measurement guards and unchanged recovery budgets. Keep the three chart-shape wire variants aligned with runtime checks.
+
+Native text recovery must remain in `native_text_encoding.py`, with known-source and strict table-expression ambiguity tests. Never turn general malformed JSON into accepted objects, guess a source, or skip downstream validation. Requalify whole-dashboard suggested drilldowns as well as selected-table edits across provider adapters; model connection tests do not cover those paths.
+
+
+Suggestion focus is an optional hint in the existing schema-3 suggestion object. Guard it against the current definition before selecting a target, retain editable preparation, and preserve older clients' behavior. It must never become an arbitrary URL/action or authority source. Ollama timeout classification is separate from connection/TLS failure; neither path replays inference.
+
+The 0.22 row-detail tool mode changes no stored schema or provider authority. It applies only when current evidence and the exact suggested request establish the operation. Existing drafts and arbitrary requests retain their ordinary editing path. Ollama timeout failures now have a distinct error code; clients should retain the existing draft and offer explicit retry rather than replay inference automatically.

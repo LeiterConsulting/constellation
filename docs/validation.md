@@ -1,15 +1,15 @@
 # Validation status
 
-Snapshot: **0.21.0 development preview, October 26, 2026**. This file is a sanitized summary. Private lab addresses, credentials, screenshots, transcripts, raw search data and detailed runtime receipts are excluded from the repository.
+Snapshot: **0.22.0 development preview, October 26, 2026**. This file is a sanitized summary. Private lab addresses, credentials, screenshots, transcripts, raw search data and detailed runtime receipts are excluded from the repository.
 
-See the [0.21 field-context qualification](#0210-field-meanings-recorded-units-and-missing-readings--october-26-2026) for the current changes and the [0.20 starting-question and follow-on walkthrough](#0200-grounded-starting-questions-and-follow-ons--october-26-2026) for current changes, and the [0.19 sparse/partial-data qualification](#0190-sparse-partial-data-and-transport-investigation--october-26-2026) for the preceding complete provider cohort. Earlier sections retain their historical failures and qualification boundaries, including the [0.16 independent privileged-handler review](#0160-security-and-non-admin-three-provider-flow--october-25-2026).
+See the [0.22 new-author walkthrough](#0220-new-author-walkthrough--october-26-2026) for current changes, the [0.21 field-context qualification](#0210-field-meanings-recorded-units-and-missing-readings--october-26-2026), and the [0.19 sparse/partial-data qualification](#0190-sparse-partial-data-and-transport-investigation--october-26-2026) for the preceding complete dataset cohort. Earlier failures and qualification boundaries remain recorded.
 
 ## Local verification
 
 | Check | Observed result |
 | --- | --- |
-| Python unit suites | 336 tests passed on Python 3.9 and 3.13, including field evidence, unit clarification/resumption, narrow missing-measurement guards, focused source isolation and retained authority/delivery/native regressions. |
-| Frontend unit suites | 77 tests passed, including unit provenance, undefined meanings, relevant duration/outcome ranking, sample coverage, scoped cache identity and retained delivery/Stop races. |
+| Python unit suites | 342 tests passed on Python 3.9 and 3.13, including unit-confirmation acknowledgements, one-page compact composition, chart shape constraints, focused typed navigation/preservation, timeout classification and retained authority/delivery/native regressions. |
+| Frontend unit suites | 80 tests passed, including grounded starter ranking, referenced field/chain context, unit confirmation, valid/stale suggestion focus and retained delivery/Stop races. |
 | TypeScript and production build | Passed; bundle-size warning remains. |
 | Deterministic app package | Generated with SHA-256 receipt. |
 | Splunk AppInspect 4.3.1, precert | 0 errors, 0 failures, 0 future failures, 7 warnings, 1 skipped, 116 successes, 128 not applicable on the tested app archive. |
@@ -24,6 +24,30 @@ The AppInspect result applies to the tested development archive. The seven warni
 | 10.4.4 | 1.26.6 | Native roundtrips, synthetic SPL/SPL2, PDF native interactions, Ollama edits, prior page/focus exercises and current row-budget check. |
 
 The full 0.7.1 creation/switch/reopen journey was run on the 10.2.8 target, not repeated in full on 10.4.4. AITK succeeded through an existing configured connection on one target; another target returned no usable completion. Do not infer instance-independent provider availability from app installation.
+
+## 0.22.0 new-author walkthrough — October 26, 2026
+
+This was a Codex-operated first-use simulation with disposable ordinary authors, not an unaided human usability study. Each provider began from an empty definition against the same real network-response dataset on Enterprise 10.2.8 / Studio 1.23.12. Direct OpenAI used `gpt-6-luna`; Ollama used `qwen3-coder:latest`; AITK 6.2 used the existing managed connection. Its secret-bearing connection parameters and underlying model/budget were not reread or changed. Provider choices and data access remained separate per author; authors had no administrator or native credential-store capabilities. Raw evidence stays local.
+
+The tested first question requested a focused one-page distribution, median/upper-percentile trend, recorded outcome breakdown and device comparison. It did not label unknown outcome values as failures. Automatic starter discovery supplied this card for OpenAI and AITK. Ollama's fresh account initially received other inspected datasets; Choose Splunk data was used to inspect the same network source. The inspected shortlist remains bounded to three scopes; ranking improves choices within that shortlist, not exhaustive discovery.
+
+| Latest affected-path result | OpenAI | Ollama | AITK |
+| --- | --- | --- | --- |
+| First page | 1 model call, 4 search checks, 32 s; 4 charts | 1 call, 4 checks, 29 s; 4 charts, on the preceding chart-shape candidate | 1 call, 3 checks, 37 s; 3 charts covering all four requested views |
+| Stored-unit confirmation | Passed earlier fresh-author browser check; retained in final starter | Acknowledged without another model request | Final browser check: 0 calls; exact native definition unchanged |
+| Contextual refinement | Suggested baseline: 1 call, 1 check, 7 s | Selected type/title: 2 calls, 0 checks, 51 s | Suggested baseline: 1 call, 1 check, 26 s |
+| Multi-page extension | Natural chat request: 1 call, 3 checks, 23 s; existing charts/sources retained | **Failed final targeted replay:** 3 calls, 1 check, 155 s; original board preserved | Browser suggestion: 3 calls, 4 checks, 91 s. Final unchanged-goal handler replay: **1 call, 4 checks, 44 s**, complete native postconditions |
+| Preview row/return interaction | Passed | Not reached | Passed |
+| Native copy in Search & Reporting | Exact private readback; rendering, row and return passed | Valid first-page copy matched exact private readback; native rendering not verified in this run | Exact private readback; rendering, row and return passed |
+| Continuation | Undo exact; Redo/refresh, separate blank/library reopen and conversation retained | Undo/Redo/refresh and conversation/selection retained | Undo exact; Redo/refresh, separate blank/library reopen, conversation and selection retained |
+
+The final package is SHA-256 `97ea3aef668cb549f2e3fc99e70dcb0c6e2467af2cd3b6c88c56c0bf57c37d6b`. It was installed on both recorded lab versions without restart. OpenAI's final first-page/refinement/multi-page/native journey ran on this archive. The full AITK browser journey preceded the final instruction-only navigation adjustment; the final replay rechecked the identical row-detail goal against its preserved first page through the installed handler and all native/search/preservation postconditions. Ollama's valid first page and selected edit preceded that final instruction adjustment; its failed final replay establishes an unresolved gap, not multi-page acceptance. All 61 packaged Python sources matched the checkout; browser assets matched the production build. Fresh AppInspect 4.3.1 precert against this exact archive returned the local-check counts above.
+
+Earlier failures are retained. An Ollama blank creation exhausted validation on dynamic split-series aliases/repeated base searches. Explicit first-page compact composition and distinct chart schemas removed those repairs in the next creation. The first OpenAI unit card asked the model to verify a unit it could not know, producing a circular question. The new editable declaration acknowledges only the user's stored-unit definition without changing values or queries. Optional unit/coverage follow-ons now follow fields actually referenced by charts and chains. Choosing a local baseline or row-detail card also selects its valid target before Send; stale targets are ignored.
+
+Ollama row extensions failed on native binding encoding and return-button placement, followed by a provider connection failure and later exhausted repairs. Narrow native encoding and typed navigation tools preserve valid work but did not make that model reliable on this goal. Its final feedback still reported filtering an existing source and placing Back on the original rather than new page. AITK initially invented wrapper/placeholder layout IDs; explicit chart-ID/no-placeholder guidance preceded the one-call final replay. Neither model, search nor time budgets were enlarged, and no failed proposal was applied. The recovery deadline is checked between operations and can be exceeded by an in-flight model request. All four disposable accounts, their private test records/views/jobs and the one explicitly authorized copied OpenAI key were removed. Independent checks confirmed the administrator's original draft list/settings and the managed AITK inference policy/collection protections were unchanged; the original browser login and user tabs were restored.
+
+Remaining UX concerns include uneven source discovery within the three-scope shortlist, occasional awkward model-written card explanations and several clicks to change a selected chart's conversation scope. The deterministic starter/unit/target fixes reduce friction; they do not establish that first-time humans understand the flow. No fresh image/PDF, general SPL2, other-dataset matrix, dark-theme/accessibility audit, second-target AITK or load/SHC qualification was added by this walkthrough. The historical REST delivery root cause remains unidentified. Prior field-context, sparse-data and security qualifications retain their own exact scope.
 
 ## Prior complete real-data journey (0.7.1)
 

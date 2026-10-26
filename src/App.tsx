@@ -21,11 +21,11 @@ import { isSplunk, providerRequest, providerLabel, failureActivity, type Provide
 import Settings from './Settings';
 import { applyStudioChanges, readAttachment, type AgentReply, type Attachment, type Environment } from './agent';
 import { useSearchPreview } from './useSearchPreview';
-import { contextualPrompts, nextSuggestions, promptContextKey, type PromptSuggestion, type PromptContext } from './prompts';
+import { contextualPrompts, nextSuggestions, promptContextKey, suggestionFocus, type PromptSuggestion, type PromptContext } from './prompts';
 import { useStarterIdeas } from './useStarterIdeas';
 import { newDraftId, readDraft, openDraft, type ChatMessage as Chat, type DraftList, type DraftRecord, type DraftSnapshot, type DashboardBrief } from './drafts';
 import { useDraftPersistence } from './useDraftPersistence';
-import { dataScopeKey, previewRanges, nativePreviewRange, type DataDiscovery, type DataProfile, type DataScope } from './data';
+import { dataScopeKey, fieldDefinitionKey, previewRanges, nativePreviewRange, type DataDiscovery, type DataProfile, type DataScope } from './data';
 import DashboardLibrary from './DashboardLibrary';
 import DataChooser from './DataChooser';
 import PageManager from './PageManager';
@@ -148,6 +148,8 @@ export default function App({ initialColorScheme }: { initialColorScheme: 'light
       : restored ? 'Draft and conversation restored.' : '');
   };
   const choosePrompt = (suggestion: PromptSuggestion) => {
+    const target=suggestionFocus(suggestion,revisionRef.current.definition);
+    if(target)onSelect(target);
     setPrompt(suggestion.prompt); setCollapsed(false);
     requestAnimationFrame(() => composerInput.current?.focus());
   };
@@ -265,8 +267,9 @@ export default function App({ initialColorScheme }: { initialColorScheme: 'light
           updated = next;
           setSelected(value => validFocus(next.definition,value) ? value : '');
           setStatus(result.recovery&&result.recovery.modelCalls>1?'Dashboard updated after automatic recovery.':'Dashboard updated.');
-        } else setStatus('The agent replied. The document is unchanged.');
-        setActivity([...result.activity, ...(result.validationNotes || []).map(note => `Corrected during validation: ${note}`)]); setProposals({ key: promptContextKey(updated.number, updated.definition, selected, activeTab, result.dataContext || scopeOverride || dataContext, {brief:result.brief || brief,messages:[...messages,{user:true,text}]}), items: result.suggestions }); setAttachments([]); addMessage(result.message);
+        } else setStatus(result.dataContext && fieldDefinitionKey(result.dataContext) !== fieldDefinitionKey(scopeOverride || dataContext) ? 'Field definitions updated.' : 'The agent replied. The document is unchanged.');
+        setActivity([...result.activity, ...(result.validationNotes || []).map(note => `Corrected during validation: ${note}`),
+          ...(result.recovery ? [`${result.recovery.modelCalls} model requests · ${result.recovery.queryChecks} search checks${typeof result.recovery.seconds==='number'?` · ${Math.round(result.recovery.seconds)} seconds`:''}.`] : [])]); setProposals({ key: promptContextKey(updated.number, updated.definition, selected, activeTab, result.dataContext || scopeOverride || dataContext, {brief:result.brief || brief,messages:[...messages,{user:true,text}]}), items: result.suggestions }); setAttachments([]); addMessage(result.message);
         if (result.dataContext && result.changes.length && !searches.enabled) searches.run();
       } catch (error) {
         if (!controller.signal.aborted) {

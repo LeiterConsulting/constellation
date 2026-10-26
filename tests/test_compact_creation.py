@@ -134,6 +134,25 @@ class CompactCreationTests(unittest.TestCase):
         self.assertNotIn(COMPOSE_ACTION, schema)
         self.assertIn('volume', apply_changes(original, result['changes'])['visualizations'])
 
+    def test_explicit_one_page_creation_keeps_the_same_execution_and_binding_checks(self):
+        action=compose();action['pages']=[dict(action['pages'][0],panels=[panel('count','splunk.singlevalue','| stats count AS readings','',['readings'])])];action['links']=[]
+        class CompactProvider(Provider):
+            def configured(self):return {'provider':'ollama','model':'fixture'}
+            def capabilities(self,saved):return {'contextTokens':32768,'images':False,'pdf':False}
+        original=blank()['definition'];runtime=Runtime();provider=CompactProvider([reply([action])])
+        # The fixture runtime returns count; use that exact observed output.
+        action['pages'][0]['panels'][0].update(pipeline='| stats count',y=['count'])
+        result=AgentService(provider,runtime).assist({'prompt':'Create a one-page dashboard of activity counts','revision':0,'definition':original,'dataContext':blank()['dataContext']})
+        schema=provider.requests[0]['text']['format']['schema']['properties']['changes']['items']
+        self.assertEqual(schema['properties']['pages']['minItems'],1);self.assertEqual(schema['properties']['pages']['maxItems'],1)
+        self.assertEqual(result['recovery']['queryChecks'],1);self.assertEqual(result['recovery']['modelCalls'],1)
+        self.assertEqual(len(apply_changes(original,result['changes'])['layout']['tabs']['items']),1)
+        self.assertEqual(original['visualizations'],{})
+        from creation_strategy import explicit_page_count
+        self.assertIsNone(explicit_page_count('Build one page and two pages'))
+        self.assertIsNone(explicit_page_count('Build a multi-page dashboard'))
+        self.assertFalse(compact_goal({'request':'Build one page with a map and dropdown'}))
+
     def test_advanced_actions_remain_available_and_staged_candidates_cannot_compose(self):
         context = {'request': 'Build two pages', 'canvasState': 'blank', 'history': [], 'dataProfile': PROFILE}
         request = {'instructions': 'Preserve native features', 'text': {'format': {'schema': copy.deepcopy(SCHEMA)}}, 'input': [{'content': []}]}

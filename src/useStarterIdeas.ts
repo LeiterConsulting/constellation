@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { providerRequest } from './api';
 import type { DataDiscovery, DataProfile, DataScope } from './data';
 import { dataScopeKey, fieldDefinitionKey } from './data';
-import { datasetQuestions, starterScopes } from './datasetQuestions';
+import { rankedStarterQuestions, starterScopes } from './datasetQuestions';
 import type { InstanceIdea } from './prompts';
 
 type Profile = (scope: DataScope, signal: AbortSignal) => Promise<DataProfile>;
@@ -31,7 +31,7 @@ export function useStarterIdeas(discovery: DataDiscovery | null, enabled: boolea
     const controller = new AbortController(); setLoading(true);
     void inspectStarterScopes(starterScopes(discovery, preferred), cache.current, controller.signal,
       (scope, signal) => providerRequest<DataProfile>('profile', { ...scope }, signal),
-      profiles => setIdeas(profiles.flatMap(profile => datasetQuestions(profile).slice(0, 1)).slice(0, 3)))
+      profiles => setIdeas(rankedStarterQuestions(profiles, preferred)))
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
   }, [discovery, enabled, preferredKey]);

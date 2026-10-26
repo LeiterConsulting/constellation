@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { datasetQuestions, starterScopes } from './datasetQuestions';
+import { datasetQuestions, rankedStarterQuestions, starterScopes } from './datasetQuestions';
 import { inspectStarterScopes } from './useStarterIdeas';
 import type { DataProfile, DataScope } from './data';
 
@@ -7,6 +7,14 @@ const profile = (fields: DataProfile['fields']): DataProfile => ({scope:{index:'
   sampledRows:20,bounded:true,note:'Synthetic metadata',completion:{state:'partial',reasons:['sample_limit']}});
 const sensor = profile([{name:'_time',numeric:true,present:20},{name:'temperature_f',numeric:true,present:8},{name:'wifi_rssi',numeric:true,present:12},{name:'device_id',numeric:false,present:20}]);
 describe('field-backed starting questions',()=>{
+  it('ranks usable measured questions ahead of generic states and unknown meanings, preserving the preferred source',()=>{
+    const states={...profile([{name:'_time',numeric:true,present:20},{name:'deployment_id',numeric:false,present:20,context:{role:'identifier' as const,basis:'field_name' as const}},{name:'dataset_state',numeric:false,present:20,context:{role:'category' as const,basis:'field_name' as const}}]),scope:{index:'states',earliest:'-24h' as const}};
+    const unknown={...profile([{name:'_time',numeric:true,present:20},{name:'value',numeric:true,present:20,context:{role:'unknown' as const,basis:'unknown' as const}}]),scope:{index:'values',earliest:'-24h' as const}};
+    const measured={...sensor,scope:{index:'readings',earliest:'-24h' as const},fields:sensor.fields.map(field=>field.name==='temperature_f'?{...field,context:{role:'measurement' as const,basis:'field_name' as const,quantity:'temperature',unit:'°F'}}:field)};
+    expect(rankedStarterQuestions([states,unknown,measured]).map(idea=>idea.scope?.index)).toEqual(['readings','states','values']);
+    expect(rankedStarterQuestions([states,unknown,measured],states.scope)[0].scope?.index).toBe('states');
+    expect(rankedStarterQuestions([states,unknown,measured])).toHaveLength(3);
+  });
   it('uses observed measurements, keeps sparse populations independent and assumes no thresholds',()=>{
     const questions=datasetQuestions(sensor);
     expect(questions[0].label).toBe('Track temperature and connectivity');
