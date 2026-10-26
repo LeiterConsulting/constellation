@@ -25,6 +25,7 @@ class FormattingSyntaxTests(unittest.TestCase):
   from provider_service import ProviderError
   class Outputs(Runtime):
    def preview(self,body):
+    if body.get('fieldDiscovery'): return super().preview(body)
     self.calls.append(body)
     if ') peak=' in body['query']:raise ProviderError('Malformed eval',422,'preview_failed')
     return {'state':'complete','fields':[{'name':n}for n in ('count','peak')],'results':[{'count':'12','peak':'42'}]}

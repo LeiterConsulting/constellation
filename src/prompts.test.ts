@@ -86,6 +86,18 @@ describe('fresh creation and contextual prompts', () => {
     const colors=contextualPrompts(doc,'viz_trend',0,null,{}, {messages:[{user:true,text:'Change only this tile’s colors'}]});
     expect(colors[0].prompt).toContain('every other tile unchanged');
   });
+  it('prioritizes missing measurement coverage and unit clarification using evidence, not numeric IDs',()=>{
+    const doc=createStarter();
+    const profile={scope:{index:'fixture',earliest:'-24h' as const},baseQuery:'search index=fixture',sampledRows:10,bounded:true,note:'Synthetic',fields:[
+      {name:'pid',numeric:true,present:5,coverage:{missing:5,numeric:5,multivalue:0,basis:'sample_rows' as const},context:{role:'identifier' as const,basis:'field_name' as const}},
+      {name:'temperature',numeric:true,present:6,coverage:{missing:4,numeric:6,multivalue:0,basis:'sample_rows' as const},context:{role:'measurement' as const,basis:'field_name' as const,quantity:'temperature'}},
+    ]};
+    const cards=contextualPrompts(doc,'viz_trend',0,profile.scope,{}, {profile});
+    expect(cards[0].label).toBe('Show how many readings support each metric');
+    expect(cards.some(card=>card.label==='Confirm temperature units')).toBe(true);
+    expect(cards.some(card=>card.label.includes('pid'))).toBe(false);
+    expect(cards[0].prompt).toContain('keep missing or excluded measurements null');
+  });
   it('helps answer blocking questions rather than proposing unrelated edits',()=>{
     const doc=createStarter();
     const units=contextualPrompts(doc,'viz_trend',0,null,{}, {messages:[{user:false,text:'Should temperatures use Fahrenheit or Celsius?'}]});

@@ -16,6 +16,15 @@ def page():
     return {'op':'page','layoutId':'layout_main','label':'Overview','purpose':'Understand activity','moveItems':False,'width':1200,'height':600,'items':[{'id':'trend','kind':'block','x':20,'y':20,'w':1160,'h':400}]}
 
 class SearchChartActionTests(unittest.TestCase):
+    def test_chart_schema_encodes_the_same_eight_field_bound_as_runtime(self):
+        from search_chart_actions import CHART_ACTION_SCHEMA,compile_chart
+        series,table=CHART_ACTION_SCHEMA['anyOf']
+        self.assertEqual(series['properties']['y']['maxItems'],8)
+        self.assertEqual(table['properties']['y']['maxItems'],80)
+        self.assertEqual(table['properties']['chartType']['enum'],['splunk.table'])
+        fields=['field_'+str(i)for i in range(12)]
+        _id,result=compile_chart(chart('splunk.table','',fields),{'visualizations':{}})
+        self.assertTrue(all(field in result['options']['table']for field in fields))
     def test_invalid_chart_shapes_give_specific_repair_guidance_without_mutating_work(self):
         original=blank()['definition'];before=copy.deepcopy(original)
         for action,expected in ((chart('table'), 'chartType must be one of splunk.line'),

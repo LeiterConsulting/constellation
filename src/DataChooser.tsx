@@ -6,9 +6,10 @@ import Modal from '@splunk/react-ui/Modal';
 import Select from '@splunk/react-ui/Select';
 import TextArea from '@splunk/react-ui/TextArea';
 import { providerRequest } from './api';
-import { previewRanges, type DataDiscovery, type DataProfile, type DataScope } from './data';
+import { dataScopeKey, previewRanges, type DataDiscovery, type DataProfile, type DataScope } from './data';
 import { Actions, Muted } from './styles';
 import { datasetQuestions } from './datasetQuestions';
+import FieldContext from './FieldContextDetails';
 
 export default function DataChooser({ discovery, initial, initialGoal = '', onBuild, onClose, returnFocus }: {
   discovery: DataDiscovery | null; initial?: DataScope | null; initialGoal?: string;
@@ -26,16 +27,16 @@ export default function DataChooser({ discovery, initial, initialGoal = '', onBu
   useEffect(() => () => { generation.current++; pending.current?.abort(); }, []);
   const stopInspection = () => { generation.current++; pending.current?.abort(); pending.current = null; setBusy(false); };
   const close = () => { stopInspection(); onClose(); };
-  const change = (next: DataScope) => { generation.current++; setScope(next); setProfile(null); setError(''); };
-  const chosen = (): DataScope => mode === 'query' ? { query: scope.query || '', language: scope.language || 'spl', earliest: scope.earliest }
-    : { index: scope.index || '', sourcetype: scope.sourcetype || '', language: 'spl', earliest: scope.earliest };
+  const change = (next: DataScope) => { generation.current++; if (dataScopeKey({...next,earliest:'-24h'}) !== dataScopeKey({...scope,earliest:'-24h'})) delete next.fieldDefinitions; setScope(next); setProfile(null); setError(''); };
+  const chosen = (): DataScope => mode === 'query' ? { query: scope.query || '', language: scope.language || 'spl', earliest: scope.earliest, fieldDefinitions: scope.fieldDefinitions }
+    : { index: scope.index || '', sourcetype: scope.sourcetype || '', language: 'spl', earliest: scope.earliest, fieldDefinitions: scope.fieldDefinitions };
   const inspect = async (build = false) => {
     const controller = new AbortController(); pending.current?.abort(); pending.current = controller;
     const turn = ++generation.current; setBusy(true); setStage(build && profile ? 'build' : 'inspect'); setError('');
     try {
       // Scope changes invalidate profile. Authoring still profiles server-side;
       // avoid repeating the same UI inspection when Build follows Inspect.
-      const result = build && profile ? profile : await providerRequest<DataProfile>('profile', { ...chosen() }, controller.signal);
+      const result = build && profile ? profile : await providerRequest<DataProfile>('profile', { ...chosen(), question: goal }, controller.signal);
       if (turn !== generation.current) return;
       setProfile(result);
       if (!result.sampledRows) { setError('No rows found in this time range. Choose another dataset or range.'); return; }
@@ -52,7 +53,7 @@ export default function DataChooser({ discovery, initial, initialGoal = '', onBu
     <Modal.Header title="Build with Splunk data"/>
     <Modal.Body>
       <Muted>Searches use your Splunk permissions. Only field metadata goes to the model; event values stay in Splunk and the preview.</Muted>
-      <ControlGroup label="Start from"><Select value={mode} disabled={busy} onChange={(_event, { value }) => { setMode(String(value)); setProfile(null); }}>
+      <ControlGroup label="Start from"><Select value={mode} disabled={busy} onChange={(_event, { value }) => { setMode(String(value)); setScope(previous=>({...previous,fieldDefinitions:undefined})); setProfile(null); }}>
         <Select.Option label="An index in this instance" value="index"/><Select.Option label="My existing search" value="query"/>
       </Select></ControlGroup>
       {mode === 'index' ? <>
@@ -71,7 +72,7 @@ export default function DataChooser({ discovery, initial, initialGoal = '', onBu
       <ControlGroup label="What should this dashboard help you understand?"><TextArea value={goal} disabled={busy} onChange={(_event, { value }) => setGoal(value)} rowsMin={2}/></ControlGroup>
       {profile ? <><Muted role="status">Found {profile.fields.length} fields in a bounded sample of {profile.sampledRows} rows.{profile.completion?.state === 'partial' ? ' This sample is partial; it does not establish complete counts.' : ''}</Muted>
         {datasetQuestions(profile).length ? <Actions aria-label="Questions for the selected data">{datasetQuestions(profile).map(idea => <Button key={idea.label} disabled={busy} onClick={() => setGoal(idea.prompt)}>{idea.label}</Button>)}</Actions> : null}
-        <details><summary>Field details</summary><Muted>{profile.fields.map(field => field.name).join(', ')}. This sample does not establish a business definition or complete coverage.</Muted></details></> : null}
+        <FieldContext profile={profile}/></> : null}
       {error ? <Message type="error">{error}</Message> : null}
       {busy ? <Muted role="status">{stage === 'build' ? 'Building your dashboard…' : 'Inspecting the selected data…'}</Muted> : null}
     </Modal.Body><Modal.Footer><Actions><Button onClick={busy ? stopInspection : close}>{busy ? 'Stop inspection' : 'Cancel'}</Button><Button onClick={() => void inspect()} disabled={busy}>Inspect fields</Button>

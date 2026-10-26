@@ -120,7 +120,7 @@ def compile_button(document, action):
     position['w'] = max(button_label_width(action['label']), position['w'])
     options = page.get('options', {})
     if position['x'] + position['w'] > options.get('width', 1200):
-        raise ProviderError('Fit navigation button ' + action['id'][:120] + ' within the width of page ' + action['pageId'][:120] + '.')
+        raise ProviderError('Fit navigation button ' + action['id'][:120] + ' within the width of page ' + action['pageId'][:120] + '. Its x=' + str(position['x']) + ' and minimum label width=' + str(position['w']) + ' require page width at least ' + str(position['x'] + position['w']) + ', or move x to at most ' + str(max(0, options.get('width',1200) - position['w'])) + '. Preserve other item positions and validate overlaps.')
     occupied = []
     for entry in page.get('structure', []):
         if entry.get('item') == action['id']: continue

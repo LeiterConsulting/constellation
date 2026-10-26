@@ -31,8 +31,19 @@ CHART_ACTION = {'type': 'object', 'properties': {
     'title': {'type': 'string'}, 'description': {'type': 'string'},
     'sourceId': {'type': 'string', 'description': 'The exact search action id or an existing source ID.'},
     'x': {'type': 'string', 'description': 'Exact output field for the time/category axis. SPL timechart emits _time, not time. Empty for a table or single value.'},
-    'y': {'type': 'array', 'items': {'type': 'string'}, 'description': 'Numeric output fields, or ordered visible fields for a table. One field for a single value; an empty table list shows all output fields.'}},
+    'y': {'type': 'array', 'maxItems': 80, 'items': {'type': 'string'}, 'description': 'Output field names, never category values. Axis charts allow at most 8 numeric series; tables allow up to 80 ordered columns. One field for a single value. An empty table list shows all returned columns.'}},
     'required': ['op', 'id', 'chartType', 'title', 'description', 'sourceId', 'x', 'y'], 'additionalProperties': False}
+
+
+def chart_variant_schema(schema, discriminator='chartType'):
+    series, table = copy.deepcopy(schema), copy.deepcopy(schema)
+    series['properties'][discriminator]['enum'] = [kind for kind in schema['properties'][discriminator]['enum'] if kind != 'splunk.table']
+    series['properties']['y']['maxItems'] = 8
+    table['properties'][discriminator]['enum'] = ['splunk.table']
+    table['properties']['y']['maxItems'] = 80
+    return {'anyOf': [series, table]}
+
+CHART_ACTION_SCHEMA = chart_variant_schema(CHART_ACTION)
 
 
 def identifier(value):
@@ -146,8 +157,10 @@ def compile_chart(action, document):
     if kind not in CHART_TYPES:
         raise ProviderError('Chart ' + key + ': chartType must be one of ' + ', '.join(CHART_TYPES) +
                             '. To move or resize an existing chart, change only its /layout position and canvas bounds; do not rebuild the chart.')
-    if not isinstance(x, str) or not isinstance(y, list) or len(y) > 8:
-        raise ProviderError('Chart ' + key + ': x must be a string and y an array of at most 8 output field names. '
+    maximum = 80 if kind == 'splunk.table' else 8
+    if not isinstance(x, str) or not isinstance(y, list) or len(y) > maximum:
+        raise ProviderError('Chart ' + key + ': x must be a string and y an array of at most ' + str(maximum) + ' output field names. '
+                            'Received x type=' + type(x).__name__ + ', y type=' + type(y).__name__ + (', y count=' + str(len(y)) if isinstance(y,list) else '') + '. Use y=[] for a table that should show all returned columns; axis charts need at most 8 named output series. '
                             'To move or resize an existing chart, change only its /layout position and canvas bounds; preserve its bindings.')
     if any(not isinstance(field, str) or not 1 <= len(field) <= 200 or any(ord(c) < 32 for c in field) for field in ([x] if x else []) + y):
         raise ProviderError('Use nonempty output field names under 200 characters for chart bindings.')

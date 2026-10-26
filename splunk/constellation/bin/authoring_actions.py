@@ -8,7 +8,7 @@ from page_service import LINK_ACTION, BUTTON_ACTION, BUTTON_MIN_HEIGHT, compile_
 from studio_contract import apply_changes
 from geometry_normalization import normalize_structure, fit_button_labels
 from input_normalization import normalize_button_actions
-from search_chart_actions import SEARCH_ACTION, CHART_ACTION, TOKEN_ACTION, compile_search, compile_chart, compile_token, normalize_field_bindings, normalize_event_counts
+from search_chart_actions import SEARCH_ACTION, CHART_ACTION, CHART_ACTION_SCHEMA, TOKEN_ACTION, compile_search, compile_chart, compile_token, normalize_field_bindings, normalize_event_counts
 from search_chart_actions import FILTER_ACTION, DASHBOARD_ACTION, compile_filter, compile_dashboard, normalize_row_filters
 from table_format import TABLE_FORMAT_ACTION, compile_table_format
 from measurement_constraints import normalize_measurements
@@ -38,7 +38,7 @@ PAGE_ACTION['properties']['op'] = {'type': 'string', 'enum': ['page']}
 PAGE_ACTION['properties']['purpose'] = {'type': 'string', 'maxLength': 1200}
 PAGE_ACTION['properties']['moveItems'] = {'type': 'boolean', 'description': 'Move these items off their previous pages when true; otherwise allow reuse.'}
 PAGE_ACTION['required'].extend(['purpose', 'moveItems'])
-ACTION_SCHEMA = {'anyOf': [COMPOSE_ACTION, LEGACY_CHANGE, DASHBOARD_ACTION, SEARCH_ACTION, CHART_ACTION, TOKEN_ACTION, FILTER_ACTION, TABLE_FORMAT_ACTION, LAYOUT_ACTION, PAGE_ACTION, LINK_ACTION, BUTTON_ACTION]}
+ACTION_SCHEMA = {'anyOf': [COMPOSE_ACTION, LEGACY_CHANGE, DASHBOARD_ACTION, SEARCH_ACTION, *CHART_ACTION_SCHEMA['anyOf'], TOKEN_ACTION, FILTER_ACTION, TABLE_FORMAT_ACTION, LAYOUT_ACTION, PAGE_ACTION, LINK_ACTION, BUTTON_ACTION]}
 
 
 def validate_chart_placement(document, previous):
@@ -75,6 +75,8 @@ def validate_chart_placement(document, previous):
                     ' wide by ' + format(height, '.15g') + ' high, or correct the rectangle using nonnegative positions and positive sizes. Preserve unrelated items.', 422, 'layout_bounds')
             if chart.get('type') == 'input.button' and position != old_positions.get(identifier) and position['h'] < BUTTON_MIN_HEIGHT:
                 raise ProviderError('Give native Studio button inputs at least 80 pixels of height so their labels are visible: ' + identifier)
+            if any(existing_id == identifier for existing_id, _position in charts) and sum(entry.get('item') == identifier for entry in page.get('structure', [])) > sum(entry.get('item') == identifier for entry in old_pages.get(page_id, {}).get('structure', [])):
+                raise ProviderError('Update the existing position for ' + str(identifier)[:100] + ' on page ' + str(page_id)[:100] + '; do not append a duplicate structure entry. Preserve other item positions.', 422, 'layout_duplicate')
             charts.append((identifier, position))
         for offset, (first_id, first) in enumerate(charts):
             for second_id, second in charts[offset + 1:]:

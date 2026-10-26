@@ -40,11 +40,46 @@ describe('field-backed starting questions',()=>{
     expect(ping[0].label).toBe('Track packet loss and device states');
     expect(ping[0].prompt).not.toContain('latency_censored_count');
   });
+  it('uses provenance-labelled units and exact missing coverage without inventing a cadence',()=>{
+    const p={...sensor,fields:sensor.fields.map(field=>field.name==='temperature_f'?{...field,context:{role:'measurement' as const,basis:'field_name' as const,quantity:'temperature',unit:'°F'},coverage:{missing:12,numeric:8,multivalue:0,basis:'sample_rows' as const}}:field)};
+    const q=datasetQuestions(p)[0];
+    expect(q.prompt).toContain('a hint, not independent verification');
+    expect(q.prompt).toContain('independent valid-reading counts');
+    expect(q.prompt).toContain('do not fill with zero');
+    expect(q.prompt).not.toMatch(/outage|every minute|150/);
+    expect(q.prompt.length).toBeLessThanOrEqual(1200);
+    const unknown={...p,fields:p.fields.map(field=>field.name==='temperature_f'?{...field,context:{role:'measurement' as const,basis:'field_name' as const,quantity:'temperature'}}:field)};
+    expect(datasetQuestions(unknown)[0].prompt).toContain('Confirm the recorded units');
+  });
+  it('asks for undefined numeric meanings and uses explicitly supplied quantity context',()=>{
+    const unknown=profile([{name:'_time',numeric:true,present:20},{name:'dataset_size_disclosed',numeric:true,present:20,context:{role:'unknown',basis:'unknown'}}]);
+    const q=datasetQuestions(unknown)[0];expect(q.label).toBe('Clarify dataset size disclosed');expect(q.prompt).toContain('do not average an undefined numeric field');
+    const defined=profile([{name:'_time',numeric:true,present:20},{name:'value',numeric:true,present:20,context:{role:'measurement',basis:'user',quantity:'duration',unit:'ms'}}]);
+    expect(datasetQuestions(defined)[0].label).toBe('Investigate slow responses');
+    const aggregate=profile([{name:'count',numeric:true,present:20,context:{role:'counter',basis:'field_name'}}]);
+    expect(datasetQuestions(aggregate)[0].label).toBe('Visualize count');expect(datasetQuestions(aggregate)[0].prompt).toContain('Preserve the current search, output grain');
+  });
   it('limits background inspection to three distinct active event datasets',()=>{
     const discovery={indexes:[...['a','b','c','d'].map(name=>({name,kind:'event'})),{name:'metrics',kind:'metric'}],status:'available',warning:'',note:'',
       activity:['metrics','a','a','b','c','d'].map(index=>({index,sourcetype:'fixture',events:'20'}))};
     expect(starterScopes(discovery).map(scope=>scope.index)).toEqual(['a','b','c']);
     expect(starterScopes(discovery,{index:'d',earliest:'-1h'}).map(scope=>scope.index)).toEqual(['d','a','b']);
+  });
+  it('prefers response measurements over generic durations and counter evidence',()=>{
+    const p=profile([{name:'_time',numeric:true,present:20},
+      {name:'duration_ms',numeric:true,present:20,context:{role:'measurement',basis:'field_name',quantity:'duration',unit:'ms'}},
+      {name:'counter_evidence_level',numeric:false,present:20,context:{role:'counter',basis:'field_name'}},
+      {name:'response_time_ms',numeric:true,present:20,context:{role:'measurement',basis:'field_name',quantity:'duration',unit:'ms'}}]);
+    const q=datasetQuestions(p)[0];
+    expect(q.label).toBe('Investigate slow responses');
+    expect(q.fields).toContain('response_time_ms');
+    expect(q.fields).not.toContain('duration_ms');expect(q.fields).not.toContain('counter_evidence_level');
+  });
+  it('keeps different scoped definitions out of the same metadata cache entry',async()=>{
+    const cache=new Map<string,DataProfile>(), signal=new AbortController().signal;
+    let calls=0;
+    for(const unit of ['ms','s']) await inspectStarterScopes([{index:'fixture',earliest:'-24h',fieldDefinitions:{latency:{unit}}}],cache,signal,async scope=>{calls++;return {...sensor,scope};},()=>{});
+    expect(calls).toBe(2);expect(cache.size).toBe(2);
   });
   it('reuses session metadata and stops issuing inspections on cancellation',async()=>{
     const scopes:DataScope[]=['a','b','c','d'].map(index=>({index,earliest:'-24h'}));

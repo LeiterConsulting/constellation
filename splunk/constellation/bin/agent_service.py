@@ -1,11 +1,12 @@
 """Studio authoring with environment context, history, and guarded attachments."""
+from field_context import enrich_profile, recorded_unit_intent, recorded_unit_question
 import json
 import copy
 import re
 from provider_service import ProviderError
-from studio_contract import model_document, validate_document
+from studio_contract import model_document, validate_document, apply_changes
 from studio_features import feature_contract, validate_features
-from table_projection import validate_requested_columns, verified_requested_projection
+from table_projection import validate_requested_columns, verified_requested_projection, validate_selected_calculation, isolate_selected_calculation
 from model_capabilities import attachment_parts
 from prompt_suggestions import SUGGESTION_SCHEMA, normalize_suggestions
 from data_service import DataService
@@ -338,15 +339,27 @@ class AgentService:
             scope = dict(scope, earliest=inferred_range(prompt) or scope.get('earliest', '-24h'))
         self.progress('profile')
         profile = data.profile(scope) if scope else None
+        confirmed_intent = recorded_unit_intent(profile, prompt, safe_history) if profile else prompt
         if profile:
-            profile['measurementConstraints'] = temperature_constraints(prompt, brief, profile)
+            profile = enrich_profile(profile, confirmed_intent)
+            profile['measurementConstraints'] = temperature_constraints(confirmed_intent, brief, profile)
             profile['independentMeasurements'] = data.independent_populations
         table_receipt = data.focused_table_receipt(document, focus.get('id'), profile) if profile and focus['kind'] == 'visualization' else None
         if profile and not profile['sampledRows']:
             return {'revision': revision, 'message': 'No rows were found in the selected data and time range. Choose another dataset or a wider range to continue.',
                     'changes': [], 'suggestions': [], 'repaired': False, 'activity': ['Inspected selected dataset; no rows in bounded sample'],
                     'model': saved['model'], 'dataContext': profile['scope'], 'dataProfile': profile, 'searchReceipts': []}
-        context = {'request': prompt, 'definition': model_document(document),
+        question = recorded_unit_question(profile, prompt, brief) if profile else None
+        if question:
+            return {'revision': revision, 'message': question[0], 'changes': [], 'suggestions': question[1] if body.get('suggestionFormat') == 'cards' else [card['prompt'] for card in question[1]],
+                    'repaired': False, 'activity': ['Inspected selected field metadata', 'Recorded units need confirmation before editing'],
+                    'model': saved['model'], 'dataContext': profile['scope'], 'dataProfile': profile, 'searchReceipts': [],
+                    'recovery': recovery.evidence(), 'brief': brief, 'pagePurposes': purposes}
+        resolved_request = prompt
+        if confirmed_intent != prompt:
+            resolved_request = (confirmed_intent + '\nThe previous recorded-unit question is now resolved. Continue the existing dashboard goal in dashboardBrief using the confirmed dataProfile field definitions. '
+                                'These confirmed definitions supersede earlier notes that units were unconfirmed; preserve all other requirements.')
+        context = {'request': resolved_request, 'definition': model_document(document),
                    'canvasState': 'blank' if not document['visualizations'] and not document.get('dataSources') else 'dashboard',
                    'environment': environment, 'nativeFeatures': feature_contract(), 'catalog': catalog, 'history': safe_history,
                    'selected': str(body.get('selected', ''))[:200], 'activeTab': str(body.get('activeTab', ''))[:200],
@@ -425,7 +438,11 @@ class AgentService:
                 validate_data_claims(result, profile)
                 raw_actions = budget.actions(result['changes'], proposal.document)
                 compiled = compile_actions(proposal.document, raw_actions, profile, table_receipt)
-                draft = proposal.stage(compiled)
+                candidate = apply_changes(proposal.document, compiled)
+                isolated = isolate_selected_calculation(prompt, body.get('selected', ''), candidate, document)
+                if isolated: candidate = apply_changes(candidate, isolated)
+                validate_selected_calculation(prompt, body.get('selected', ''), candidate, document)
+                draft = proposal.stage(compiled + isolated)
                 if profile:
                     from formatting_syntax import selected_table_syntax
                     separators = selected_table_syntax(draft, document, body.get('selected', ''))
@@ -496,8 +513,8 @@ class AgentService:
                 repair = True
                 self.progress('repair', attempt + 1)
                 if profile and attempt == 0:
-                    profile = data.profile(scope)
-                    profile['measurementConstraints'] = temperature_constraints(prompt, brief, profile)
+                    profile = enrich_profile(data.profile(scope), confirmed_intent)
+                    profile['measurementConstraints'] = temperature_constraints(confirmed_intent, brief, profile)
                     profile['independentMeasurements'] = data.independent_populations
                 # Keep failed output and validation feedback as untrusted user content.
                 budget.feedback(request, {

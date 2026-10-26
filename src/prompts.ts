@@ -5,6 +5,7 @@ import type { StudioDefinition } from './document';
 import { validFocus, pagesOf, type PagePurpose } from './pages';
 import { elementLabel } from './elementLabels';
 import { fieldTitle, profileFields } from './datasetQuestions';
+import { hasMissing, isMeasurement } from './fieldContext';
 
 export interface PromptSuggestion { label: string; prompt: string; reason: string; kind: 'idea' | 'data' | 'comparison' | 'interaction' | 'layout' | 'refine'; }
 export interface InstanceIdea extends PromptSuggestion { scope?: DataScope; profile?: DataProfile; fields?: string[]; }
@@ -68,6 +69,9 @@ export function contextualPrompts(definition: StudioDefinition, selected = '', a
   const preserve = ' Keep the current data, time range and standing requirements; preserve the rest of the dashboard.';
   if (charts.some(item => definition.dataSources?.[String(item.dataSources?.primary)]?.type === 'ds.test')) result.push({ label: 'Connect real data', kind: 'data', reason: chart ? `${elementLabel(definition,selected)} currently uses illustrative data.` : 'This design currently includes illustrative data.',
     prompt: 'Help me connect this design to real Splunk data. Identify the metrics and fields needed by the current charts. Ask for my existing searches or relevant field names before changing queries; preserve the layout while we connect them.' });
+  const ambiguous = fields.find(field => isMeasurement(field) && field.context?.quantity && !field.context.unit);
+  if (ambiguous) result.push({label:`Confirm ${fieldTitle(ambiguous.name)} units`.slice(0,60),kind:'refine',reason:'Recorded units have not been defined; comparisons and limits need that context.',
+    prompt:`Help me confirm the recorded units and meaning of ${JSON.stringify(ambiguous.name)} before adding thresholds or conversions. Ask one short question, keep the current measurements unchanged, and retain my answer in the dashboard requirements.`});
   const lastRequest = recentRequests(context).at(-1) || '';
   if (chart && /\b(?:colou?rs?|palette|theme|contrast)\b/i.test(lastRequest)) result.unshift({label:'Give this tile a contrasting background',kind:'refine',reason:`Make ${elementLabel(definition, selected)} readable without changing the whole dashboard.`,
     prompt:'Change only the selected tile’s native background and text/series colors to create readable contrast. Keep labels, axes, legends and values readable. Keep the dashboard theme and every other tile unchanged.'});
@@ -82,7 +86,7 @@ export function contextualPrompts(definition: StudioDefinition, selected = '', a
   const filters = Object.values((definition.inputs || {}) as Record<string,{type?:string}>).some(item => item.type && !['input.button','input.timerange'].includes(item.type));
   if (entity && !filters) result.push({label:`Focus on one ${fieldTitle(entity.name)}`.slice(0,60),kind:'interaction',reason:`Use ${entity.name} to narrow the view without losing the overview.`,
     prompt:`Add a clearly labelled native ${JSON.stringify(entity.name)} filter with an all-values default. Connect it to the relevant searches and preserve working drilldowns.${preserve}`});
-  if (fields.some(field => field.numeric && field.present < (context.profile?.sampledRows || 0))) result.push({label:'Show how many readings support each metric',kind:'data',reason:'Measurement counts make sparse data easier to interpret.',
+  if (fields.some(field => isMeasurement(field) && hasMissing(field))) result.unshift({label:'Show how many readings support each metric',kind:'data',reason:'The inspected sample has missing measurements. Counts distinguish absent readings from zero.',
     prompt:`Add valid measurement counts alongside the dashboard’s existing numeric summaries. Count each measurement independently, retain event counts separately, and keep missing or excluded measurements null.${preserve}`});
   if (chart?.type === 'splunk.singlevalue' && context.profile?.fields.some(field => field.name === '_time')) result.push({label:'Show how this metric changed',kind:'comparison',reason:`Put ${elementLabel(definition,selected)} in its time context.`,
     prompt:`Add a companion time trend for the selected metric using the same verified measurement and population.${preserve}`});

@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.21.0 - 2026-10-26
+
+- Calculate field presence, finite numeric values, missing rows and multivalue evidence from the same bounded current-user verbose preview for both indexes and existing searches. Use an inspection-only 201-row SPL limit and prioritize meaningful fields in wide schemas, retaining the original native/base query. Keep zero distinct from absent/nonnumeric readings; return metadata only.
+- Separate platform facts, field-name hints and explicit user definitions. Retain supported recorded-unit and short meaning declarations with their selected data scope across conversation, save/reopen and refresh; clear associations when changing source/search/language.
+- Ask one recorded-unit question before an ambiguous temperature cutoff. Bind a short unit answer only after an unambiguous question about one observed field, and resume the saved goal with the confirmed definition.
+- Use unit provenance and sparse measurement coverage in starting questions and follow-ons. Keep an optional field-context disclosure in the existing data chooser, with relevant measurements first and explicit sample-only caveats.
+- Prefer explicit response-time measurements over generic duration fields; exclude counter-evidence fields from outcome/entity suggestions and ask about undefined numeric meanings before proposing calculations.
+- Reject narrow zero imputation of known sparse measurements and their recognized aggregate aliases through ordinary bounded repair. No query is rewritten by this guard; arbitrary expression lineage and general SPL2 semantics remain outside its scope.
+- Keep explicit table-only calculations on their selected target. Clone a changed shared SPL source for that table atomically, preserving other consumers, and reject unrelated changes before staging.
+- Extend the exact selected-table full-width operation to eligible absolute pages with several unchanged charts. Place the table below all other page items and preserve its height, searches and unrelated geometry. Give explicit feedback when an edit appends duplicate ordinary placements.
+- Separate table columns from chart series in both ordinary and compact provider schemas: up to 80 verified table columns, eight numeric chart series, and empty-list tables for all returned columns. Give actual shape/count feedback. Navigation-width feedback includes exact required bounds.
+- Keep draft schema 3, provider permissions, native output and model/search/time limits unchanged. New field definitions are an optional bounded extension of the existing data-context sidecar.
+
 ## 0.20.0 - 2026-10-26
 
 - Replace index-name starter cards with outcome-oriented questions grounded in bounded current-user field inspection. Prefer the last selected dataset within the workspace session and inspect at most three candidate scopes, with short-lived in-memory reuse and cancellation.

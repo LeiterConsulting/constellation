@@ -33,6 +33,7 @@ class TimeAxisTests(unittest.TestCase):
     def test_agent_repairs_axis_without_another_model_call_and_revalidates_search(self):
         class TimeRuntime(Runtime):
             def preview(self, body):
+                if body.get('fieldDiscovery'): return super().preview(body)
                 if 'timechart' not in body['query']: return super().preview(body)
                 return {'state':'complete','fields':[{'name':'_time'},{'name':'reading'}], 'results':[{'_time':'fixture-time','reading':'3'}]}
         changes=[{'op':'search','id':'events','pipeline':'| timechart bins=100 avg(value) AS reading'},

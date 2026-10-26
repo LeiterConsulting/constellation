@@ -40,12 +40,12 @@ class AuthoringBudget:
             request['max_output_tokens'] = 3500
             context['originalGoal'] = context['request']
             context['request'] = 'Build only the first useful chart and its search on the first requested page of originalGoal. Do not build the rest yet. The server will request the remaining work in the next stage.'
-            from authoring_actions import LEGACY_CHANGE, SEARCH_ACTION, CHART_ACTION, PAGE_ACTION, DASHBOARD_ACTION
+            from authoring_actions import LEGACY_CHANGE, SEARCH_ACTION, CHART_ACTION_SCHEMA, PAGE_ACTION, DASHBOARD_ACTION
             title = copy.deepcopy(LEGACY_CHANGE)
             title['properties']['path']['enum'] = ['/title']
             title['properties']['op']['enum'] = ['set']
             schema = copy.deepcopy(self.schema)
-            schema['properties']['changes']['items'] = {'anyOf': [title, DASHBOARD_ACTION, SEARCH_ACTION, CHART_ACTION, PAGE_ACTION]}
+            schema['properties']['changes']['items'] = {'anyOf': [title, DASHBOARD_ACTION, SEARCH_ACTION, *CHART_ACTION_SCHEMA['anyOf'], PAGE_ACTION]}
             schema['properties']['changes']['maxItems'] = 5
             request['text']['format']['schema'] = schema
         else:

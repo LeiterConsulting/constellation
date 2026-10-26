@@ -19,6 +19,7 @@ Provider messages, retrieved guidance, uploaded documents and indexed content ar
 | Boundary | Main implementation |
 | --- | --- |
 | Workspace and contextual chat | `src/App.tsx`, `prompts.ts`, `Preview.tsx`, `ElementFocus.tsx`, `PageManager.tsx`. |
+| Field evidence and definitions | `field_context.py`; `src/fieldContext.ts`, `FieldContextDetails.tsx`; scope-bound definitions in the existing data context. |
 | Starting questions | `src/datasetQuestions.ts`, `useStarterIdeas.ts`; existing current-user `profile` endpoint. |
 | Data selection and previews | `src/DataChooser.tsx`, `useSearchPreview.ts`, `previewJobs.ts`; `data_service.py`, `search_service.py`, `preview_jobs.py`, `search_scope.py`. |
 | Provider transport, limits and modality policy | `provider_service.py`, `provider_adapters.py`, `provider_messages.py`, `model_readiness.py`, `model_capabilities.py`, `connection_store.py`. |
@@ -158,3 +159,23 @@ Changed ordinary chart/input rectangles must fit declared absolute-page dimensio
 
 
 Dataset completeness and nullable schema are separate evidence in `search_evidence.py`. Existing-query inspection requests verbose field extraction within the same current-user preview budget; profiles carry only field metadata and allowlisted complete/partial/unknown reasons. Validation can retain declared all-null columns with conservative selected-SPL provenance, while missing output aliases and unverified inputs still fail. Unknown transformations/SPL2 do not gain that exception. This does not fill values, broaden scope or prove analytical correctness.
+
+
+## Field evidence and scoped definitions (0.21)
+
+`field_context.py` owns metadata construction and deterministic semantic hints separately from transports, search guards and native actions. Index and existing-search inspection both use the current-user verbose preview under its existing 200-row/five-second limits. SPL inspection adds an internal `head 201`, allowing the existing 201st-row check to mark capped output partial; the selected base/exported query remains exact. SPL2 retains its ordinary bounded path. No extra counting search or fieldsummary approximation supplies sample presence. Measurements and identifiers rank ahead of technical fields within the 60-field context bound. Zero, missing/empty, nonnumeric and multivalue cells remain distinct; only derived counts/types leave the server. The returned-row sample can be partial and is not a random sample or proof of full-window coverage, cadence, outages or business correctness.
+
+Context marks a platform timestamp, a field-name role/unit hint, or a user declaration explicitly. Numeric identifiers, status codes, counters and measurements are distinguished conservatively. A suffix is not independent verification of source units. Bare RSSI does not establish dBm. Only an exact observed field with an explicit recorded-unit verb or a short means/represents declaration becomes scoped user context. Conflicting name units stay visible. Provider-generated summaries cannot confirm definitions.
+
+Optional `dataContext.fieldDefinitions` holds at most 40 field entries, each with a supported canonical unit and/or a 240-character meaning. It is user intent, validated on inspection/authoring, not a tool instruction or source fact. The existing schema-3 data-context object already permits bounded metadata. Definitions retain their selected index/sourcetype or exact existing search/language, survive time-range changes, and are cleared by the chooser when changing that source. Current-turn declarations update them; old unscoped brief words remain intent rather than automatically confirmed definitions. The original words remain in the brief and conversation. Starter-cache identity includes the definitions; profiles/result rows themselves are not persisted.
+
+Starting questions use unit provenance and independent measurement-count requests when the sample has missing numeric measurements. Follow-ons can prioritize coverage or unit clarification before speculative comparisons. The field-context table is collapsed in the existing chooser; relevant measurements appear first. Every accepted suggestion still goes through the ordinary current-user scope, measurement, native execution and atomic-edit validators.
+
+The same module rejects narrow SPL `fillnull value=0` and same-field coalesce-to-zero operations on known sparse measurements, following simple recognized aggregate aliases. Explicit count-only filling remains separate. It does not implement general expression lineage, change imported/unchanged searches, rewrite queries, infer absent columns or bypass ordinary SPL2 validation. Missing-field metadata is never a fabricated zero.
+
+Unknown recorded temperature units block an explicit temperature cutoff with one metadata-only question. A short unit answer binds only after a single recorded-unit question identifying one observed eligible field. Display/conversion requests and ambiguous fields remain unconfirmed. The resumed model request retains the original words and durable goal, explicitly giving confirmed scoped definitions precedence over earlier uncertainty. The ordinary authoring, scope, measurement and native validators still apply.
+
+The exact selected-summary-table placement path now admits several ordinary absolute-page charts with unique known geometry. It places the table below the other items, keeps their positions, preserves table height and grows canvas bounds only as necessary. Decorative/conditional layers, duplicate placements and ambiguous native structures retain model authoring. New duplicate ordinary placements receive direct repair feedback; unchanged native work is preserved.
+
+
+`table_projection.py` also guards explicit table-only calculation requests. A changed shared `ds.search` source can be cloned and rebound to the selected table, restoring the original source byte-for-byte for its other consumers. Unknown source types, ambiguous bindings, identifier collisions and broader goals retain normal repair. The candidate must preserve every other element/source and dashboard property before it is staged; all query, measurement, projection and feature checks still run on the clone.

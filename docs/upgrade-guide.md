@@ -155,3 +155,16 @@ Nullable provenance also recognizes the narrow aggregate `avg(eval(if(field<=num
 Workspace activation and initial persistence retain the current private draft ID in the URL. Refresh must resolve that explicit ID before the account's most-recent-draft preference; opening another tab must not redirect an existing tab to a different draft. Data-derived `form.*` parameters are still removed during activation, and ordinary owner checks remain authoritative. No draft migration or sharing change is involved.
 
 `formatting_syntax.revise_tail_rounding` updates requested self-rounds only in trailing eval commands made entirely of recognized self-round/strftime assignments. This lets a precision increase replace earlier rounding instead of rounding an already-rounded value. It stops at any filter, calculation, projection or unknown expression. Do not extend this to semantic pipeline rewrites without independent numeric/population checks; arbitrary earlier precision loss remains outside this narrow compiler. Native execution and existing field/scope/binding checks still run.
+
+
+## 0.21 field-context extension
+
+Draft schema remains 3. `fieldDefinitions` is an optional, bounded property of the existing `dataContext` sidecar; no credential, native-dashboard or draft migration runs. Source/search/language changes must clear the association, while changing only the time window may retain it. Inspect/author requests validate canonical units, exact field names and short meanings. Requalify source switching, refresh/reopen, brief retention and cache identity when extending this contract. Refresh old browser tabs after upgrading; older clients do not qualify the new context behavior.
+
+The 201-row limit belongs only to SPL inspection, never the profile base query or exported dashboard searches. Preserve the 201st-row partial check, five-second search limit and nine-second wait. Prefer relevant fields before the 60-field metadata cutoff without claiming coverage of omitted fields.
+
+Keep sample construction, semantic hints/declarations and zero-imputation feedback in `field_context.py`. Add explicit ambiguity, non-finite/multivalue, missing-versus-zero, unknown-unit, source-isolation and untrusted-input fixtures for extensions. Never infer a physical unit or status meaning from observed values, index names or provider summaries. Broader derived-expression and SPL2 semantics require separate validation and native probes.
+
+Recorded-unit clarification uses the same scoped definitions. Retain the single-question/single-field guard for short answers, distinguish stored units from display conversion, and resume the durable goal without treating older uncertainty as a competing instruction. Table output columns and numeric chart series have separate wire/runtime limits (80 and eight); keep ordinary, foundation and compact schemas aligned when extending either.
+
+The expanded exact table-placement grammar retains its previous narrow request wording and native validation. Qualify preservation and actual canvas visibility on pages with several rows; do not silently resolve decorative or conditional-layer ambiguity. Duplicate-placement feedback must preserve unknown native properties and unchanged imports.

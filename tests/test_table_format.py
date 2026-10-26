@@ -8,6 +8,7 @@ from provider_service import ProviderError
 from studio_contract import apply_changes
 from test_measurement_constraints import PROFILE
 from table_format import formatting_only
+from test_drafts_and_data import profile_fixture
 
 
 def document():
@@ -20,6 +21,7 @@ def document():
 
 class Runtime:
     def preview(self, body):
+        if body.get('fieldDiscovery'): return profile_fixture(self,body)
         return {'state': 'complete', 'fields': [{'name': f} for f in ('entity', 'mean', 'signal', 'seen')],
                 'results': [{'entity': 'fixture_A', 'mean': '20.123', 'signal': '-60.25', 'seen': '1700000000'}]}
 
@@ -93,6 +95,7 @@ class TableFormatTests(unittest.TestCase):
         doc['dataSources']['summary']['options']['query'] += ' | fields - mean'
         class Missing(Runtime):
             def preview(self, body):
+                if body.get('fieldDiscovery'): return super().preview(body)
                 result = super().preview(body)
                 result['fields'] = [f for f in result['fields'] if f['name'] != 'mean']
                 for row in result['results']: row.pop('mean')

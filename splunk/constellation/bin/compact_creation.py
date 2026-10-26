@@ -5,6 +5,7 @@ advanced native features retain the existing authoring actions.
 """
 import re
 from provider_service import ProviderError
+from search_chart_actions import chart_variant_schema
 
 PANEL = {'type': 'object', 'properties': {
     'id': {'type': 'string'},
@@ -19,7 +20,7 @@ COMPOSE_ACTION = {'type': 'object', 'properties': {
     'pages': {'type': 'array', 'minItems': 1, 'maxItems': 4, 'items': {'type': 'object', 'properties': {
         'id': {'type': 'string'}, 'label': {'type': 'string'}, 'purpose': {'type': 'string'},
         'columns': {'type': 'integer', 'enum': [1, 2]},
-        'panels': {'type': 'array', 'minItems': 1, 'maxItems': 8, 'items': PANEL}},
+        'panels': {'type': 'array', 'minItems': 1, 'maxItems': 8, 'items': chart_variant_schema(PANEL, 'type')}},
         'required': ['id', 'label', 'purpose', 'columns', 'panels'], 'additionalProperties': False}},
     'links': {'type': 'array', 'maxItems': 4, 'items': {'type': 'object', 'properties': {
         'from': {'type': 'string', 'description': 'Exact ID of the source TABLE panel, not its page.'},

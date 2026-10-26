@@ -14,6 +14,7 @@ from studio_contract import apply_changes
 from draft_migrations import migrate_snapshot
 from search_service import search_feedback
 from test_agent_service import Client, Store, change
+from test_drafts_and_data import profile_fixture
 import test_agent_service as fixtures
 
 
@@ -25,6 +26,7 @@ class Runtime:
         self.profiles+=1
         return {'results':[{'field':'temperature_f','count':'200','numeric_count':'200'}]}
     def preview(self,body):
+        if body.get('fieldDiscovery'): return profile_fixture(self, body)
         self.queries.append(copy.deepcopy(body))
         if 'broken' in body['query']: raise ProviderError('Correct query syntax and parentheses.',422,'fixture_syntax')
         return {'fields':[{'name':'average_f'}], 'results':[{'average_f':'PRIVATE EVENT VALUE'}]}

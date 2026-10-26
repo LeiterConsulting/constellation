@@ -43,6 +43,7 @@ class PopulationGuardTests(unittest.TestCase):
             def execute(self,query,earliest):
                 return {'results':[{'field':item['name'],'count':'20','numeric_count':'20' if item['numeric'] else '0'} for item in PROFILE_WITH_FIELDS['fields']], 'state':'complete'}
             def preview(self,body):
+                if body.get('fieldDiscovery'): return super().preview(body)
                 self.calls.append(copy.deepcopy(body))
                 return {'fields':[{'name':'average_a'},{'name':'latest_b'}],'results':[{'average_a':'20','latest_b':'30'}],'state':'complete'}
         original=blank()['definition'];before=copy.deepcopy(original);runtime=NumericRuntime()

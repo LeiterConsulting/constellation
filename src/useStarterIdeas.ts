@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { providerRequest } from './api';
 import type { DataDiscovery, DataProfile, DataScope } from './data';
-import { dataScopeKey } from './data';
+import { dataScopeKey, fieldDefinitionKey } from './data';
 import { datasetQuestions, starterScopes } from './datasetQuestions';
 import type { InstanceIdea } from './prompts';
 
@@ -11,7 +11,7 @@ export async function inspectStarterScopes(scopes: DataScope[], cache: Map<strin
   const profiles: DataProfile[] = [];
   for (const scope of scopes.slice(0, 3)) {
     if (signal.aborted) return;
-    const key = dataScopeKey(scope);
+    const key = dataScopeKey(scope) + fieldDefinitionKey(scope);
     try {
       const result = cache.get(key) || await profile(scope, signal);
       if (signal.aborted) return;
@@ -24,7 +24,7 @@ export function useStarterIdeas(discovery: DataDiscovery | null, enabled: boolea
   const cache = useRef(new Map<string, DataProfile>());
   const checkedAt = useRef(0);
   const [ideas, setIdeas] = useState<InstanceIdea[]>([]), [loading, setLoading] = useState(false);
-  const preferredKey = dataScopeKey(preferred);
+  const preferredKey = dataScopeKey(preferred) + fieldDefinitionKey(preferred);
   useEffect(() => {
     if (!enabled || !discovery) return;
     if (Date.now() - checkedAt.current > 300_000) { cache.current.clear(); checkedAt.current = Date.now(); }

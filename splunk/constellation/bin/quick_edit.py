@@ -10,7 +10,7 @@ from studio_contract import apply_changes
 
 
 def full_width_table(prompt, document, selected):
-    """Exact two-chart placement, without asking inference to rebuild a page."""
+    """Exact selected-table placement below all unchanged page items, without asking inference to rebuild a page."""
     match = re.fullmatch(r'Make only this selected summary table full width below the trend(?: on ([^.!?]+))?\. '
                          r'Keep its existing height and every query, column, page, drilldown and other element unchanged\.'
                          r'(?: Grow the ([^.!?]+) canvas height if needed to contain the moved table\.)?', prompt, re.I)
@@ -23,18 +23,19 @@ def full_width_table(prompt, document, selected):
     label = next((tab.get('label') for tab in layout.get('tabs', {}).get('items', []) if tab.get('layoutId') == page_id), None)
     if any(name and (not isinstance(label, str) or name.casefold() != label.casefold()) for name in match.groups()): return None
     items = page.get('structure', [])
-    if page.get('type') != 'absolute' or len(items) != 2: return None
-    other = next((item for item in items if item.get('item') != selected), None)
-    if not other: return None
+    if page.get('type') != 'absolute' or len(items) < 2 or len({item.get('item') for item in items}) != len(items): return None
+    others = [item for item in items if item.get('item') != selected]
+    if not others: return None
     charts = [document['visualizations'].get(item.get('item'), {}) for item in items]
-    if document['visualizations'].get(other.get('item'), {}).get('type') not in ('splunk.line', 'splunk.area', 'splunk.column'): return None
+    if not any(document['visualizations'].get(item.get('item'), {}).get('type') in ('splunk.line','splunk.area','splunk.column') for item in others): return None
+    if any(not chart or chart.get('type') in ('splunk.markdown','splunk.richtext','splunk.rectangle','splunk.ellipse','splunk.image') for chart in charts): return None
     if any(chart.get('containerOptions', {}).get('visibility') for chart in charts): return None
     bounds = page.get('options', {})
     if any(type(bounds.get(key)) is not int or not 40 < bounds[key] <= 20000 for key in ('width', 'height')): return None
     if any(type(item.get('position', {}).get(key)) is not int for item in items for key in ('x', 'y', 'w', 'h')): return None
     index = next(i for i, item in enumerate(items) if item.get('item') == selected)
     position = copy.deepcopy(items[index]['position'])
-    position.update(x=20, y=other['position']['y'] + other['position']['h'] + 20, w=bounds['width'] - 40)
+    position.update(x=20, y=max(item['position']['y'] + item['position']['h'] for item in others) + 20, w=bounds['width'] - 40)
     height = max(bounds['height'], position['y'] + position['h'] + 20)
     if height > 20000: return None
     base = '/layout/layoutDefinitions/' + page_id.replace('~', '~0').replace('/', '~1')

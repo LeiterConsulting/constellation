@@ -61,3 +61,14 @@ If the model finishes but the original response stalls, the app can receive the 
 A field inspection marked **partial** is a bounded sample, not a complete count or proof that a field is absent. Existing searches retain their exact scope. A requested temperature column can legitimately remain empty when every selected temperature is excluded; independent Wi-Fi values and event counts can still be present. Empty measurements are not replaced with zero. Inspect Search details and the selected time range before interpreting a snapshot.
 
 Each workspace keeps its own draft link. Refresh returns to that draft even if you open another draft in a different tab. Draft links still require the owning Splunk user; they do not grant access to another user.
+
+
+### Explain field meanings once
+
+Describe recorded units and event meaning in your question, for example: `temperature_f is measured in Fahrenheit. wifi_rssi is recorded in dBm. Each row represents one device observation. Missing readings are unknown, never zero.` For a short field meaning, use `latency means elapsed response time for one observation.` Definitions apply to fields inspected in the selected data; they stay with that data source when you reopen the draft. Changing the source/search asks the app to establish fresh context. Changing only the time window keeps definitions.
+
+**Field context** inside Choose Splunk data shows meanings, units and sample coverage. It labels your definitions separately from hints based on names. Inspect again after changing the question to review updated declarations. A name hint is not proof of the physical unit, and metadata cannot define what status codes mean. The agent should ask when a conversion or threshold needs an unresolved unit.
+
+When the agent asks which units are recorded in one field, a short answer such as “Fahrenheit” confirms that field and continues the original goal. This defines the stored unit; it does not convert values. If several fields or display preferences are involved, name the field explicitly.
+
+Coverage describes only the returned sample. A real zero is present data; an absent or nonnumeric reading is separate. Missing values do not establish an outage or expected cadence. Ask for independent valid-reading counts alongside source-row counts to see which measurements support a metric. Constellation preserves unknown measurements as null rather than silently turning them into zero. Broader derived-expression and SPL2 interpretations still need review.

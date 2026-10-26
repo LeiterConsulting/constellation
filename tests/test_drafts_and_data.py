@@ -95,6 +95,17 @@ class DraftTests(unittest.TestCase):
         with self.assertRaises(ProviderError): validate_snapshot(dict(blank(), apiKey='fixture-secret'))
 
 
+def profile_fixture(runtime, body):
+    """Authored rows for the old metadata fixtures; no live data or endpoints."""
+    metadata = runtime.execute(body['query'], body.get('earliest', '-24h'))
+    entries = [item for item in metadata['results'] if 'field' in item]
+    count = max([int(item.get('count', 0)) for item in entries] or [0])
+    fields = [{'name': '_time'}] + [{'name': item['field']} for item in entries if item['field'] != '_time']
+    rows = [{'_time': str(1000 + row), **{item['field']: str(row + 1) if int(item.get('numeric_count', 0)) == int(item.get('count', 0)) else 'SYNTHETIC PRIVATE VALUE'
+             for item in entries if row < int(item.get('count', 0))}} for row in range(count)]
+    return {**{key: metadata[key] for key in ('state', 'evidence') if key in metadata}, 'fields': fields, 'results': rows}
+
+
 class DataRuntime:
     def __init__(self): self.calls = []
     def datasets(self): return {'indexes': [{'name':'fixture_index'}], 'status':'available'}
@@ -104,6 +115,7 @@ class DataRuntime:
         return {'results':[{'field':'duration','count':'20','numeric_count':'20','values':'PRIVATE EVENT VALUE'},
                            {'field':'host','count':'20','numeric_count':'0'}, {'field':'_raw','count':'20','numeric_count':'0'}]}
     def preview(self, body):
+        if body.get('fieldDiscovery') and ' | stats count' not in body['query']: return profile_fixture(self, body)
         self.calls.append(body)
         return {'fields':[{'name':'count'}], 'results':[{'count':'12'}]}
 
@@ -140,9 +152,10 @@ class DataGroundingTests(unittest.TestCase):
     def test_profile_uses_selected_scope_and_excludes_event_values(self):
         runtime = DataRuntime(); service = DataService(runtime)
         result = service.profile({'index':'fixture_index','sourcetype':'events" | rest /unsafe','earliest':'-24h'})
-        self.assertEqual(result['fields'], [{'name':'_time','numeric':True,'present':20},{'name':'duration','numeric':True,'present':20},{'name':'host','numeric':False,'present':20}])
+        self.assertEqual([{k:field[k] for k in ('name','numeric','present')} for field in result['fields']], [{'name':'_time','numeric':True,'present':20},{'name':'duration','numeric':True,'present':20},{'name':'host','numeric':False,'present':20}])
+        self.assertEqual(result['sampledRows'],20);self.assertTrue(all(field['coverage']['missing']==0 for field in result['fields']))
         self.assertNotIn('PRIVATE EVENT VALUE', json.dumps(result))
-        self.assertIn('maxvals=1', runtime.calls[0][0]); self.assertIn('\\"', runtime.calls[0][0])
+        self.assertNotIn('fieldsummary', runtime.calls[0][0]); self.assertIn('\\"', runtime.calls[0][0])
         with self.assertRaises(ProviderError): service.profile({'index':'not_visible'})
         with self.assertRaises(ProviderError): service.profile({'index':'fixture_index','earliest':'0'})
     def test_real_data_edits_are_executed_and_synthetic_or_out_of_scope_sources_are_rejected(self):
@@ -187,6 +200,21 @@ class DataGroundingTests(unittest.TestCase):
         result=DataService(DataRuntime()).profile({'query':'index="fixture_index" | stats count','earliest':'-1h'})
         self.assertEqual(result['fields'][0]['name'],'count'); self.assertTrue(result['fields'][0]['numeric'])
         self.assertNotIn('12',json.dumps(result))
+
+
+    def test_exact_table_placement_handles_multiple_unchanged_rows_and_rejects_ambiguous_layers(self):
+        from quick_edit import quick_edit
+        from studio_contract import apply_changes
+        doc=blank()['definition'];doc['visualizations']={name:{'type':kind,'future':{'keep':True}}for name,kind in [('trend','splunk.line'),('signal','splunk.line'),('metric','splunk.singlevalue'),('table','splunk.table')]}
+        doc['layout']={'tabs':{'items':[{'layoutId':'layout_main','label':'Overview'}]},'layoutDefinitions':{'layout_main':{'type':'absolute','structure':[]}}}
+        page=doc['layout']['layoutDefinitions']['layout_main'];page['options']={'width':1200,'height':1200}
+        page['structure']=[{'item':name,'type':'block','position':{'x':20 if i%2==0 else 620,'y':20+(i//2)*300,'w':560,'h':260}}for i,name in enumerate(doc['visualizations'])]
+        old=copy.deepcopy(doc);prompt='Make only this selected summary table full width below the trend on Overview. Keep its existing height and every query, column, page, drilldown and other element unchanged. Grow the Overview canvas height if needed to contain the moved table.'
+        result=apply_changes(doc,quick_edit(prompt,doc,'table',[]));items=result['layout']['layoutDefinitions']['layout_main']['structure']
+        self.assertEqual(items[-1]['position'],{'x':20,'y':600,'w':1160,'h':260})
+        self.assertEqual(items[:-1],old['layout']['layoutDefinitions']['layout_main']['structure'][:-1]);self.assertEqual(result['visualizations'],old['visualizations']);self.assertEqual(doc,old)
+        doc['visualizations']['metric']['containerOptions']={'visibility':{'show':False}}
+        self.assertIsNone(quick_edit(prompt,doc,'table',[]))
 
 
 class UpgradeContractsTests(unittest.TestCase):

@@ -13,6 +13,7 @@ class SparseDataTests(unittest.TestCase):
     def fixture(self, rows=None, fields=None):
         class Sample(DataRuntime):
             def preview(self,body):
+                if body.get('fieldDiscovery') and body.get('query','').endswith(' | head 201'): return super().preview(body)
                 self.calls.append(body)
                 return {'state':'complete','fields':[{'name':x}for x in (fields or ['entity','mean','readings'])],
                         'results':copy.deepcopy(rows if rows is not None else [{'entity':'fixture_A','readings':'3'}])}

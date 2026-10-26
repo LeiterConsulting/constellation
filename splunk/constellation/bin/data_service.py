@@ -8,6 +8,7 @@ from search_scope import scoped_suffix
 from population_guard import validate_populations
 from search_evidence import sample_completion, empty_columns, verified_null_columns
 from search_hints import preview_repair_hint
+from field_context import sample_fields, enrich_profile, validate_missing_measurements, validate_definitions
 
 
 def spl_literal(value):
@@ -35,27 +36,22 @@ class DataService:
                     note='Current-user catalog and bounded indexed-metadata search. Counts may be incomplete; no event values are returned.')
 
     def profile(self, body):
+        definitions = validate_definitions(body.get('fieldDefinitions'))
         earliest = body.get('earliest', '-24h')
         if earliest not in TIME_RANGES: raise ProviderError('Choose one of the supported preview time ranges.')
         if body.get('query'):
             query, language = body['query'], body.get('language', 'spl')
-            result = self.runtime.preview({'query': resolve_query_tokens(query, self.document, self.tokens), 'language': language, 'earliest': earliest, 'fieldDiscovery': True})
+            if not isinstance(query, str): raise ProviderError('Supply an existing search.')
+            inspection = resolve_query_tokens(query, self.document, self.tokens)
+            if language == 'spl': inspection += ' | head 201'
+            result = self.runtime.preview({'query': inspection, 'language': language, 'earliest': earliest, 'fieldDiscovery': True})
             if not result['results'] and result.get('state') == 'partial':
                 raise ProviderError('The sample stopped before completion. No absence of data was established; simplify the existing search or retry.', 422, 'profile_partial')
-            fields = []
-            for entry in result['fields'][:60]:
-                name = entry['name']
-                if name in ('_raw', '_cd', '_bkt', '_serial'): continue
-                values = [row[name] for row in result['results'] if row.get(name) not in (None, '')]
-                numeric = 0
-                for value in values:
-                    try: float(value); numeric += 1
-                    except (ValueError, TypeError): pass
-                fields.append({'name': name, 'numeric': bool(values) and numeric == len(values), 'present': len(values)})
-            return {'scope': {'query': query, 'language': language, 'earliest': earliest}, 'baseQuery': query,
-                    'fields': fields, 'sampledRows': len(result['results']), 'bounded': True,
+            fields, sampled = sample_fields(result)
+            return enrich_profile({'scope': {'query': query, 'language': language, 'earliest': earliest, **({'fieldDefinitions': definitions} if definitions else {})}, 'baseQuery': query,
+                    'fields': fields, 'sampledRows': sampled, 'bounded': True,
                     'completion': sample_completion(result),
-                    'note': 'Field types are inferred from a bounded sample, not complete source coverage. Partial samples cannot prove absence or complete counts. Values are excluded from model context.'}
+                    'note': 'Field metadata from at most 200 returned rows, not complete source coverage. Missing counts refer only to this sample; event values are excluded.'}, body.get('question', ''))
         index, sourcetype = body.get('index'), body.get('sourcetype', '')
         catalog = self.runtime.datasets()
         if not isinstance(index, str) or index not in {item['name'] for item in catalog['indexes']}:
@@ -63,25 +59,14 @@ class DataService:
         if not isinstance(sourcetype, str) or len(sourcetype) > 200 or any(ord(char) < 32 for char in sourcetype):
             raise ProviderError('Choose a valid sourcetype.')
         base = 'search index=' + spl_literal(index) + (' sourcetype=' + spl_literal(sourcetype) if sourcetype else '')
-        result = self.runtime.execute('| ' + base + ' | head 200 | fieldsummary maxvals=1 | eval priority=if(field="_time" OR field="host" OR field="sourcetype" OR field="source",0,1) | sort 0 priority - count | fields field count numeric_count distinct_count | head 80', earliest)
+        result = self.runtime.preview({'query': base + ' | head 201', 'language': 'spl', 'earliest': earliest, 'fieldDiscovery': True})
         if not result['results'] and result.get('state') == 'partial':
             raise ProviderError('The field inspection stopped before completion. Retry inspection; the source has not been proven empty.', 422, 'profile_partial')
-        fields = []
-        for row in result['results']:
-            name = row.get('field')
-            if not isinstance(name, str) or len(name) > 200 or name in ('_raw', '_cd', '_bkt', '_serial'): continue
-            try: count, numeric = int(row.get('count', 0)), int(row.get('numeric_count', 0))
-            except (ValueError, TypeError): continue
-            fields.append({'name': name, 'numeric': count > 0 and numeric == count, 'present': count})
-        # Source scope and time are always server-derived from the selected catalog entry.
-        # _time is the platform timestamp for indexed events; fieldsummary omits it.
-        sampled = max([field['present'] for field in fields] or [0])
-        if sampled and not any(field['name'] == '_time' for field in fields):
-            fields.insert(0, {'name': '_time', 'numeric': True, 'present': sampled})
-        return {'scope': {'index': index, 'sourcetype': sourcetype, 'earliest': earliest, 'language': 'spl'},
-                'baseQuery': base, 'fields': fields[:60], 'sampledRows': max([f['present'] for f in fields] or [0]),
+        fields, sampled = sample_fields(result)
+        return enrich_profile({'scope': {'index': index, 'sourcetype': sourcetype, 'earliest': earliest, 'language': 'spl', **({'fieldDefinitions': definitions} if definitions else {})},
+                'baseQuery': base, 'fields': fields, 'sampledRows': sampled,
                 'bounded': True, 'completion': sample_completion(result),
-                'note': 'Field metadata from at most 200 recent events and 5 seconds, not complete source coverage. Partial samples cannot prove absence or complete counts. Event values are excluded.'}
+                'note': 'Field metadata from at most 200 recent returned events and 5 seconds, not complete source coverage. Missing counts refer only to the inspected sample. Event values are excluded.'}, body.get('question', ''))
 
     def resolve_query(self, document, identifier, seen=None):
         seen = set() if seen is None else seen
@@ -182,6 +167,9 @@ class DataService:
             try:
                 if source.get('options', {}).get('query') != previous.get('dataSources', {}).get(identifier, {}).get('options', {}).get('query'):
                     validate_wildcard_filters(source.get('options', {}).get('query', ''), document)
+                    query, language = self.resolve_query(document, identifier)
+                    suffix = scoped_suffix(query, profile)
+                    if suffix is not None: validate_missing_measurements(suffix, profile, language)
                     if self.independent_populations: validate_populations(source.get('options', {}).get('query', ''), profile)
                 language, result = self.inspect_source(document, identifier, source, profile)
             except ProviderError as error:
