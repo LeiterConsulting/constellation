@@ -508,9 +508,15 @@ class AgentService:
                 candidate = apply_changes(proposal.document, compiled)
                 isolated = isolate_selected_calculation(prompt, body.get('selected', ''), candidate, document)
                 if isolated: candidate = apply_changes(candidate, isolated)
+                from creation_page_scope import normalize_creation_page_scope
+                scopes = normalize_creation_page_scope(candidate, document, profile, '\n'.join([brief.get('purpose', ''), brief.get('requirements', ''), prompt]))
+                if scopes: candidate = apply_changes(candidate, scopes)
+                from table_projection import compile_creation_columns
+                columns = compile_creation_columns(prompt, candidate, document, profile)
+                if columns: candidate = apply_changes(candidate, columns)
                 validate_selected_calculation(prompt, body.get('selected', ''), candidate, document)
                 if row_only: row_navigation.validate_result(candidate,document,body.get('selected',''))
-                draft = proposal.stage(compiled + isolated)
+                draft = proposal.stage(compiled + isolated + scopes + columns)
                 if profile:
                     from formatting_syntax import selected_table_syntax
                     separators = selected_table_syntax(draft, document, body.get('selected', ''))
@@ -617,5 +623,5 @@ class AgentService:
                 'dataContext': profile['scope'] if profile else None, 'dataProfile': profile, 'searchReceipts': receipts,
                 'knowledgeSources': [{key: item[key] for key in ('id', 'title', 'source')} for item in guidance],
                 'validationNotes': validation_notes,
-                'recovery': recovery.evidence(), 'pagePurposes': next_purposes,
+                'recovery': dict(recovery.evidence(), recipePanels=budget.recipe_panels), 'pagePurposes': next_purposes,
                 'model': saved['model'], 'brief': brief}

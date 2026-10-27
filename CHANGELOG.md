@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.28.0 - 2026-10-27
+
+- Enable common compact stats/timechart/raw-table recipes through the tested AITK strategy; retain Ollama’s prior pipeline format after exploratory recipe-schema failures. Compile plans from verified inputs into matching SPL and native output bindings. Retain pipeline/native alternatives, real search validation and all existing guards.
+- Keep native catalog timestamp semantics independent of sample serialization; reject unsupported numeric inputs and give field-specific feedback.
+- Default ordinary first-draft row navigation to its destination page. Clone shared searches and retain Overview across detail selections without extra wording; preserve focus, masks, ranges and unrelated properties.
+- Compile an explicit verified raw-field list into one eligible new table's positive projection and display binding before actual output validation. Preserve imported/advanced/ambiguous work.
+- Give exact received/required chart counts during compact recovery and keep metrics requested together in one summary panel. Add numerical recipe evidence without UI controls or larger budgets.
+- Retain exploratory failures separately from final non-admin provider qualification.
+
 ## 0.27.0 - 2026-10-27
 
 - Compile omitted separators in fresh compact SPL tables only when the complete post-stats eval is recognized self-round/strftime formatting. Preserve expressions, quoted format strings, scope and unrelated panels; leave unknown expressions to native validation.

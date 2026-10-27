@@ -45,6 +45,9 @@ TABLE id. pageId is the DESTINATION page id, not the table's own page. field is 
 verified output column of that table. token names the detail-query filter token.
 Add this when the user asks to click a row to open/filter a detail page. A token alone
 does not filter a search: put its reference in every requested destination query.
+Row investigation is destination-local by default: keep Overview across all entities
+and use separate detail search IDs. Never share a row-filtered search with Overview.
+Only an explicit shared/global-filter request should also change Overview's population.
 - button: {op:"button",id,label,pageId,targetPageId,targetId:"",x,y,w,h:80}. This creates,
 places and connects a native navigation button. pageId PLACES it; targetPageId is its
 DESTINATION. A return button must target the requested overview page. Include both

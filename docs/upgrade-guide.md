@@ -1,5 +1,9 @@
 # Updating Constellation
 
+## 0.28 first-draft recipes and page populations
+
+No credential, draft or existing native-dashboard migration runs; schema remains 3. Refresh tabs after installation. Keep recipe compilation in `creation_recipes.py`, creation page scope in `creation_page_scope.py`, raw-column compilation in `table_projection.py` and orchestration in the ordinary guarded authoring path. Older pipeline proposals remain supported. Requalify actual numeric/timestamp outputs, all-null and invalid-input refusals, independent measurements, implicit row navigation, deliberate global/input-owned controls and unchanged imported work. Compare every Overview source's results before/after at least two detail selections, and separately prove destination filtering. Existing dashboards are not silently repaired on load. Recipe counts are optional numerical evidence; never use them or schema validity to waive native searches or other gates. Limits remain three model calls, sixteen unique checks and the existing time/admission bounds.
+
 ## 0.27 compact table eval syntax
 
 No credential, connection, draft or native-dashboard migration runs. Refresh existing tabs after installing. Keep this normalization in compact creation and the shared formatting parser; never broaden it into a general SPL/SPL2 rewrite. Requalify pure self-formatting assignments, quoted pipes/commas, raw-event/unknown-expression refusals, existing-work preservation and actual native numeric/date output. All ordinary validation and three-call/sixteen-check recovery bounds remain intact. Record provider latency and repairs separately from syntactic compilation; a connection test or a successful offline parser test is not a live authoring qualification.

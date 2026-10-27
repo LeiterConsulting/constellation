@@ -6,7 +6,7 @@ from model_readiness import CREATE_OUTPUT_TOKENS, EDIT_OUTPUT_TOKENS, OLLAMA_CON
 from provider_service import ProviderError
 from studio_contract import model_document
 from creation_strategy import bounded_aitk_creation, explicit_page_count, explicit_panel_count, CONCISE_CREATION
-from compact_creation import COMPOSE_ACTION, COMPACT_INSTRUCTIONS, compact_goal, empty_canvas, expand_compose
+from compact_creation import COMPOSE_ACTION, COMPACT_INSTRUCTIONS, RECIPE_COMPOSE_ACTION, RECIPE_COMPACT_INSTRUCTIONS, compact_goal, empty_canvas, expand_compose
 from prompt_suggestions import SUGGESTION_INSTRUCTIONS
 from search_hints import HISTOGRAM_GUIDANCE
 
@@ -29,6 +29,7 @@ class AuthoringBudget:
                       (self.provider == 'ollama' and (type(reported) is not int or reported < OLLAMA_CONTEXT_TOKENS)))
         self.phase = 'foundation' if self.creation and context.get('dataProfile') and foundation and complex_goal else 'complete'
         self.stages = 0
+        self.recipe_panels = 0
 
     def prepare(self, request, document):
         if not hasattr(self, 'instructions'):
@@ -60,8 +61,11 @@ class AuthoringBudget:
                             and all(part.get('type') == 'input_text' for item in request['input'] for part in item['content']))
         omit_compose(request)
         if self.compact:
-            request['instructions'] = COMPACT_INSTRUCTIONS
-            request['text']['format']['schema']['properties']['changes']['items'] = copy.deepcopy(COMPOSE_ACTION)
+            # Qualification selected recipes for AITK. Keep Ollama's existing
+            # compact wire shape after live trials of the wider union failed.
+            recipes = self.provider == 'aitk'
+            request['instructions'] = RECIPE_COMPACT_INSTRUCTIONS if recipes else COMPACT_INSTRUCTIONS
+            request['text']['format']['schema']['properties']['changes']['items'] = copy.deepcopy(RECIPE_COMPOSE_ACTION if recipes else COMPOSE_ACTION)
             # Encode the explicit small page count for schema-aware adapters;
             # actions() also enforces it for schema-ignoring adapters.
             pages = request['text']['format']['schema']['properties']['changes']['items']['properties']['pages']
@@ -145,8 +149,16 @@ class AuthoringBudget:
                     panels=explicit_panel_count(self.context['request'])
                     if panels is not None and re.search(r'\bexactly\s+\w+\s+(?:charts|panels|tiles|visualizations)\b',self.context['request'],re.I):
                         total=sum(len(page.get('panels',[]))for page in action['pages']if isinstance(page,dict))
-                        if total!=panels:raise ProviderError('Return one corrected compose plan with exactly '+str(panels)+' charts total across the requested pages.',422,'compact_plan')
+                        if total!=panels:
+                            distribution=', '.join(str(len(page.get('panels',[]))) for page in action['pages'] if isinstance(page,dict))
+                            raise ProviderError('Received '+str(total)+' charts ('+distribution+' by page), but this request requires exactly '+str(panels)+' charts total. Return one corrected complete compose plan. Combine metrics requested in one summary into that single table panel; do not create one panel per metric.',422,'compact_plan')
+        recipe_panels = sum(1 for action in actions if isinstance(action, dict) and action.get('op') == 'compose'
+                            for page in action.get('pages', []) if isinstance(page, dict)
+                            for panel in page.get('panels', []) if isinstance(panel, dict) and 'recipe' in panel) if isinstance(actions, list) else 0
+        if recipe_panels and self.provider == 'ollama' and getattr(self, 'compact', False):
+            raise ProviderError('Use the qualified pipeline/x/y panel form for this connection, not a recipe panel. Preserve the requested pages and total chart count.', 422, 'compact_plan')
         actions = expand_compose(actions, document, self.context.get('dataProfile'))
+        if recipe_panels: self.recipe_panels = recipe_panels
         if self.phase == 'foundation' and isinstance(actions, list):
             from search_chart_actions import compile_dashboard
             result = []

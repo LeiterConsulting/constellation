@@ -94,6 +94,83 @@ def validate_requested_columns(prompt, selected, document, receipts):
             raise ProviderError('The query returns the requested columns, but the selected table hides them: ' + ', '.join(sorted(hidden))[:300] + '. Update options.table frameBySeriesNames to display them while retaining existing columns and drilldowns.', 422, 'table_projection')
 
 
+def compile_creation_columns(prompt, document, previous, profile):
+    """Retain explicit raw fields on one fresh table, before native validation.
+
+    Only a positive literal projection over unchanged verified inputs qualifies.
+    No aggregate, rename, re-extraction or arbitrary DOS expression is repaired.
+    Actual output and the existing intent validator remain mandatory afterwards.
+    """
+    if previous.get('visualizations') or previous.get('dataSources') or not profile or profile.get('scope', {}).get('language', 'spl') != 'spl': return []
+    matches = re.findall(r'\braw(?:\s+reading)?\s+table\s+with\s+([A-Za-z_][A-Za-z0-9_]*(?:\s*,\s*[A-Za-z_][A-Za-z0-9_]*)*)', prompt, re.I)
+    if len(matches) != 1: return []
+    requested = list(dict.fromkeys(name.strip() for name in matches[0].split(',')))
+    known = {f['name'] for f in profile.get('fields', [])}
+    if not set(requested) <= known: return []
+    from measurement_constraints import pipeline_commands, mask_command
+    from search_scope import scoped_suffix
+    from formatting_syntax import separated, ASSIGNMENT
+    masks = {mask_command(rule) for rule in profile.get('measurementConstraints', [])}
+    tables = []
+    for key, table in document.get('visualizations', {}).items():
+        sid = table.get('dataSources', {}).get('primary');source = document.get('dataSources', {}).get(sid, {})
+        if table.get('type') != 'splunk.table' or source.get('type') != 'ds.search': continue
+        query = source.get('options', {}).get('query', '')
+        if not isinstance(query, str): continue
+        suffix = scoped_suffix(query, profile)
+        if suffix is None: continue
+        commands = pipeline_commands(suffix)
+        if any(re.match(r'(?i:stats|timechart|chart|tstats|top|rare|transpose|xyseries|eventstats|streamstats)\b', c) for _, _, c in commands): continue
+        tables.append((key, table, sid, source, suffix, commands))
+    if len(tables) != 1: return []
+    key, table, sid, source, suffix, commands = tables[0]
+    if any(vkey != key and sid in viz.get('dataSources', {}).values() for vkey, viz in document['visualizations'].items()): return []
+    if any(sid in item.get('dataSources', {}).values() for item in document.get('inputs', {}).values()) or any(item.get('options', {}).get('extend') == sid for item in document['dataSources'].values()): return []
+    binding = table.get('options', {}).get('table', '> primary')
+    if not isinstance(binding, str): return []
+    match = re.fullmatch(r'''\s*>\s*primary\s*\|\s*frameBySeriesNames\(([^()]*)\)\s*''', binding)
+    if match:
+        try: visible = json.loads('[' + match[1] + ']')
+        except (ValueError, TypeError): return []
+        if not isinstance(visible, list) or any(not isinstance(n, str) or not re.fullmatch(r'[A-Za-z_][A-Za-z0-9_]*', n) for n in visible): return []
+    elif re.fullmatch(r'\s*>\s*primary\s*', binding): visible = []
+    else: return []
+    projections = []
+    for start, end, command in commands:
+        projection = re.fullmatch(r'(table|fields)\s+([A-Za-z_][A-Za-z0-9_]*(?:\s+[A-Za-z_][A-Za-z0-9_]*)*)', command, re.I)
+        if projection: projections.append((start, end, projection));continue
+        if re.match(r'(?i:search|where|sort|reverse|dedup)\b', command) or command in masks:
+            if projections: return []
+            continue
+        # A trailing pure self-format preserves field identity; other evals do not.
+        if projections and command.startswith('eval '):
+            formatted = separated(command)[5:];position = 0
+            while position < len(formatted):
+                assignment = ASSIGNMENT.match(formatted, position)
+                if not assignment: return []
+                position = assignment.end()
+                if position == len(formatted): break
+                comma = re.match(r'\s*,\s*', formatted[position:])
+                if not comma: return []
+                position += comma.end()
+            continue
+        return []
+    if len(projections) > 1: return []
+    changes = [];escape = lambda s:s.replace('~', '~0').replace('/', '~1')
+    if projections:
+        start, end, projection = projections[0];columns = projection[2].split()
+        missing = [f for f in requested if f not in columns]
+        if missing:
+            segment = suffix[start:end];replacement = segment.replace(projection[0], projection[0] + ' ' + ' '.join(missing), 1)
+            query = source['options']['query'];normalized = query.strip().lstrip('| ').strip();prefix = normalized[:len(normalized)-len(suffix)]
+            changes.append({'op':'set', 'path':'/dataSources/'+escape(sid)+'/options/query', 'value':json.dumps(prefix + suffix[:start] + replacement + suffix[end:])})
+    if visible:
+        ordered = requested + [f for f in visible if f not in requested]
+        if ordered != visible:
+            changes.append({'op':'set', 'path':'/visualizations/'+escape(key)+'/options/table', 'value':json.dumps('> primary | frameBySeriesNames(' + ', '.join(json.dumps(f) for f in ordered) + ')')})
+    return changes
+
+
 def validate_creation_columns(prompt, document, previous, profile, receipts):
     """An explicit field list for one new raw table must survive query and DOS.
 

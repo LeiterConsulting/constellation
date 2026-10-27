@@ -3,10 +3,12 @@
 No native searches, permissions or validation run here. Explicit geometry and
 advanced native features retain the existing authoring actions.
 """
+import copy
 import re
 from provider_service import ProviderError
 from search_chart_actions import chart_variant_schema
 from creation_strategy import explicit_page_count
+from creation_recipes import RECIPE_PANEL, compile_recipe
 
 PANEL = {'type': 'object', 'properties': {
     'id': {'type': 'string'},
@@ -29,6 +31,8 @@ COMPOSE_ACTION = {'type': 'object', 'properties': {
         'field': {'type': 'string', 'description': 'Verified entity field present in the source table output and destination searches.'},
         }, 'required': ['from', 'to', 'field'], 'additionalProperties': False}}},
     'required': ['op', 'title', 'description', 'pages', 'links'], 'additionalProperties': False}
+RECIPE_COMPOSE_ACTION = copy.deepcopy(COMPOSE_ACTION)
+RECIPE_COMPOSE_ACTION['properties']['pages']['items']['properties']['panels']['items']['anyOf'].insert(0, RECIPE_PANEL)
 
 COMPACT_INSTRUCTIONS = '''You are Constellation, a Splunk Dashboard Studio author.
 Build the COMPLETE requested first dashboard using verified dataProfile metadata.
@@ -43,6 +47,10 @@ Do not repeat source IDs, positions or separate navigation actions. The server
 assigns readable positions, source IDs ds_PANELID and page IDs layout_PAGEID.
 Choose one column for large charts/tables or two for pairs. Honor every requested
 chart, metric, unit, exclusion, page and navigation requirement. No placeholder work.
+A summary table containing several metrics is ONE panel with several aggregates,
+not one panel per metric. Summary table + Overview trend + detail trend + raw table
+means exactly FOUR panels, two on each page. Do not add a separate panel for counts,
+last_seen or Wi-Fi when the request places those metrics in the summary table.
 Panel type: splunk.line/area/column/bar/singlevalue/table. Titles name metric/units.
 pipeline starts with | and appends to dataProfile.baseQuery; NEVER repeat the base.
 x/y are OUTPUT field names: timechart x:"_time",y:[metricAliases]; table x:"",y:
@@ -80,6 +88,22 @@ network calls, credentials, writes or privileges. Ask one short question with no
 changes only for a genuine unresolved business ambiguity. Never claim a save.
 Keep descriptions concise and explain the completed visible result in one or two
 sentences. At most one brief useful suggestion, or [].'''
+
+RECIPE_COMPACT_INSTRUCTIONS = COMPACT_INSTRUCTIONS.replace(
+    '{id,type,title,pipeline,x,y}',
+    '{id,type,title,recipe:{kind,metrics:[{function,field,alias}],groupBy,columns}}', 1) + '''
+PREFERRED SEARCH FORM: use the recipe panel above for ordinary aggregates/raw tables.
+The server builds SPL and matching output bindings together. Recipe panels NEVER
+also supply pipeline/x/y. kind:"stats": metrics use
+avg/min/max/sum/median/stdev/count/latest/earliest; field is an exact verified input,
+alias a distinct output, groupBy one verified entity or "", columns:[]. count with
+field:"" counts all events; count with a measurement field counts valid readings.
+kind:"timechart": same metrics, groupBy:"",columns:[]; the server supplies bins=100
+and _time. kind:"table": metrics:[],groupBy:"",columns:[requested verified raw fields,
+including _time when requested]. The server already masks excluded measurements;
+use original input fields, without conditional eval or casts. Only advanced searches
+need the alternative {id,type,title,pipeline,x,y} panel with exact output bindings.
+'''
 
 
 def compact_goal(context):
@@ -192,10 +216,12 @@ def expand_compose(actions, document, profile):
             raise ProviderError('Give each compose page 1 to 8 panels, at most 8 total.')
         items = [];row=column=0
         for offset, panel in enumerate(page['panels']):
-            exact(panel, PANEL['required']);key = identifier(panel['id'])
+            recipe = isinstance(panel, dict) and 'recipe' in panel
+            exact(panel, RECIPE_PANEL['required'] if recipe else PANEL['required']);key = identifier(panel['id'])
             if key in panels or len(panels) >= 8: raise ProviderError('Use distinct panel IDs and at most 8 charts total.')
             panels[key] = {'page': pid, 'type': panel['type'], 'title': panel['title']}
-            pipeline = without_redundant_input_casts(panel['pipeline'], profile)
+            pipeline, x, y = compile_recipe(panel['recipe'], panel['type'], profile) if recipe else (panel['pipeline'], panel['x'], panel['y'])
+            pipeline = without_redundant_input_casts(pipeline, profile)
             if panel['type'] == 'splunk.table' and isinstance(pipeline, str):
                 # Only this fresh table's own pipeline: the parser consumes an
                 # entire post-stats self-formatter before inserting separators.
@@ -204,11 +230,11 @@ def expand_compose(actions, document, profile):
                 pipeline = repair_query(pipeline)
             result.extend([{'op': 'search', 'id': 'ds_' + key, 'pipeline': pipeline},
                            {'op': 'chart', 'id': key, 'chartType': panel['type'], 'title': panel['title'],
-                            'description': '', 'sourceId': 'ds_' + key, 'x': panel['x'], 'y': panel['y']}])
+                            'description': '', 'sourceId': 'ds_' + key, 'x': x, 'y': y}])
             # Wide/all-column tables need a full row to keep their headers and
             # values usable. This applies only to an ordinary NEW composition;
             # existing user geometry and explicitly positioned work stay exact.
-            wide = page['columns']==1 or panel['type']=='splunk.table' and isinstance(panel['y'],list) and (not panel['y'] or len(panel['y'])>4)
+            wide = page['columns']==1 or panel['type']=='splunk.table' and isinstance(y,list) and (not y or len(y)>4)
             if wide and column:row+=1;column=0
             items.append({'id': key, 'kind': 'block', 'x': 20+column*590,
                           'y': 20+row*380, 'w':1160 if wide else 570, 'h':360})
