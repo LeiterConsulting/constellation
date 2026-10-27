@@ -11,6 +11,15 @@ def canvas():
     return doc
 
 class PageCompletionTests(unittest.TestCase):
+    def test_exact_new_chart_total_rejects_unrequested_cross_page_reuse(self):
+        old=canvas();doc=copy.deepcopy(old);doc['visualizations']={'a':{'type':'splunk.table'},'b':{'type':'splunk.table'}}
+        doc['layout']['layoutDefinitions']['layout_main']['structure']=[{'item':'a'},{'item':'b'}]
+        doc['layout']['layoutDefinitions']['other']={'type':'absolute','structure':[{'item':'a'}]}
+        with self.assertRaisesRegex(ProviderError,'each placed once'):validate_page_intent('Build exactly two charts.','Created',doc,old,{'kind':'dashboard'})
+        doc['layout']['layoutDefinitions']['other']['structure']=[]
+        validate_page_intent('Build exactly two charts.','Created',doc,old,{'kind':'dashboard'})
+        doc['layout']['layoutDefinitions']['other']['structure']=[{'item':'a'}]
+        validate_page_intent('Build exactly two charts and repeat the summary across pages.','Created',doc,old,{'kind':'dashboard'})
     def test_page_can_refer_to_a_new_button_created_atomically_in_the_same_batch(self):
         original=canvas();original['layout']['future']={'keep':True};before=copy.deepcopy(original)
         page={'op':'page','layoutId':'layout_main','label':'Overview','purpose':'Investigate','moveItems':False,'width':1200,'height':800,

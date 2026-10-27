@@ -16,6 +16,26 @@ LINK_ACTION = {'type': 'object', 'properties': {
 # Studio's absolute input wrapper includes label spacing and padding even when
 # a button has no separate input title. Smaller rectangles clip its label.
 BUTTON_MIN_HEIGHT = 80
+PAGE_META_ACTION = {'type':'object','properties':{
+    'op':{'type':'string','enum':['pageMeta']},'layoutId':{'type':'string'},
+    'label':{'type':'string','minLength':1,'maxLength':200},'purpose':{'type':'string','maxLength':1200}},
+    'required':['op','layoutId','label','purpose'],'additionalProperties':False}
+
+
+def focused_page_meta(prompt,document,focus,attachments):
+    if attachments or focus.get('kind')!='page'or not re.search(r'\b(?:rename|purpose)\b',prompt,re.I):return None
+    positive=re.sub(r'\b(?:do not|don.t|never)\b[^.!?]*','',prompt,flags=re.I)
+    if re.search(r'\b(?:add|create|build|remove|move|resize|delete|calculate|filter|retarget)\b',positive,re.I):return None
+    schema=copy.deepcopy(PAGE_META_ACTION);schema['properties']['layoutId']['enum']=[focus['id']]
+    return schema
+
+
+def compile_page_meta(document,action):
+    if not isinstance(action,dict)or set(action)!=set(PAGE_META_ACTION['required'])or action.get('op')!='pageMeta':raise ProviderError('Use pageMeta with layoutId, label and purpose.')
+    if not isinstance(action['label'],str)or not 1<=len(action['label'].strip())<=200 or not isinstance(action['purpose'],str)or len(action['purpose'])>1200:raise ProviderError('Give the page a concise name and purpose.')
+    matches=[i for i,tab in enumerate(document.get('layout',{}).get('tabs',{}).get('items',[]))if tab.get('layoutId')==action['layoutId']]
+    if len(matches)!=1:raise ProviderError('Choose exactly one existing page ID; pageMeta does not create or move pages.')
+    return {'op':'set','path':'/layout/tabs/items/'+str(matches[0])+'/label','value':json.dumps(action['label'])}
 
 
 def button_label_width(label):
@@ -34,7 +54,7 @@ def validate_purposes(purposes, document):
 def proposed_purposes(actions, previous, document):
     result = {key: value for key, value in previous.items() if key in document.get('layout', {}).get('layoutDefinitions', {})}
     for action in actions:
-        if action.get('op') == 'page': result[action['layoutId']] = action['purpose']
+        if action.get('op') in ('page','pageMeta'): result[action['layoutId']] = action['purpose']
     return validate_purposes(result, document)
 
 

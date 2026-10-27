@@ -5,7 +5,7 @@ import re
 from model_readiness import CREATE_OUTPUT_TOKENS, EDIT_OUTPUT_TOKENS, OLLAMA_CONTEXT_TOKENS
 from provider_service import ProviderError
 from studio_contract import model_document
-from creation_strategy import bounded_aitk_creation, explicit_page_count, CONCISE_CREATION
+from creation_strategy import bounded_aitk_creation, explicit_page_count, explicit_panel_count, CONCISE_CREATION
 from compact_creation import COMPOSE_ACTION, COMPACT_INSTRUCTIONS, compact_goal, empty_canvas, expand_compose
 from prompt_suggestions import SUGGESTION_INSTRUCTIONS
 from search_hints import HISTOGRAM_GUIDANCE
@@ -21,7 +21,7 @@ class AuthoringBudget:
         self.context = copy.deepcopy(context)
         self.provider = saved.get('provider', 'openai')
         self.creation = context['canvasState'] == 'blank'
-        complex_goal = bool(re.search(r'\b(?:multi[- ]page|(?:two|three|four|[2-9])\s+pages|pages\s*:)', context['request'], re.I))
+        complex_goal = bool(re.search(r'\b(?:multi[- ]page|(?:two|three|four|five|six|seven|eight|nine|[2-9])[- ]pages|pages\s*:)', context['request'], re.I))
         reported = context.get('modelLimits', {}).get('contextTokens')
         # A verified 32K+ Ollama window can carry the complete typed proposal,
         # reserving both repairs. Never infer capacity from a model's name.
@@ -84,7 +84,7 @@ class AuthoringBudget:
             # blank document, user brief, inspected data and environment.
             context = {key: context[key] for key in ('request', 'definition', 'canvasState', 'environment', 'history', 'focus', 'pagePurposes', 'dashboardBrief', 'modelLimits', 'dataProfile') if key in context}
             if self.provider == 'ollama':
-                request['max_output_tokens'] = 3500
+                request['max_output_tokens'] = 5500 if (explicit_panel_count(context['request']) or 0) > 4 else 3500
         if self.creation:
             request['instructions'] += '\n\n' + SUGGESTION_INSTRUCTIONS
             if context.get('dataProfile', {}).get('scope', {}).get('language', 'spl') == 'spl':
@@ -96,6 +96,18 @@ class AuthoringBudget:
         if context.get('rowNavigationOnly'):
             context = {key: context[key] for key in ('request','focus','focusedSourceReceipt','dataProfile','dashboardBrief','history','modelLimits','rowNavigationOnly','rowFields') if key in context}
             request['max_output_tokens'] = min(request['max_output_tokens'],3500)
+        if context.get('routeOnly'):
+            context = {key:context[key]for key in ('request','focus','focusedSourceReceipt','dataProfile','dashboardBrief','history','modelLimits','routeOnly')if key in context}
+            request['max_output_tokens'] = min(request['max_output_tokens'],1500)
+        if context.get('buttonRouteOnly'):
+            context={key:context[key]for key in ('request','focus','dashboardBrief','history','modelLimits','buttonRouteOnly')if key in context}
+            request['max_output_tokens']=min(request['max_output_tokens'],1500)
+        if context.get('pageMetadataOnly'):
+            context={key:context[key]for key in ('request','focus','dashboardBrief','history','modelLimits','pageMetadataOnly')if key in context}
+            request['max_output_tokens']=min(request['max_output_tokens'],1500)
+        if context.get('calculationOnly'):
+            context={key:context[key]for key in ('request','focus','dataProfile','dashboardBrief','history','modelLimits','calculationOnly')if key in context}
+            request['max_output_tokens']=min(request['max_output_tokens'],3500)
         # A conservative estimate, not a tokenizer or a verified upstream limit.
         # Drop only rolling history; the durable brief and exact document remain.
         if self.provider == 'ollama':
@@ -109,6 +121,10 @@ class AuthoringBudget:
             if overhead + len(json.dumps(context).encode()) > allowance:
                 raise ProviderError('This dashboard exceeds the conservative input budget for the Ollama context window. Use a smaller dashboard or a provider with more context. Your draft is preserved.', 413, 'model_context_budget')
         context['modelLimits']['outputTokens'] = request['max_output_tokens']
+        # AITK receives one text prompt. Put the actual current instruction after
+        # rolling history, so a completed historical request is not the last goal.
+        current_request=context.pop('request',None)
+        if current_request is not None:context['request']=current_request
         request['input'] = [{'role': 'user', 'content': [{'type': 'input_text', 'text': json.dumps(context, separators=(',', ':'))}] + [part for part in content if part.get('type') != 'input_text']}]
 
     def advance(self, request, document):
@@ -119,11 +135,17 @@ class AuthoringBudget:
     def actions(self, actions, document):
         """Keep page identity stable when completing this turn's new foundation."""
         if getattr(self, 'compact', False) and isinstance(actions, list):
+            if actions and (len(actions)!=1 or not isinstance(actions[0],dict)or actions[0].get('op')!='compose'):
+                raise ProviderError('This compact first draft requires ONE complete compose plan. Do not emit separate search, chart, page, native or navigation actions; the server compiles those mechanics.',422,'compact_plan')
             for action in actions:
                 if isinstance(action, dict) and action.get('op') == 'compose':
                     count = explicit_page_count(self.context['request'])
                     if not isinstance(action.get('pages'), list) or len(action['pages']) != count:
-                        raise ProviderError('This request requires ' + ('one complete page.' if count == 1 else 'two complete pages, including every row-link destination.'))
+                        raise ProviderError('This request requires exactly ' + str(count) + ' complete pages, including every row-link destination.')
+                    panels=explicit_panel_count(self.context['request'])
+                    if panels is not None and re.search(r'\bexactly\s+\w+\s+(?:charts|panels|tiles|visualizations)\b',self.context['request'],re.I):
+                        total=sum(len(page.get('panels',[]))for page in action['pages']if isinstance(page,dict))
+                        if total!=panels:raise ProviderError('Return one corrected compose plan with exactly '+str(panels)+' charts total across the requested pages.',422,'compact_plan')
         actions = expand_compose(actions, document, self.context.get('dataProfile'))
         if self.phase == 'foundation' and isinstance(actions, list):
             from search_chart_actions import compile_dashboard
@@ -156,7 +178,26 @@ class AuthoringBudget:
             envelope = dict(envelope,recoveryFeedback={key:value for key,value in envelope.get('recoveryFeedback',{}).items() if key not in ('candidateDefinition','placementHint')},
                             request='Return one complete corrected rowDetail plan for the same original request. The server recompiles this uncommitted detail page; never emit native or separate navigation actions.')
             envelope['recoveryFeedback']['editsApplyTo']='original'
-        if getattr(self, 'compact', False):
+        if self.context.get('routeOnly'):
+            envelope = dict(envelope,recoveryFeedback={key:value for key,value in envelope.get('recoveryFeedback',{}).items()if key not in ('candidateDefinition','placementHint')},
+                            request='Return one complete corrected route action using routeOnly for the current request. The server recompiles against the exact original dashboard, preserving unrelated work.')
+            envelope['recoveryFeedback']['editsApplyTo']='original'
+        if self.context.get('buttonRouteOnly'):
+            envelope = dict(envelope,recoveryFeedback={key:value for key,value in envelope.get('recoveryFeedback',{}).items()if key not in ('candidateDefinition','placementHint')},
+                            request='Return one complete corrected buttonRoute action for the current request. The server holds the original dashboard; preserve all unrelated work.')
+            envelope['recoveryFeedback']['editsApplyTo']='original'
+        if self.context.get('pageMetadataOnly'):
+            envelope=dict(envelope,recoveryFeedback={key:value for key,value in envelope.get('recoveryFeedback',{}).items()if key not in ('candidateDefinition','placementHint')},
+                          request='Return one corrected pageMeta action for the current selected-page request. The exact original dashboard stays on the server; purpose is draft metadata.')
+            envelope['recoveryFeedback']['editsApplyTo']='original'
+        if self.context.get('calculationOnly'):
+            envelope=dict(envelope,recoveryFeedback={key:value for key,value in envelope.get('recoveryFeedback',{}).items()if key not in ('candidateDefinition','placementHint')},
+                          request='Return one corrected complete search pipeline for calculationOnly.sourceId against its original pipeline, retaining every existing output field and adding the exact requested alias. Use actual search feedback, not a previous completed goal.')
+            envelope['recoveryFeedback']['editsApplyTo']='original'
+        retain_compact = getattr(self,'compact',False)and envelope.get('recoveryFeedback',{}).get('editsApplyTo')=='original'
+        if retain_compact:
+            envelope=dict(envelope,rejectedOutput='',request='Return ONE complete corrected compose plan for the current original goal. The server supplies all IDs, positions, filters and navigation. Do not emit ordinary or native edits.')
+        if getattr(self, 'compact', False)and not retain_compact:
             request['text']['format']['schema'] = copy.deepcopy(self.schema)
             request['instructions'] = self.instructions + '\n\nRepair the original goal against the supplied uncommitted candidate. Use ordinary native/typed actions; keep working configuration and correct all validation feedback. Return compact JSON.\n\n' + SUGGESTION_INSTRUCTIONS
             if self.provider == 'ollama':

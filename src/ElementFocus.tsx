@@ -5,6 +5,7 @@ import { variables as v } from '@splunk/themes';
 import type { StudioDefinition } from './document';
 import { elementsOf, pagesOf } from './pages';
 import type { LabelBindings } from './elementLabels';
+import { visibleFocusRects,type FocusRect } from './elementFocusGeometry';
 
 const Target = styled.button`
   position:absolute; padding:0; margin:0; background:transparent; cursor:crosshair;
@@ -16,7 +17,7 @@ const Target = styled.button`
 const Outline = styled.div`
   position:absolute; pointer-events:none; outline:2px solid ${v.focusColor}; outline-offset:2px; border-radius:${v.borderRadius};
 `;
-type Rect={id:string;label:string;left:number;top:number;width:number;height:number};
+type Rect=FocusRect;
 
 export default function ElementFocus({definition,activeTab,selected,selecting,frame,onSelect,bindings}:{
   definition:StudioDefinition;activeTab?:string;selected:string;selecting:boolean;frame:RefObject<HTMLDivElement>;onSelect:(id:string)=>void;
@@ -38,6 +39,7 @@ export default function ElementFocus({definition,activeTab,selected,selecting,fr
       const layout=(definition.layout.layoutDefinitions as Record<string,{type:string;options?:{width?:number};structure?:Array<{item:string;position?:{x:number;y:number;w:number;h:number}}>}>|undefined)?.[page?.id||''];
       const next:Rect[]=[];
       for(const item of elementsOf(definition, bindings)) {
+        if(!page?.items.includes(item.id))continue;
         if(!selecting&&item.id!==selected)continue;
         if(item.kind==='visualization') {
           const rect=api.getVisualizationDomElement(item.id)?.getBoundingClientRect();
@@ -47,15 +49,32 @@ export default function ElementFocus({definition,activeTab,selected,selecting,fr
           if(position)next.push({id:item.id,label:item.label,left:canvas.left-box.left+position.x*scale,top:canvas.top-box.top+position.y*scale,width:position.w*scale,height:position.h*scale});
         }
       }
-      const signature=JSON.stringify(next);if(signature!==last.current){last.current=signature;setRects(next);}
+      const visible=visibleFocusRects(next,box);
+      const signature=JSON.stringify(visible);if(signature!==last.current){last.current=signature;setRects(visible);}
     };
     const schedule=()=>{cancelAnimationFrame(scheduled);scheduled=requestAnimationFrame(measure);};
+    const wheel=(event:WheelEvent)=>{
+      if(!(event.target instanceof Element)||!event.target.closest('[data-constellation-focus-target]'))return;
+      const page=activeTab||pagesOf(definition)[0]?.id;
+      let viewport=api.getCanvasDomElement(page);
+      // Use the public canvas node and standard DOM scrolling semantics; no
+      // generated Framework classes or private component state are consulted.
+      while(viewport&&viewport!==root&&root.contains(viewport)){
+        const style=getComputedStyle(viewport);
+        if((/auto|scroll/.test(style.overflowY)&&viewport.scrollHeight>viewport.clientHeight)||(/auto|scroll/.test(style.overflowX)&&viewport.scrollWidth>viewport.clientWidth)){
+          const factor=event.deltaMode===1?16:event.deltaMode===2?viewport.clientHeight:1;
+          event.preventDefault();event.stopPropagation();viewport.scrollBy({top:event.deltaY*factor,left:event.deltaX*factor});return;
+        }
+        viewport=viewport.parentElement;
+      }
+    };
     const resize=new ResizeObserver(schedule);resize.observe(root);
     const mutations=new MutationObserver(schedule);mutations.observe(root,{childList:true,subtree:true});
     window.addEventListener('resize',schedule);root.addEventListener('scroll',schedule,true);schedule();
-    return()=>{alive=false;cancelAnimationFrame(scheduled);resize.disconnect();mutations.disconnect();window.removeEventListener('resize',schedule);root.removeEventListener('scroll',schedule,true);};
+    if(selecting)root.addEventListener('wheel',wheel,{capture:true,passive:false});
+    return()=>{alive=false;cancelAnimationFrame(scheduled);resize.disconnect();mutations.disconnect();window.removeEventListener('resize',schedule);root.removeEventListener('scroll',schedule,true);root.removeEventListener('wheel',wheel,true);};
   },[api,definition,activeTab,selected,selecting,frame,bindings]);
   return <>{rects.map(({id,label,...rect})=>selecting
-    ? <Target key={id} type="button" style={rect} aria-label={`Focus on ${label}`} onClick={event=>{event.stopPropagation();onSelect(id);}}><span>{label}</span></Target>
+    ? <Target key={id} type="button" style={rect} data-constellation-focus-target="" aria-label={`Focus on ${label}`} onPointerDown={event=>event.stopPropagation()} onMouseDown={event=>event.stopPropagation()} onClick={event=>{event.stopPropagation();onSelect(id);}}><span>{label}</span></Target>
     : <Outline key={id} style={rect} aria-hidden="true"/>)}</>;
 }

@@ -1,5 +1,15 @@
 # Updating Constellation
 
+## 0.24 existing navigation and workload checks
+
+No connection, credential, draft or native-dashboard migration runs. Refresh existing tabs after upgrading. Keep route compilation in `route_actions.py`, separate from provider adapters, query guards and persistence. Restricted eligibility requires current selection, verified row-output evidence where applicable, explicit intent and unambiguous native destinations. Schema-ignoring replies need identical runtime restrictions. Requalify shared-source cloning, original-page preservation, default/concrete filters, repeated retargeting, existing buttons and output repair before extending to chains, SPL2 or conditional/reused elements.
+
+Button plans retain geometry; labels that cannot fit require a shorter label or explicit native resize. Button destination checks must not become table-row requirements because a page name contains "device". Current-request ordering and rename feedback retain history without accepting an old completed instruction as the new result.
+
+Three/four-page compact composition requires an explicit total of at most eight charts. This is workload policy, not a measured model limit. Preserve the three-call, sixteen-search-check, eight-changed-source and existing time bounds. Focused aggregate additions require an exclusive selected SPL search and current input/output evidence; retain all old columns, actual validation and verified projection. Shared or advanced sources remain on ordinary authoring. Compact wire enforcement must match the schema even when an adapter ignores it; repair original plans compactly before a valid candidate exists.
+
+Benchmark v2 includes eight-chart/four-page creation and edits within a 32-chart document, retaining fixture/grader/app identity and noncompensating hard gates. No score changes provider routing, permissions or persistent policy.
+
 ## 0.20 starting questions
 
 No draft, native-dashboard or connection migration is required. Keep schema-based question templates in `datasetQuestions.ts`, bounded inspection/cache lifecycle in `useStarterIdeas.ts`, and follow-on eligibility/preferences in `prompts.ts`. They must not invent fields, assume business units/relationships, broaden the selected scope or execute a suggestion automatically. The optional author-response `dataProfile` contains the existing server-verified field metadata, never result cells, and is not persisted as a draft contract. Preserve older-client compatibility and the same validation/provider budgets. Requalify primary-versus-summary field selection, aggregate grain, stale scope/conversation invalidation, cancellation and repeated/declined suggestions when extending templates.

@@ -110,6 +110,13 @@ def compile_filter(action, document, profile):
         raise ProviderError('The filtered source must preserve the inspected baseQuery before its pipeline.')
     suffix = without_entity_equality(suffix, field, token)
     clause = '| search ' + field + '=$' + token + '|s$'
+    # A compiler-added measurement mask may precede an already-correct route
+    # clause. Repeated retarget/repair must not append duplicate predicates.
+    from measurement_constraints import pipeline_commands
+    for _start, _end, command in pipeline_commands(suffix):
+        if re.match(r'(?:stats|timechart|chart|eventstats|streamstats)\b', command, re.I): break
+        if command == clause[2:]:
+            return {'op':'set','path':'/dataSources/'+source_id.replace('~','~0').replace('/','~1')+'/options/query','value':json.dumps(source['options']['query'])}
     query = profile['baseQuery'].strip() + ' ' + clause + (' ' + suffix.strip() if suffix.strip() else '')
     if suffix.strip() == clause or suffix.strip().startswith(clause + ' |'): query = source['options']['query']
     return {'op': 'set', 'path': '/dataSources/' + source_id.replace('~', '~0').replace('/', '~1') + '/options/query', 'value': json.dumps(query)}

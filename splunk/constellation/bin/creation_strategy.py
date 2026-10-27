@@ -7,17 +7,27 @@ MAX_COMPLETE_CONTEXT_BYTES = 36000
 
 def explicit_page_count(prompt):
     """Only an unambiguous small page count can constrain compact composition."""
-    counts = {1 if match.lower() in ('one','1') else 2 for match in re.findall(r'\b(one|two|1|2)(?:-|\s+)pages?\b', prompt, re.I)}
-    if len(counts) != 1 or re.search(r'\b(?:three|four|five|six|seven|eight|nine|[3-9]|\d{2,})(?:-|\s+)pages?\b|\bmulti[- ]page\b', prompt, re.I): return None
+    names = {'one':1,'two':2,'three':3,'four':4}
+    counts = {names.get(match.lower(), int(match) if match.isdigit() else 0) for match in re.findall(r'\b(one|two|three|four|[1-4])(?:-|\s+)pages?\b', prompt, re.I)}
+    if len(counts) != 1 or re.search(r'\b(?:five|six|seven|eight|nine|[5-9]|\d{2,})(?:-|\s+)pages?\b', prompt, re.I): return None
     return counts.pop()
+
+
+def explicit_panel_count(prompt):
+    names = {'one':1,'two':2,'three':3,'four':4,'five':5,'six':6,'seven':7,'eight':8}
+    matches = re.findall(r'\b(one|two|three|four|five|six|seven|eight|\d+)\s+(?:charts|panels|tiles|visualizations)\b', prompt, re.I)
+    counts = {names.get(value.lower(), int(value) if value.isdigit() else 0) for value in matches}
+    return counts.pop() if len(counts) == 1 else None
 
 
 def bounded_aitk_creation(context):
     """A workload heuristic, never a claim about the connection's token window."""
     prompt = context['request']
-    if not context.get('dataProfile') or explicit_page_count(prompt) is None: return False
-    # Ambiguous/larger page counts and explicitly large chart requests stage.
-    if re.search(r'\b(?:three|four|five|six|seven|eight|nine|[3-9]|\d{2,})\s+pages\b|\b(?:seven|eight|nine|[7-9]|\d{2,})\s+(?:charts|panels|tiles|visualizations)\b', prompt, re.I): return False
+    pages, panels = explicit_page_count(prompt), explicit_panel_count(prompt)
+    if not context.get('dataProfile') or pages is None: return False
+    # More pages need an explicit bounded total; unknown/large goals still stage.
+    if pages > 2 and (panels is None or not pages <= panels <= 8): return False
+    if panels is not None and not 1 <= panels <= 8: return False
     return len(json.dumps(context, ensure_ascii=True, separators=(',', ':')).encode()) <= MAX_COMPLETE_CONTEXT_BYTES
 
 

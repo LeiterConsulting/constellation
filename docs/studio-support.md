@@ -4,7 +4,7 @@ The opt-in shared AITK handler separates inference authority from ordinary autho
 
 Table formatting uses a verified authoring action that compiles to a final SPL `eval` against existing aggregate output fields. `formatTable` is not a native visualization option: newly introduced or changed `options.formatTable` objects are rejected with repair feedback, while unchanged imported properties are preserved. Check the visible timestamp/number result in native Studio in addition to definition readback.
 
-This is the working support contract for the 0.23.0 development preview. Broad document authoring is implemented; complete native parity is not yet qualified. The preview uses the embedded Splunk Dashboard Framework and preserves the original Studio definition for export and native save.
+This is the working support contract for the 0.24.0 development preview. Broad document authoring is implemented; complete native parity is not yet qualified. The preview uses the embedded Splunk Dashboard Framework and preserves the original Studio definition for export and native save.
 
 | Area | Current behavior | Qualification / boundary |
 | --- | --- | --- |
@@ -42,6 +42,8 @@ New or changed real-data timecharts must fit their selected window within the 20
 | Provider connection | Direct Ollama edits passed. AITK named-connection inference remains unsuccessful in this environment. | OpenAI, Ollama and an existing AITK connection exercised; AITK multi-page creation/editing passed with a sufficient 16,000-token budget retained for the current repeated qualification. |
 
 The app never treats a module-list 404 as proof that ad hoc SPL2 is unavailable. Each environment check can run a three-row synthetic SPL2 probe separately. User roles, installed visualizations, and server configuration can change; re-check capabilities in the Environment dialog.
+
+0.24 adds guarded existing-table routes and focused button navigation. Destination filters, shared-source isolation and return wiring compile inside the app; the model chooses verified fields and requested destinations. Compound/ambiguous requests retain the ordinary path. Three/four-page compact blank composition requires an explicit total of at most eight charts and retains the existing source bound. Qualification and retained failures are recorded in [validation](validation.md).
 
 ## Remaining qualification work
 

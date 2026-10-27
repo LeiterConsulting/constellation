@@ -1,15 +1,15 @@
 # Validation status
 
-Snapshot: **0.23.0 development preview, October 26, 2026**. This file is a sanitized summary. Private lab addresses, credentials, screenshots, transcripts, raw search data and detailed runtime receipts are excluded from the repository.
+Snapshot: **0.24.0 development preview, October 27, 2026**. This file is a sanitized summary. Private lab addresses, credentials, screenshots, transcripts, raw search data and detailed runtime receipts are excluded from the repository.
 
-See the [0.23 detail-plan qualification](#0230-compiled-detail-plans-and-weighted-benchmark--october-26-2026), the [0.22 new-author walkthrough](#0220-new-author-walkthrough--october-26-2026) for current changes, the [0.21 field-context qualification](#0210-field-meanings-recorded-units-and-missing-readings--october-26-2026), and the [0.19 sparse/partial-data qualification](#0190-sparse-partial-data-and-transport-investigation--october-26-2026) for the preceding complete dataset cohort. Earlier failures and qualification boundaries remain recorded.
+See the [0.24 broader navigation qualification](#0240-broader-navigation-and-larger-workloads--october-27-2026) for current evidence. The 0.23 detail-plan, 0.22 new-author, 0.21 field-context and 0.19 sparse/partial-data cohorts below retain their own scope. Earlier failures and qualification boundaries remain recorded.
 
 ## Local verification
 
 | Check | Observed result |
 | --- | --- |
-| Python unit suites | 349 tests passed on Python 3.9 and 3.13, including detail-plan compilation/repair/preservation, wide-table packing, benchmark hard gates/numeric oracles/concrete row filters and retained authority/delivery/native regressions. |
-| Frontend unit suites | 80 tests passed, including grounded starter ranking, referenced field/chain context, unit confirmation, valid/stale suggestion focus and retained delivery/Stop races. |
+| Python unit suites | 366 tests passed on Python 3.9 and 3.13, including guarded route/button/page/calculation plans, compact repair, preservation, benchmark hard gates and retained authority/delivery/native regressions. |
+| Frontend unit suites | 83 tests passed, including visible selection geometry and retained starter, field-context, focus and delivery/Stop regressions. |
 | TypeScript and production build | Passed; bundle-size warning remains. |
 | Deterministic app package | Generated with SHA-256 receipt. |
 | Splunk AppInspect 4.3.1, precert | 0 errors, 0 failures, 0 future failures, 7 warnings, 1 skipped, 116 successes, 128 not applicable on the tested app archive. |
@@ -24,6 +24,41 @@ The AppInspect result applies to the tested development archive. The seven warni
 | 10.4.4 | 1.26.6 | Native roundtrips, synthetic SPL/SPL2, PDF native interactions, Ollama edits, prior page/focus exercises and current row-budget check. |
 
 The full 0.7.1 creation/switch/reopen journey was run on the 10.2.8 target, not repeated in full on 10.4.4. AITK succeeded through an existing configured connection on one target; another target returned no usable completion. Do not infer instance-independent provider availability from app installation.
+
+## 0.24.0 broader navigation and larger workloads — October 27, 2026
+
+The app now compiles eligible edits to existing row routes, navigation buttons and page names/purposes from compact plans. Destination searches shared with other consumers are cloned before filtering, preserving the other consumers. A narrowly selected-table calculation mode sends the existing verified pipeline and old/new output-column requirements instead of the full dashboard. Normal scope, native feature, output, measurement, intent and current-user execution gates remain mandatory. Advanced or ambiguous operations retain ordinary authoring; these compilers are not general SPL/SPL2 parsers.
+
+Exploratory live failures drove fixes: Ollama duplicated chart placements on an exact-count multi-page goal, ignored compact schema restrictions and later dropped a requested peak column; AITK repeated an earlier button instruction and attempted to put page-purpose metadata in native JSON. Compact recovery now retains its plan contract until a candidate exists, current instructions follow history, focused operations have matching runtime restrictions, and explicit count/column/navigation postconditions reject incomplete work. Failed candidates remained uncommitted. Recovery limits and provider authority were not expanded.
+
+An ordinary-author real-data cohort exercised three named pages with six unique charts; rerouted the Overview table to Coverage and filtered every destination chart; changed the selected return button to open Device details; renamed Coverage to Data quality and recorded its purpose; then added a visible maximum-temperature column to the selected summary. Temperatures above 150°F were excluded while Wi-Fi remained independent. Every step passed in one model call for all three providers after the fixes. Creation took 45/36/29 seconds for OpenAI/Ollama/AITK; route edits took 7/11/18 seconds and focused metric edits 6/11/16 seconds. These are ad hoc observations, not latency distributions or a comparative performance benchmark.
+
+That five-step analytical cohort ran immediately before the final selection-overlay fix. All **62 Python modules** in its installed backend match the final archive exactly. The final archive then received the complete synthetic provider suites and the browser/native checks below; the analytical cohort was not independently repeated after the frontend-only change.
+
+The [benchmark v2](model-benchmark.md) expands from five to twelve cases: creation up to eight charts/four pages with two independent routes, and route, formatting, metric, page and button edits in an existing 32-chart/four-page document. All applicable weighted criteria remain hard gates. Focused operations keep the larger document server-side; input document size is not a model context-capacity measurement.
+
+| Final-archive synthetic suite | OpenAI `gpt-6-luna` | Ollama `qwen3-coder:latest` | AITK 6.2 existing managed connection |
+| --- | --- | --- | --- |
+| Accepted, independently checked tasks | 12/12 | 12/12 | 12/12 after one interrupted grading retry |
+| First model response accepted | 12/12 | 12/12 | 10/12 |
+| Weighted score / critical gates | 100 / passed | 100 / passed | 100 / passed after regrading the original reply |
+| Largest contiguous tested creation batch | 8 charts | 8 charts | 8 charts after regrading |
+
+AITK repaired its one-chart and eight-chart authoring cases within existing limits. The eight-chart candidate was accepted, but a subsequent independent read-only grading request raised `URLError`; the original report remains an incomplete 11/12 delivery result. Regrading the **same saved reply**, without inference, passed completion, scope, bindings, numerical populations and both navigation paths. A separately labelled derived report retains the interruption. This is not a clean end-to-end delivery pass or an explanation of the historical REST failure. Earlier all-provider suites and exploratory grader fixes are retained locally: raw detail probes must run before display projection, and temperature-only subsets need not retain unused Wi-Fi readings. These corrections have offline regression coverage; no application validation gate was waived.
+
+All reports retain fixture/grader/connection fingerprints and the exact app archive hash; no raw replies or event values are published. Eight charts is only an advisory workload candidate, never an automatic routing permission. Every report retains `productionQualified:false`. AITK's current upstream model/token parameters were neither read nor changed. Repeat on held-out cases, changed configurations and representative load before adopting model limits.
+
+Separate blank drafts and exact definition/conversation reopen passed for each provider, with denied peer access. Private native Studio copies in Search & Reporting matched exact readback and owner ACLs. Browser checks exercised all three providers' Overview row → Data quality → Device details → Overview paths in both preview and normal native Studio. An additional OpenAI browser test selected the existing button, changed it through chat, checked exact Undo, Redo/refresh, and saved the edited definition through the Save to Splunk UI. The resulting native dashboard rendered and navigated without Constellation code.
+
+The operated selection check exposed off-screen input targets and blocked canvas scrolling. Selection targets now stay within the visible active page; wheel events over the overlay scroll the native canvas using its public DOM API. The correct button was selected and edited after scrolling. No controls were added. Result arrival can still remount the preview and reset its scroll position; the completed-preview selection path was tested, not every interaction during partial loading. These are operated regression checks, not unaided usability or full accessibility acceptance.
+
+Read-only synthetic mutation probes tested all **18 final generated source transformations** across the three real-data dashboards. Increasing already-excluded temperatures left outputs unchanged; changing Wi-Fi on those observations changed each tested Wi-Fi-average source. No indexed data was modified or sent to inference. The benchmark separately checked the exact-150°F boundary, missing counts and both fictional device filters.
+
+Final **0.24.0**, build 36, is SHA-256 `e357742f8f9ca7085b081b19626950a848813a4fbe342c55f6b649a9c143024d`. Both recorded Splunk versions installed it without restart. The current full provider/browser cohort ran on Enterprise 10.2.8 / Studio 1.23.12; 10.4.4 / Studio 1.26.6 installation does not establish a repeated full cohort. All packaged Python modules, the entry bundle and three JavaScript chunks matched source/build. The archive excludes macOS and private extras. Fresh AppInspect 4.3.1 precert returned zero errors/failures/future failures, seven warnings and one skip. The production bundle-size warning remains.
+
+Cleanup removed four disposable accounts, their 21 private configuration records, six native views and the one copied OpenAI key; its absence was verified and the temporary password file was removed. The original administrator's settings, 35-draft listing, managed inference policy and protected backing collections were unchanged. The original browser login was restored and the test tab closed.
+
+Remaining 1.0 gates include arbitrary/ambiguous page edits, shared-source analytical edits, advanced layouts, SPL2/chains and compound business rules; held-out/repeated workload and model-budget trials; naturally correlated REST failure diagnosis; unaided UX/accessibility/reflow; bundle/load budgets; second-target AITK; native feature/version coverage; upgrade/rollback and deployment/cluster qualification. This preview does not establish general model reliability, full native parity or Cloud certification.
 
 ## 0.23.0 compiled detail plans and weighted benchmark — October 26, 2026
 

@@ -1,6 +1,7 @@
 """Studio authoring with environment context, history, and guarded attachments."""
 from field_context import enrich_profile, recorded_unit_intent, recorded_unit_question, unit_confirmation
 import row_navigation
+from route_actions import INSTRUCTIONS as ROUTE_INSTRUCTIONS, validate_route_intent, focused_route, focused_button_route
 import json
 import copy
 import re
@@ -8,6 +9,7 @@ from provider_service import ProviderError
 from studio_contract import model_document, validate_document, apply_changes
 from studio_features import feature_contract, validate_features
 from table_projection import validate_requested_columns, verified_requested_projection, validate_selected_calculation, isolate_selected_calculation
+from table_projection import focused_calculation, CALCULATION_INSTRUCTIONS
 from model_capabilities import attachment_parts
 from prompt_suggestions import SUGGESTION_SCHEMA, normalize_suggestions
 from data_service import DataService
@@ -27,7 +29,7 @@ from table_format import formatting_only, TABLE_FORMAT_ACTION, FORMAT_INSTRUCTIO
 from quick_edit import quick_edit
 from model_readiness import CREATE_OUTPUT_TOKENS, EDIT_OUTPUT_TOKENS
 from authoring_budget import AuthoringBudget
-from page_service import validate_purposes, proposed_purposes, focus_context
+from page_service import validate_purposes, proposed_purposes, focus_context, focused_page_meta
 
 SCHEMA = {'type': 'object', 'properties': {
     'message': {'type': 'string'},
@@ -380,6 +382,17 @@ class AgentService:
         if table_receipt: context['focusedSourceReceipt'] = table_receipt
         format_only = table_receipt and not attachments and formatting_only(prompt, focus.get('id'), document)
         row_only = row_navigation.eligible(prompt,document,focus.get('id'),profile,table_receipt,attachments)
+        route_schema = focused_route(prompt,document,focus.get('id'),profile,table_receipt,attachments)
+        button_schema = focused_button_route(prompt,document,focus.get('id'),attachments)
+        page_schema = focused_page_meta(prompt,document,focus,attachments)
+        calculation = focused_calculation(prompt,focus.get('id'),document,profile,table_receipt,attachments)
+        if route_schema:
+            context['routeOnly'] = {key:route_schema['properties'][key]['enum']for key in ('sourceId','pageId','field')}
+            context['routeOnly']['destinationLabel'] = next(tab['label']for tab in document['layout']['tabs']['items']if tab['layoutId']==context['routeOnly']['pageId'][0])
+        if button_schema:
+            context['buttonRouteOnly']={'id':focus['id'],'pages':[{'id':t['layoutId'],'label':t['label']}for t in document['layout']['tabs']['items']]}
+        if page_schema:context['pageMetadataOnly']=True
+        if calculation:context['calculationOnly']=calculation
         if row_only:
             context['rowNavigationOnly'] = True
             context['rowFields'] = row_navigation.row_fields(profile,table_receipt)
@@ -390,8 +403,13 @@ class AgentService:
         guidance = retrieve_guidance(prompt, document, environment, real_data=bool(profile))
         context['retrievedGuidance'] = guidance
         instructions = (FORMAT_INSTRUCTIONS if format_only else CREATION_INSTRUCTIONS if profile and context['canvasState'] == 'blank' else
-                        FOCUSED_INSTRUCTIONS if focus['kind'] in ('visualization', 'input') else INSTRUCTIONS)
+                        FOCUSED_INSTRUCTIONS if focus['kind'] in ('visualization', 'input', 'page') else INSTRUCTIONS)
         if row_only: instructions = row_navigation.INSTRUCTIONS
+        elif route_schema: instructions = ROUTE_INSTRUCTIONS + '\nReturn exactly ONE route action matching routeOnly. No separate edits, queries, filters, tokens or buttons. The server holds the exact original definition. On recovery replace the complete uncommitted route plan for the same current request. Return JSON message,changes,suggestions; give a short result message.'
+        elif button_schema: instructions = 'Update only the selected existing navigation button for the CURRENT request. History is previous completed work. Return JSON message,changes,suggestions with exactly ONE buttonRoute action {op:"buttonRoute",id,pageId,label}. Use buttonRouteOnly.id and choose the requested destination from buttonRouteOnly.pages. Preserve its rectangle, all other elements, queries and row filters; the server compiles native handlers against the exact original. Never return table, search or raw native edits. On recovery replace the complete uncommitted buttonRoute plan.'
+        elif page_schema: instructions = 'Update only the CURRENT selected page name/purpose. History contains completed previous turns. Return JSON message,changes,suggestions with exactly ONE pageMeta action {op:"pageMeta",layoutId,label,purpose}. Use focus.id, preserve the requested page label exactly, and record its stated purpose. Keep the old label/purpose when unmentioned. The server preserves the entire native page, all queries, geometry, interactions and unknown properties. Page purpose is draft metadata; NEVER emit a native /pagePurposes path, recreate a page or edit a previous button. On recovery replace the complete pageMeta plan.'
+        elif calculation: instructions = CALCULATION_INSTRUCTIONS
+        elif not format_only and context['canvasState'] != 'blank' and re.search(r'\b(?:navigation|drilldown|route|retarget|button|link|open|row)\b',prompt,re.I): instructions += '\n\n' + ROUTE_INSTRUCTIONS
         request = {'model': saved['model'], 'store': False, 'instructions': instructions,
                    'input': [{'role': 'user', 'content': [{'type': 'input_text', 'text': json.dumps(context)}] + attachments}],
                    'max_output_tokens': CREATE_OUTPUT_TOKENS if context['canvasState'] == 'blank' else EDIT_OUTPUT_TOKENS,
@@ -408,6 +426,16 @@ class AgentService:
                 if action != TABLE_FORMAT_ACTION]
             if row_only:
                 request['text']['format']['schema']['properties']['changes'].update(items=row_navigation.plan_schema(profile,table_receipt),minItems=1,maxItems=1)
+            elif route_schema:
+                request['text']['format']['schema']['properties']['changes'].update(items=route_schema,minItems=1,maxItems=1)
+            elif button_schema:
+                request['text']['format']['schema']['properties']['changes'].update(items=button_schema,minItems=1,maxItems=1)
+            elif page_schema:
+                request['text']['format']['schema']['properties']['changes'].update(items=page_schema,minItems=1,maxItems=1)
+            elif calculation:
+                from search_chart_actions import SEARCH_ACTION
+                calculation_schema=copy.deepcopy(SEARCH_ACTION);calculation_schema['properties']['id']['enum']=[calculation['sourceId']]
+                request['text']['format']['schema']['properties']['changes'].update(items=calculation_schema,minItems=1,maxItems=1)
         if saved['model'] in ('gpt-6-luna', 'gpt-6-astra'):
             request['reasoning'] = {'effort': 'medium' if context['canvasState'] == 'blank' else 'low'}
         budget = AuthoringBudget(saved, context)
@@ -451,7 +479,22 @@ class AgentService:
                 if not format_only and isinstance(result['changes'], list) and any(isinstance(action, dict) and action.get('op') == 'formatTable' for action in result['changes']):
                     raise ProviderError('formatTable is unavailable for this broader edit. Preserve the verified aggregation, add the requested calculation through a search/native query edit and display new output columns in the table projection. Use final SPL eval after aggregation for any requested formatting.')
                 validate_data_claims(result, profile)
-                if row_only:
+                if route_schema:
+                    if not isinstance(result['changes'],list)or len(result['changes'])!=1 or not isinstance(result['changes'][0],dict)or result['changes'][0].get('op')!='route' or any(result['changes'][0].get(key)not in route_schema['properties'][key]['enum']for key in ('sourceId','pageId','field')):
+                        raise ProviderError('Return exactly one complete route action using only the sourceId, pageId and verified field listed in routeOnly.',422,'route_plan')
+                    rule=route_schema['properties']['returnLabel'];label=result['changes'][0].get('returnLabel')
+                    if not isinstance(label,str)or ('enum'in rule and label not in rule['enum'])or len(label)<rule.get('minLength',0):
+                        raise ProviderError('Create return navigation only when this request asks for it, using a readable returnLabel; otherwise use returnLabel="" to preserve existing controls.',422,'route_plan')
+                if button_schema:
+                    if not isinstance(result['changes'],list)or len(result['changes'])!=1 or not isinstance(result['changes'][0],dict)or result['changes'][0].get('op')!='buttonRoute'or result['changes'][0].get('id')not in button_schema['properties']['id']['enum']or result['changes'][0].get('pageId')not in button_schema['properties']['pageId']['enum']:
+                        raise ProviderError('Return exactly one buttonRoute action using the selected button ID and an existing destination page. No table, source or native edits.',422,'button_route_plan')
+                if page_schema:
+                    if not isinstance(result['changes'],list)or len(result['changes'])!=1 or not isinstance(result['changes'][0],dict)or result['changes'][0].get('op')!='pageMeta'or result['changes'][0].get('layoutId')!=focus['id']:
+                        raise ProviderError('Return one pageMeta action for the selected existing page. Purpose belongs in that action, never native Studio paths.',422,'page_meta_plan')
+                if calculation:
+                    if not isinstance(result['changes'],list)or len(result['changes'])!=1 or not isinstance(result['changes'][0],dict)or result['changes'][0].get('op')!='search'or result['changes'][0].get('id')!=calculation['sourceId']:
+                        raise ProviderError('Return one search action for calculationOnly.sourceId, retaining the complete original pipeline and adding the exact requested AS alias. No native or unrelated actions.',422,'calculation_plan')
+                if row_only or route_schema or button_schema or page_schema or calculation:
                     # A rejected new detail page is transient, not user work.
                     # Recompile its corrected plan against the exact original;
                     # query checks remain cached within the same recovery budget.
@@ -475,7 +518,9 @@ class AgentService:
                 validate_features(draft, document, environment)
                 validate_chart_placement(draft, document)
                 validate_blank_claim(result['message'], draft, document, profile)
-                if budget.phase == 'complete': validate_page_intent(prompt, result['message'], draft, document, focus, next_purposes)
+                if budget.phase == 'complete':
+                    validate_page_intent(prompt, result['message'], draft, document, focus, next_purposes)
+                    validate_route_intent(prompt,draft,document,profile,focus)
                 if not profile:
                     for key, source in draft.get('dataSources', {}).items():
                         if source == document.get('dataSources', {}).get(key): continue
@@ -503,7 +548,12 @@ class AgentService:
                     validate_features(draft, document, environment)
                     receipts = data.validate_searches(draft, document, profile)
                 validate_requested_columns(prompt, body.get('selected', ''), draft, receipts)
+                if calculation:
+                    fields=next((set(r.get('fields',[]))for r in receipts if r.get('source')==calculation['sourceId']),set())
+                    missing=set(calculation['existingOutputFields'])-fields
+                    if missing:raise ProviderError('Retain every existing selected-table output column while adding the new aggregate: '+', '.join(sorted(missing))[:400],422,'calculation_columns')
                 if row_only: row_navigation.validate_result(draft,document,body.get('selected',''))
+                if budget.phase == 'complete': validate_route_intent(prompt,draft,document,profile,focus)
                 # Newly introduced network graphs must match the target feature set.
                 for key, viz in draft['visualizations'].items():
                     if viz.get('type', '').lower() == 'splunk.networkgraph' and document['visualizations'].get(key, {}).get('type') != viz['type'] and not environment['features']['networkGraph']:

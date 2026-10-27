@@ -13,6 +13,11 @@ PROFILE_WITH_FIELDS=dict(PROFILE,fields=[{'name':'metric_a','numeric':True},{'na
 
 
 class PopulationGuardTests(unittest.TestCase):
+    def test_filtering_temperature_also_couples_wifi_only_averages_and_field_counts(self):
+        for aggregate in ('avg(metric_b) AS wifi','count(metric_b) AS valid_wifi','latest(metric_b) AS latest_wifi'):
+            with self.subTest(aggregate=aggregate),self.assertRaisesRegex(ProviderError,'discards events'):
+                validate_populations(PROFILE['baseQuery']+' | where metric_a<=150 | stats '+aggregate,PROFILE_WITH_FIELDS)
+        validate_populations(PROFILE['baseQuery']+' | where metric_a<=150 | stats count(metric_a) AS valid_temperature',PROFILE_WITH_FIELDS)
     def test_reverse_quoted_null_and_multiple_measurement_filters_still_reject_coupling(self):
         for condition in ("'metric_a'<=150", '150>=metric_a', 'isnotnull(metric_a)', 'metric_a<=150 AND metric_b>-80'):
             query=PROFILE['baseQuery']+' | where '+condition+' | stats avg(metric_a) latest(metric_b)'
@@ -22,6 +27,8 @@ class PopulationGuardTests(unittest.TestCase):
     def test_explicit_independence_survives_focused_edits_and_allows_a_current_revision(self):
         brief={'purpose':'Exclude high A, but retain B measurements independently.','requirements':''}
         self.assertTrue(independent_measurements('Round the selected table',brief))
+        self.assertTrue(independent_measurements('Exclude high A while retaining Wi-Fi measurements independently.',{}))
+        self.assertTrue(independent_measurements('Preserving independent measurement populations is required.',{}))
         self.assertFalse(independent_measurements('Use the same population for both measurements now.',brief))
         self.assertFalse(independent_measurements('Show counts by entity',{}))
 

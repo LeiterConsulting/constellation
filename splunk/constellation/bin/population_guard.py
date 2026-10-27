@@ -8,7 +8,7 @@ def independent_measurements(prompt, brief):
     # Explicit current revisions override a retained independence request.
     if re.search(r'\b(?:same|shared)\s+population\b|\b(?:no longer|stop)\b[^.!?]{0,80}\bindependent', prompt, re.I): return False
     text = '\n'.join([prompt, brief.get('purpose', ''), brief.get('requirements', '')])
-    return bool(re.search(r'\b(?:retain|keep|preserve)\b[^.!?]{0,160}\bindependent(?:ly)?\b|\bindependent(?:ly)?\b[^.!?]{0,80}\b(?:measurements|observations|readings|metrics)\b', text, re.I))
+    return bool(re.search(r'\b(?:retain(?:ing|ed|s)?|keep(?:ing|s)?|preserv(?:e|es|ed|ing))\b[^.!?]{0,160}\bindependent(?:ly)?\b|\bindependent(?:ly)?\b[^.!?]{0,80}\b(?:measurements|observations|readings|metrics)\b', text, re.I))
 
 
 def validate_populations(query, profile):
@@ -30,7 +30,7 @@ def validate_populations(query, profile):
     if not filtered: return
     segment = syntax[aggregate.end():].split('|', 1)[0]
     measured = set()
-    for match in re.finditer(r'\b(?:avg|mean|min|max|sum|latest|earliest|median|stdev|stdevp|var|varp|range|perc\d+)\s*\(', segment, re.I):
+    for match in re.finditer(r'\b(?:avg|mean|min|max|sum|count|latest|earliest|median|stdev|stdevp|var|varp|range|perc\d+)\s*\(', segment, re.I):
         start, cursor, depth = match.end(), match.end(), 1
         while cursor < len(segment) and depth:
             if segment[cursor] == '(': depth += 1
@@ -39,9 +39,9 @@ def validate_populations(query, profile):
         if depth: continue  # Native syntax validation handles incomplete syntax.
         arguments = segment[start:cursor-1]
         measured.update(field for field in numeric if re.search(r'(?<![A-Za-z0-9_.])' + re.escape(field) + r'(?![A-Za-z0-9_.])', arguments))
-    affected = filtered & measured
-    if affected and len(measured) > 1:
-        others = measured - {sorted(affected)[0]}
-        raise ProviderError('The request retains independent measurements, but this shared aggregate filters ' +
-            ', '.join(sorted(affected))[:250] + ' before also calculating ' + ', '.join(sorted(others))[:250] +
+    coupled = {field for field in filtered if measured - {field}}
+    if coupled:
+        others = measured - {sorted(coupled)[0]}
+        raise ProviderError('The request retains independent measurements, but this aggregate filters ' +
+            ', '.join(sorted(coupled))[:250] + ' before calculating ' + ', '.join(sorted(others))[:250] +
             '. That discards events from the other measurements. Remove the global measurement filter and condition only the affected aggregate, for example avg(eval(if(FIELD<=LIMIT,FIELD,null()))), while calculating other measurements from all selected events. Preserve the requested cutoff, device grouping and time scope.', 422, 'population_coupling')

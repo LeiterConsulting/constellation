@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.24.0 - 2026-10-27
+
+- Keep canvas element selection within the visible active page and allow scrolling while picking; prevent native click focus from replacing explicit selection. Preserve the existing interface and native geometry.
+- Compile existing table routes as guarded plans: safe destination filters, shared-source cloning, native links and optional return navigation. Explicit selected-table reroutes use a compact verified-field schema and preserve unrelated native work.
+- Add selected-button navigation plans that retain geometry and check the requested label/destination. Correct a validator that mistook a button targeting “Device details” for a table-row request.
+- Compile focused page name/purpose plans into native labels and draft-only purposes. Put the current request after history and reject stale responses that do not perform an explicit selected-page rename.
+- Scope an explicit aggregate addition to one exclusive selected-table search pipeline and verified old/new output columns; expose new columns only after actual search validation.
+- Enforce compact-plan format for schema-ignoring replies, retain compact repair before a staged candidate exists, and reject unrequested duplicate cross-page chart placements on exact-count new dashboards.
+- Admit explicit three/four-page compact goals within eight charts and existing context, search and recovery bounds. Advanced/ambiguous work retains ordinary authoring.
+- Strengthen independent-measurement checks for Wi-Fi-only aggregates and field counts after a temperature filter; recognize retaining/preserving intent without widening unknown predicates.
+- Expand benchmark v2 to twelve tasks, including eight-chart/four-page creation and edits within a 32-chart dashboard. Check concrete row populations, navigation and preserved unknown/shared configuration. All applicable criteria remain hard gates. No new user controls or automatic model routing.
+
 ## 0.23.0 - 2026-10-26
 
 - Replace coordinated navigation actions for the exact selected-table row-detail follow-on with one small analytical plan. Compile IDs, pre-aggregation filters, wildcard defaults, page placement and Back navigation locally; preserve original sources, projections and page geometry.

@@ -50,12 +50,13 @@ export default memo(function Preview({ definition, revision, tokens, activeTab, 
     return result as unknown as DashboardJSON;
   }, [definition, searchResults, tokens, searchMessages]);
   const plugin = useMemo(() => ({ onEventTrigger: (event: { [key: string]: unknown }) => {
+    if (selecting) return;
     if (typeof event.type === 'string' && /click$/.test(event.type) && typeof event.targetId === 'string') {
       const source = definition.visualizations[event.targetId] || (definition.inputs as Record<string, {eventHandlers?: unknown}> | undefined)?.[event.targetId];
       if (!source) return;
       onSelect(navigationTarget(definition,event.targetId,(event.payload as {name?:unknown}|undefined)?.name) || event.targetId);
     }
-  } }), [definition, onSelect]);
+  } }), [definition, onSelect, selecting]);
   const renderKey = revision + ':' + searchVersion + ':' + JSON.stringify(searchMessages);
   return <RendererFrame ref={frame} style={{ height }} role="region" aria-label="Dashboard preview"><RendererBoundary key={renderKey}>
     <DashboardContextProvider key={renderKey} preset={EnterprisePreset} initialDefinition={preview}

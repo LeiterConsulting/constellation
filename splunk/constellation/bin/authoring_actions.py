@@ -4,7 +4,7 @@ import json
 import re
 import math
 from provider_service import ProviderError
-from page_service import LINK_ACTION, BUTTON_ACTION, BUTTON_MIN_HEIGHT, compile_link, compile_button
+from page_service import LINK_ACTION, BUTTON_ACTION, BUTTON_MIN_HEIGHT, PAGE_META_ACTION, compile_link, compile_button, compile_page_meta
 from studio_contract import apply_changes
 from geometry_normalization import normalize_structure, fit_button_labels
 from input_normalization import normalize_button_actions
@@ -14,6 +14,7 @@ from table_format import TABLE_FORMAT_ACTION, compile_table_format
 from measurement_constraints import normalize_measurements
 from native_text_encoding import normalize_reference_text
 from compact_creation import COMPOSE_ACTION, expand_compose
+from route_actions import ROUTE_ACTION, BUTTON_ROUTE_ACTION, compile_route, compile_button_route
 
 LEGACY_CHANGE = {'type': 'object', 'properties': {
     'op': {'type': 'string', 'enum': ['set', 'remove']},
@@ -39,7 +40,7 @@ PAGE_ACTION['properties']['op'] = {'type': 'string', 'enum': ['page']}
 PAGE_ACTION['properties']['purpose'] = {'type': 'string', 'maxLength': 1200}
 PAGE_ACTION['properties']['moveItems'] = {'type': 'boolean', 'description': 'Move these items off their previous pages when true; otherwise allow reuse.'}
 PAGE_ACTION['required'].extend(['purpose', 'moveItems'])
-ACTION_SCHEMA = {'anyOf': [COMPOSE_ACTION, LEGACY_CHANGE, DASHBOARD_ACTION, SEARCH_ACTION, *CHART_ACTION_SCHEMA['anyOf'], TOKEN_ACTION, FILTER_ACTION, TABLE_FORMAT_ACTION, LAYOUT_ACTION, PAGE_ACTION, LINK_ACTION, BUTTON_ACTION]}
+ACTION_SCHEMA = {'anyOf': [COMPOSE_ACTION, LEGACY_CHANGE, DASHBOARD_ACTION, SEARCH_ACTION, *CHART_ACTION_SCHEMA['anyOf'], TOKEN_ACTION, FILTER_ACTION, TABLE_FORMAT_ACTION, LAYOUT_ACTION, PAGE_ACTION, PAGE_META_ACTION, LINK_ACTION, BUTTON_ACTION, ROUTE_ACTION, BUTTON_ROUTE_ACTION]}
 
 
 def validate_chart_placement(document, previous):
@@ -93,8 +94,11 @@ def compile_actions(document, actions, profile=None, table_receipt=None):
     layout = copy.deepcopy(document['layout'])
     defaults, token_changes = copy.deepcopy(document.get('defaults', {})), False
     result, links, buttons, filters, formats, typed = [], [], [], [], [], False
+    routes = []
     for action in actions:
         if not isinstance(action, dict): raise ProviderError('Each authoring action must be an object.')
+        if action.get('op') in ('route','buttonRoute'): routes.append(action); continue
+        if action.get('op')=='pageMeta':result.append(compile_page_meta(document,action));continue
         if action.get('op') == 'dashboard': result.extend(compile_dashboard(action)); continue
         if action.get('op') == 'formatTable': formats.append(action); continue
         if action.get('op') == 'filter': filters.append(action); continue
@@ -208,7 +212,7 @@ def compile_actions(document, actions, profile=None, table_receipt=None):
                                         ' but its button action places it on ' + page_id[:150] + '. Use one consistent placement pageId.')
                 page['structure'] = [item for item in page['structure'] if item.get('item') != identifier]
         result.append({'op': 'set', 'path': '/layout', 'value': json.dumps(layout)})
-    if links or buttons or filters:
+    if links or buttons or filters or routes:
         candidate = apply_changes(document, result)
         for action in filters:
             change = compile_filter(action, candidate, profile)
@@ -222,6 +226,10 @@ def compile_actions(document, actions, profile=None, table_receipt=None):
             change = compile_link(candidate, action)
             result.append(change)
             candidate = apply_changes(candidate, [change])
+        for action in routes:
+            changes = compile_button_route(candidate,action)if action['op']=='buttonRoute'else compile_route(candidate, action, profile)
+            result.extend(changes)
+            candidate = apply_changes(candidate, changes)
     candidate = apply_changes(document, result)
     for action in formats:
         change = compile_table_format(action, candidate, table_receipt)

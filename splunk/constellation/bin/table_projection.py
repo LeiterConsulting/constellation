@@ -4,6 +4,47 @@ import re
 from provider_service import ProviderError
 
 
+def focused_calculation(prompt, selected, document, profile, receipt, attachments):
+    """One explicit new aggregate on an exclusive inspected SPL table source."""
+    if attachments or not profile or not receipt or receipt.get('status')=='failed' or profile.get('scope',{}).get('language','spl')!='spl':return None
+    table,requested,_fields=requested_columns(prompt,selected,document,[])
+    if len(requested)!=1 or not re.search(r'(?i)\bchange no other element\b|\bto only this selected\b.{0,50}\btable\b',prompt):return None
+    if re.search(r'\b(?:move|resize|rename|retarget|remove|delete|create)\b',prompt,re.I):return None
+    aggregates=re.findall(r'\b(avg|min|max|sum|count|latest|earliest)\(\s*([A-Za-z_][A-Za-z0-9_.]*)\s*\)\s+AS\s+([A-Za-z_][A-Za-z0-9_]*)\b',prompt,re.I)
+    if len(aggregates)!=1 or aggregates[0][2]in {f['name']for f in receipt.get('fields',[])}:return None
+    if aggregates[0][1]not in {f['name']for f in profile.get('fields',[])if f.get('numeric')is True}:return None
+    bindings=table.get('dataSources',{});sid=bindings.get('primary')
+    source=document.get('dataSources',{}).get(sid,{})
+    if set(bindings)!={'primary'}or source.get('type')!='ds.search':return None
+    if any(key!=selected and sid in v.get('dataSources',{}).values()for key,v in document['visualizations'].items()):return None
+    if any(sid in v.get('dataSources',{}).values()for v in document.get('inputs',{}).values()):return None
+    if any(v.get('options',{}).get('extend',v.get('extend'))==sid for v in document.get('dataSources',{}).values()):return None
+    from search_scope import scoped_suffix
+    suffix=scoped_suffix(source.get('options',{}).get('query',''),profile)
+    if suffix is None:return None
+    return {'tableId':selected,'sourceId':sid,'pipeline':suffix,'requestedAliases':sorted(requested),
+            'existingOutputFields':[f['name']for f in receipt.get('fields',[])]}
+
+
+CALCULATION_INSTRUCTIONS = '''Update only the selected table's CURRENT search.
+Return JSON message,changes,suggestions with ONE search action {op:"search",id,
+pipeline}. Use calculationOnly.sourceId and edit its supplied EXACT existing
+pipeline to add the requested aggregate and exact AS alias. Preserve existing
+aggregations, grouping, formatting, filters and columns. Do not replace the search
+with a new summary. Add the aggregate within its existing stats command before BY;
+retain that grouping. If a terminal fields/table projection exists, include the
+new alias there too. The server prepends the verified base query, preserves all
+native properties and exposes the new column only AFTER actual output verifies it.
+Do not emit native, chart, binding, page or navigation actions. Keep metadata-only
+existingOutputFields and the durable brief's units, exclusions and populations.
+Never fill missing/excluded temperatures with zero or drop independent Wi-Fi
+events. The server's temperature null mask retains other measurements. Preserve
+the source scope and time range; no files or result rows are in this context.
+History is completed work; request is the current instruction. On recovery replace
+the complete pipeline against the original selected source, retaining successful
+query checks. Return a short visible-result message; never claim a save.'''
+
+
 def requested_columns(prompt, selected, document, receipts):
     table = document.get('visualizations', {}).get(selected, {})
     if table.get('type') != 'splunk.table' or not re.search(r'\b(?:add|include)\b', prompt, re.I): return table, set(), None

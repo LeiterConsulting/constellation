@@ -12,11 +12,28 @@ from provider_service import ProviderError
 from authoring_budget import AuthoringBudget
 
 class AuthoringBudgetTests(unittest.TestCase):
+    def test_schema_ignoring_compact_reply_keeps_small_plan_repair_against_original(self):
+        from agent_service import SCHEMA
+        context={'request':'Build three pages with exactly six charts','canvasState':'blank','history':[],'dataProfile':PROFILE,'modelLimits':{'contextTokens':32768}}
+        budget=AuthoringBudget({'provider':'ollama'},context)
+        request={'instructions':'Fixture','text':{'format':{'schema':copy.deepcopy(SCHEMA)}},'input':[{'content':[{'type':'input_text','text':'Fixture'}]}]}
+        budget.prepare(request,blank()['definition']);schema=copy.deepcopy(request['text']['format']['schema'])
+        with self.assertRaisesRegex(ProviderError,'ONE complete compose'):
+            budget.actions([{'op':'search','id':'events','pipeline':'| stats count'}],blank()['definition'])
+        envelope={'rejectedOutput':'Rejected native proposal','recoveryFeedback':{'editsApplyTo':'original','candidateDefinition':blank()['definition'],'validationError':'Use compose'}}
+        budget.feedback(request,envelope)
+        self.assertTrue(budget.compact);self.assertEqual(request['text']['format']['schema'],schema)
+        self.assertNotIn('Rejected native proposal',json.dumps(request));self.assertIn('ONE complete corrected compose',json.dumps(request))
+        self.assertEqual(request['max_output_tokens'],5500)
     def test_bounded_aitk_workload_does_not_infer_capacity_or_stage_every_two_page_request(self):
         base={'request':'Build two pages','canvasState':'blank','history':[],'dataProfile':PROFILE}
         self.assertEqual(AuthoringBudget({'provider':'aitk'},base).phase,'complete')
         for context in (dict(base,request='Build three pages'), dict(base,request='Build two pages with 12 charts'), dict(base,dashboardBrief={'purpose':'x'*40000})):
             self.assertEqual(AuthoringBudget({'provider':'aitk'},context).phase,'foundation')
+        for goal in ('Build three pages with exactly six charts','Build four pages with exactly eight charts'):
+            self.assertEqual(AuthoringBudget({'provider':'aitk'},dict(base,request=goal)).phase,'complete')
+        for goal in ('Build four pages with 12 charts','Build five pages with eight charts','Build three pages with two charts'):
+            self.assertEqual(AuthoringBudget({'provider':'aitk'},dict(base,request=goal)).phase,'foundation')
 
     def test_concise_creation_keeps_full_context_schema_actions_and_budgets(self):
         from agent_service import SCHEMA

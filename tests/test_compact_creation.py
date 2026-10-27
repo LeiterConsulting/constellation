@@ -184,7 +184,8 @@ class CompactCreationTests(unittest.TestCase):
         self.assertEqual(request['max_output_tokens'],3500)
         self.assertEqual(json.loads(request['input'][0]['content'][0]['text'])['modelLimits']['outputTokens'],3500)
         self.assertEqual(context['modelLimits']['outputTokens'],8500)
-        budget.feedback(request,{'recoveryFeedback':{'candidateDefinition':blank()['definition'],'editsApplyTo':'original'},'rejectedOutput':'{}'})
+        candidate=blank()['definition'];candidate['visualizations']={'new_chart':{'type':'splunk.table'}}
+        budget.feedback(request,{'recoveryFeedback':{'candidateDefinition':candidate,'editsApplyTo':'candidate'},'rejectedOutput':'{}'})
         self.assertEqual(request['max_output_tokens'],8500)
         self.assertEqual(json.loads(request['input'][0]['content'][0]['text'])['modelLimits']['outputTokens'],8500)
         self.assertNotIn(COMPOSE_ACTION,request['text']['format']['schema']['properties']['changes']['items']['anyOf'])
