@@ -11,6 +11,7 @@ export const progressLabel = (progress: RunProgress) => {
 
 /** One atomic author request, with independent short control calls. No replay. */
 export async function authoringRun(body: Record<string, unknown>, signal: AbortSignal, onProgress: (value: RunProgress) => void, request = providerRequest): Promise<AgentReply> {
+  if (signal.aborted) throw new DOMException('Stopped', 'AbortError');
   let handle: string | undefined, stopped = false;
   let accepted = false;
   const transport = new AbortController();
@@ -22,7 +23,8 @@ export async function authoringRun(body: Record<string, unknown>, signal: AbortS
   let deliveryError: AppDeliveryError | undefined;
   let deadline: ReturnType<typeof setTimeout> | undefined;
   let timer: ReturnType<typeof setTimeout> | undefined;
-  const cancel = () => { if (handle) void request('run', { action: 'cancel', handle }).catch(() => {}); };
+  let cancelSent = false;
+  const cancel = () => { if (handle && !cancelSent) { cancelSent = true; void request('run', { action: 'cancel', handle }).catch(() => {}); } };
   const abort = () => { stopped = true; clearTimeout(timer); clearTimeout(deadline); transport.abort(); rejectDelivery(new DOMException('Stopped', 'AbortError')); cancel(); };
   signal.addEventListener('abort', abort, { once: true });
   const poll = async () => {

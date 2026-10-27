@@ -46,6 +46,9 @@ class MemoryDrafts(DraftService):
 
 class DraftTests(unittest.TestCase):
     identifier = 'a' * 32
+    def test_listing_identifies_only_authenticated_owner_for_refresh_recovery(self):
+        self.assertEqual(MemoryDrafts(user='alice').listing()['owner'], 'alice')
+        self.assertEqual(MemoryDrafts(user='bob').listing()['owner'], 'bob')
     def test_restored_recovery_records_still_count_toward_the_storage_bound(self):
         store = MemoryDrafts()
         for i in range(200):

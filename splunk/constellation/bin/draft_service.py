@@ -128,7 +128,7 @@ class DraftService:
                 if entry['content'].get('restored_at'): continue
                 (trash if record['deletedAt'] else drafts).append(record)
         return {'drafts': sorted(drafts, key=lambda item: item['updatedAt'], reverse=True),
-                'trash': sorted(trash, key=lambda item: item['updatedAt'], reverse=True), 'activeId': active, 'retainedRecords': retained}
+                'trash': sorted(trash, key=lambda item: item['updatedAt'], reverse=True), 'activeId': active, 'retainedRecords': retained, 'owner': self.user}
 
     def read(self, identifier, deleted=False):
         entry = self.entry(identifier)

@@ -2,6 +2,16 @@
 
 Constellation is a Splunk app with an embedded browser workspace and current-user Python REST handlers. It does not require a separately deployed orchestration platform, database or vector service.
 
+## Pending save recovery (0.26)
+
+`draftRecovery.ts` holds one pending snapshot in this tab's `sessionStorage`, limited to 1.5 million JSON characters and six hours. It checkpoints visible changes before the autosave debounce. Startup obtains the authenticated owner from the existing draft listing before reading recovery state; a different account, malformed/expired entry, deleted draft or missing previously saved draft is not restored. There is no browser connection/key cache, indexed-row cache, new endpoint or external worker. Draft contents, including conversation, SPL and small pending attachments, are sensitive browser content: see [security](../SECURITY.md#drafts-and-retention).
+
+`DraftSync` compares object content independently of key order. Lost save delivery triggers readback, never a blind write retry. Exact saved content confirms the write. A pending snapshot keeps the last confirmed version and the exact issued intermediate write. After refresh, a committed intermediate write advances that base only when both its next revision and complete contents match. If it commits just after the refresh read, one definite revision conflict may be reconciled by the same exact proof, followed by one compare-and-save of the latest local snapshot. Another session's different content or later revision still conflicts; local work remains available through the existing save-as-copy action. All writes still undergo native draft validation, ownership and local locking.
+
+The recovery copy clears after confirmed save. If browser storage is blocked/full or the snapshot is too large, the existing save line says to keep this tab open until saved and the unload warning remains. Closing a tab, expiry, browser eviction and large attachments are not durable recovery guarantees. Private Splunk drafts remain the cross-session source of truth. Interrupted inference stays as pending user input and is never dispatched automatically. Draft schema stays 3. Startup storage failure now keeps editing disabled with a single Retry loading drafts action instead of autosaving a replacement blank draft.
+
+Stop sends at most one cancellation for a created handle and starts no run for an already-aborted signal. These changes do not make blocking upstream provider calls preemptible, add streaming or qualify distributed search-head routing.
+
 ## Delivery recovery (0.25)
 
 `src/restDelivery.ts` defines the explicit read allowlist and one-retry deadline policy shared by app requests and native readback. Discovery/profile/preview reads, draft reads, and control/result polling can recover a transient connection or gateway failure. Start/dispatch, inference, settings/draft writes, native saves, login/permission failures and validation errors are never replayed. A retry consumes the original deadline rather than resetting it. Transport details and response bodies do not enter user-facing errors.

@@ -42,7 +42,7 @@ A private draft link reopens your own conversation; it does not share a dashboar
 
 ## When something fails
 
-**Reconnecting to Splunk** means the app is checking for the validated reply to your existing request. It does not send the prompt again. You can still use **Stop**. A brief interruption of a read can recover once; writes and model requests are not repeated. Wait for **Draft saved** before refreshing or closing the page.
+**Reconnecting to Splunk** means the app is checking for the validated reply to your existing request. It does not send the prompt again. You can still use **Stop**. A brief interruption of a read can recover once; an uncertain write is checked by exact readback and model requests are never replayed. Small pending draft changes can recover across refresh in this tab; wait for **Draft saved** before closing it, and whenever the save line asks you to keep it open.
 
 The agent can repair validation failures within a fixed budget. If recovery is exhausted, the accepted draft is preserved; read Activity and retry the original request when appropriate. A model test is not a dashboard-creation qualification. Authentication, quota and transport failures may need provider or administrator action.
 
@@ -83,3 +83,9 @@ A **Confirm recorded units** suggestion prepares a declaration for review. Send 
 The suggested **Open a detail page from a row** step chooses its table before you send it. For an eligible table, Constellation builds the filters and Back navigation together, preserving the existing table and searches. You can continue refining either page through the same conversation. Model qualification and batching checks are developer/admin work; the everyday canvas and connection test stay simple.
 
 To revise navigation, select its table and describe the destination and filter: “Retarget this table row to open Coverage, filter every chart there to the selected device and add a Back button.” Select an existing button to change its label or destination. Select a page to rename it and revise its purpose. Failed validation preserves your accepted draft.
+
+## Refresh while a draft is saving
+
+The save line shows **Saving draft…** until Splunk confirms the private draft. Small pending changes also have a recovery copy in the current tab. After refresh, **Recovered unsaved changes from this tab** means the app restored and resumed saving those changes. An interrupted agent request returns to the composer and is not sent again automatically.
+
+If the save line says **Keep this tab open until saved**, wait for **Draft saved** before refreshing or closing. This can happen with large attachments or blocked/full browser storage. The tab copy lasts at most six hours and is not a backup across tab closure. If another session changed the draft, use the existing save-as-copy action to keep both versions. See [data and retention](../SECURITY.md#drafts-and-retention).

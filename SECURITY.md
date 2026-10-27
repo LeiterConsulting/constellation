@@ -34,6 +34,10 @@ Direct OpenAI uses `store: false`; that setting does not establish zero retentio
 
 Private Splunk-backed drafts retain definitions, conversations, composer state, selected data/filter/page context and pending attachments. Search-result caches and provider keys are outside draft snapshots. Treat pending attachments and conversation history as sensitive stored content. Deleting a draft or managed private native view uses recoverable Trash, which retains content until handled through the supported lifecycle; it does not immediately erase it. Infrastructure backup and retention policies remain the administrator's responsibility.
 
+While changes await a confirmed save, 0.26 keeps one bounded recovery copy in this tab's `sessionStorage`. It can contain draft definitions/SPL, conversation, tokens and small pending attachments, and is sensitive browser content accessible to trusted scripts on the same Splunk origin. It contains no connection settings, saved provider keys or search-result cache. Startup first obtains the authenticated Splunk owner; mismatched-account, malformed/expired and deleted/unavailable records are discarded. Exact issued-state/revision proof is required before reconciling an old in-flight save; other conflicts preserve local work without overwriting the server.
+
+The copy clears after confirmed save and expires after six hours. Closing the tab normally ends its storage session; browser restore/retention policies still apply. It is not a secure-erasure or durable-backup guarantee. Snapshots above 1.5 million JSON characters, storage denial/quota or eviction retain the wait-until-saved warning instead of claiming refresh protection. See [browser storage behavior](https://developer.mozilla.org/en-US/docs/Web/API/Window/sessionStorage).
+
 Revision checks and local locks protect one search head. Cross-member SHC write coordination is not qualified. Private links identify records and focus but require normal access; they are not public sharing tokens.
 
 ## Repository and release controls

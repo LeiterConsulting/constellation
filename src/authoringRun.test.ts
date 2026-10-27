@@ -5,6 +5,35 @@ import { AppDeliveryError } from './restDelivery';
 const deferred = <T,>() => { let resolve!: (value: T) => void; const promise = new Promise<T>(done => { resolve = done; }); return { promise, resolve }; };
 afterEach(() => vi.useRealTimers());
 describe('authoring lifecycle', () => {
+  it('does not start an already cancelled run', async () => {
+    const controller = new AbortController(); controller.abort(); const request = vi.fn();
+    await expect(authoringRun({}, controller.signal, vi.fn(), request)).rejects.toMatchObject({ name: 'AbortError' });
+    expect(request).not.toHaveBeenCalled();
+  });
+  it('keeps overlapping lost-delivery and Stop races isolated with one dispatch and one cancel each', async () => {
+    vi.useFakeTimers();
+    const cases = Array.from({ length: 18 }, (_, index) => {
+      const controller = new AbortController(); let polls = 0;
+      const reply = { revision: index, changes: [], message: `Validated ${index}` };
+      const request = vi.fn((action, body) => {
+        if (action === 'author') return Promise.reject(new AppDeliveryError('synthetic disconnect'));
+        if (body.action === 'start') return Promise.resolve({ handle: `fixture_${index}`, events: [], stage: 'queued', seconds: 0 });
+        expect(body.handle).toBe(`fixture_${index}`);
+        return Promise.resolve(body.action === 'result' ? { available: polls > 1, reply } : { stage: ++polls > 1 ? 'complete' : 'model', events: [], seconds: polls });
+      });
+      const run = authoringRun({ revision: index }, controller.signal, vi.fn(), request as typeof providerRequest);
+      const result = index % 2 ? expect(run).rejects.toMatchObject({ name: 'AbortError' }) : expect(run).resolves.toEqual(reply);
+      return { controller, request, result, index };
+    });
+    await vi.advanceTimersByTimeAsync(500);
+    cases.filter(item => item.index % 2).forEach(item => item.controller.abort());
+    await vi.advanceTimersByTimeAsync(2500); await Promise.all(cases.map(item => item.result));
+    for (const item of cases) {
+      expect(item.request.mock.calls.filter(([action]) => action === 'author')).toHaveLength(1);
+      expect(item.request.mock.calls.filter(([, body]) => body.action === 'cancel')).toHaveLength(item.index % 2 ? 1 : 0);
+      expect(item.request.mock.calls.filter(([, body]) => body.action === 'ack')).toHaveLength(item.index % 2 ? 0 : 1);
+    }
+  });
   it('waits through early response loss until the running handler delivers, without replay', async () => {
     vi.useFakeTimers();const controller=new AbortController();const progress=vi.fn();let polls=0;
     const reply={revision:9,changes:[],message:'Validated'};

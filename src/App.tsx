@@ -82,6 +82,8 @@ export default function App({ initialColorScheme }: { initialColorScheme: 'light
   const [proposals, setProposals] = useState<Proposals>(null);
   const [draftId, setDraftId] = useState(newDraftId);
   const [storageReady, setStorageReady] = useState(!isSplunk());
+  const [storageError, setStorageError] = useState('');
+  const [storageAttempt, setStorageAttempt] = useState(0);
   const [dataContext, setDataContext] = useState<DataScope | null>(null);
   const lastDataScope = useRef<DataScope | null>(null);
   const [dataProfile, setDataProfile] = useState<DataProfile | null>(null);
@@ -122,7 +124,7 @@ export default function App({ initialColorScheme }: { initialColorScheme: 'light
     searchesEnabled: searches.enabled, pagePurposes, pendingRequest: thinking ? [...messages].reverse().find(message => message.user)?.text || '' : '' }),
   [revision.definition, brief, messages, prompt, attachments, tokens, activeTab, selected, suggestions, activity, saved, dataContext, searches.enabled, pagePurposes, thinking]);
   const persistence = useDraftPersistence(draftId, snapshot, storageReady);
-  const activate = (definition: StudioDefinition, restored?: DraftRecord, keepLibrary = false) => {
+  const activate = (definition: StudioDefinition, restored?: DraftRecord, keepLibrary = false, pending = false) => {
     const nextDraftId = restored?.id || newDraftId();
     window.history.replaceState(window.history.state, '', workspaceLink(window.location.href, nextDraftId));
     generation.current?.abort(); generation.current = null; setThinking(false); searches.reset();
@@ -130,7 +132,7 @@ export default function App({ initialColorScheme }: { initialColorScheme: 'light
     setHistory([]); setFuture([]); setCollapsed(false);setSelecting(false);
     const number = revisionRef.current.number + 1;
     const state = restored?.state;
-    if (restored) persistence.adopt(restored);
+    if (restored) persistence.adopt(restored, pending);
     setDraftId(nextDraftId);
     setRevision({ number, definition }); setSelected(validFocus(definition,state?.selected || '')?state?.selected || '':'');
     setPagePurposes(state?.pagePurposes||{}); setBrief(state?.brief || { purpose: '', requirements: '' }); setDetailsOpen(false);
@@ -145,7 +147,7 @@ export default function App({ initialColorScheme }: { initialColorScheme: 'light
     if (!keepLibrary) setModal(null);
     if (state?.searchesEnabled) searches.run();
     setStatus(state?.pendingRequest ? 'The previous request was interrupted. Your request is ready to send again; it has not been rerun.'
-      : restored ? 'Draft and conversation restored.' : '');
+      : pending ? 'Recovered unsaved changes from this tab.' : restored ? 'Draft and conversation restored.' : '');
   };
   const choosePrompt = (suggestion: PromptSuggestion) => {
     const target=suggestionFocus(suggestion,revisionRef.current.definition);
@@ -163,24 +165,29 @@ export default function App({ initialColorScheme }: { initialColorScheme: 'light
     void providerRequest<DataDiscovery>('discovery', undefined, controller.signal).then(setDiscovery).catch(() => { /* An existing search remains available in the data chooser. */ });
     void (async () => {
       try {
+        setStorageError('');
         const list = await providerRequest<DraftList>('drafts', undefined, controller.signal);
-        const requested=initialRoute.current.draft||list.activeId;
-        if (requested && list.drafts.some(item => item.id === requested)) {
-          const record = await (initialRoute.current.draft ? openDraft(requested) : readDraft(requested));
+        const requested=initialRoute.current.draft||list.activeId||draftId;
+        const server = list.drafts.some(item => item.id === requested)
+          ? await (initialRoute.current.draft ? openDraft(requested) : readDraft(requested)) : null;
+        if (controller.signal.aborted) return;
+        const restored = persistence.restore(list.owner || '', requested, server, list.trash.some(item => item.id === requested));
+        if (restored) {
+          const { record, pending } = restored;
           if (!controller.signal.aborted) {
             const route=initialRoute.current;
-            activate(record.state.definition, record);
+            activate(record.state.definition, record, false, pending);
             if(route.page&&pagesOf(record.state.definition).some(page=>page.id===route.page))setActiveTab(route.page);
             if(route.focus&&validFocus(record.state.definition,route.focus))setSelected(route.focus);
           }
         } else if(initialRoute.current.draft) {
           setStatus('This draft link is unavailable to your Splunk user. Choose a draft from Dashboards.');
         }
-      } catch (failure) { if (!controller.signal.aborted) setStatus(failure instanceof Error ? failure.message : 'Drafts could not be restored.'); }
-      finally { if (!controller.signal.aborted) setStorageReady(true); }
+        setStorageReady(true);
+      } catch (failure) { if (!controller.signal.aborted) setStorageError(failure instanceof Error ? failure.message : 'Drafts could not be restored.'); }
     })();
     return () => { controller.abort(); generation.current?.abort(); };
-  }, []);
+  }, [storageAttempt]);
   useEffect(() => {
     if (storageReady && isSplunk()) window.history.replaceState(window.history.state, '', workspaceLink(window.location.href, draftId));
   }, [draftId, storageReady]);
@@ -310,6 +317,7 @@ export default function App({ initialColorScheme }: { initialColorScheme: 'light
         <Menu.Item onClick={() => setTheme(previous => previous === 'light' ? 'dark' : 'light')}>{theme === 'light' ? 'Dark' : 'Light'} theme</Menu.Item>
       </Menu></Dropdown>
     </Actions></Header>
+    {storageError ? <MessageBar type="error">{storageError}<Button onClick={() => setStorageAttempt(value => value + 1)}>Retry loading drafts</Button></MessageBar> : null}
     <Workspace $floating={floating || collapsed}>
       <Canvas><CanvasHeading><div><h2>{revision.definition.title || 'Untitled dashboard'}</h2><Muted role="status">{persistence.status}{searches.status ? ` · ${searches.status}` : ''}</Muted>{revision.definition.description ? <details><summary>About this dashboard</summary><Muted>{String(revision.definition.description)}</Muted></details> : null}</div><Actions>
         <Button disabled={thinking||!storageReady} onClick={event=>{modalReturnFocus.current=event.currentTarget;setPagesOpen(true);}}>Pages</Button>

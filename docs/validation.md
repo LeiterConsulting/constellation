@@ -1,15 +1,15 @@
 # Validation status
 
-Snapshot: **0.25.0 development preview, October 27, 2026**. This file is a sanitized summary. Private lab addresses, credentials, screenshots, transcripts, raw search data and detailed runtime receipts are excluded from the repository.
+Snapshot: **0.26.0 development preview, October 27, 2026**. This file is a sanitized summary. Private lab addresses, credentials, screenshots, transcripts, raw search data and detailed runtime receipts are excluded from the repository.
 
-See the [0.25 delivery and held-out dataset qualification](#0250-rest-delivery-and-held-out-datasets--october-27-2026) for current evidence. Earlier navigation, benchmark, new-author, field-context and sparse-data cohorts below retain their own scope and failures.
+See the [0.26 load and pending-save qualification](#0260-load-cancellation-and-pending-saves--october-27-2026) for current evidence. Earlier navigation, benchmark, new-author, field-context and sparse-data cohorts below retain their own scope and failures.
 
 ## Local verification
 
 | Check | Observed result |
 | --- | --- |
-| Python unit suites | 376 tests passed on Python 3.9 and 3.13, including native read deadlines/non-replay/cancellation, transport classification, raw-column visibility, button preflight, named-page grammar and retained authority/authoring/native regressions. |
-| Frontend unit suites | 91 tests passed, including early lost-response recovery, Stop/terminal/deadline races, readback without duplicate creation, read retry eligibility and retained focus/starter regressions. |
+| Python unit suites | 377 tests passed on Python 3.9 and 3.13, including native read deadlines/non-replay/cancellation, transport classification, raw-column visibility, button preflight, named-page grammar and retained authority/authoring/native regressions. |
+| Frontend unit suites | 105 tests passed, including early lost-response recovery, Stop/terminal/deadline races, readback without duplicate creation, read retry eligibility and retained focus/starter regressions. |
 | TypeScript and production build | Passed; bundle-size warning remains. |
 | Deterministic app package | Generated with SHA-256 receipt. |
 | Splunk AppInspect 4.3.1, precert | 0 errors, 0 failures, 0 future failures, 7 warnings, 1 skipped, 116 successes, 128 not applicable on the tested app archive. |
@@ -24,6 +24,32 @@ The AppInspect result applies to the tested development archive. The seven warni
 | 10.4.4 | 1.26.6 | Native roundtrips, synthetic SPL/SPL2, PDF native interactions, Ollama edits, prior page/focus exercises and current row-budget check. |
 
 The full 0.7.1 creation/switch/reopen journey was run on the 10.2.8 target, not repeated in full on 10.4.4. AITK succeeded through an existing configured connection on one target; another target returned no usable completion. Do not infer instance-independent provider availability from app installation.
+
+## 0.26.0 Load, cancellation and pending saves — October 27, 2026
+
+The final **0.26.0 build 38** archive is SHA-256 `751738aa7837bee6b59308171b29f7b241378219eb9abcd6c359a94e26aec994` (456 files; 5,443,174 bytes). Both recorded lab versions installed it without restart. The full live cohort below ran on Enterprise 10.2.8 / Studio 1.23.12; the 10.4.4 target received installation verification only. All 63 packaged Python modules and the browser entry/chunks matched source/build, with no macOS/private extras. Fresh AppInspect 4.3.1 precert returned zero errors/failures/future failures, seven warnings and one skip. The 19.2 MB browser entry warning remains.
+
+**Fixes.** Visible pending changes checkpoint to a bounded per-tab recovery copy. Refresh reconciles exact saved content, an intermediate commit and an old commit arriving just after the refresh read, retaining revision checks against unrelated work. Lost save delivery confirms by readback without blind write replay. Content comparisons ignore JSON key order. Startup restoration failures now offer Retry loading drafts and cannot autosave a replacement blank. Stop sends one cancellation per created handle and starts nothing for an already-aborted signal. No provider/search/recovery budget or privilege was increased; the primary canvas and conversation gained no permanent control.
+
+**Final repeated cohort.** Three disposable ordinary authors, plus an isolation peer, used the existing constrained author role and configured OpenAI, Ollama and managed AITK connections. No administrator, credential-store or AI-configuration privileges were granted. CPU and reachability sources each received two rounds per provider: blank two-page/four-chart creation, selected-summary peak calculation, numeric/time formatting and existing-button editing. All 12 flows / **48 turns** passed, including exact conversation/draft reopen, private native copies in Search & Reporting and denied peer access. Independent synthetic probes exercised all **48 final source transformations**, known means/maxima/counts, missing-versus-zero, required raw columns and two entity selections; fixture rows were neither ingested nor sent to inference. Actual-data profiles/previews retained partial labels and existing resource bounds.
+
+| Provider | Accepted turns | First-response turns | Creation seconds, four observations | Median edit seconds, twelve observations |
+| --- | --- | --- | --- | --- |
+| OpenAI | 16/16 | 16/16 | 25.25–37.05 | 6.38 |
+| Ollama | 16/16 | 16/16 | 15.79–22.62 | 7.34 |
+| AITK | 16/16 | 15/16 | 29.72–110.27 | 19.27 |
+
+AITK's second CPU creation repaired one invalid eval expression through normal native feedback, using two model calls/five search checks. It finished in 110.27 seconds without a user rephrase or partial commit. Keep this repair and latency visible; the result does not establish uniformly fast creation. These are small operated task samples under overlapping load, not provider success rates, latency percentiles or unaided usability results. AITK upstream model/token parameters were not read or changed.
+
+**Bounded load and faults.** While provider work overlapped, three authors each ran 20 cycles of settings/list/read/save traffic: **60 draft saves and 15 native preview jobs**, with immediate cancellation, result polling and peer denial. The background driver made 312 requests including those denial checks, with no delivery failure; its maximum ordinary request was 0.829 seconds and its maximum draft request was 0.369 seconds. Five competing two-tab save pairs per author produced exactly one winner per pair, retaining the other as a revision conflict. This is one-search-head burst evidence, not saturation, soak or distributed-write qualification.
+
+Two post-send disconnects per provider recovered the original validated reply, with one author dispatch/one model call, unchanged unrelated document content, denied peer access and acknowledgement cleanup: **6/6** controlled faults passed. Each author also stopped a model-stage request while creation/load overlapped. Cancellation acknowledgement was 0.036–0.080 seconds; handler exit varied up to 37.7 seconds. Late results remained unavailable and no candidate was applied. A direct provider call can still complete and bill after Stop. Fault injection happened in the private client driver; offline production-client race tests complement these installed endpoint checks. No natural transport failure in this sample establishes the cause of older uncorrelated stalls.
+
+**Pending-save evidence.** Nine opt-in live tests used the production DraftSync/DraftRecovery classes against real private saves, covering lost-response readback, refresh during an earlier commit, a commit after the refresh read and genuine unrelated-session conflicts across the three authors. Browser checks restored an unsent goal before the first debounce and restored a visibly changed page while Saving draft was shown. Selected-chart chat edits updated the preview and retained unrelated definitions; ordinary-user row/return navigation worked in the preview and native Studio. An Ollama browser Stop preserved the definition, saved the stopped conversation and allowed a subsequent selected edit. Offline tests cover account switching, deleted/missing records, malformed/expired/quota-blocked storage, 60 rapid saves and 18 overlapping delivery/Stop races.
+
+Initial load/cancellation driver failures were test assumptions: cancelling an already-cancelled preview twice and expecting an empty successful author result instead of the required 409 author_cancelled. A later reporting indentation defect also interrupted its driver. They were corrected and retained separately; the final package cohort above was rerun. The first package cohort is exploratory evidence and is not substituted for final-package acceptance.
+
+**Limits.** Tab recovery is at most 1.5 million JSON characters/six hours and does not guarantee tab-closure, browser-eviction or large-file recovery. Blocked/oversized storage retains the wait-until-saved/unload warning. Cross-member routing/locking, prolonged faults/soak, the second target's complete provider flow, independent review of delivery/tab storage, broader native/SPL2 coverage and unaided accessibility/usability remain 1.0 gates. Cleanup removed four temporary accounts, their 66 private configuration objects, 24 private native views and the one copied OpenAI key. All 35 original administrator drafts and their active preference, original connections, protected AITK policy/collection ACLs remained unchanged; the local password file was deleted. Raw receipts remain local.
 
 ## 0.25.0 REST delivery and held-out datasets — October 27, 2026
 

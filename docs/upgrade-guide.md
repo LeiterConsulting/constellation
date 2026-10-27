@@ -1,5 +1,11 @@
 # Updating Constellation
 
+## 0.26 pending-save recovery
+
+No connection, native-dashboard or server draft migration runs; schema remains 3. Refresh existing browser tabs. Keep tab-local recovery in `draftRecovery.ts`, revision/write coordination in `drafts.ts` and lifecycle/UI status in `useDraftPersistence.ts`. The draft listing adds only the authenticated owner name. Never recover before that identity is obtained or use browser data as permission to access another owner, resurrect Trash, overwrite future schemas or replay inference.
+
+Pending browser state is sensitive, bounded to one snapshot/1.5 million JSON characters/six hours and cleared after confirmation. Requalify account switching, expiry/corruption/quota, first save, intermediate commits before/after refresh read, genuine conflicts and unavailable/deleted drafts. Keep unknown save readback separate from the one permitted rebase on a definite conflict with an exact issued-state/next-version proof. Do not generalize either into mutation retries or cross-member compare-and-swap. Browser-storage failure retains save status and unload protection; tab closure and large pending files remain explicit limits.
+
 ## 0.25 delivery recovery and held-out source checks
 
 No credential, connection, draft or native-dashboard migration runs. Refresh existing browser tabs. Keep browser read eligibility in `restDelivery.ts`, original-author/validated-reply coordination in `authoringRun.ts` and native read policy in `native_transport.py`. New endpoints must explicitly prove read semantics before joining a retry allowlist. Preserve one dispatch, the original deadlines, session identity, revision checks, Stop and late-response rejection. Never turn a retry into another model request or a credential/role fallback.
