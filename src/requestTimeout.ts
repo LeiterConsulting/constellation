@@ -1,3 +1,5 @@
+export class RequestDeadlineError extends Error {}
+
 /** Bound network waits without losing caller-driven cancellation. */
 export async function fetchWithDeadline<T = Response>(url: string, init: RequestInit, milliseconds: number, consume?: (response: Response) => Promise<T>): Promise<T> {
   const controller = new AbortController();
@@ -13,7 +15,7 @@ export async function fetchWithDeadline<T = Response>(url: string, init: Request
     const operation = fetch(url, { ...init, signal: controller.signal }).then(response => consume ? consume(response) : response as T);
     return await Promise.race([operation, deadline]);
   } catch (error) {
-    if (expired) throw new Error('Splunk did not respond in time. Your current draft is preserved. Check the saved state before retrying.');
+    if (expired) throw new RequestDeadlineError('Splunk did not respond in time. Your current draft is preserved. Check the saved state before retrying.');
     throw error;
   } finally {
     clearTimeout(timer!); external?.removeEventListener('abort', forward);

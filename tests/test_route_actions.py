@@ -40,6 +40,18 @@ def fixture():
 
 
 class RouteTests(unittest.TestCase):
+    def test_overlong_literal_fixed_button_label_is_rejected_before_inference(self):
+        class Runtime:
+            def environment(self):return {'version':'10.4.4','features':{}}
+            def datasets(self):return {'indexes':[]}
+        doc=fixture();before=copy.deepcopy(doc);provider=Provider([])
+        for page in doc['layout']['layoutDefinitions'].values():
+            for item in page['structure']:
+                if item['item']=='old_back':item['position']['w']=190
+        before=copy.deepcopy(doc)
+        with self.assertRaises(ProviderError)as caught:
+            AgentService(provider,Runtime()).assist({'prompt':'Change only this selected button: rename it "A much longer navigation label" and make it open Overview. Preserve its position and size.', 'definition':doc,'revision':0,'selected':'old_back'})
+        self.assertEqual(caught.exception.code,'button_label_fit');self.assertEqual(provider.requests,[]);self.assertEqual(doc,before)
     def action(self):return {'op':'route','sourceId':'summary','pageId':'coverage','field':'device_name','returnLabel':'Back to Overview'}
     def test_retarget_filters_all_destination_sources_clones_shared_search_and_is_idempotent(self):
         doc=fixture();before=copy.deepcopy(doc)

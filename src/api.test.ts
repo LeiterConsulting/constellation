@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createBlank, fromStudioXml } from './document';
 import { failureActivity, listDashboards, listDestinationApps, providerRequest, saveCopy } from './api';
+import { AppDeliveryError, retryableRead } from './restDelivery';
 
 vi.mock('@splunk/splunk-utils/url', () => ({ createRESTURL: (endpoint: string, { app, owner }: { app: string; owner: string }) => `https://example.test/servicesNS/${owner}/${app}/${endpoint}`, createURL: (path: string) => `https://example.test/${path}` }));
 vi.mock('@splunk/splunk-utils/fetch', () => ({ createFetchInit: (init: RequestInit) => init }));
@@ -14,6 +15,29 @@ const install = (handler: (url: string, init?: RequestInit) => Response) => {
 };
 afterEach(() => { vi.unstubAllGlobals(); vi.clearAllMocks(); });
 describe('native dashboard handoff', () => {
+  it('retries an interrupted read once but never replays inference or writes', async () => {
+    install(() => json({ configured: true }));
+    const fetcher = vi.mocked(fetch).mockRejectedValueOnce(new TypeError('fixture-private'));
+    await expect(providerRequest('settings')).resolves.toEqual({ configured: true });
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    for (const [action,body] of [['author',{}],['test',{}],['settings',{model:'fixture'}],['drafts',{action:'save'}],['drafts',{action:'open'}],['run',{action:'start'}],['preview_job',{action:'start'}]] as const) {
+      fetcher.mockClear().mockRejectedValue(new TypeError('fixture-private'));
+      await expect(providerRequest(action,body)).rejects.toBeInstanceOf(AppDeliveryError);
+      expect(fetcher).toHaveBeenCalledTimes(1);
+    }
+    expect(retryableRead('run',{action:'poll'})).toBe(true);
+    expect(retryableRead('preview_job',{action:'poll'})).toBe(true);
+  });
+  it('bounds read recovery and does not retry validation, login or Stop', async () => {
+    install(() => json({}));const fetcher=vi.mocked(fetch).mockRejectedValue(new TypeError('fixture-private'));
+    await expect(providerRequest('settings')).rejects.toBeInstanceOf(AppDeliveryError);expect(fetcher).toHaveBeenCalledTimes(2);
+    install(() => new Response(JSON.stringify({error:'Invalid query',code:'search_scope'}),{status:422}));
+    await expect(providerRequest('profile',{})).rejects.toThrow('Invalid query');expect(fetch).toHaveBeenCalledTimes(1);
+    install(() => new Response('<html>login</html>'));
+    await expect(providerRequest('settings')).rejects.toThrow('Splunk session');expect(fetch).toHaveBeenCalledTimes(1);
+    const controller=new AbortController();controller.abort();install(()=>json({}));vi.mocked(fetch).mockRejectedValue(new DOMException('Stopped','AbortError'));
+    await expect(providerRequest('settings',undefined,controller.signal)).rejects.toMatchObject({name:'AbortError'});expect(fetch).toHaveBeenCalledTimes(1);
+  });
   it('keeps only numerical recovery details in the existing failure activity', async () => {
     install(() => new Response(JSON.stringify({ error: 'Previous dashboard preserved.', validationError: 'Use the existing chart ID.', recovery: { modelCalls: 3, queryChecks: 2, seconds: 12.5, privateDetail: 'fixture-private' } }), { status: 422 }));
     const failure = await providerRequest('author', {}).catch(error => error);
@@ -33,6 +57,17 @@ describe('native dashboard handoff', () => {
     expect(calls.every(([url]) => url.includes('/fixture-user/search/data/ui/views'))).toBe(true);
     const xml = (calls[0][1]?.body as URLSearchParams).get('eai:data');
     expect(xml).toContain('version="2" theme="dark"'); expect(xml).toContain('futureProperty'); expect(definition.futureProperty.retained).toBe(true);
+  });
+  it('recovers native readback delivery without creating a second dashboard', async()=>{
+    const definition=createBlank();vi.mocked(fromStudioXml).mockReturnValue(definition);let readbacks=0;
+    const fetcher=install((url,init)=>{
+      if(url.includes('current-context'))return json(context);
+      if(init?.method==='POST')return json({entry:[]});
+      if(++readbacks===1)throw new TypeError('fixture-private');
+      return json({entry:[{acl:{sharing:'user',owner:'fixture-user',app:'search'},content:{'eai:data':'fixture-xml'}}]});
+    });
+    await expect(saveCopy(definition,'light','search')).resolves.toHaveProperty('name');
+    expect(fetcher.mock.calls.filter(([,init])=>init?.method==='POST')).toHaveLength(1);expect(readbacks).toBe(2);
   });
   it('rejects an invalid app before creating a dashboard', async () => {
     const fetcher = install(() => json(context));

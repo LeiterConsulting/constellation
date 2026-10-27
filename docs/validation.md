@@ -1,15 +1,15 @@
 # Validation status
 
-Snapshot: **0.24.0 development preview, October 27, 2026**. This file is a sanitized summary. Private lab addresses, credentials, screenshots, transcripts, raw search data and detailed runtime receipts are excluded from the repository.
+Snapshot: **0.25.0 development preview, October 27, 2026**. This file is a sanitized summary. Private lab addresses, credentials, screenshots, transcripts, raw search data and detailed runtime receipts are excluded from the repository.
 
-See the [0.24 broader navigation qualification](#0240-broader-navigation-and-larger-workloads--october-27-2026) for current evidence. The 0.23 detail-plan, 0.22 new-author, 0.21 field-context and 0.19 sparse/partial-data cohorts below retain their own scope. Earlier failures and qualification boundaries remain recorded.
+See the [0.25 delivery and held-out dataset qualification](#0250-rest-delivery-and-held-out-datasets--october-27-2026) for current evidence. Earlier navigation, benchmark, new-author, field-context and sparse-data cohorts below retain their own scope and failures.
 
 ## Local verification
 
 | Check | Observed result |
 | --- | --- |
-| Python unit suites | 366 tests passed on Python 3.9 and 3.13, including guarded route/button/page/calculation plans, compact repair, preservation, benchmark hard gates and retained authority/delivery/native regressions. |
-| Frontend unit suites | 83 tests passed, including visible selection geometry and retained starter, field-context, focus and delivery/Stop regressions. |
+| Python unit suites | 376 tests passed on Python 3.9 and 3.13, including native read deadlines/non-replay/cancellation, transport classification, raw-column visibility, button preflight, named-page grammar and retained authority/authoring/native regressions. |
+| Frontend unit suites | 91 tests passed, including early lost-response recovery, Stop/terminal/deadline races, readback without duplicate creation, read retry eligibility and retained focus/starter regressions. |
 | TypeScript and production build | Passed; bundle-size warning remains. |
 | Deterministic app package | Generated with SHA-256 receipt. |
 | Splunk AppInspect 4.3.1, precert | 0 errors, 0 failures, 0 future failures, 7 warnings, 1 skipped, 116 successes, 128 not applicable on the tested app archive. |
@@ -24,6 +24,43 @@ The AppInspect result applies to the tested development archive. The seven warni
 | 10.4.4 | 1.26.6 | Native roundtrips, synthetic SPL/SPL2, PDF native interactions, Ollama edits, prior page/focus exercises and current row-budget check. |
 
 The full 0.7.1 creation/switch/reopen journey was run on the 10.2.8 target, not repeated in full on 10.4.4. AITK succeeded through an existing configured connection on one target; another target returned no usable completion. Do not infer instance-independent provider availability from app installation.
+
+## 0.25.0 REST delivery and held-out datasets — October 27, 2026
+
+### Reproduced cause and delivery fixes
+
+The interrupted 0.24 grading request stopped in connection setup before TLS, with no HTTP status. Fresh diagnostics split resolution, TCP, TLS, status, headers and body phases. An actual client-side `getaddrinfo` failure (`gaierror`, errno 8) was reproduced before any TCP connection. Its marker was absent from native access logs while positive controls were present. The 0.24 trace is consistent with that failure boundary but lacks the underlying exception reason; attributing every older interruption to the same DNS cause would be an inference. Older uncorrelated stalls remain unresolved.
+
+A probe also sent a custom tracing parameter to a native endpoint that rejected it with HTTP 400. That harness defect was corrected and retained separately. A subsequent 300-read metadata cohort passed. The private diagnostic client can fall back to an IPv4 lookup before sending a request; TLS verification and the original hostname remain intact. No resolver, server-network or certificate policy was changed. The app's recovery is independent of that lab-client accommodation.
+
+Browser and native read recovery now permits one retry within the original deadline. Inference, dispatch, writes, permissions, login and validation failures are not replayed. Exhausted native transport returns service unavailability and escapes the query/model-repair loop. The client also waits for a running handler's validated reply after original author delivery fails, instead of cancelling it prematurely. Existing Stop, terminal states and the 240-second delivery deadline bound that wait. The existing progress line explains reconnection; no controls were added.
+
+Three installed ordinary-user exercises deliberately disconnected immediately after sending an author request, before reading its response. Each recovered its validated result through the independent control route, used **one model call**, changed only the requested description, denied peer retrieval and removed its reply on acknowledgement. Native access logs matched **exactly one HTTP 200 author response per injected disconnect**. This establishes a controlled delivery-recovery path, not a natural server outage. Offline tests separately cover the browser's early-failure race, Stop during reconnection, terminal failure and deadline expiry. A live browser Stop during Ollama inference left the accepted definition exactly unchanged, including a later read after subsequent checks. Upstream work may still finish after Stop.
+
+### Repeated ordinary-user held-out flows
+
+CPU observations and endpoint reachability readings were held out from the freezer benchmark. Each provider completed two rounds on each dataset through the final archive. Every flow created two pages/four charts, added a selected-table maximum column, formatted numerical/timestamp outputs, edited an existing navigation button, saved/reopened its conversation and saved an exact owner-private native Studio copy. Authors inherited the ordinary `user` role plus the existing managed-inference capability; they had no administrator, credential-store or AI-configuration privileges. Source units/meanings were explicitly supplied for the exercise, not inferred as verified facts from names.
+
+| Final package | OpenAI `gpt-6-luna` | Ollama `qwen3-coder:latest` | AITK 6.2 existing managed connection |
+| --- | --- | --- | --- |
+| Complete flows, two datasets × two rounds | 4/4 | 4/4 | 4/4 |
+| Creation/edit turns accepted on first model response | 16/16 | 16/16 | 16/16 |
+| Independent source transformations probed | 16 | 16 | 16 |
+| Early-disconnect validated-reply recovery | Passed, one model call | Passed, one model call | Passed, one model call |
+| Native exact readback/private ACL and peer denial | Passed | Passed | Passed |
+| Operated preview/native row and return navigation | CPU passed | Reachability passed | Reachability passed |
+
+All **48 final source transformations** received independent read-only synthetic probes, without ingestion or sending rows to inference. The fixtures check known per-entity means, maxima, observation/measurement counts, missing-versus-zero behavior, raw rows/required columns and both concrete entity selections. Actual-data searches remained bounded; inspected samples and several visible previews were partial. Successful logical/numeric probes do not establish complete real-world counts or full source coverage. Browser refresh checks waited for **Draft saved**; immediate unload during an in-flight save is outside this result. These are operated regressions and small repeated task samples, not unaided usability, a general success rate or latency percentiles. AITK upstream model/token parameters were neither read nor changed.
+
+Exploratory failures remain separate: an impossible longer-label/fixed-width request exhausted model repairs; a live preflight check now rejects it with useful text before any model stage. “Two named pages” bypassed compact creation and Ollama exhausted page/button-ID repair; the explicit count grammar now recognizes named/distinct/separate. Native inspection found a requested CPU-instance column missing from a raw table; explicit verified raw field lists now check actual output and visible columns before acceptance. Existing and ambiguous native work stays outside that narrow rule. Final full cohorts were rerun after these fixes.
+
+The private grader also initially treated unquoted title capitalization as different page identity and supplied concrete token overrides outside the required `default` map. Corrected regrading reused saved replies without inference, and the subsequent complete final cohorts used the corrected checks. These harness faults are not app/model failures and did not relax any runtime validation gate.
+
+Final **0.25.0**, build 37, is SHA-256 `d578fe8aeaf96d42a64ad643228e403c39204b46fda22ac2ecaa5d3997bf6360`. Both recorded lab versions installed it without restart. Full provider/browser qualification ran on Enterprise 10.2.8 / Studio 1.23.12; the 10.4.4 / Studio 1.26.6 target received installation verification only in this cohort. All 63 packaged Python modules, the browser entry and chunks matched source/build, with no macOS/private extras. Fresh AppInspect 4.3.1 precert returned zero errors/failures/future failures, seven warnings and one skip. The production bundle-size warning remains.
+
+Cleanup removed four disposable accounts, 31 private configuration records, 26 native views and the copied OpenAI key; its absence and removal of the temporary password file were verified. The original administrator's settings/35-draft listing, managed inference policy and protected collections were unchanged. The original browser login was restored and the temporary tab closed.
+
+Remaining 1.0 gates include older uncorrelated delivery stalls and representative network/load faults, broader held-out models/datasets, complex business rules/SPL2/chains, native feature/version coverage, unaided UX/accessibility/reflow, unsaved-refresh handling, upgrade/rollback and deployment/cluster qualification. A small passing cohort does not establish Cloud certification or production reliability.
 
 ## 0.24.0 broader navigation and larger workloads — October 27, 2026
 

@@ -94,6 +94,40 @@ def validate_requested_columns(prompt, selected, document, receipts):
             raise ProviderError('The query returns the requested columns, but the selected table hides them: ' + ', '.join(sorted(hidden))[:300] + '. Update options.table frameBySeriesNames to display them while retaining existing columns and drilldowns.', 422, 'table_projection')
 
 
+def validate_creation_columns(prompt, document, previous, profile, receipts):
+    """An explicit field list for one new raw table must survive query and DOS.
+
+    Only verified literal identifiers and a single ordinary unaggregated SPL
+    table are eligible. Existing dashboards and ambiguous targets stay native.
+    """
+    if previous.get('visualizations') or not profile: return
+    match = re.search(r'\braw(?:\s+reading)?\s+table\s+with\s+([A-Za-z_][A-Za-z0-9_.]*(?:\s*,\s*[A-Za-z_][A-Za-z0-9_.]*)*)', prompt, re.I)
+    if not match: return
+    known = {field['name'] for field in profile.get('fields', [])}
+    requested = {name.strip().rstrip('.') for name in match[1].split(',')}
+    requested.update(re.findall(r'\bAlso\s+include\s+([A-Za-z_][A-Za-z0-9_.]*)\s+in\s+the\s+raw\s+table\b', prompt, re.I))
+    requested &= known
+    if not requested: return
+    from measurement_constraints import pipeline_commands
+    from search_scope import scoped_suffix
+    tables = []
+    for table in document.get('visualizations', {}).values():
+        source = document.get('dataSources', {}).get(table.get('dataSources', {}).get('primary'), {})
+        if table.get('type') != 'splunk.table' or source.get('type') != 'ds.search': continue
+        suffix = scoped_suffix(source.get('options', {}).get('query', ''), profile)
+        if suffix is not None and not any(re.match(r'(?:stats|timechart|chart|tstats|top|rare|transpose|xyseries)\b', command, re.I) for _, _, command in pipeline_commands(suffix)):
+            tables.append(table)
+    if len(tables) != 1: return  # Never choose between several raw tables.
+    table = tables[0];sid = table['dataSources']['primary']
+    fields = next((set(receipt['fields']) for receipt in receipts if receipt.get('source') == sid and receipt.get('fields')), None)
+    if fields is None: return
+    missing = requested - fields
+    projections = re.findall(r'\bframeBySeriesNames\(([^)]*)\)', str(table.get('options', {}).get('table', '')))
+    for args in projections: missing |= requested - set(re.findall(r'''['"]([^'"]+)['"]''', args))
+    if missing:
+        raise ProviderError('The raw reading table must return and display the explicitly requested verified fields: ' + ', '.join(sorted(missing))[:300] + '. Retain its raw event grain, existing columns, filters and unrelated charts.', 422, 'table_projection')
+
+
 def validate_selected_calculation(prompt, selected, candidate, previous):
     """Explicit table-only calculations cannot edit a different element/source."""
     _table, requested, _fields = requested_columns(prompt, selected, previous, [])

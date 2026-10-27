@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.25.0 - 2026-10-27
+
+- Retry explicit read operations once within their original deadlines, including native readback and owned search-result polling. Never replay inference, dispatch, settings/draft writes or native saves.
+- Keep waiting for the validated reply when original author delivery drops while its handler is running. Preserve Stop, terminal-state handling, the delivery deadline and acknowledgement cleanup; use the existing progress line to explain reconnection.
+- Classify exhausted native transport as service unavailability rather than invalid SPL. Retain cancellation, certificate checks, current-user identity and ordinary validation; do not send transport failures through query/model repair.
+- Recognize explicit named/distinct/separate page counts for bounded compact creation. Preflight an overlong literal label for a fixed-size selected button before inference.
+- Validate explicit verified raw-table field lists during blank creation against actual output and visible columns. Keep existing dashboards, ambiguous targets and advanced bindings outside this narrow check.
+- Record repeated non-admin CPU/reachability flows, independent missing-data and filter probes, and retained exploratory failures. No controls, privileges, provider credentials or draft migrations are added.
+
 ## 0.24.0 - 2026-10-27
 
 - Keep canvas element selection within the visible active page and allow scrolling while picking; prevent native click focus from replacing explicit selection. Preserve the existing interface and native geometry.

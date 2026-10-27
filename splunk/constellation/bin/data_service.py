@@ -128,7 +128,7 @@ class DataService:
                 receipt['fields'].append({'name': name, 'numeric': numeric})
             receipt['status'] = result.get('state', 'unknown')
         except ProviderError as error:
-            if error.code in ('recovery_budget', 'author_cancelled', 'author_expired'): raise
+            if error.status >= 500 or error.code in ('recovery_budget', 'author_cancelled', 'author_expired'): raise
             receipt.update(status='failed', code=error.code)
         return receipt
 
@@ -173,7 +173,7 @@ class DataService:
                     if self.independent_populations: validate_populations(source.get('options', {}).get('query', ''), profile)
                 language, result = self.inspect_source(document, identifier, source, profile)
             except ProviderError as error:
-                if error.code in ('recovery_budget', 'author_cancelled', 'author_expired'): raise
+                if error.status >= 500 or error.code in ('recovery_budget', 'author_cancelled', 'author_expired'): raise
                 receipt = {'source': identifier, 'status': 'failed', 'code': error.code,
                            'earliest': profile['scope']['earliest'], 'bounded': True}
                 if error.code == 'search_scope': receipt['requiredPrefix'] = base

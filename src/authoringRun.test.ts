@@ -1,9 +1,36 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { authoringRun, progressLabel } from './authoringRun';
 import { providerRequest } from './api';
+import { AppDeliveryError } from './restDelivery';
 const deferred = <T,>() => { let resolve!: (value: T) => void; const promise = new Promise<T>(done => { resolve = done; }); return { promise, resolve }; };
 afterEach(() => vi.useRealTimers());
 describe('authoring lifecycle', () => {
+  it('waits through early response loss until the running handler delivers, without replay', async () => {
+    vi.useFakeTimers();const controller=new AbortController();const progress=vi.fn();let polls=0;
+    const reply={revision:9,changes:[],message:'Validated'};
+    const request=vi.fn((action,body)=>Promise.resolve(action==='author'?Promise.reject(new AppDeliveryError('Lost response')):body.action==='start'?{handle:'fixture',events:[],stage:'queued',seconds:0}:body.action==='result'?{available:polls>1,reply}:body.action==='poll'?{events:[],stage:++polls>1?'complete':'model',seconds:3}:{}));
+    const run=authoringRun({},controller.signal,progress,request as typeof providerRequest);
+    await vi.advanceTimersByTimeAsync(500);expect(request.mock.calls.some(([,body])=>body.action==='cancel')).toBe(false);
+    expect(progress.mock.calls.at(-1)?.[0].stage).toBe('delivery');
+    await vi.advanceTimersByTimeAsync(1600);await expect(run).resolves.toEqual(reply);
+    expect(request.mock.calls.filter(([action])=>action==='author')).toHaveLength(1);expect(request.mock.calls.some(([,body])=>body.action==='ack')).toBe(true);
+  });
+  it('Stop exits while waiting for a lost response and rejects late recovered work', async () => {
+    vi.useFakeTimers();const controller=new AbortController();
+    const request=vi.fn((action,body)=>action==='author'?Promise.reject(new AppDeliveryError('Lost response')):Promise.resolve(body.action==='start'?{handle:'fixture',events:[],stage:'queued',seconds:0}:body.action==='poll'?{stage:'model',events:[],seconds:3}:{available:false}));
+    const run=authoringRun({},controller.signal,vi.fn(),request as typeof providerRequest);const outcome=expect(run).rejects.toMatchObject({name:'AbortError'});
+    await vi.advanceTimersByTimeAsync(500);controller.abort();await outcome;
+    expect(request.mock.calls.filter(([action])=>action==='author')).toHaveLength(1);expect(request.mock.calls.some(([,body])=>body.action==='cancel')).toBe(true);expect(request.mock.calls.some(([,body])=>body.action==='ack')).toBe(false);
+  });
+  it('ends lost-delivery recovery at its existing deadline or a terminal handler state', async () => {
+    for(const terminal of [false,true]){
+      vi.useFakeTimers();const failure=new AppDeliveryError('Lost response');const controller=new AbortController();
+      const request=vi.fn((action,body)=>action==='author'?Promise.reject(failure):Promise.resolve(body.action==='start'?{handle:'fixture',events:[],stage:'queued',seconds:0}:body.action==='poll'?{stage:terminal?'failed':'model',events:[],seconds:3}:{available:false}));
+      const run=authoringRun({},controller.signal,vi.fn(),request as typeof providerRequest);const outcome=expect(run).rejects.toBe(failure);
+      await vi.advanceTimersByTimeAsync(terminal?500:240001);await outcome;
+      expect(request.mock.calls.filter(([action])=>action==='author')).toHaveLength(1);expect(request.mock.calls.some(([,body])=>body.action==='cancel')).toBe(true);vi.useRealTimers();
+    }
+  });
   it('releases a handle created after Stop without starting inference', async () => {
     const start = deferred<unknown>(); const controller = new AbortController();
     const request = vi.fn((action, body) => body.action === 'start' ? start.promise : Promise.resolve({}));

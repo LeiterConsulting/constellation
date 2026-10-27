@@ -29,6 +29,13 @@ def compose():
 
 
 class CompactCreationTests(unittest.TestCase):
+    def test_named_page_count_keeps_ordinary_phrasing_on_the_bounded_plan_path(self):
+        from creation_strategy import explicit_page_count
+        for noun in ('named','distinct','separate'):
+            request='Build exactly two '+noun+' pages with exactly four charts and row navigation.'
+            self.assertEqual(explicit_page_count(request),2);self.assertTrue(compact_goal({'request':request}))
+        self.assertIsNone(explicit_page_count('Build two named pages or three separate pages.'))
+        self.assertIsNone(explicit_page_count('Build two pages, then five named pages.'))
     def test_wide_tables_occupy_a_clear_full_row_without_clipping_or_reordering_other_panels(self):
         original=blank()['definition'];action=compose();action['links']=[]
         wide=panel('wide','splunk.table','| stats count AS observations count AS expected count AS seen count AS total BY device_name','',['device_name','observations','expected','seen','total'])

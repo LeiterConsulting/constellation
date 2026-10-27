@@ -2,6 +2,16 @@
 
 Constellation is a Splunk app with an embedded browser workspace and current-user Python REST handlers. It does not require a separately deployed orchestration platform, database or vector service.
 
+## Delivery recovery (0.25)
+
+`src/restDelivery.ts` defines the explicit read allowlist and one-retry deadline policy shared by app requests and native readback. Discovery/profile/preview reads, draft reads, and control/result polling can recover a transient connection or gateway failure. Start/dispatch, inference, settings/draft writes, native saves, login/permission failures and validation errors are never replayed. A retry consumes the original deadline rather than resetting it. Transport details and response bodies do not enter user-facing errors.
+
+`authoringRun.ts` keeps the original single author dispatch separate from validated-reply retrieval. After an original delivery failure it waits for the already-running handler through the existing control endpoint; a successful original response, a validated reply, Stop, a terminal handler failure or the 240-second delivery deadline ends that wait. Stop also rejects the pending delivery promise, so loss of the original response cannot strand cancellation. The existing progress line can show Reconnecting to Splunk. There is no background worker or automatic inference retry.
+
+`native_transport.py` permits one retry for GETs and the exact owned v2 search-results POST, within the existing native request timeout. Search creation, job controls and privileged provider completions are not eligible. Permission and certificate errors are not retried. `SearchService` classifies exhausted transport as HTTP 503; data validation and authoring propagate it instead of treating it as invalid SPL or spending a model repair. Native and browser deadlines, server recovery budgets and provider call limits remain distinct.
+
+Creation retains the same bounded grammar: named/distinct/separate page adjectives can qualify an explicit count. A focused fixed-rectangle button plan preflights an explicit literal label that cannot fit. An explicit raw-table field list on an otherwise blank verified SPL canvas checks actual output and visible projection for one eligible unaggregated table. These checks do not infer arbitrary query semantics, rewrite existing work or change permissions.
+
 ## Request flow
 
 1. The React workspace gathers the current definition, revision, active page, explicit selection, request and bounded conversation context.

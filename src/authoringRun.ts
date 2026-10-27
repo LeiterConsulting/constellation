@@ -1,8 +1,9 @@
 import { providerRequest } from './api';
 import type { AgentReply } from './agent';
+import { AppDeliveryError } from './restDelivery';
 
 export interface RunProgress { stage: string; seconds: number; events: { stage: string; seconds: number; attempt: number }[]; }
-const labels: Record<string, string> = { queued: 'Starting', inspect: 'Checking Splunk', profile: 'Inspecting data fields', model: 'Waiting for the model', validate: 'Validating dashboard changes', search: 'Checking searches', repair: 'Correcting validation issues', complete: 'Receiving dashboard changes', failed: 'Stopped with an issue', cancelled: 'Stopped' };
+const labels: Record<string, string> = { queued: 'Starting', delivery: 'Reconnecting to Splunk', inspect: 'Checking Splunk', profile: 'Inspecting data fields', model: 'Waiting for the model', validate: 'Validating dashboard changes', search: 'Checking searches', repair: 'Correcting validation issues', complete: 'Receiving dashboard changes', failed: 'Stopped with an issue', cancelled: 'Stopped' };
 export const progressLabel = (progress: RunProgress) => {
   const attempt = progress.events.at(-1)?.attempt || 0;
   return `${labels[progress.stage] || 'Working'}${attempt > 1 ? ` · request ${attempt} of 3` : ''}`;
@@ -14,21 +15,27 @@ export async function authoringRun(body: Record<string, unknown>, signal: AbortS
   let accepted = false;
   const transport = new AbortController();
   let deliver!: (reply: AgentReply) => void;
-  const delivery = new Promise<AgentReply>(resolve => { deliver = resolve; });
+  let rejectDelivery!: (error: unknown) => void;
+  const delivery = new Promise<AgentReply>((resolve, reject) => { deliver = resolve; rejectDelivery = reject; });
+  // Stop can precede handle creation; the eventual race still observes failure.
+  void delivery.catch(() => {});
+  let deliveryError: AppDeliveryError | undefined;
+  let deadline: ReturnType<typeof setTimeout> | undefined;
   let timer: ReturnType<typeof setTimeout> | undefined;
   const cancel = () => { if (handle) void request('run', { action: 'cancel', handle }).catch(() => {}); };
-  const abort = () => { stopped = true; clearTimeout(timer); transport.abort(); cancel(); };
+  const abort = () => { stopped = true; clearTimeout(timer); clearTimeout(deadline); transport.abort(); rejectDelivery(new DOMException('Stopped', 'AbortError')); cancel(); };
   signal.addEventListener('abort', abort, { once: true });
   const poll = async () => {
     if (stopped || signal.aborted) return;
     try {
       const value = await request<RunProgress>('run', { action: 'poll', handle }, signal);
       if (!stopped && !signal.aborted) {
-        onProgress(value);
+        onProgress(deliveryError ? { ...value, stage: 'delivery' } : value);
         if (value.stage === 'complete') {
           const result = await request<{ available: boolean; reply?: AgentReply }>('run', { action: 'result', handle }, signal);
           if (result.available && result.reply && !stopped && !signal.aborted) deliver(result.reply);
         }
+        if (deliveryError && ['failed', 'cancelled', 'expired'].includes(value.stage)) rejectDelivery(deliveryError);
       }
     }
     catch { /* Do not interrupt an accepted author response for a missed receipt. */ }
@@ -40,6 +47,7 @@ export async function authoringRun(body: Record<string, unknown>, signal: AbortS
     handle = start.handle;
     if (signal.aborted) { cancel(); throw new DOMException('Stopped', 'AbortError'); }
     onProgress(start);
+    deadline = setTimeout(() => rejectDelivery(deliveryError || new AppDeliveryError('Splunk did not deliver the result in time. Your current draft is preserved.')), 240_000);
     timer = setTimeout(() => void poll(), 400);
     const author = request<AgentReply>('author', { ...body, runHandle: handle }, transport.signal).catch(async error => {
       if (!signal.aborted) {
@@ -47,6 +55,10 @@ export async function authoringRun(body: Record<string, unknown>, signal: AbortS
           const result = await request<{ available: boolean; reply?: AgentReply }>('run', { action: 'result', handle }, signal);
           if (result.available && result.reply) return result.reply;
         } catch { /* Preserve the original failure if no validated reply is available. */ }
+      }
+      if (error instanceof AppDeliveryError && !signal.aborted) {
+        deliveryError = error;
+        return delivery;
       }
       throw error;
     });
@@ -56,7 +68,7 @@ export async function authoringRun(body: Record<string, unknown>, signal: AbortS
     return reply;
   } catch (error) { cancel(); throw error; }
   finally {
-    stopped = true; clearTimeout(timer); transport.abort(); signal.removeEventListener('abort', abort);
+    stopped = true; clearTimeout(timer); clearTimeout(deadline); transport.abort(); signal.removeEventListener('abort', abort);
     if (accepted && handle) void request('run', { action: 'ack', handle }).catch(() => {});
   }
 }

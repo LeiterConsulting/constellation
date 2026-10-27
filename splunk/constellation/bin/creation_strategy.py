@@ -8,8 +8,9 @@ MAX_COMPLETE_CONTEXT_BYTES = 36000
 def explicit_page_count(prompt):
     """Only an unambiguous small page count can constrain compact composition."""
     names = {'one':1,'two':2,'three':3,'four':4}
-    counts = {names.get(match.lower(), int(match) if match.isdigit() else 0) for match in re.findall(r'\b(one|two|three|four|[1-4])(?:-|\s+)pages?\b', prompt, re.I)}
-    if len(counts) != 1 or re.search(r'\b(?:five|six|seven|eight|nine|[5-9]|\d{2,})(?:-|\s+)pages?\b', prompt, re.I): return None
+    page_noun = r'(?:-|\s+)(?:(?:named|distinct|separate)\s+)?pages?\b'
+    counts = {names.get(match.lower(), int(match) if match.isdigit() else 0) for match in re.findall(r'\b(one|two|three|four|[1-4])' + page_noun, prompt, re.I)}
+    if len(counts) != 1 or re.search(r'\b(?:five|six|seven|eight|nine|[5-9]|\d{2,})' + page_noun, prompt, re.I): return None
     return counts.pop()
 
 

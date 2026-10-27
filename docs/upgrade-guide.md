@@ -1,5 +1,13 @@
 # Updating Constellation
 
+## 0.25 delivery recovery and held-out source checks
+
+No credential, connection, draft or native-dashboard migration runs. Refresh existing browser tabs. Keep browser read eligibility in `restDelivery.ts`, original-author/validated-reply coordination in `authoringRun.ts` and native read policy in `native_transport.py`. New endpoints must explicitly prove read semantics before joining a retry allowlist. Preserve one dispatch, the original deadlines, session identity, revision checks, Stop and late-response rejection. Never turn a retry into another model request or a credential/role fallback.
+
+Native service/transport failures must escape data/model repair as service failures. Keep normal syntax, scope, permission, partial-result and output validation intact. Requalify dropped delivery during active inference, terminal failure, Stop while reconnecting, expired receipts, acknowledgement and peer denial after changing these contracts. Certificate problems require configuration repair, not weaker verification.
+
+Page-count grammar and raw-column checks remain separate from provider adapters. Explicit raw fields are verified against profile and actual output for one simple new table; ambiguous or advanced native work is preserved. Fixed-button label preflight must not resize or choose another label without permission in the user's request.
+
 ## 0.24 existing navigation and workload checks
 
 No connection, credential, draft or native-dashboard migration runs. Refresh existing tabs after upgrading. Keep route compilation in `route_actions.py`, separate from provider adapters, query guards and persistence. Restricted eligibility requires current selection, verified row-output evidence where applicable, explicit intent and unambiguous native destinations. Schema-ignoring replies need identical runtime restrictions. Requalify shared-source cloning, original-page preservation, default/concrete filters, repeated retargeting, existing buttons and output repair before extending to chains, SPL2 or conditional/reused elements.

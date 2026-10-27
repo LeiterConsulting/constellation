@@ -42,6 +42,8 @@ A private draft link reopens your own conversation; it does not share a dashboar
 
 ## When something fails
 
+**Reconnecting to Splunk** means the app is checking for the validated reply to your existing request. It does not send the prompt again. You can still use **Stop**. A brief interruption of a read can recover once; writes and model requests are not repeated. Wait for **Draft saved** before refreshing or closing the page.
+
 The agent can repair validation failures within a fixed budget. If recovery is exhausted, the accepted draft is preserved; read Activity and retry the original request when appropriate. A model test is not a dashboard-creation qualification. Authentication, quota and transport failures may need provider or administrator action.
 
 Check **Draft saved** before closing. On a save conflict, keep both versions using **Save as new draft**. Draft and managed private native-view deletion uses recoverable Trash. Backups, retention and removal of the app remain administrator responsibilities. See the [handoff audit](share-readiness.md) and [support limits](studio-support.md).

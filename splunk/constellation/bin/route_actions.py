@@ -101,6 +101,16 @@ def compile_button_route(document,action):
     return [{'op':'set','path':'/inputs/'+identifier.replace('~','~0').replace('/','~1')+'/options/label','value':json.dumps(action['label'])},link]
 
 
+def button_label_preflight(prompt, document, selected):
+    """A fixed-rectangle plan cannot fit an explicitly overlong literal label."""
+    label = re.search(r'\b(?:rename\s+it|label\s+it)\s+["\u201c]([^"\u201d]+)["\u201d]', prompt, re.I)
+    if not label: return
+    placements = [entry for page in document['layout'].get('layoutDefinitions', {}).values()
+                  for entry in page.get('structure', []) if entry.get('item') == selected]
+    if len(placements) == 1 and placements[0].get('position', {}).get('w', 0) < button_label_width(label[1]):
+        raise ProviderError('That label will not fit the current button width. Use a shorter label or allow resizing. Your draft is unchanged.', 422, 'button_label_fit')
+
+
 def compile_route(document, action, profile):
     if not isinstance(action,dict) or set(action)!=set(ROUTE_ACTION['required']) or action.get('op')!='route':
         raise ProviderError('Use the documented route fields: sourceId, pageId, field and returnLabel.')

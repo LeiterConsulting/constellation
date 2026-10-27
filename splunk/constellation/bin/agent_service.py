@@ -1,7 +1,7 @@
 """Studio authoring with environment context, history, and guarded attachments."""
 from field_context import enrich_profile, recorded_unit_intent, recorded_unit_question, unit_confirmation
 import row_navigation
-from route_actions import INSTRUCTIONS as ROUTE_INSTRUCTIONS, validate_route_intent, focused_route, focused_button_route
+from route_actions import INSTRUCTIONS as ROUTE_INSTRUCTIONS, validate_route_intent, focused_route, focused_button_route, button_label_preflight
 import json
 import copy
 import re
@@ -10,6 +10,7 @@ from studio_contract import model_document, validate_document, apply_changes
 from studio_features import feature_contract, validate_features
 from table_projection import validate_requested_columns, verified_requested_projection, validate_selected_calculation, isolate_selected_calculation
 from table_projection import focused_calculation, CALCULATION_INSTRUCTIONS
+from table_projection import validate_creation_columns
 from model_capabilities import attachment_parts
 from prompt_suggestions import SUGGESTION_SCHEMA, normalize_suggestions
 from data_service import DataService
@@ -384,6 +385,7 @@ class AgentService:
         row_only = row_navigation.eligible(prompt,document,focus.get('id'),profile,table_receipt,attachments)
         route_schema = focused_route(prompt,document,focus.get('id'),profile,table_receipt,attachments)
         button_schema = focused_button_route(prompt,document,focus.get('id'),attachments)
+        if button_schema: button_label_preflight(prompt,document,focus.get('id'))
         page_schema = focused_page_meta(prompt,document,focus,attachments)
         calculation = focused_calculation(prompt,focus.get('id'),document,profile,table_receipt,attachments)
         if route_schema:
@@ -532,7 +534,7 @@ class AgentService:
                 try:
                     receipts = data.validate_searches(draft, document, profile) if profile else []
                 except ProviderError as error:
-                    if error.code in ('recovery_budget', 'author_cancelled', 'author_expired'): raise
+                    if error.status >= 500 or error.code in ('recovery_budget', 'author_cancelled', 'author_expired'): raise
                     from time_axis import verified_time_axes
                     axes = verified_time_axes(draft, document, data.receipts)
                     if not axes: raise
@@ -548,6 +550,7 @@ class AgentService:
                     validate_features(draft, document, environment)
                     receipts = data.validate_searches(draft, document, profile)
                 validate_requested_columns(prompt, body.get('selected', ''), draft, receipts)
+                validate_creation_columns(prompt, draft, document, profile, receipts)
                 if calculation:
                     fields=next((set(r.get('fields',[]))for r in receipts if r.get('source')==calculation['sourceId']),set())
                     missing=set(calculation['existingOutputFields'])-fields
@@ -573,6 +576,9 @@ class AgentService:
                 budget.stages += 1
                 break
             except (ValueError, KeyError, TypeError, ProviderError) as error:
+                if isinstance(error, ProviderError) and error.status >= 500:
+                    error.recovery = recovery.evidence()
+                    raise
                 if getattr(error, 'code', None) in ('author_cancelled', 'author_expired'): raise
                 feedback = str(error) if isinstance(error, ProviderError) else 'Invalid JSON edit structure.'
                 validation_notes.append(feedback[:800])

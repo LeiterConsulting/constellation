@@ -4,6 +4,7 @@ from urllib.parse import quote, parse_qsl
 import json
 from provider_service import ProviderError
 from compatibility import feature_profile
+from native_transport import native_read_retry, transport_failure
 
 TIME_RANGES = {'-15m', '-1h', '-24h', '-7d'}
 
@@ -139,8 +140,9 @@ class SearchService:
             resource, _, query = path.partition('?')
             parameters = {'output_mode': 'json', 'count': '100'}
             parameters.update(parse_qsl(query, keep_blank_values=True))
-            response, raw = splunk.rest.simpleRequest(resource, sessionKey=self.token, method=method,
-                getargs=parameters, postargs=fields, raiseAllErrors=True, timeout=self.request_timeout)
+            response, raw = native_read_retry(splunk.rest.simpleRequest, resource, self.namespace, method, self.request_timeout,
+                check_cancel=getattr(self, 'check_cancel', None), sessionKey=self.token,
+                getargs=parameters, postargs=fields, raiseAllErrors=True)
             # A finalized job can briefly report readiness before its results
             # endpoint supplies a body. 204 is pending, never an empty result or
             # invalid SPL. Only the owned preview-results reader handles it.
@@ -150,10 +152,17 @@ class SearchService:
                     and re.fullmatch(r'[A-Za-z0-9_.-]{1,200}/results', resource[len(results):])):
                 return {'resultsPending': True}
             return json.loads(raw)
+        except ProviderError:
+            raise
         except Exception as error:
             status = str(getattr(error, 'statusCode', ''))
             if optional and status in ('403', '404'):
                 return {'unavailable': 'restricted' if status == '403' else 'not_available'}
+            import ssl
+            if isinstance(error, ssl.SSLError):
+                raise ProviderError('Splunk could not verify its TLS connection. Ask an administrator to check its certificate configuration. Your previous dashboard is preserved.', 503, 'splunk_tls') from None
+            if transport_failure(error):
+                raise ProviderError('The Splunk connection was interrupted. Your previous dashboard is preserved; no query repair was attempted.', 503, 'splunk_transport') from None
             # Never forward a Splunk response body, query content, or session token.
             code = 'splunk_' + type(error).__name__ + ('_' + status if status.isdigit() else '')
             raise ProviderError('Splunk could not complete this discovery or search request. ' + search_feedback(str(error)), 422, code) from None
