@@ -1,5 +1,9 @@
 # Updating Constellation
 
+## 0.27 compact table eval syntax
+
+No credential, connection, draft or native-dashboard migration runs. Refresh existing tabs after installing. Keep this normalization in compact creation and the shared formatting parser; never broaden it into a general SPL/SPL2 rewrite. Requalify pure self-formatting assignments, quoted pipes/commas, raw-event/unknown-expression refusals, existing-work preservation and actual native numeric/date output. All ordinary validation and three-call/sixteen-check recovery bounds remain intact. Record provider latency and repairs separately from syntactic compilation; a connection test or a successful offline parser test is not a live authoring qualification.
+
 ## 0.26 pending-save recovery
 
 No connection, native-dashboard or server draft migration runs; schema remains 3. Refresh existing browser tabs. Keep tab-local recovery in `draftRecovery.ts`, revision/write coordination in `drafts.ts` and lifecycle/UI status in `useDraftPersistence.ts`. The draft listing adds only the authenticated owner name. Never recover before that identity is obtained or use browser data as permission to access another owner, resurrect Trash, overwrite future schemas or replay inference.

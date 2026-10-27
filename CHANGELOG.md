@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.27.0 - 2026-10-27
+
+- Compile omitted separators in fresh compact SPL tables only when the complete post-stats eval is recognized self-round/strftime formatting. Preserve expressions, quoted format strings, scope and unrelated panels; leave unknown expressions to native validation.
+- Prefer separate formatting eval commands and give controlled comma/string-quote feedback. Retain actual search, output, measurement, native, placement and preservation checks, existing budgets and the same UI.
+- Record a longer ordinary-user soak across OpenAI, Ollama and managed AITK, including real CPU/reachability/freezer sources, independent numeric probes, delivery faults, cancellation and private persistence. See validation for exact results and remaining 1.0 gates.
+
+## 0.26.0 - 2026-10-27
+
+- Recover bounded pending draft changes after refresh, reconcile exact intermediate/readback saves and retain unrelated revision conflicts. Never replay an interrupted agent request or blindly repeat writes.
+- Make Stop dispatch cancellation once per created run and prevent an aborted run from starting. Retain upstream cancellation limits.
+- Qualify bounded three-author load, pending-save races, delivery recovery and private native copies on the exact package; record limits and retained failures.
+
 ## 0.25.0 - 2026-10-27
 
 - Retry explicit read operations once within their original deadlines, including native readback and owned search-result polling. Never replay inference, dispatch, settings/draft writes or native saves.

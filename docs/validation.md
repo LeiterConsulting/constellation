@@ -1,14 +1,14 @@
 # Validation status
 
-Snapshot: **0.26.0 development preview, October 27, 2026**. This file is a sanitized summary. Private lab addresses, credentials, screenshots, transcripts, raw search data and detailed runtime receipts are excluded from the repository.
+Snapshot: **0.27.0 development preview, October 27, 2026**. This file is a sanitized summary. Private lab addresses, credentials, screenshots, transcripts, raw search data and detailed runtime receipts are excluded from the repository.
 
-See the [0.26 load and pending-save qualification](#0260-load-cancellation-and-pending-saves--october-27-2026) for current evidence. Earlier navigation, benchmark, new-author, field-context and sparse-data cohorts below retain their own scope and failures.
+See the [0.27 creation and extended soak qualification](#0270-creation-syntax-and-extended-soak--october-27-2026) for current evidence. Earlier navigation, benchmark, new-author, field-context and sparse-data cohorts below retain their own scope and failures.
 
 ## Local verification
 
 | Check | Observed result |
 | --- | --- |
-| Python unit suites | 377 tests passed on Python 3.9 and 3.13, including native read deadlines/non-replay/cancellation, transport classification, raw-column visibility, button preflight, named-page grammar and retained authority/authoring/native regressions. |
+| Python unit suites | 380 tests passed on Python 3.9 and 3.13, including native read deadlines/non-replay/cancellation, transport classification, raw-column visibility, button preflight, named-page grammar and retained authority/authoring/native regressions. |
 | Frontend unit suites | 105 tests passed, including early lost-response recovery, Stop/terminal/deadline races, readback without duplicate creation, read retry eligibility and retained focus/starter regressions. |
 | TypeScript and production build | Passed; bundle-size warning remains. |
 | Deterministic app package | Generated with SHA-256 receipt. |
@@ -24,6 +24,32 @@ The AppInspect result applies to the tested development archive. The seven warni
 | 10.4.4 | 1.26.6 | Native roundtrips, synthetic SPL/SPL2, PDF native interactions, Ollama edits, prior page/focus exercises and current row-budget check. |
 
 The full 0.7.1 creation/switch/reopen journey was run on the 10.2.8 target, not repeated in full on 10.4.4. AITK succeeded through an existing configured connection on one target; another target returned no usable completion. Do not infer instance-independent provider availability from app installation.
+
+## 0.27.0 Creation syntax and extended soak — October 27, 2026
+
+The final **0.27.0 build 39** archive is SHA-256 `cb4b107ff9eca13db89199c34d23f09e2396417d4233854d8146b030133dc5d1` (456 files; 5,443,450 bytes). Both lab versions installed it without restart, using verified TLS. All 63 packaged Python modules and browser entry/chunks match source/build; no macOS/private extras were found. Fresh AppInspect 4.3.1 precert returned zero errors/failures/future failures, seven warnings and one skip. The 19.2 MB browser-entry warning remains.
+
+**Fix.** Fresh compact SPL tables now share the existing narrow post-stats self-round/strftime separator compiler. It consumes a complete recognized eval command, preserves expressions and quoted formats, and leaves unknown expressions/raw-event stages/non-table panels and existing native work alone. Creation guidance prefers separate eval assignments and explains comma/string-quote rules; controlled feedback never returns native error bodies. Every compiled search still passes ordinary scope, output, measurement, feature, placement, preservation and actual-search checks. No UI controls, provider privileges, schema migrations or recovery-budget increases were added. The old rejected raw proposal was not retained; the 0.26 EvalCommand error identifies a failure class, not proof that every historical eval failure was an omitted comma.
+
+**Final-package soak.** Three disposable ordinary authors and an isolation peer used the existing constrained author role. Each provider ran continuously for at least **30 minutes**, completing **82 flows / 328 turns** in total, with no failed flow. OpenAI used `gpt-6-luna`, Ollama `qwen3-coder:latest`, and AITK 6.2 used the existing approved connection; AITK upstream model/token parameters were not read or changed. CPU, reachability and freezer sources rotated through blank two-page/four-chart creation, selected maximum calculation, numeric/time formatting and existing-button editing. Exact draft/conversation readback followed every turn. Every completed flow saved an exact private native Studio copy in Search & Reporting and denied peer access. No administrator, credential-store or AI-configuration capability was granted to authors.
+
+| Provider | Complete flows / turns | First-response turns | Median creation seconds (range) | Median edit seconds |
+| --- | --- | --- | --- | --- |
+| OpenAI | 33 / 132 | 131/132 | 28.82 (22.38–41.42) | 6.47 |
+| Ollama | 30 / 120 | 120/120 | 24.95 (16.31–38.78) | 9.04 |
+| AITK | 19 / 76 | 74/76 | 28.11 (25.38–68.23) | 18.92 |
+
+No eval-syntax repair appeared in this soak. AITK repaired two freezer creations: one lacked required metric output fields and another omitted the required raw timestamp column. OpenAI repaired one freezer creation after generic native search feedback. Those failures and successful automatic recoveries remain in the counts. The separate explicit Overview/detail-scope challenge passed all three providers; OpenAI used two model calls there, while Ollama and AITK used one. These are repeated operated task observations under overlapping load, not provider-wide success rates, comparable model benchmarks or production latency percentiles. The earlier 110.27-second AITK example and this cohort used different workload conditions; do not treat their difference as a controlled speedup measurement.
+
+Independent **synthetic** probes checked **327 final source transformations**, known per-entity means/maxima/counts, raw columns, missing-versus-zero behavior and both concrete entity selections. Freezer cases excluded temperatures over 150°F from every temperature calculation while retaining independent Wi-Fi readings and event counts. Synthetic rows were neither ingested nor sent to inference. A separate installed syntax oracle under all three authors checked known numeric/timestamp output from compiled omitted-comma tables, quoted pipes/commas and native rejection of an unknown expression. Offline full-service tests check one model call/one search check for this supported syntax class. Actual-data profiles/previews retained existing bounds and partial labels; synthetic arithmetic does not prove complete indexed coverage.
+
+**Load and delivery.** The three workers overlapped **526 background cycles / 1052 metadata requests** and **89 bounded actual preview lifecycles** with creation, edits and saves. All background cycles passed. Every fifth creation deliberately lost its original response after send; **15/15** recovered the same validated reply without replaying author dispatch. Two additional cancellation bursts per provider passed: acknowledgement took 0.032–0.071 seconds, handler exit up to 34.96 seconds, late replies remained unavailable and no candidate was applied. Stop does not guarantee cancellation of upstream billing. The private driver recorded 8512 traced requests with no natural transport or DNS failure. Expected peer-denial/cancellation HTTP responses and injected disconnects are not natural delivery failures. This sample does not establish the cause of older uncorrelated stalls.
+
+**Operated browser journey.** Each ordinary author reopened a completed freezer draft, selected the summary and renamed only that chart through chat. Independent definition readback proved all other properties, queries, exclusions, pages, geometry and interactions identical. Row/detail/return navigation passed in preview and native Studio. Refresh immediately after the visible return-page change restored the title, conversation and Overview page, then showed Draft saved. AITK also saved its edited result through the actual Save to Splunk UI with exact private native readback/peer denial. The administrator login was restored and the temporary test tab closed.
+
+**Retained limitations.** One OpenAI CPU board shared an entity-filtered trend between Overview and detail under the original prompt. Its detail filtering and arithmetic passed, but that does not establish an independent all-entity Overview after selection. An explicit all-hosts Overview/only-detail-filtered challenge passed across all three providers; broader implicit scope and shared-source semantics remain a qualification task. An initial exploratory driver used `F` instead of the structured canonical `°F` and correctly received a unit validation error; it was corrected and the full minimum-duration soak restarted. That aborted run is not counted above. All raw evidence remains local.
+
+The complete soak ran on Enterprise 10.2.8 / Studio 1.23.12, one search head. Enterprise 10.4.4 received installation verification only. Longer production-duration soak, failed upstream transports, SHC/cross-member concurrency, second-target provider journeys, independent delivery/tab-storage security review, broader native/SPL2 and compound semantics, unaided UX/accessibility/reflow and bundle reduction remain 1.0 gates. Cleanup removed 4 temporary accounts, 95 owned configuration objects, 89 private native views and the one copied OpenAI key. All 35 original administrator drafts, preferences/settings, protected AITK policy and collection ACLs were unchanged; the local password file was deleted.
 
 ## 0.26.0 Load, cancellation and pending saves — October 27, 2026
 

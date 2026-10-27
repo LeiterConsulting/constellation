@@ -37,7 +37,7 @@ class FormattingSyntaxTests(unittest.TestCase):
   self.assertEqual(len([c for c in runtime.calls if isinstance(c,dict)]),2)
   from search_service import search_feedback
   feedback=search_feedback("Error in 'EvalCommand': malformed PRIVATE VALUE")
-  self.assertIn('commas',feedback);self.assertNotIn('PRIVATE',feedback)
+  self.assertIn('commas',feedback);self.assertIn('double quotes',feedback);self.assertNotIn('PRIVATE',feedback)
  def test_exact_omitted_commas_preserve_scope_expressions_and_quoted_format(self):
   prefix='search index="fixture_index" | stats avg(value) AS mean max(value) AS peak latest(_time) AS seen BY entity '
   suffix='| eval mean=round(mean,2) peak=round(peak,2) | eval seen=strftime(seen,"%Y|%m,%d %H:%M:%S")'

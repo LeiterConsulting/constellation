@@ -86,7 +86,7 @@ def search_feedback(message):
     """Classify native diagnostics without forwarding bodies, query literals or tokens."""
     text = message.lower()
     if 'evalcommand' in text:
-        return 'Correct the eval expression. Separate multiple field assignments with commas; preserve the verified aggregation, aliases and selected query scope.'
+        return 'Correct the eval expression. Separate multiple field assignments with commas. SPL string literals use double quotes; single quotes identify fields. Preserve the verified aggregation, aliases and selected query scope.'
     for patterns, feedback in (
         (('number of wildcards', 'empty field specifier'), 'Avoid empty aggregate field specifiers. In SPL, event counts use count AS alias without parentheses; other aggregate functions need verified fields.'),
         (('unknown search command', 'unknown command'), 'Remove or replace an unknown search command using the supported read-only subset.'),

@@ -52,6 +52,10 @@ For a combined/entity trend use timechart bins=100 ... AS alias WITHOUT BY: BY
 creates dynamic entity series. For a per-entity table use stats ... BY entity.
 Event counts use count AS alias without (). Never append head to hide truncation.
 Use final eval round/strftime AFTER aggregation for readable table metrics/dates.
+Prefer one assignment per eval command, for example:
+| eval mean=round(mean,2) | eval last_seen=strftime(last_seen,"%Y-%m-%d %H:%M:%S").
+If combining assignments in one eval, separate EVERY assignment with a comma.
+SPL string literals use double quotes. Single quotes identify fields, not SQL strings.
 This is SPL, not SQL: never append a WHERE predicate inside stats/timechart. SPL
 filters use separate pipe commands; the server already supplies the cutoff mask.
 Input fields are already verified. Do not begin with eval/tonumber/rex/spath for
@@ -191,7 +195,14 @@ def expand_compose(actions, document, profile):
             exact(panel, PANEL['required']);key = identifier(panel['id'])
             if key in panels or len(panels) >= 8: raise ProviderError('Use distinct panel IDs and at most 8 charts total.')
             panels[key] = {'page': pid, 'type': panel['type'], 'title': panel['title']}
-            result.extend([{'op': 'search', 'id': 'ds_' + key, 'pipeline': without_redundant_input_casts(panel['pipeline'], profile)},
+            pipeline = without_redundant_input_casts(panel['pipeline'], profile)
+            if panel['type'] == 'splunk.table' and isinstance(pipeline, str):
+                # Only this fresh table's own pipeline: the parser consumes an
+                # entire post-stats self-formatter before inserting separators.
+                # Unknown expressions still reach ordinary native validation.
+                from formatting_syntax import repair_query
+                pipeline = repair_query(pipeline)
+            result.extend([{'op': 'search', 'id': 'ds_' + key, 'pipeline': pipeline},
                            {'op': 'chart', 'id': key, 'chartType': panel['type'], 'title': panel['title'],
                             'description': '', 'sourceId': 'ds_' + key, 'x': panel['x'], 'y': panel['y']}])
             # Wide/all-column tables need a full row to keep their headers and

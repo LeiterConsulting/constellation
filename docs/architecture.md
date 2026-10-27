@@ -2,6 +2,12 @@
 
 Constellation is a Splunk app with an embedded browser workspace and current-user Python REST handlers. It does not require a separately deployed orchestration platform, database or vector service.
 
+## Compact creation syntax (0.27)
+
+`compact_creation.py` reuses `formatting_syntax.repair_query` only for a fresh composition table's own SPL pipeline. It inserts missing separators only when an entire post-stats eval command consists of recognized self-round/strftime assignments. Expression and quoted-format bytes are retained. Raw-event stages, non-table charts, unknown expressions, non-SPL composition and existing native work retain their prior paths. Compiled searches still pass the same scope, measurement, output, feature, placement and actual-search validation before atomic acceptance.
+
+Compact guidance prefers one assignment per eval command, explicitly explains comma separation and uses double-quoted string literals. Controlled native EvalCommand feedback now names both comma and quote rules without returning native error bodies. This targets a recognized syntax failure class; it does not establish that every historical eval failure had the same cause or turn unknown expressions into accepted syntax. No provider/privileged handler, budget, draft schema or UI control changes. The [Splunk eval reference](https://help.splunk.com/en/splunk-enterprise/search/spl-search-reference/10.2/search-commands/eval) documents comma-separated assignments and quoted literals.
+
 ## Pending save recovery (0.26)
 
 `draftRecovery.ts` holds one pending snapshot in this tab's `sessionStorage`, limited to 1.5 million JSON characters and six hours. It checkpoints visible changes before the autosave debounce. Startup obtains the authenticated owner from the existing draft listing before reading recovery state; a different account, malformed/expired entry, deleted draft or missing previously saved draft is not restored. There is no browser connection/key cache, indexed-row cache, new endpoint or external worker. Draft contents, including conversation, SPL and small pending attachments, are sensitive browser content: see [security](../SECURITY.md#drafts-and-retention).

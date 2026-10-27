@@ -29,6 +29,45 @@ def compose():
 
 
 class CompactCreationTests(unittest.TestCase):
+    def test_fresh_table_separators_preserve_expressions_scope_and_other_panels(self):
+        action=compose();action['links']=[]
+        query='| stats avg(duration) AS mean max(duration) AS peak latest(_time) AS seen BY device_name | eval mean=round(mean,2) peak=round(peak,1) seen=strftime(seen,"%Y|%m,%d %H:%M:%S")'
+        action['pages'][0]['panels'][1].update(pipeline=query,y=['device_name','mean','peak','seen'])
+        before=copy.deepcopy(action);original=blank()['definition'];original['future']={'keep':True}
+        expanded=expand_compose([action],original,PROFILE)
+        searches={a['id']:a['pipeline']for a in expanded if a['op']=='search'}
+        self.assertEqual(searches['ds_devices'],query.replace(') peak=', '), peak=').replace(') seen=', '), seen='))
+        self.assertEqual(searches['ds_volume'],action['pages'][0]['panels'][0]['pipeline'])
+        self.assertEqual(action,before);self.assertEqual(original['future'],{'keep':True})
+
+    def test_fresh_table_unknown_expressions_and_raw_stages_are_not_rewritten(self):
+        for query in ('| eval mean=round(mean,2) peak=round(peak,1) | stats avg(mean) AS mean',
+                      '| stats count AS mean | eval mean=round(other,2) peak=round(peak,1)',
+                      '| stats count AS mean | eval mean=round(mean,2) AND peak=round(peak,1)',
+                      '| stats count AS mean | eval mean=round(mean,2) peak=coalesce(peak,0)'):
+            action=compose();action['pages'][0]['panels'][1]['pipeline']=query
+            self.assertEqual(next(a['pipeline']for a in expand_compose([action],blank()['definition'],PROFILE)if a.get('id')=='ds_devices'),query)
+        action=compose();action['pages'][0]['panels'][0]['pipeline']='| stats count AS mean | eval mean=round(mean,2) peak=round(peak,1)'
+        self.assertEqual(next(a['pipeline']for a in expand_compose([action],blank()['definition'],PROFILE)if a.get('id')=='ds_volume'),action['pages'][0]['panels'][0]['pipeline'])
+
+    def test_new_table_eval_is_validated_with_one_model_call_across_compact_providers(self):
+        class Outputs(Runtime):
+            def preview(self,body):
+                if body.get('fieldDiscovery'):return super().preview(body)
+                self.calls.append(body)
+                if ') peak='in body['query']:raise ProviderError('Malformed eval',422,'preview_failed')
+                return {'state':'complete','fields':[{'name':n}for n in ('mean','peak')],'results':[{'mean':'12','peak':'42'}]}
+        for kind in ('aitk','ollama'):
+            class CompactProvider(Provider):
+                def configured(self):return {'provider':kind,'model':'fixture'}
+                def capabilities(self,saved):return {'contextTokens':32768,'images':False,'pdf':False}
+            action=compose();action['links']=[];action['pages']=[dict(action['pages'][0],panels=[panel('metrics','splunk.table','| stats avg(duration) AS mean max(duration) AS peak | eval mean=round(mean,2) peak=round(peak,1)','',['mean','peak'])])]
+            original=blank()['definition'];before=copy.deepcopy(original);provider=CompactProvider([reply([action])]);runtime=Outputs()
+            result=AgentService(provider,runtime).assist({'prompt':'Build one page with one table of mean and peak duration.','revision':0,'definition':original,'dataContext':blank()['dataContext']})
+            query=apply_changes(original,result['changes'])['dataSources']['ds_metrics']['options']['query']
+            self.assertIn('), peak=',query);self.assertEqual(result['recovery']['modelCalls'],1);self.assertEqual(result['recovery']['queryChecks'],1)
+            self.assertFalse(result['repaired']);self.assertEqual(original,before);self.assertTrue(any(query==c.get('query')for c in runtime.calls if isinstance(c,dict)))
+
     def test_named_page_count_keeps_ordinary_phrasing_on_the_bounded_plan_path(self):
         from creation_strategy import explicit_page_count
         for noun in ('named','distinct','separate'):

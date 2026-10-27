@@ -4,7 +4,7 @@ A conversational canvas for creating and editing **Splunk Dashboard Studio** das
 
 Describe an operational question, choose data available to your Splunk user, and watch a dashboard take shape. Select a chart, input or page to refine it through chat. Start from a blank canvas, an existing Studio definition, or an image/PDF reference when the selected provider supports it.
 
-**Status: 0.26.0 development preview.** This is a new codebase, separate from Splunk Dashboard Generator. It is not a production release or Splunk Cloud certified app. The repository is currently private and is being prepared for a future public release.
+**Status: 0.27.0 development preview.** This is a new codebase, separate from Splunk Dashboard Generator. It is not a production release or Splunk Cloud certified app. The repository is currently private and is being prepared for a future public release.
 
 ## What works today
 
@@ -38,7 +38,7 @@ npm run dev -- --port 5178
 
 Open the local URL printed by Vite. Standalone mode demonstrates the canvas and authored example data; provider Settings, live Splunk searches, server-backed drafts and native saves require an installed Splunk app.
 
-The package is written to `artifacts/constellation-0.26.0.tgz`, with its digest in `artifacts/SHA256SUMS`. Build artifacts and dependencies are not committed. See [installation](docs/installation.md) to install the package and configure a provider in the app.
+The package is written to `artifacts/constellation-0.27.0.tgz`, with its digest in `artifacts/SHA256SUMS`. Build artifacts and dependencies are not committed. See [installation](docs/installation.md) to install the package and configure a provider in the app.
 
 ## Compatibility and boundaries
 
@@ -50,9 +50,11 @@ Multi-page actual-data creation and focused edits have been exercised through Op
 
 0.16 hardens opt-in shared AITK inference and adds owner-only OpenAI key handling. A non-admin author completed the two-page sensor creation/edit/native-save journey through all three providers without credential-store permissions. Shared AITK requires protected connection metadata and a trusted execution owner; actual data searches and persistence retain the author's permissions. A fresh [independent agent source review](docs/security-review.md) found no remaining actionable issue in the reviewed patches. Deployment review and Cloud/cluster acceptance remain separate gates. See [AITK setup](docs/aitk-setup.md), [validation](docs/validation.md) and the [qualification protocol](docs/provider-qualification.md).
 
-0.25 adds bounded read delivery recovery and waits for a running handler after loss of its original author response, without replaying inference. The [latest qualification](docs/validation.md#0250-rest-delivery-and-held-out-datasets--october-27-2026) records the observed client DNS failure, controlled delivery tests, repeated ordinary-user dataset flows and remaining 1.0 gates. Earlier uncorrelated failures remain separate from the reproduced cause.
+0.25 adds bounded read delivery recovery and waits for a running handler after loss of its original author response, without replaying inference. The [delivery qualification](docs/validation.md#0250-rest-delivery-and-held-out-datasets--october-27-2026) records the observed client DNS failure, controlled delivery tests, repeated ordinary-user dataset flows and remaining 1.0 gates. Earlier uncorrelated failures remain separate from the reproduced cause.
 
 0.26 adds recovery of pending draft changes across refresh, exact readback after a lost save response, and one cancellation dispatch per run. Recovery keeps revision conflicts and never restarts an interrupted agent request. See [architecture](docs/architecture.md#pending-save-recovery-026) and [validation](docs/validation.md) for bounds and load evidence.
+
+0.27 extends exact eval-separator compilation to fresh compact SPL tables and strengthens creation/repair guidance for commas and string quotes. Actual search, output, measurement and native validation remain mandatory. See [validation](docs/validation.md) for the longer non-admin soak and observed latency.
 
 ## Data and credentials
 
