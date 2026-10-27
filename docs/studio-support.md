@@ -4,7 +4,7 @@ The opt-in shared AITK handler separates inference authority from ordinary autho
 
 Table formatting uses a verified authoring action that compiles to a final SPL `eval` against existing aggregate output fields. `formatTable` is not a native visualization option: newly introduced or changed `options.formatTable` objects are rejected with repair feedback, while unchanged imported properties are preserved. Check the visible timestamp/number result in native Studio in addition to definition readback.
 
-This is the working support contract for the 0.28.0 development preview. Broad document authoring is implemented; complete native parity is not yet qualified. The preview uses the embedded Splunk Dashboard Framework and preserves the original Studio definition for export and native save.
+This is the working support contract for the 0.29.0 development preview. Broad document authoring is implemented; complete native parity is not yet qualified. The preview uses the embedded Splunk Dashboard Framework and preserves the original Studio definition for export and native save.
 
 | Area | Current behavior | Qualification / boundary |
 | --- | --- | --- |
@@ -39,7 +39,7 @@ New or changed real-data timecharts must fit their selected window within the 20
 | Tabs, inputs, tokens, conditional visibility | Version-supported; existing tab/token flow exercised | Version-supported; new agent-created tab exercised |
 | Network graphs / new custom visualization framework | Version-supported; not separately rendered in this slice | Generation gated to existing configuration |
 | Auto-refresh capability | Present for current lab user | Available under pre-10.4 behavior |
-| Provider connection | Direct Ollama edits passed. AITK named-connection inference remains unsuccessful in this environment. | OpenAI, Ollama and an existing AITK connection exercised; AITK multi-page creation/editing passed with a sufficient 16,000-token budget retained for the current repeated qualification. |
+| Provider connection | Direct Ollama edits passed. AITK named-connection inference remains unsuccessful in this environment. | OpenAI, Ollama and an existing AITK connection exercised; AITK multi-page creation/editing passed through the existing approved connection; upstream model/token settings were not re-read in the current cohort. |
 
 The app never treats a module-list 404 as proof that ad hoc SPL2 is unavailable. Each environment check can run a three-row synthetic SPL2 probe separately. User roles, installed visualizations, and server configuration can change; re-check capabilities in the Environment dialog.
 

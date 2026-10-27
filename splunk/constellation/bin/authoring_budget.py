@@ -9,6 +9,7 @@ from creation_strategy import bounded_aitk_creation, explicit_page_count, explic
 from compact_creation import COMPOSE_ACTION, COMPACT_INSTRUCTIONS, RECIPE_COMPOSE_ACTION, RECIPE_COMPACT_INSTRUCTIONS, compact_goal, empty_canvas, expand_compose
 from prompt_suggestions import SUGGESTION_INSTRUCTIONS
 from search_hints import HISTOGRAM_GUIDANCE
+from creation_outline import outline_schema, nested_outline, outline_instructions
 
 
 def omit_compose(request):
@@ -64,13 +65,16 @@ class AuthoringBudget:
             # Qualification selected recipes for AITK. Keep Ollama's existing
             # compact wire shape after live trials of the wider union failed.
             recipes = self.provider == 'aitk'
-            request['instructions'] = RECIPE_COMPACT_INSTRUCTIONS if recipes else COMPACT_INSTRUCTIONS
+            request['instructions'] = RECIPE_COMPACT_INSTRUCTIONS if recipes else outline_instructions(COMPACT_INSTRUCTIONS)
             request['text']['format']['schema']['properties']['changes']['items'] = copy.deepcopy(RECIPE_COMPOSE_ACTION if recipes else COMPOSE_ACTION)
             # Encode the explicit small page count for schema-aware adapters;
             # actions() also enforces it for schema-ignoring adapters.
             pages = request['text']['format']['schema']['properties']['changes']['items']['properties']['pages']
             count = explicit_page_count(context['request'])
             pages.update(minItems=count, maxItems=count)
+            if self.provider == 'ollama':
+                panels = explicit_panel_count(context['request']) if re.search(r'\bexactly\s+\w+\s+(?:charts|panels|tiles|visualizations)\b', context['request'], re.I) else None
+                request['text']['format']['schema']['properties']['changes']['items'] = outline_schema(COMPOSE_ACTION, count, panels)
             request['text']['format']['schema']['properties']['changes']['maxItems'] = 1
         if self.creation and context.get('dataProfile'):
             request['instructions'] += '\n\n' + CONCISE_CREATION
@@ -139,6 +143,8 @@ class AuthoringBudget:
     def actions(self, actions, document):
         """Keep page identity stable when completing this turn's new foundation."""
         if getattr(self, 'compact', False) and isinstance(actions, list):
+            actions = [nested_outline(action) for action in actions]
+        if getattr(self, 'compact', False) and isinstance(actions, list):
             if actions and (len(actions)!=1 or not isinstance(actions[0],dict)or actions[0].get('op')!='compose'):
                 raise ProviderError('This compact first draft requires ONE complete compose plan. Do not emit separate search, chart, page, native or navigation actions; the server compiles those mechanics.',422,'compact_plan')
             for action in actions:
@@ -157,7 +163,7 @@ class AuthoringBudget:
                             for panel in page.get('panels', []) if isinstance(panel, dict) and 'recipe' in panel) if isinstance(actions, list) else 0
         if recipe_panels and self.provider == 'ollama' and getattr(self, 'compact', False):
             raise ProviderError('Use the qualified pipeline/x/y panel form for this connection, not a recipe panel. Preserve the requested pages and total chart count.', 422, 'compact_plan')
-        actions = expand_compose(actions, document, self.context.get('dataProfile'))
+        actions = expand_compose(actions, document, self.context.get('dataProfile'), self.context['request'] if getattr(self,'compact',False) else '')
         if recipe_panels: self.recipe_panels = recipe_panels
         if self.phase == 'foundation' and isinstance(actions, list):
             from search_chart_actions import compile_dashboard

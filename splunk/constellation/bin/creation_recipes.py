@@ -43,8 +43,12 @@ def compile_recipe(recipe, chart_type, profile):
         if chart_type != 'splunk.table' or metrics or group or not 1 <= len(columns) <= 80 or len(set(map(str, columns))) != len(columns):
             raise ProviderError('A raw table recipe needs distinct verified columns, no metrics and no grouping.')
         return '| table ' + ' '.join(field(c) for c in columns), '', list(columns)
-    if columns or not 1 <= len(metrics) <= 8 or kind == 'timechart' and group:
-        raise ProviderError('Aggregate recipes need 1–8 metrics; only stats may group, and columns stays empty.')
+    if columns:
+        raise ProviderError('Only raw table recipes use columns. For stats/timechart set columns:[]; the group field and metric aliases already define the displayed outputs. Preserve the requested metrics in this panel.')
+    if not 1 <= len(metrics) <= 8:
+        raise ProviderError('A stats/timechart recipe needs 1–8 metrics. Keep the requested calculations together in their existing panel.')
+    if kind == 'timechart' and group:
+        raise ProviderError('A timechart recipe uses groupBy:"" to keep its declared metric aliases. Row navigation already filters its device; only stats recipes may group by a field. Preserve this trend and its metrics.')
     if group: field(group)
     aliases, expressions, formatting = [], [], []
     for metric in metrics:

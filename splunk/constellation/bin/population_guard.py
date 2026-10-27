@@ -5,10 +5,23 @@ from search_scope import scoped_suffix
 
 
 def independent_measurements(prompt, brief):
-    # Explicit current revisions override a retained independence request.
-    if re.search(r'\b(?:same|shared)\s+population\b|\b(?:no longer|stop)\b[^.!?]{0,80}\bindependent', prompt, re.I): return False
-    text = '\n'.join([prompt, brief.get('purpose', ''), brief.get('requirements', '')])
-    return bool(re.search(r'\b(?:retain(?:ing|ed|s)?|keep(?:ing|s)?|preserv(?:e|es|ed|ing))\b[^.!?]{0,160}\bindependent(?:ly)?\b|\bindependent(?:ly)?\b[^.!?]{0,80}\b(?:measurements|observations|readings|metrics)\b', text, re.I))
+    text = '\n'.join([brief.get('purpose',''),brief.get('requirements',''),prompt])
+    result=False
+    for clause in re.split(r'[.!?;\n]',text):
+        if re.search(r'\b(?:same|shared)\s+population\b|\b(?:no longer|stop|do not|don.t)\b.{0,80}\bindependent',clause,re.I):result=False
+        elif re.search(r'\b(?:retain(?:ing|ed|s)?|keep(?:ing|s)?|preserv(?:e|es|ed|ing))\b.{0,160}\bindependent(?:ly)?\b|\bindependent(?:ly)?\b.{0,80}\b(?:measurements|observations|readings|metrics)\b',clause,re.I):result=True
+    return result
+
+
+def retain_source_rows(prompt, brief):
+    """An explicit standing row-retention requirement, not inferred from units."""
+    rows = r'all\s+(?:source\s+)?(?:rows|events|observations)\b'
+    text = '\n'.join([brief.get('purpose',''),brief.get('requirements',''),prompt])
+    result = False
+    for clause in re.split(r'[.!?;\n]',text):
+        if re.search(r'\b(?:same|shared)\s+population\b|\b(?:no longer|stop|do not|don.t|never)\s+(?:preserv\w*|retain\w*|keep\w*)\b.{0,100}\b' + rows,clause,re.I): result=False
+        elif re.search(r'\b(?:preserv\w*|retain\w*|keep\w*)\b.{0,100}\b' + rows,clause,re.I): result=True
+    return result
 
 
 def validate_populations(query, profile):

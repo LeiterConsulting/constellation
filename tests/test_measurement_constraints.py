@@ -6,7 +6,7 @@ from authoring_actions import compile_actions
 from measurement_constraints import normalize_measurements, temperature_constraints, mask_command
 from provider_service import ProviderError
 from studio_contract import apply_changes
-from population_guard import validate_populations
+from population_guard import validate_populations, retain_source_rows, independent_measurements
 
 PROFILE = {'scope': {'index': 'fixture_index', 'language': 'spl', 'earliest': '-24h'},
            'baseQuery': 'search index="fixture_index"',
@@ -15,6 +15,33 @@ GOAL = 'Temperatures are Fahrenheit: exclude readings above 150 F from temperatu
 
 
 class MeasurementConstraintTests(unittest.TestCase):
+    def test_explicit_all_row_requirement_keeps_temperature_only_trend_observations(self):
+        profile=dict(self.profile(),retainSourceRows=True)
+        query=PROFILE['baseQuery']+' | where temperature_f<=150 | timechart bins=100 avg(temperature_f) AS mean'
+        doc={'dataSources':{'trend':{'type':'ds.search','options':{'query':query}}}}
+        normalized=json.loads(normalize_measurements(doc,{},profile)[0]['value'])
+        self.assertNotIn('where temperature_f',normalized);self.assertIn(mask_command(profile['measurementConstraints'][0]),normalized)
+        self.assertIn('timechart bins=100 avg(temperature_f) AS mean',normalized)
+        self.assertEqual(normalize_measurements(doc,copy.deepcopy(doc),profile),[])
+        shared=json.loads(normalize_measurements(doc,{},self.profile())[0]['value'])
+        self.assertIn('where temperature_f<=150',shared)
+        for predicate in ('isnotnull(temperature_f)','temperature_f<=150 AND signal>-70'):
+            bad={'dataSources':{'trend':{'type':'ds.search','options':{'query':PROFILE['baseQuery']+' | where '+predicate+' | stats avg(temperature_f) AS mean'}}}}
+            with self.subTest(predicate=predicate),self.assertRaisesRegex(ProviderError,'Keep all source observations'):normalize_measurements(bad,{},profile)
+    def test_all_row_retention_is_explicit_durable_and_can_be_revised(self):
+        from dashboard_brief import authoring_brief
+        prompt='Preserve independent Wi-Fi readings and all events.'
+        brief=authoring_brief({'brief':{'purpose':'Understand readings','requirements':''},'prompt':prompt})
+        self.assertTrue(retain_source_rows(prompt,{}));self.assertTrue(retain_source_rows('Rename the title.',brief))
+        self.assertFalse(retain_source_rows('Use the same population.',brief))
+        self.assertFalse(retain_source_rows('Do not preserve all source rows.',{}))
+        revised=authoring_brief({'brief':brief,'prompt':'Stop preserving all events.'})
+        self.assertFalse(retain_source_rows('Rename the title.',revised))
+        self.assertTrue(retain_source_rows('Never replace missing with zero while keeping all source events.',{}))
+        revised=authoring_brief({'brief':brief,'prompt':'Use a shared population.'})
+        self.assertFalse(retain_source_rows('Rename the title.',revised));self.assertFalse(independent_measurements('Rename the title.',revised))
+        again=authoring_brief({'brief':revised,'prompt':'Keep Wi-Fi measurements independent and keep all source events.'})
+        self.assertTrue(retain_source_rows('Rename the title.',again));self.assertTrue(independent_measurements('Rename the title.',again))
     def profile(self, prompt=GOAL):
         return dict(PROFILE, measurementConstraints=temperature_constraints(prompt, {}, PROFILE))
 

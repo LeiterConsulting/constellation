@@ -9,6 +9,9 @@ an interpretable baseline, measurement coverage, a focused filter or a meaningfu
 detail-page investigation when the inspected schema and current layout support it.
 Use dashboardBrief, recent conversation, current selection, page purposes and field context.
 Prioritize undefined recorded units or sparse measurement coverage when they block interpretation.
+Fields with context.basis="user" and a unit already have a scoped user declaration:
+do not ask to confirm that same recorded unit again. Display conversions and a
+nameUnitConflict remain separate decisions; never infer stored units from a cutoff.
 Respect exclusions and requests such as no tables. Avoid completed requests,
 generic polish/refine cards, invented relationships, new uninspected datasets and
 assumed units or thresholds. Metadata is not evidence of a trend or anomaly.

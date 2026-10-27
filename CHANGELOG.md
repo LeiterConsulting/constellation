@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.29.0 - 2026-10-27
+
+- Use a flat bounded chart list for eligible Ollama creation, with explicit page membership and exact-count schema/runtime checks. Compile through existing native composition and validation; never drop extras or invent missing charts.
+- Keep late compact first-draft repairs in the short plan format against the original empty document. Recompile the complete uncommitted goal with cached search evidence and every final validator; retain ordinary repair for existing/advanced work.
+- Compile a redundant linked-detail timechart grouping only for a verified single selection and matching fixed aliases. Preserve explicit split-series requests, Overview, supplied searches and advanced expressions.
+- Keep an explicit all-observations requirement through temperature-only queries as well as summaries. Remove only the exact cutoff already supplied by the measurement mask; reject ambiguous temperature filters and retain shared-population revisions. Give precise recipe-shape feedback.
+- Retain exact inspected-field stored-unit assertions and common “is in” declarations in the existing source-scoped definitions. Keep questions, alternatives, hypotheses, negatives and conversions unconfirmed.
+- Omit redundant optional unit follow-ons only with scoped user evidence, retaining unresolved/mixed fields, name conflicts and display conversions. Invalidate stale suggestions when definitions change.
+- Preserve AITK recipes, OpenAI/native editing paths, permissions, draft schema, UI controls and recovery bounds. Qualification is recorded in [validation](docs/validation.md).
+
 ## 0.28.0 - 2026-10-27
 
 - Enable common compact stats/timechart/raw-table recipes through the tested AITK strategy; retain Ollama’s prior pipeline format after exploratory recipe-schema failures. Compile plans from verified inputs into matching SPL and native output bindings. Retain pipeline/native alternatives, real search validation and all existing guards.

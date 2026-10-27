@@ -6,7 +6,7 @@ import { validFocus, pagesOf, type PagePurpose } from './pages';
 import { elementLabel } from './elementLabels';
 import { fieldTitle, profileFields } from './datasetQuestions';
 import { hasMissing, isMeasurement } from './fieldContext';
-import { referencedFields, unitConfirmation } from './promptEvidence';
+import { referencedFields, unitConfirmation, redundantUnitQuestion } from './promptEvidence';
 
 export interface PromptSuggestion { label: string; prompt: string; reason: string; kind: 'idea' | 'data' | 'comparison' | 'interaction' | 'layout' | 'refine'; focus?: string; }
 export const suggestionFocus = (suggestion: PromptSuggestion, definition: StudioDefinition) => typeof suggestion.focus==='string' && validFocus(definition,suggestion.focus) ? suggestion.focus : null;
@@ -29,7 +29,7 @@ export function promptContextKey(revision: number, definition: StudioDefinition,
   const tabs = definition.layout.tabs as { items?: Array<{ layoutId: string }> } | undefined;
   const tab = tabs?.items?.find(item => item.layoutId === activeTab)?.layoutId || tabs?.items?.[0]?.layoutId || '';
   return JSON.stringify([revision, validFocus(definition, selected) ? selected : '', tab,
-    data ? [data.index || '', data.sourcetype || '', data.query || '', data.language || 'spl', data.earliest] : null,
+    data ? [data.index || '', data.sourcetype || '', data.query || '', data.language || 'spl', data.earliest, data.fieldDefinitions || {}] : null,
     context.brief?.purpose || '', context.brief?.requirements || '', recentRequests(context)]);
 }
 
@@ -115,6 +115,7 @@ export function nextSuggestions(proposed: PromptSuggestion[], fallback: PromptSu
   return candidates.filter(item => {
     const key = item.prompt.trim().toLocaleLowerCase(), label = item.label.trim().toLocaleLowerCase();
     if (!key || item.prompt.length > 1200 || generic.test(label) || seen.has(key) || seen.has('label:' + label) || (completed.has(key) && !/^retry\b/i.test(label))) return false;
+    if (redundantUnitQuestion(item, context.profile)) return false;
     if (noTables && /\btable\b/i.test(item.label) && !/\b(?:remove|replace|delete)\b/i.test(item.label)) return false;
     seen.add(key); seen.add('label:' + label); return true;
   }).slice(0, 3).map(item => ({...item,label:item.label.slice(0,60),reason:item.reason.slice(0,200)}));

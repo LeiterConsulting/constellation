@@ -139,11 +139,15 @@ def normalize_measurements(document, previous, profile):
             # boundary. Entity-filter compilation may have moved it one pipe.
             for start, end, candidate in reversed(pipeline_commands(suffix)):
                 if candidate == command: suffix = suffix[:start] + suffix[end:]
-            if coupled: suffix = without_redundant_cutoff(suffix, rule)
+            if coupled or profile.get('retainSourceRows'): suffix = without_redundant_cutoff(suffix, rule)
             before_parts = []
             for _start, _end, part in pipeline_commands(suffix):
                 if re.match(r'(?:stats|timechart|chart)\b', part, re.I): break
                 before_parts.append(part)
+                if profile.get('retainSourceRows') and re.match(r'(?:where|search)\b',part,re.I):
+                    selected = re.fullmatch(r'search\s+' + re.escape(field) + r'=\$[A-Za-z_]\w*\|s\$',part,re.I)
+                    if not selected and re.search(r'(?<![\w.])' + re.escape(field) + r'(?![\w.])',field_syntax(part)):
+                        raise ProviderError('Keep all source observations as requested. The verified temperature mask already excludes the measurement; do not drop rows with an additional temperature filter. Preserve other predicates and count valid measurements independently.',422,'population_coupling')
             before = field_syntax('|'.join(before_parts))
             if re.search(r'\b(?:eval|rename|rex|spath|fillnull)\b[^|]*\b' + re.escape(field) + r'\b', before, re.I):
                 raise ProviderError('Preserve the verified ' + field + ' measurement before aggregation. The server excludes values above ' +

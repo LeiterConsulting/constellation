@@ -5,7 +5,7 @@ import unittest
 from test_drafts_and_data import blank
 from test_reliability_journey import Provider, Runtime, reply
 from test_search_chart_actions import PROFILE
-from compact_creation import expand_compose, COMPOSE_ACTION, compact_goal, without_redundant_input_casts
+from compact_creation import expand_compose, COMPOSE_ACTION, compact_goal, without_redundant_input_casts, detail_timechart
 from authoring_actions import compile_actions, validate_chart_placement
 from authoring_budget import AuthoringBudget
 from agent_service import AgentService, SCHEMA
@@ -29,6 +29,29 @@ def compose():
 
 
 class CompactCreationTests(unittest.TestCase):
+    def test_fixed_alias_detail_trend_removes_only_its_redundant_verified_entity_group(self):
+        profile=dict(PROFILE,fields=[{'name':'host'},{'name':'duration','numeric':True}])
+        chart={'chartType':'splunk.line','x':'_time','y':['mean']}
+        query='| where duration>=0 | timechart bins=100 avg(duration) AS mean BY host'
+        self.assertEqual(detail_timechart(query,chart,'host',profile),query.removesuffix(' BY host'))
+        for changed in (query+' | fields _time mean host',query.replace('BY host','BY other'),
+                        query.replace('avg(duration)','avg(eval(duration+1))'),query.replace('bins=100','bins=100 limit=0'),
+                        query.replace('avg(duration)',"avg('duration')")):
+            self.assertEqual(detail_timechart(changed,chart,'host',profile),changed)
+        self.assertEqual(detail_timechart(query,dict(chart,y=['different']),'host',profile),query)
+        self.assertEqual(detail_timechart(query,chart,'host',dict(profile,scope={'query':'search index=fixture','language':'spl'})),query)
+        self.assertEqual(detail_timechart(query,chart,'host',dict(profile,scope={'index':'fixture','language':'spl2'})),query)
+        action=compose();action['links'][0]['field']='host';action['pages'][0]['panels'][1]['pipeline']='| stats count BY host';action['pages'][0]['panels'][1]['y']=['host','count']
+        action['pages'][1]['panels'][0]['pipeline']='| timechart bins=100 count AS count BY host'
+        before=copy.deepcopy(action)
+        expanded=expand_compose([action],blank()['definition'],profile,'Build two pages with a row-linked detail trend.')
+        detail=next(x for x in expanded if x.get('id')=='ds_detail')
+        self.assertNotIn('BY host',detail['pipeline']);self.assertEqual(action,before)
+        explicit='Build two pages with separate series by host.'
+        self.assertFalse(compact_goal({'request':explicit}))
+        self.assertTrue(compact_goal({'request':'Build two pages with a trend followed by a summary table.'}))
+        expanded=expand_compose([action],blank()['definition'],profile,explicit)
+        self.assertIn('BY host',next(x for x in expanded if x.get('id')=='ds_detail')['pipeline'])
     def test_fresh_table_separators_preserve_expressions_scope_and_other_panels(self):
         action=compose();action['links']=[]
         query='| stats avg(duration) AS mean max(duration) AS peak latest(_time) AS seen BY device_name | eval mean=round(mean,2) peak=round(peak,1) seen=strftime(seen,"%Y|%m,%d %H:%M:%S")'
@@ -178,7 +201,7 @@ class CompactCreationTests(unittest.TestCase):
     def test_agent_still_runs_actual_output_binding_and_recovery_checks(self):
         action = compose(); action['pages'] = [dict(action['pages'][0], panels=[panel('volume', 'splunk.table', '| stats count', '', ['missing'])]),
             dict(action['pages'][1], panels=[panel('detail', 'splunk.table', '| stats count', '', ['count'])])]; action['links'] = []
-        fix = {'op': 'set', 'path': '/visualizations/volume/options/table', 'value': '> primary | frameBySeriesNames("count")'}
+        fix = copy.deepcopy(action); fix['pages'][0]['panels'][0]['y'] = ['count']
         class CompactProvider(Provider):
             def configured(self): return {'provider':'aitk','model':'fixture'}
         original = blank()['definition']; provider = CompactProvider([reply([action]), reply([fix])]); runtime = Runtime()
@@ -187,8 +210,9 @@ class CompactCreationTests(unittest.TestCase):
         self.assertTrue(result['validationNotes']); self.assertFalse(original['visualizations'])
         self.assertEqual(result['pagePurposes']['layout_main'], action['pages'][0]['purpose'])
         self.assertEqual(provider.requests[0]['text']['format']['schema']['properties']['changes']['items']['properties']['pages']['minItems'], 2)
-        schema = provider.requests[1]['text']['format']['schema']['properties']['changes']['items']['anyOf']
-        self.assertNotIn(COMPOSE_ACTION, schema)
+        schema = provider.requests[1]['text']['format']['schema']['properties']['changes']['items']
+        self.assertEqual(schema['properties']['op']['enum'], ['compose'])
+        self.assertEqual(json.loads(provider.requests[1]['input'][-1]['content'][0]['text'])['recoveryFeedback']['editsApplyTo'], 'original')
         self.assertIn('volume', apply_changes(original, result['changes'])['visualizations'])
 
     def test_explicit_one_page_creation_keeps_the_same_execution_and_binding_checks(self):

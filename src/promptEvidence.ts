@@ -29,3 +29,28 @@ export function unitConfirmation(field: ProfileField): PromptSuggestion | null {
     prompt:`${JSON.stringify(field.name)} is recorded in ${units[unit]}.`,
     reason:`Name hint only: ${unit}. Send this confirmation only if it is the stored unit; edit it otherwise.`};
 }
+
+/** Discard an optional repeated source-unit question only with scoped user evidence. */
+export function redundantUnitQuestion(card: PromptSuggestion, profile?: DataProfile | null): boolean {
+  const text = `${card.label} ${card.prompt}`;
+  if (!/\b(?:confirm|verify|clarify|check|which|what|define)\b.{0,80}\b(?:units?|fahrenheit|celsius|dbm|milliseconds|seconds)\b/i.test(text)
+      || /\b(?:convert\w*|conversion|display\w*|show|plot|format|label|axis|relabel\w*)\b/i.test(text)) return false;
+  const fields = profile?.fields || [];
+  const hasUnitMeaning = (field: ProfileField) => field.context?.role === 'measurement' || isMeasurement(field);
+  const matches = (value: string) => fields.filter(field => {
+    const escaped = field.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return new RegExp(`(?<![\\w.])${escaped}(?!\\w|\\.\\w)`, 'i').test(value);
+  });
+  // The editable request's exact field wins over a generic display label that
+  // happens to equal another inspected field (temperature vs temperature_f).
+  const requested = matches(card.prompt);
+  const named = requested.length ? requested : matches(card.label);
+  const quantities = [
+    [/\b(?:temp(?:eratures?)?|fahrenheit|celsius)\b/i, 'temperature'],
+    [/\b(?:latency|duration|response time|milliseconds|seconds)\b/i, 'duration'],
+    [/\b(?:rssi|wi-?fi|signal|dbm)\b/i, 'signal_strength'],
+  ] as const;
+  const mentioned = quantities.filter(([pattern]) => pattern.test(text)).map(([,quantity]) => quantity);
+  const relevant = named.length ? named : mentioned.length ? fields.filter(field => mentioned.some(quantity => quantity === field.context?.quantity)) : fields.filter(hasUnitMeaning);
+  return relevant.length > 0 && relevant.every(field => hasUnitMeaning(field) && field.context?.basis === 'user' && !!field.context.unit && !field.context.nameUnitConflict);
+}

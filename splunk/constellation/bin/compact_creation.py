@@ -113,7 +113,40 @@ def compact_goal(context):
     advanced = r'\b(?:grid|trellis|map|maps|choropleth|scatter|pie|gauge|funnel|sankey|network\s+graph|custom\s+visualization|dropdown|multiselect|cascad\w*|auto[- ]?refresh|conditional|visibility|markdown|image|sketch|PDF|SPL2|chain|pixels?|coordinates?|width|height|tokens?)\b|\bsplunk\.(?!line\b|area\b|column\b|bar\b|singlevalue\b|table\b)|\$'
     selective = r'\b(?:no|without)\s+(?:(?:return|back)\s+)?buttons?\b|\b(?:do not|don.t|never)\s+(?:add|create|include)[^.!?]{0,60}\bbutton\b|\bbutton[^.!?]{0,40}\b(?:named|labelled|labeled|called)\b|\b(?:only|just)\s+(?:one|this|the selected)\s+(?:detail|destination)'
     placement = r'\b(?:place|put|position)\b[^.!?]{0,60}\b(?:left|right|above|below|beside)\b|\bspan\s+(?:both|two|2)\s+columns\b'
-    return not any(re.search(pattern, prompt, re.I) for pattern in (advanced, selective, placement))
+    return not split_series_goal(prompt) and not any(re.search(pattern, prompt, re.I) for pattern in (advanced, selective, placement))
+
+
+def split_series_goal(prompt):
+    prompt = re.sub(r'\b(?:followed|accompanied|supported)\s+by\b', '', prompt, flags=re.I)
+    return bool(re.search(r'\b(?:trends?|timecharts?|series|lines)\b[^.!?]{0,60}\b(?:by|per|split)\b|\b(?:separate|individual|per[- ](?:device|host|entity))\s+(?:series|lines|trends)\b', prompt, re.I))
+
+
+def detail_timechart(pipeline, chart, field, profile):
+    """One linked entity and fixed aliases make its terminal BY redundant.
+
+    Only a fresh ordinary catalog composition qualifies. Do not touch an
+    Overview, a user-requested split series, supplied search, expression,
+    advanced option, unknown input, quoted field or post-timechart transform.
+    """
+    if (not isinstance(pipeline, str) or chart.get('chartType') not in ('splunk.line','splunk.area','splunk.column','splunk.bar')
+            or chart.get('x') != '_time' or profile.get('scope',{}).get('language','spl')!='spl'
+            or not profile.get('scope', {}).get('index') or profile['scope'].get('query')): return pipeline
+    from measurement_constraints import pipeline_commands
+    parts = pipeline_commands(pipeline)
+    if not parts: return pipeline
+    start,end,command = parts[-1]
+    literal = r'[A-Za-z_][A-Za-z0-9_]*'
+    match = re.fullmatch(r'timechart(?:\s+(?:bins=\d+|span=\d+[smhd]))?\s+(.+?)\s+BY\s+(' + literal + r')', command, re.I)
+    known = {item['name']:item for item in profile.get('fields', [])}
+    if not match or match[2] != field or field not in known: return pipeline
+    metric = r'(?:(avg|min|max|sum|median|stdev|latest|earliest|count)\(\s*(' + literal + r')\s*\)|(count))\s+AS\s+(' + literal + r')'
+    if not re.fullmatch(metric + r'(?:\s*,?\s*' + metric + r')*', match[1], re.I): return pipeline
+    metrics = re.findall(metric, match[1], re.I)
+    aliases = [item[3] for item in metrics]
+    if not chart.get('y') or aliases != chart['y'] or len(set(aliases)) != len(aliases): return pipeline
+    if any(value and (value not in known or function.lower() not in ('count','latest','earliest') and known[value].get('numeric') is not True) for function,value,_count,_alias in metrics): return pipeline
+    by = re.search(r'\s+BY\s+' + re.escape(field) + r'\s*$', command, re.I)
+    return pipeline[:start] + '| ' + command[:by.start()] + pipeline[end:]
 
 
 def empty_canvas(document):
@@ -197,7 +230,7 @@ def without_redundant_input_casts(pipeline, profile):
     return pipeline
 
 
-def expand_compose(actions, document, profile):
+def expand_compose(actions, document, profile, request=''):
     if not isinstance(actions, list) or not any(isinstance(a, dict) and a.get('op') == 'compose' for a in actions): return actions
     if (len(actions) != 1 or not empty_canvas(document) or not profile
             or profile.get('scope', {}).get('language', 'spl') != 'spl'):
@@ -245,7 +278,7 @@ def expand_compose(actions, document, profile):
         labels[pid] = page['label']
         result.append({'op': 'page', 'layoutId': 'layout_' + pid, 'label': page['label'], 'purpose': page['purpose'],
                        'moveItems': False, 'width': 1200, 'height': bottom + 20, 'items': items})
-    linked, returns = set(), set()
+    linked, returns, detail_fields = set(), set(), {}
     for offset, link in enumerate(action['links']):
         exact(link, ('from', 'to', 'field'))
         origin, destination = link_references(link, panels, labels)
@@ -256,6 +289,7 @@ def expand_compose(actions, document, profile):
             raise ProviderError('Use one row destination per compose table and keep each token bound to one entity field.')
         linked.add(origin);tokens[token] = link['field']
         targets = [key for key, value in panels.items() if value['page'] == destination]
+        for key in targets: detail_fields.setdefault(key,set()).add(link['field'])
         result.append({'op': 'token', 'name': token, 'value': '*'})
         result.extend({'op': 'filter', 'sourceId': 'ds_' + key, 'field': link['field'], 'token': token} for key in targets)
         result.append({'op': 'link', 'sourceId': origin, 'pageId': 'layout_' + destination, 'targetId': targets[0],
@@ -268,5 +302,12 @@ def expand_compose(actions, document, profile):
             result.append({'op': 'button', 'id': 'back_' + str(offset), 'label': back_label, 'pageId': 'layout_' + destination,
                            'targetPageId': 'layout_' + panels[origin]['page'], 'targetId': '', 'x': 20, 'y': pages[destination], 'w': 300, 'h': 80})
             pages[destination] += 100
+    if request and not split_series_goal(request):
+        charts = {item['sourceId']:item for item in result if item['op']=='chart'}
+        for item in result:
+            if item['op'] != 'search': continue
+            fields = detail_fields.get(item['id'][3:],set())
+            if len(fields)==1:
+                item['pipeline'] = detail_timechart(item['pipeline'],charts[item['id']],next(iter(fields)),profile)
     if len(result) > 64: raise ProviderError('Keep the expanded compose proposal within the 64-action budget.')
     return result

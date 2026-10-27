@@ -14,6 +14,24 @@ UNIT_NAMES = {'fahrenheit': ('°F', 'temperature'), 'celsius': ('°C', 'temperat
               'percent': ('%', 'ratio'), 'bytes': ('B', 'size'), 'ms': ('ms', 'duration'),
               'sec': ('s', 'duration'), 's': ('s', 'duration'), 'us': ('µs', 'duration'),
               '°f': ('°F', 'temperature'), '°c': ('°C', 'temperature')}
+RECORDED_UNIT_VERBS = r'(?:is (?:measured|recorded|stored) in|is in|uses units of|units are)'
+
+
+def declared_units(name, intent):
+    """Recognize assertions about an exact field, never questions or conversions."""
+    units = '|'.join(re.escape(unit) for unit in sorted(UNIT_NAMES, key=len, reverse=True))
+    pattern = r'(?<![\w.])["`\']?' + re.escape(name) + r'["`\']?\s+' + RECORDED_UNIT_VERBS + r'\s+(' + units + r')(?=\s|[.,;!?]|$)'
+    result = []
+    for match in re.finditer(pattern, intent, re.I):
+        start = max(intent.rfind(mark, 0, match.start()) for mark in '.!?;\n') + 1
+        prefix = intent[start:match.start()]
+        end = re.search(r'[.!?;\n]', intent[match.end():])
+        if end and end[0] == '?': continue
+        suffix = intent[match.end():match.end() + end.start()] if end else intent[match.end():]
+        if re.search(r'^\s*,?\s*(?:or|versus|vs)\b|\b(?:if|unless|perhaps|maybe)\b', suffix, re.I): continue
+        if re.search(r"\b(?:if|unless|whether|confirm|verify|check|assum\w*|suppose|imagine|perhaps|maybe|could|would|should|might|not|never|isn['’]t|don['’]t)\b", prefix, re.I): continue
+        result.append(UNIT_NAMES[match[1].lower()][0])
+    return result
 
 
 def scalar_number(value):
@@ -97,11 +115,10 @@ def enrich_profile(profile, intent=''):
     for field in result['fields']:
         context = name_context(field['name'])
         declared = dict(definitions.get(field['name'], {}))
-        # Deliberately require an exact field and an explicit recorded-unit verb.
+        # Deliberately require an exact field and a stored-unit assertion.
         escaped = re.escape(field['name'])
-        pattern = r'(?<![\w.])(?:["`\']?)' + escaped + r'(?:["`\']?)\s+(?:is measured in|is recorded in|uses units of|units are)\s+(' + '|'.join(re.escape(unit) for unit in sorted(UNIT_NAMES, key=len, reverse=True)) + r')(?=\s|[.,;!?]|$)'
-        declarations = list(re.finditer(pattern, intent, re.I))
-        if declarations: declared['unit'] = UNIT_NAMES[declarations[-1][1].lower()][0]
+        declarations = declared_units(field['name'], intent)
+        if declarations: declared['unit'] = declarations[-1]
         definition = list(re.finditer(r'(?<![\w.])["`\']?' + escaped + r'["`\']?\s+(?:means|represents)\s+([^\n.!?]{1,240})', intent, re.I))
         if definition: declared['meaning'] = definition[-1][1].strip()
         if declared:
@@ -191,6 +208,6 @@ def unit_confirmation(profile, prompt):
         if field.get('context', {}).get('basis') != 'user': continue
         units = '|'.join(re.escape(unit) for unit in sorted(UNIT_NAMES, key=len, reverse=True))
         name = re.escape(field['name'])
-        if re.fullmatch(r'\s*["`\']?' + name + r'["`\']?\s+(?:is recorded in|is measured in|uses units of|units are)\s+(?:' + units + r')\s*\.?\s*', prompt, re.I):
+        if re.fullmatch(r'\s*["`\']?' + name + r'["`\']?\s+' + RECORDED_UNIT_VERBS + r'\s+(?:' + units + r')\s*\.?\s*', prompt, re.I):
             return field['name'], field['context'].get('unit')
     return None

@@ -29,7 +29,7 @@ def authoring_brief(body):
         # conversation or routine chart-title/style instructions.
         clauses = re.split(r'(?<=[.!?])\s+', body['prompt'].strip())
         additions = [text for text in clauses if re.search(
-            r'\b(?:remember|always|require|exclude|excluding|exclusion|ignore|units?|fahrenheit|celsius|must|never|cutoff|missing|zero|means|represents|measured in|recorded in|each (?:row|event))\b', text, re.I)
+            r'\b(?:remember|always|require|exclude|excluding|exclusion|ignore|units?|fahrenheit|celsius|must|never|cutoff|missing|zero|means|represents|(?:same|shared) population|(?:stop|no longer)[^.!?]{0,80}\bindependent|(?:measured|recorded|stored) in|is in (?:dBm|ms|seconds|percent|bytes)|(?:preserv\w*|retain\w*|keep\w*)[^.!?]{0,100}(?:\ball (?:source )?(?:rows|events|observations)|\bindependent)|each (?:row|event))\b', text, re.I)
             and text not in previous and text not in brief['purpose']]
         if additions:
             text = '\n\n'.join(additions)

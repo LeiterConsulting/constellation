@@ -16,6 +16,10 @@ def recipe(kind='stats', metrics=None, group='device_name', columns=None):
             'groupBy':group,'columns':columns or []}
 
 class RecipeTests(unittest.TestCase):
+    def test_invalid_recipe_shape_feedback_identifies_the_correction_without_accepting_it(self):
+        recipe={'kind':'timechart','metrics':[{'function':'count','field':'','alias':'events'}],'groupBy':'','columns':[]}
+        for changed,message in ((dict(recipe,columns=['events']),'Only raw table'),(dict(recipe,metrics=[]),'1–8 metrics'),(dict(recipe,groupBy='device_name'),'groupBy:""')):
+            with self.subTest(changed=changed),self.assertRaisesRegex(ProviderError,message):compile_recipe(changed,'splunk.line',PROFILE)
     def test_aggregate_and_raw_bindings_come_from_one_verified_plan(self):
         self.assertEqual(compile_recipe(recipe(), 'splunk.table', PROFILE), ('| stats avg(duration) AS mean_value count AS observations BY device_name | eval mean_value=round(mean_value,2)','','device_name mean_value observations'.split()))
         q,x,y = compile_recipe(recipe('timechart', group=''), 'splunk.line', PROFILE)
@@ -78,7 +82,8 @@ class RecipeTests(unittest.TestCase):
                      'modelLimits':{'contextTokens':32768},'history':[]}
             request={'instructions':'Initial instructions','text':{'format':{'schema':copy.deepcopy(SCHEMA)}},'input':[{'role':'user','content':[{'type':'input_text','text':'context'}]}]}
             budget=AuthoringBudget({'provider':provider},context);budget.prepare(request,blank()['definition'])
-            panels=request['text']['format']['schema']['properties']['changes']['items']['properties']['pages']['items']['properties']['panels']['items']['anyOf']
+            props=request['text']['format']['schema']['properties']['changes']['items']['properties']
+            panels=(props['panels'] if provider=='ollama' else props['pages']['items']['properties']['panels'])['items']['anyOf']
             self.assertEqual(any('recipe'in variant.get('properties',{})for variant in panels),provider=='aitk')
             self.assertEqual('PREFERRED SEARCH FORM'in request['instructions'],provider=='aitk')
 

@@ -10,6 +10,28 @@ from dashboard_brief import authoring_brief
 class FieldContextTests(unittest.TestCase):
     def profile(self,fields):
         return {'scope':{'index':'fixture','earliest':'-24h'},'fields':fields,'sampledRows':4}
+    def test_stored_and_in_declarations_persist_exact_units_without_conversion(self):
+        base=self.profile([{'name':'temperature_f','numeric':True},{'name':'wifi_rssi','numeric':True}]);before=copy.deepcopy(base)
+        p=enrich_profile(base,'temperature_f is stored in Fahrenheit; wifi_rssi is in dBm. Exclude temperatures above 150°F.')
+        self.assertEqual(p['scope']['fieldDefinitions'],{'temperature_f':{'unit':'°F'},'wifi_rssi':{'unit':'dBm'}})
+        self.assertEqual([f['context']['basis']for f in p['fields']],['user','user'])
+        again=enrich_profile(json.loads(json.dumps(p)))
+        self.assertEqual(again['scope'],p['scope']);self.assertEqual(base,before)
+        self.assertEqual(unit_confirmation(p,'"wifi_rssi" is in dBm.'),('wifi_rssi','dBm'))
+        self.assertIsNone(unit_confirmation(p,'wifi_rssi is in dBm. Convert it to another unit.'))
+        brief=authoring_brief({'brief':{'purpose':'Observe readings','requirements':''},'prompt':'wifi_rssi is in dBm. latency is stored in milliseconds.'})
+        self.assertIn('wifi_rssi is in dBm',brief['requirements']);self.assertIn('stored in milliseconds',brief['requirements'])
+    def test_unit_questions_hypotheses_display_requests_and_other_fields_stay_unconfirmed(self):
+        base=self.profile([{'name':'temperature','numeric':True},{'name':'latency','numeric':True}])
+        for intent in ('temperature is stored in Fahrenheit?', 'Can you confirm temperature is in Fahrenheit?',
+                       'Confirm temperature is stored in Fahrenheit.', 'Do not assume temperature is in Fahrenheit.',
+                       'If temperature is stored in Fahrenheit, convert it.', 'Show temperature in Fahrenheit.',
+                       'temperature is stored in Fahrenheit or Celsius.', 'temperature is in Fahrenheit if this is the US source.',
+                       'Temperatures above 150°F are excluded.', 'not_temperature is in Fahrenheit.',
+                       'The recorded temperature readings use Fahrenheit.'):
+            with self.subTest(intent=intent):
+                self.assertNotIn('fieldDefinitions',enrich_profile(base,intent)['scope'])
+        self.assertNotIn('fieldDefinitions',enrich_profile(dict(base,scope={'index':'other','earliest':'-24h'}))['scope'])
     def test_exact_sample_presence_numeric_zero_invalid_and_multivalue_are_distinct(self):
         result={'fields':[{'name':x}for x in ('temperature_f','signal','ids','_raw')], 'results':[
             {'temperature_f':0,'signal':'-60','ids':['one','two'],'_raw':'PRIVATE FIXTURE'},
@@ -151,13 +173,14 @@ class FieldContextTests(unittest.TestCase):
             def datasets(self): return {'indexes':[{'name':'fixture'}]}
             def preview(self, body): return {'fields':[{'name':'response_time_ms'}],'results':[{'response_time_ms':0}]}
         doc=copy.deepcopy(STARTER);client=Client([])
-        reply=AgentService(ProviderService(Store(),client),Runtime()).assist({
-            'revision':0,'definition':doc,'prompt':'"response_time_ms" is recorded in milliseconds.',
-            'dataContext':{'index':'fixture','earliest':'-24h'}})
-        self.assertEqual(client.calls,[]);self.assertEqual(reply['changes'],[])
-        self.assertEqual(reply['recovery']['modelCalls'],0)
-        self.assertEqual(doc,STARTER)
-        self.assertEqual(reply['dataContext']['fieldDefinitions']['response_time_ms']['unit'],'ms')
-        self.assertEqual(reply['dataProfile']['fields'][0]['context']['basis'],'user')
+        for verb in ('is recorded in','is stored in','is in'):
+            reply=AgentService(ProviderService(Store(),client),Runtime()).assist({
+                'revision':0,'definition':doc,'prompt':'"response_time_ms" '+verb+' milliseconds.',
+                'dataContext':{'index':'fixture','earliest':'-24h'}})
+            self.assertEqual(client.calls,[]);self.assertEqual(reply['changes'],[])
+            self.assertEqual(reply['recovery']['modelCalls'],0)
+            self.assertEqual(doc,STARTER)
+            self.assertEqual(reply['dataContext']['fieldDefinitions']['response_time_ms']['unit'],'ms')
+            self.assertEqual(reply['dataProfile']['fields'][0]['context']['basis'],'user')
         for prompt in ('Is milliseconds correct for response_time_ms?', 'response_time_ms is recorded in milliseconds. Add a peak.', 'Display response_time_ms in seconds.'):
             self.assertIsNone(unit_confirmation(reply['dataProfile'],prompt))

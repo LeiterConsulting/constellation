@@ -1,10 +1,30 @@
 import { describe, expect, it } from 'vitest';
 import { createBlank, createStarter, cleanDashboardUrl, validateDefinition } from './document';
 import { contextualPrompts, nextSuggestions, promptContextKey, suggestionFocus, suggestionsDeclined } from './prompts';
+import { redundantUnitQuestion } from './promptEvidence';
 import { starterScopes } from './datasetQuestions';
 import { applyStudioChanges } from './agent';
 
 describe('fresh creation and contextual prompts', () => {
+  it('suppresses repeated unit questions only for scoped user declarations and retains useful next steps',()=>{
+    const profile={scope:{index:'fixture',earliest:'-24h' as const,fieldDefinitions:{temperature_f:{unit:'°F'}}},baseQuery:'search index=fixture',sampledRows:5,bounded:true,note:'Synthetic',fields:[
+      {name:'temperature_f',numeric:true,present:5,context:{role:'measurement' as const,basis:'user' as const,quantity:'temperature',unit:'°F'}},
+      {name:'temperature',numeric:true,present:5,context:{role:'measurement' as const,basis:'field_name' as const,quantity:'temperature'}},
+      {name:'latency',numeric:true,present:5,context:{role:'measurement' as const,basis:'field_name' as const,quantity:'duration'}},
+    ]};
+    const confirm={label:'Confirm temperature units',prompt:'Confirm the recorded units of temperature_f.',reason:'Review recorded units.',kind:'refine' as const};
+    const coverage={label:'Count valid readings',prompt:'Add independent valid-reading counts.',reason:'Interpret missing values.',kind:'data' as const};
+    expect(nextSuggestions([confirm],[coverage],{profile})).toEqual([coverage]);
+    expect(redundantUnitQuestion(confirm,{...profile,fields:profile.fields.map(f=>({...f,numeric:false}))})).toBe(true);
+    for (const prompt of ['Confirm temperature and latency units.','Check latency units.','Confirm units of temperature_f.calibrated.','Confirm the conversion of temperature_f to Celsius.','Which units should the temperature_f axis display?','Show temperature_f in Celsius.']) {
+      expect(redundantUnitQuestion({...confirm,prompt},profile)).toBe(false);
+    }
+    expect(redundantUnitQuestion(confirm,{...profile,fields:profile.fields.map(f=>({...f,context:{...f.context,basis:'field_name' as const}}))})).toBe(false);
+    expect(redundantUnitQuestion(confirm,{...profile,fields:profile.fields.map(f=>({...f,context:{...f.context,nameUnitConflict:'°C'}}))})).toBe(false);
+    expect(redundantUnitQuestion(confirm,null)).toBe(false);
+    const doc=createBlank();
+    expect(promptContextKey(0,doc,'',undefined,profile.scope)).not.toBe(promptContextKey(0,doc,'',undefined,{...profile.scope,fieldDefinitions:{}}));
+  });
   it('starts with no sample fields, charts, queries, inputs or token assumptions', () => {
     const blank = createBlank();
     expect(validateDefinition(blank)).toBe(blank);

@@ -24,7 +24,7 @@ from dashboard_brief import authoring_brief
 from repair_hints import placement_hint
 from creation_prompt import CREATION_INSTRUCTIONS
 from focused_prompt import FOCUSED_INSTRUCTIONS
-from population_guard import independent_measurements
+from population_guard import independent_measurements, retain_source_rows
 from measurement_constraints import temperature_constraints
 from table_format import formatting_only, TABLE_FORMAT_ACTION, FORMAT_INSTRUCTIONS, verified_format_action
 from quick_edit import quick_edit
@@ -349,6 +349,7 @@ class AgentService:
             profile = enrich_profile(profile, confirmed_intent)
             profile['measurementConstraints'] = temperature_constraints(confirmed_intent, brief, profile)
             profile['independentMeasurements'] = data.independent_populations
+            profile['retainSourceRows'] = retain_source_rows(prompt, brief)
         table_receipt = data.focused_table_receipt(document, focus.get('id'), profile) if profile and focus['kind'] == 'visualization' else None
         if profile and not profile['sampledRows']:
             return {'revision': revision, 'message': 'No rows were found in the selected data and time range. Choose another dataset or a wider range to continue.',
@@ -602,6 +603,15 @@ class AgentService:
                     profile = enrich_profile(data.profile(scope), confirmed_intent)
                     profile['measurementConstraints'] = temperature_constraints(confirmed_intent, brief, profile)
                     profile['independentMeasurements'] = data.independent_populations
+                    profile['retainSourceRows'] = retain_source_rows(prompt, brief)
+                if getattr(budget, 'compact', False):
+                    # This turn began on an empty verified canvas. Its rejected
+                    # composition is transient, never accepted user work. Replan
+                    # compactly against the exact original, retaining receipts
+                    # and every final validator instead of expanding to native
+                    # JSON solely because a late search/binding check failed.
+                    proposal = PendingProposal(document)
+                    next_purposes = purposes
                 # Keep failed output and validation feedback as untrusted user content.
                 budget.feedback(request, {
                     'recoveryFeedback': {'validationError': feedback, 'dataProfile': profile,
