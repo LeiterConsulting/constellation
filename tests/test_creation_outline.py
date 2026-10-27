@@ -22,6 +22,17 @@ def outline():
 
 
 class CreationOutlineTests(unittest.TestCase):
+    def test_flat_recipe_plans_keep_membership_inputs_and_atomic_rejection(self):
+        action=outline();action['panels']=[{k:v for k,v in p.items()if k not in ('pipeline','x','y')}for p in action['panels']]
+        for p in action['panels']:
+            metric=[{'function':'count','field':'','alias':'count'}]
+            p['recipe']={'kind':'stats','metrics':metric,'groupBy':'device_name' if p['type']=='splunk.table' else ''} if p['type']in('splunk.table','splunk.singlevalue') else {'kind':'timechart','metrics':metric}
+        before=copy.deepcopy(action);original=blank()['definition'];profile=dict(PROFILE,fields=[{'name':'device_name'}])
+        compiled=expand_compose([nested_outline(action)],original,profile)
+        final=apply_changes(original,compile_actions(original,compiled,profile));self.assertEqual(len(final['visualizations']),4)
+        self.assertEqual(action,before);self.assertIn('search device_name=$select_page_1|s$',final['dataSources']['ds_detail']['options']['query'])
+        mixed=copy.deepcopy(action);mixed['panels'][0]['pipeline']='| delete'
+        with self.assertRaises(ProviderError):nested_outline(mixed)
     def test_linked_fixed_alias_trend_reaches_native_validation_without_a_model_repair(self):
         class Model(Provider):
             def configured(self):return {'provider':'ollama','model':'synthetic'}

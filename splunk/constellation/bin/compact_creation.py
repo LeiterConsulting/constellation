@@ -91,18 +91,25 @@ sentences. At most one brief useful suggestion, or [].'''
 
 RECIPE_COMPACT_INSTRUCTIONS = COMPACT_INSTRUCTIONS.replace(
     '{id,type,title,pipeline,x,y}',
-    '{id,type,title,recipe:{kind,metrics:[{function,field,alias}],groupBy,columns}}', 1) + '''
+    '{id,type,title,recipe:{kind,...}}', 1) + '''
 PREFERRED SEARCH FORM: use the recipe panel above for ordinary aggregates/raw tables.
 The server builds SPL and matching output bindings together. Recipe panels NEVER
-also supply pipeline/x/y. kind:"stats": metrics use
-avg/min/max/sum/median/stdev/count/latest/earliest; field is an exact verified input,
-alias a distinct output, groupBy one verified entity or "", columns:[]. count with
-field:"" counts all events; count with a measurement field counts valid readings.
-kind:"timechart": same metrics, groupBy:"",columns:[]; the server supplies bins=100
-and _time. kind:"table": metrics:[],groupBy:"",columns:[requested verified raw fields,
-including _time when requested]. The server already masks excluded measurements;
-use original input fields, without conditional eval or casts. Only advanced searches
-need the alternative {id,type,title,pipeline,x,y} panel with exact output bindings.
+also supply pipeline/x/y. Choose exactly one recipe shape:
+stats: {kind:"stats",metrics:[{function:"avg",field:"verified_numeric",alias:"mean"},
+{function:"count",field:"",alias:"observations"}],groupBy:"verified_entity"}.
+timechart: {kind:"timechart",metrics:[{function:"avg",field:"verified_numeric",alias:"mean"}]}.
+table: {kind:"table",columns:["_time","verified_entity","verified_numeric"]}.
+Replace the example fields/aliases with inspected fields and requested calculations.
+Aggregate recipes do NOT have columns. Only raw tables have columns; their recipe
+has no metrics or groupBy. Only stats has groupBy (one verified field or "").
+Metrics use avg/min/max/sum/median/stdev/count/latest/earliest. field is an exact
+verified input; alias is a distinct output. count with field:"" counts all events;
+count with a measurement field counts valid readings. Timechart gets bins=100/_time.
+Include every requested raw field, including _time when requested. The server
+already masks excluded measurements; use original inputs, without conditional
+eval or casts. Only calculations outside these recipes need the alternative
+{id,type,title,pipeline,x,y} panel with exact output bindings. Keep metrics requested
+in one summary together in that panel, never add a separate chart for each metric.
 '''
 
 

@@ -1,5 +1,11 @@
 # Updating Constellation
 
+## 0.30 calculation-specific recipes
+
+No credential, draft or native-dashboard migration runs; schema remains 3. Refresh workspace tabs after installation. Keep the new kind-specific recipe wire schema in `creation_recipes.py`, separate from flat page membership in `creation_outline.py` and the existing composition/native compiler. Old complete recipes remain valid when their inapplicable fields are empty. Never discard nonempty columns/grouping/metrics or unknown properties to accept a mismatched kind.
+
+Ollama's eligible compact plan now prefers recipes but retains the pipeline alternative. Keep explicit page/chart bounds, advanced-goal fallback, unchanged original-work boundaries and every existing search/measurement/output/navigation validator. Requalify plain-language creation, multi-page exact counts, independent source populations, actual output binding, focused edits and native persistence for each provider. A smaller wire plan is not proof of model capacity, correctness or a controlled speedup.
+
 ## 0.29 compact outline and declared units
 
 No credential, draft or native-dashboard migration runs; schema remains 3. Refresh workspace tabs after installation. Keep Ollama's flat wire plan in `creation_outline.py`, separate from existing composition/native validation and the AITK recipe strategy. Retain exact-count runtime checks for schema-ignoring adapters, no truncation/invention, per-page membership, ordinary source/filter compilation and atomic repair. Requalify actual native output, independent measurement populations, Overview/detail scope, selected edits and persistence across providers.

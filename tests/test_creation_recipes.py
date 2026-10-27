@@ -16,6 +16,19 @@ def recipe(kind='stats', metrics=None, group='device_name', columns=None):
             'groupBy':group,'columns':columns or []}
 
 class RecipeTests(unittest.TestCase):
+    def test_kind_specific_plans_compile_without_irrelevant_fields_and_preserve_legacy(self):
+        for modern, legacy, chart in (
+            ({'kind':'stats','metrics':recipe()['metrics'],'groupBy':'device_name'},recipe(),'splunk.table'),
+            ({'kind':'timechart','metrics':recipe()['metrics']},recipe('timechart',group=''),'splunk.line'),
+            ({'kind':'table','columns':['_time','device_name','duration']},recipe('table',[], '',['_time','device_name','duration']),'splunk.table')):
+            before=copy.deepcopy(modern)
+            self.assertEqual(compile_recipe(modern,chart,PROFILE),compile_recipe(legacy,chart,PROFILE))
+            self.assertEqual(modern,before)
+        for bad in ({'kind':'stats','metrics':[]}, {'kind':'timechart','metrics':recipe()['metrics'],'columns':['mean_value']},
+                    {'kind':'table','columns':['duration'],'metrics':recipe()['metrics']},
+                    {'kind':'table','columns':['duration'],'extra':True}, {'kind':[], 'columns':[]}):
+            with self.subTest(bad=bad),self.assertRaises(ProviderError):compile_recipe(bad,'splunk.table',PROFILE)
+
     def test_invalid_recipe_shape_feedback_identifies_the_correction_without_accepting_it(self):
         recipe={'kind':'timechart','metrics':[{'function':'count','field':'','alias':'events'}],'groupBy':'','columns':[]}
         for changed,message in ((dict(recipe,columns=['events']),'Only raw table'),(dict(recipe,metrics=[]),'1–8 metrics'),(dict(recipe,groupBy='device_name'),'groupBy:""')):
@@ -61,12 +74,15 @@ class RecipeTests(unittest.TestCase):
                 if body.get('fieldDiscovery'):return super().preview(body)
                 self.calls.append(body)
                 return {'state':'complete','fields':[{'name':n}for n in (['observations']if self.missing else['mean_value','observations'])], 'results':[{'mean_value':'12','observations':'3'}]}
-        for kind in ('aitk',):
+        for kind in ('aitk','ollama'):
             class CompactProvider(Provider):
                 def configured(self):return {'provider':kind,'model':'fixture'}
                 def capabilities(self,saved):return {'contextTokens':32768,'images':False,'pdf':False}
             action={'op':'compose','title':'Observed duration','description':'Selected real data.','pages':[{'id':'main','label':'Overview','purpose':'Observe duration','columns':1,
-                    'panels':[{'id':'summary','type':'splunk.table','title':'Mean duration','recipe':recipe(group='')}]}],'links':[]}
+                    'panels':[{'id':'summary','type':'splunk.table','title':'Mean duration','recipe':{k:v for k,v in recipe(group='').items()if k!='columns'}}]}],'links':[]}
+            if kind=='ollama':
+                action=dict(action,pages=[{k:v for k,v in action['pages'][0].items()if k not in('id','panels')}],
+                            panels=[dict(action['pages'][0]['panels'][0],page=0)])
             runtime=Outputs();provider=CompactProvider([reply([action])]);body={'prompt':'Build one page with one table of mean duration and observations.','revision':0,'definition':blank()['definition'],'dataContext':blank()['dataContext']}
             result=AgentService(provider,runtime).assist(body);self.assertEqual(result['recovery']['modelCalls'],1);self.assertEqual(result['recovery']['queryChecks'],1);self.assertFalse(result['repaired'])
             self.assertEqual(result['recovery']['recipePanels'],1)
@@ -74,7 +90,7 @@ class RecipeTests(unittest.TestCase):
             runtime=Outputs();runtime.missing=True;provider=CompactProvider([reply([action])]*3)
             with self.assertRaises(ProviderError):AgentService(provider,runtime).assist(body)
 
-    def test_recipe_wire_strategy_is_enabled_only_for_the_qualified_provider_path(self):
+    def test_recipe_wire_strategy_excludes_irrelevant_kind_fields_and_keeps_advanced_pipeline(self):
         from authoring_budget import AuthoringBudget
         from agent_service import SCHEMA
         for provider in ('aitk','ollama'):
@@ -84,7 +100,13 @@ class RecipeTests(unittest.TestCase):
             budget=AuthoringBudget({'provider':provider},context);budget.prepare(request,blank()['definition'])
             props=request['text']['format']['schema']['properties']['changes']['items']['properties']
             panels=(props['panels'] if provider=='ollama' else props['pages']['items']['properties']['panels'])['items']['anyOf']
-            self.assertEqual(any('recipe'in variant.get('properties',{})for variant in panels),provider=='aitk')
-            self.assertEqual('PREFERRED SEARCH FORM'in request['instructions'],provider=='aitk')
+            recipes=next(variant['properties']['recipe']['anyOf']for variant in panels if 'recipe'in variant.get('properties',{}))
+            self.assertEqual([set(r['properties'])for r in recipes],[{'kind','metrics','groupBy'},{'kind','metrics'},{'kind','columns'}])
+            self.assertTrue(all(r['additionalProperties']is False and set(r['required'])==set(r['properties'])for r in recipes))
+            self.assertTrue(any('pipeline'in variant.get('properties',{})for variant in panels))
+            self.assertIn('PREFERRED SEARCH FORM',request['instructions'])
+            if provider=='ollama':
+                self.assertIn('panels:[{id,page:0,type,title,recipe:{kind,...}}]',request['instructions'])
+                self.assertNotIn('panels:[\n',request['instructions'])
 
 if __name__=='__main__':unittest.main()

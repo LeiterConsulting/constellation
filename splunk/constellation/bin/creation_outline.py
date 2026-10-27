@@ -39,9 +39,10 @@ def nested_outline(action):
             raise ProviderError('Outline pages contain label, purpose and columns only.', 422, 'compact_plan')
         page.update(id='page_' + str(index), panels=[])
     for panel in result.pop('panels'):
-        if (not isinstance(panel, dict) or set(panel) != {'id', 'page', 'type', 'title', 'pipeline', 'x', 'y'}
+        keys = {'id', 'page', 'type', 'title', 'recipe'} if isinstance(panel, dict) and 'recipe' in panel else {'id', 'page', 'type', 'title', 'pipeline', 'x', 'y'}
+        if (not isinstance(panel, dict) or set(panel) != keys
                 or type(panel['page']) is not int or not 0 <= panel['page'] < len(pages)):
-            raise ProviderError('Give each outline chart an existing zero-based page index and its documented pipeline/bindings.', 422, 'compact_plan')
+            raise ProviderError('Give each outline chart an existing zero-based page index and one documented recipe or pipeline/bindings.', 422, 'compact_plan')
         page = panel.pop('page')
         result['pages'][page]['panels'].append(panel)
     if not isinstance(links, list) or len(links) > 4:
@@ -58,8 +59,9 @@ def nested_outline(action):
 
 def outline_instructions(instructions):
     return instructions.replace(
-        '{op:"compose",title,description,pages:[{id,label,purpose,columns:1 or 2,panels:[\n{id,type,title,pipeline,x,y}]}],links:[{from,to,field}]}.',
-        '{op:"compose",title,description,pages:[{label,purpose,columns:1 or 2}],\npanels:[{id,page:0,type,title,pipeline,x,y}],links:[{from,to:1,field}]}.'
+        'pages:[{id,label,purpose,columns:1 or 2,panels:[\n',
+        'pages:[{label,purpose,columns:1 or 2}],\npanels:['
+    ).replace(']}],links:[{from,to,field}]}.', '],links:[{from,to:1,field}]}.').replace('{id,type,title,', '{id,page:0,type,title,'
     ).replace('Every page and panel ID must be globally unique, start with a letter and contain',
               'Every panel ID must be unique, start with a letter and contain'
     ).replace('Use bare IDs such as overview,details,temp; do not add layout_ or ds_ prefixes.',

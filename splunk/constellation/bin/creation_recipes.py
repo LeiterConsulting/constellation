@@ -23,12 +23,29 @@ RECIPE_PANEL = {'type': 'object', 'properties': {
     'type': {'type': 'string', 'enum': ['splunk.line', 'splunk.area', 'splunk.column', 'splunk.bar', 'splunk.singlevalue', 'splunk.table']},
     'title': {'type': 'string'}, 'recipe': RECIPE},
     'required': ['id', 'type', 'title', 'recipe'], 'additionalProperties': False}
+# Models choose a calculation, not empty fields belonging to another kind.
+# Runtime still accepts the older complete form, but never drops populated
+# fields or unknown properties to make a rejected proposal pass.
+RECIPE_PANEL['properties']['recipe'] = {'anyOf': [
+    {'type': 'object', 'properties': {key: ({'type': 'string', 'enum': [kind]} if key == 'kind' else RECIPE['properties'][key]) for key in keys},
+     'required': list(keys), 'additionalProperties': False}
+    for kind, keys in (('stats', ('kind', 'metrics', 'groupBy')),
+                       ('timechart', ('kind', 'metrics')),
+                       ('table', ('kind', 'columns')))
+]}
+for variant in RECIPE_PANEL['properties']['recipe']['anyOf']:
+    key = 'columns' if variant['properties']['kind']['enum'] == ['table'] else 'metrics'
+    variant['properties'][key] = dict(variant['properties'][key], minItems=1)
 FIELD = r'[A-Za-z_][A-Za-z0-9_]*'
 
 
 def compile_recipe(recipe, chart_type, profile):
-    if not isinstance(recipe, dict) or set(recipe) != set(RECIPE['required']):
-        raise ProviderError('Use kind, metrics, groupBy and columns for a complete search recipe.')
+    if not isinstance(recipe, dict):
+        raise ProviderError('Use one documented search recipe object.')
+    required = {'stats': {'kind', 'metrics', 'groupBy'}, 'timechart': {'kind', 'metrics'}, 'table': {'kind', 'columns'}}.get(recipe.get('kind') if isinstance(recipe.get('kind'), str) else '')
+    if not required or not required <= set(recipe) or not set(recipe) <= set(RECIPE['required']):
+        raise ProviderError('Use stats {kind,metrics,groupBy}, timechart {kind,metrics}, or table {kind,columns}; do not invent recipe fields.')
+    recipe = dict({'metrics': [], 'groupBy': '', 'columns': []}, **recipe)
     if not profile or profile.get('scope', {}).get('language', 'spl') != 'spl':
         raise ProviderError('First-draft recipes require a verified SPL scope.')
     known = {f['name']: f for f in profile.get('fields', [])}

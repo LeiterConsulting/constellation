@@ -62,11 +62,8 @@ class AuthoringBudget:
                             and all(part.get('type') == 'input_text' for item in request['input'] for part in item['content']))
         omit_compose(request)
         if self.compact:
-            # Qualification selected recipes for AITK. Keep Ollama's existing
-            # compact wire shape after live trials of the wider union failed.
-            recipes = self.provider == 'aitk'
-            request['instructions'] = RECIPE_COMPACT_INSTRUCTIONS if recipes else outline_instructions(COMPACT_INSTRUCTIONS)
-            request['text']['format']['schema']['properties']['changes']['items'] = copy.deepcopy(RECIPE_COMPOSE_ACTION if recipes else COMPOSE_ACTION)
+            request['instructions'] = RECIPE_COMPACT_INSTRUCTIONS if self.provider == 'aitk' else outline_instructions(RECIPE_COMPACT_INSTRUCTIONS)
+            request['text']['format']['schema']['properties']['changes']['items'] = copy.deepcopy(RECIPE_COMPOSE_ACTION)
             # Encode the explicit small page count for schema-aware adapters;
             # actions() also enforces it for schema-ignoring adapters.
             pages = request['text']['format']['schema']['properties']['changes']['items']['properties']['pages']
@@ -74,7 +71,7 @@ class AuthoringBudget:
             pages.update(minItems=count, maxItems=count)
             if self.provider == 'ollama':
                 panels = explicit_panel_count(context['request']) if re.search(r'\bexactly\s+\w+\s+(?:charts|panels|tiles|visualizations)\b', context['request'], re.I) else None
-                request['text']['format']['schema']['properties']['changes']['items'] = outline_schema(COMPOSE_ACTION, count, panels)
+                request['text']['format']['schema']['properties']['changes']['items'] = outline_schema(RECIPE_COMPOSE_ACTION, count, panels)
             request['text']['format']['schema']['properties']['changes']['maxItems'] = 1
         if self.creation and context.get('dataProfile'):
             request['instructions'] += '\n\n' + CONCISE_CREATION
@@ -161,8 +158,6 @@ class AuthoringBudget:
         recipe_panels = sum(1 for action in actions if isinstance(action, dict) and action.get('op') == 'compose'
                             for page in action.get('pages', []) if isinstance(page, dict)
                             for panel in page.get('panels', []) if isinstance(panel, dict) and 'recipe' in panel) if isinstance(actions, list) else 0
-        if recipe_panels and self.provider == 'ollama' and getattr(self, 'compact', False):
-            raise ProviderError('Use the qualified pipeline/x/y panel form for this connection, not a recipe panel. Preserve the requested pages and total chart count.', 422, 'compact_plan')
         actions = expand_compose(actions, document, self.context.get('dataProfile'), self.context['request'] if getattr(self,'compact',False) else '')
         if recipe_panels: self.recipe_panels = recipe_panels
         if self.phase == 'foundation' and isinstance(actions, list):

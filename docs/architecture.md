@@ -2,6 +2,12 @@
 
 Constellation is a Splunk app with an embedded browser workspace and current-user Python REST handlers. It does not require a separately deployed orchestration platform, database or vector service.
 
+## Calculation-specific compact recipes (0.30)
+
+`creation_recipes.py` exposes three strict wire forms: stats has metrics and a grouping field; timechart has metrics; raw table has columns. The kind discriminates required properties, so aggregate plans do not carry a raw-column list. The compiler supplies only omitted inapplicable empty values and retains compatibility with the former complete form. Populated irrelevant fields, unknown properties, invalid inputs, aliases, types and unsupported calculations still fail. No model field is silently discarded to pass validation.
+
+Eligible Ollama creation now prefers these recipes inside the existing flat, page-indexed chart list. AITK retains its composition with the same smaller recipes. Both retain a pipeline/x/y alternative for calculations outside the recipe functions; advanced, supplied-query, SPL2 and existing native editing boundaries remain unchanged. Recipes own neither data execution nor acceptance: scope, measurement masks/populations, actual output, original intent, placement, navigation and preservation checks still run before atomic commit. No UI, credential, persistence schema, execution authority or recovery-budget changes are introduced.
+
 ## Bounded Ollama outline and unit context (0.29)
 
 Ollama's eligible compact first draft uses `creation_outline.py`: a flat chart list with zero-based page membership and a separate page-label/purpose list. An explicitly exact total constrains the one chart array in the model schema and remains checked at runtime. The compiler neither invents missing panels nor truncates extras; malformed memberships, unknown fields and empty pages fail. It expands into the existing composition, searches, chart bindings and navigation, retaining all actual search/output, scope, measurement, placement, intent and permission validation. AITK keeps its recipe strategy; OpenAI and advanced/existing edits keep their established paths. Recovery still uses three model calls, sixteen query checks and the existing time bounds.

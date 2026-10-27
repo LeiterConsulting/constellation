@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.30.0 - 2026-10-27
+
+- Give compact search recipes distinct stats, timechart and raw-table shapes. Models no longer need to fill irrelevant empty properties; runtime retains the old complete form without discarding populated or unknown fields.
+- Prefer verified recipes in Ollama's flat first-draft plan as well as AITK's composition. Preserve the pipeline alternative for unsupported calculations, exact chart/page counts, current-user native searches and all final validation.
+- Keep the same interface, credentials, draft schema and recovery bounds. Provider qualification and remaining 1.0 gates are recorded in [validation](docs/validation.md).
+
 ## 0.29.0 - 2026-10-27
 
 - Use a flat bounded chart list for eligible Ollama creation, with explicit page membership and exact-count schema/runtime checks. Compile through existing native composition and validation; never drop extras or invent missing charts.

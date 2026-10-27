@@ -1,14 +1,14 @@
 # Validation status
 
-Snapshot: **0.29.0 development preview, October 27, 2026**. This file is a sanitized summary. Private lab addresses, credentials, screenshots, transcripts, raw search data and detailed runtime receipts are excluded from the repository.
+Snapshot: **0.30.0 development preview, October 27, 2026**. This file is a sanitized summary. Private lab addresses, credentials, screenshots, transcripts, raw search data and detailed runtime receipts are excluded from the repository.
 
-See the [0.29 compact-creation and unit-context qualification](#0290-compact-creation-and-retained-unit-context--october-27-2026) for current evidence. Earlier cohorts below retain their own scope and failures.
+See the [0.30 recipe qualification](#0300-calculation-specific-recipes--october-27-2026) for current evidence. Earlier cohorts below retain their own scope and failures.
 
 ## Local verification
 
 | Check | Observed result |
 | --- | --- |
-| Python unit suites | 407 tests passed on Python 3.9 and 3.13, including flat creation outlines, late compact recovery, linked detail trends, stored-unit evidence, source-row retention and retained authority/search/native regressions. |
+| Python unit suites | 409 tests passed on Python 3.9 and 3.13, including kind-specific/legacy recipes, flat recipe membership, actual-output rejection, bounded recovery and retained authority/search/native/field-context regressions. |
 | Frontend unit suites | 106 tests passed, including scoped repeated-unit suppression, conflicting/mixed units, exact field-name collisions, suggestion invalidation and retained delivery/focus/starter regressions. |
 | TypeScript and production build | Passed; bundle-size warning remains. |
 | Deterministic app package | Generated with SHA-256 receipt. |
@@ -24,6 +24,32 @@ The AppInspect result applies to the tested development archive. The seven warni
 | 10.4.4 | 1.26.6 | Native roundtrips, synthetic SPL/SPL2, PDF native interactions, Ollama edits, prior page/focus exercises and current row-budget check. |
 
 The full 0.7.1 creation/switch/reopen journey was run on the 10.2.8 target, not repeated in full on 10.4.4. AITK succeeded through an existing configured connection on one target; another target returned no usable completion. Do not infer instance-independent provider availability from app installation.
+
+## 0.30.0 Calculation-specific recipes — October 27, 2026
+
+The final **0.30.0 build 45** archive is SHA-256 `807b156a282e059b08492663c65766a2cf495b72a28e6cfe6db54dcb805c2665` (459 files; 5,454,288 bytes). Both lab versions installed the exact archive without restart, using verified TLS. All 66 Python modules, browser entry and three asset chunks matched source/build; no macOS/private extras or extended metadata were present. Fresh AppInspect 4.3.1 precert returned zero errors/failures/future failures, seven warnings and one skip. The 19.2 MB browser-entry warning remains.
+
+**Change.** Compact stats, timechart and raw-table recipes now expose only their own meaningful fields. AITK no longer has to fill a raw-column list for aggregate plans. Ollama can use the same verified recipes inside its bounded flat page/chart plan, avoiding hand-authored input casts, masks and matching output bindings for ordinary calculations. The pipeline alternative remains available for calculations outside those recipes. Old complete recipes remain supported with empty inapplicable fields; populated irrelevant properties and unknown fields are rejected rather than discarded. Every current-user scope, actual search/output, measurement/population, original-goal, placement, navigation and preservation check remains active. UI controls, privileges, draft schema and recovery limits are unchanged.
+
+**Final-package repeated cohort.** Three disposable ordinary authors and an isolation peer used the existing constrained role. OpenAI used `gpt-6-luna`, Ollama `qwen3-coder:latest`, and AITK 6.2 the existing approved connection; AITK upstream model/token parameters were not read or changed. Each provider completed two rounds on CPU, reachability and freezer data: blank two-page/four-chart creation, selected maximum calculation, number/date formatting and existing-button editing. All **18 flows / 72 turns** passed on the first model response. Exact draft/conversation reopen, private native copies in Search & Reporting and peer denial passed. Authors had no administrator, credential-store or AI-configuration capability. The cohort lasted about 5.0–8.8 minutes per provider; it is not another 30-minute soak.
+
+| Provider | Complete flows / turns | First-response turns | Median creation seconds (range) | Median edit seconds |
+| --- | --- | --- | --- | --- |
+| OpenAI | 6 / 24 | 24/24 | 24.08 (21.04–27.51) | 6.30 |
+| Ollama | 6 / 24 | 24/24 | 22.96 (21.23–40.04) | 7.71 |
+| AITK | 6 / 24 | 24/24 | 25.78 (24.47–27.64) | 18.04 |
+
+All six Ollama and all six AITK creations compiled four recipe panels. None needed the former input-measurement or aggregate-column repair. AITK's prior six creations included three repairs and a 23.23–51.97-second range. These are bounded regression observations under overlapping work, not a controlled speedup or provider-wide latency/success guarantee. Ollama's first creation still took 40 seconds; avoiding repair does not eliminate upstream latency.
+
+**Independent analytical and delivery checks.** Native read-only synthetic probes checked all **72 final source transformations**: known means/maxima/counts, raw columns/nulls, both detail selections, and unchanged numerical Overview results. Separate boundary probes on all six freezer boards retained exactly 150°F, excluded 150.1°F/180°F, kept missing readings unknown and preserved independent Wi-Fi/event populations. Synthetic rows were neither ingested nor sent to inference. Actual-data previews retained their bounds and partial labels; arithmetic probes do not establish complete indexed coverage. The repeated cohort overlapped **113 background cycles / 226 metadata reads** and **20 actual preview lifecycles**, all passing. Three controlled original-response losses recovered the original validated replies without inference replay. All 72 acknowledgements were confirmed with no missed receipts. The 2281 traced handler requests, including cleanup checks, contained 24 expected private-draft access denials and no natural transport failure; injected disconnects remain separate. This sample does not explain every historical interruption. No new cancellation burst was run; prior cancellation/pending-save qualification retains its original scope.
+
+**Broader goals and UI.** The unchanged shorter freezer goal from 0.29 passed through all three ordinary authors in one model call each: OpenAI 27.92 seconds, Ollama 22.88 seconds and AITK 26.50 seconds. All retained stored units, detail-only filters, exact private draft/native definitions and peer denial. The earlier Ollama example required two calls and 48.63 seconds. Production suggestion functions checked against these actual profiles omitted a synthetic repeated-unit card and retained useful cards, including a genuine display-conversion choice. This supplemental function check is separate from the operated UI journeys.
+
+All three authors reopened their new freezer drafts in the actual browser, selected the generated summary, requested a title-only chat edit, exercised row/detail/return navigation, refreshed after Overview was visibly selected, and saved through Save to Splunk into Search & Reporting. Independent full-definition readback proved that only the selected title changed: every query, mask, geometry and interaction stayed exact; conversation, units and Overview persisted. Every saved native Studio copy rendered and supported row/return navigation with ordinary Edit/Actions controls. An initial browser driver tried refresh before the asynchronous return action was visible; the synchronized check passed without an app change. The driver also initially treated a relative native link as an absolute host; resolving it at the existing origin fixed that test error. Neither is counted as a natural REST failure.
+
+The opt-in synthetic benchmark supplement ran **three cases per provider**: four-page/eight-chart creation, retargeting an existing route within a 32-chart document, and a focused metric addition. All nine cases passed every applicable critical gate on the first model response. This is a subset of benchmark v2, not a rerun of all twelve tasks or production qualification; the existing grader and fixture identities are retained in private reports. It does not automatically change model routing or authority.
+
+**Remaining 1.0 gates.** Full journeys ran on Enterprise 10.2.8 / Studio 1.23.12 with AITK 6.2, one search head. Enterprise 10.4.4 / Studio 1.26.6 received installation verification only; its installed AITK remains 6.1 and is not newly qualified. Broader phrasing/model and native/imported/SPL2/derived-unit semantics, independent delivery/tab-storage security review, longer deployment/upgrade/cluster trials, second-target provider journeys, unaided usability/accessibility/reflow and bundle reduction remain open. The targeted repairs did not recur in this sample; that is not proof of general reliability. This is a development preview, not 1.0 or Cloud certification. Cleanup removed four temporary accounts, 26 owned configuration objects, 24 private native views, 12 owned jobs and the copied OpenAI key. All 36 original administrator drafts/preferences/settings, 78 original administrator configuration contents, protected AITK policy and backing-collection ACLs were unchanged. The original browser login was restored; the temporary password file was deleted. Raw evidence stays local.
 
 ## 0.29.0 Compact creation and retained unit context — October 27, 2026
 
