@@ -4,18 +4,18 @@ A conversational canvas for creating and editing **Splunk Dashboard Studio** das
 
 Describe an operational question, choose data available to your Splunk user, and watch a dashboard take shape. Select a chart, input or page to refine it through chat. Start from a blank canvas, an existing Studio definition, or an image/PDF reference when the selected provider supports it.
 
-**Status: 0.34.0 development preview (unreleased).** This is a new codebase, separate from Splunk Dashboard Generator. It is not a production release or Splunk Cloud certified app. The repository is currently private and is being prepared for a future public release.
+**Status: 0.34.0 development preview.** This is a new codebase, separate from Splunk Dashboard Generator. It is not a production release or Splunk Cloud certified app. The repository is currently private and is being prepared for a future public release.
 
 ## Download and start
 
-Get [Constellation 0.31.1](https://github.com/LeiterConsulting/constellation/releases/tag/v0.31.1), the latest published development preview. Repository access is required.
+Get [Constellation 0.34.0](https://github.com/LeiterConsulting/constellation/releases/tag/v0.34.0), the latest published development preview. Repository access is required.
 
 | Download | Use |
 | --- | --- |
-| [Splunk app · tar.gz](https://github.com/LeiterConsulting/constellation/releases/download/v0.31.1/constellation-0.31.1.tar.gz) | Install or update Constellation through Splunk app management. |
-| [App and documentation bundle](https://github.com/LeiterConsulting/constellation/releases/download/v0.31.1/constellation-0.31.1-handoff.zip) | The same app, user guide, setup instructions and reviewed support/validation documents. |
-| [Standalone user guide](https://github.com/LeiterConsulting/constellation/releases/download/v0.31.1/constellation-0.31.1-user-guide.md) | A walkthrough of creation, focused editing, drafts and native saves. |
-| [SHA256SUMS](https://github.com/LeiterConsulting/constellation/releases/download/v0.31.1/SHA256SUMS) | Verify the downloaded files. |
+| [Splunk app · tar.gz](https://github.com/LeiterConsulting/constellation/releases/download/v0.34.0/constellation-0.34.0.tar.gz) | Install or update Constellation through Splunk app management. |
+| [App and documentation bundle](https://github.com/LeiterConsulting/constellation/releases/download/v0.34.0/constellation-0.34.0-handoff.zip) | The same app, user guide, setup instructions and reviewed support/validation documents. |
+| [Standalone user guide](https://github.com/LeiterConsulting/constellation/releases/download/v0.34.0/constellation-0.34.0-user-guide.md) | A walkthrough of creation, focused editing, drafts and native saves. |
+| [SHA256SUMS](https://github.com/LeiterConsulting/constellation/releases/download/v0.34.0/SHA256SUMS) | Verify the downloaded files. |
 
 1. Have an administrator install the app from file using the [installation guide](docs/installation.md). Refresh workspace tabs after an update; follow Splunk's reported restart requirements.
 2. Open **Constellation → Settings**, configure OpenAI, Ollama or an administrator-approved AITK connection, and test the selected model. Keys stay in Splunk; no credentials are included in the release.

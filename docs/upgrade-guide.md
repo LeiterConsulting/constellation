@@ -1,5 +1,7 @@
 # Updating Constellation
 
+The [0.34.0 release](https://github.com/LeiterConsulting/constellation/releases/tag/v0.34.0) includes the previously unpublished 0.32 and 0.33 increments described below. Install its reviewed archive through normal Splunk app management, then refresh existing workspace tabs. Retain backups and follow Splunk's reported restart requirements.
+
 ## 0.34 native shapes, planning and version boundaries
 
 Draft schema remains 3; no credential, draft or native-view migration runs. Refresh workspace tabs after installation. Keep documented native type/option minima in `studio_capabilities.json`, regenerate the inventory after changing type boundaries, and review official release notes separately from SDK metadata. An imported unsupported visualization remains intact in storage/export while its preview explains the target limitation. Never rewrite an imported query merely on load.

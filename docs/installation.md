@@ -1,15 +1,15 @@
 # Installation and first dashboard
 
-Constellation 0.31.1 is a development preview. Start in an isolated Splunk Enterprise environment with representative data. Review the [support matrix](studio-support.md), [validation scope](validation.md) and [security guide](../SECURITY.md).
+Constellation 0.34.0 is a development preview. Start in an isolated Splunk Enterprise environment with representative data. Review the [support matrix](studio-support.md), [validation scope](validation.md) and [security guide](../SECURITY.md).
 
 ## Download the release
 
-Download the installable `constellation-0.31.1.tar.gz` and `SHA256SUMS` from [release v0.31.1](https://github.com/LeiterConsulting/constellation/releases/tag/v0.31.1). Repository access is required. The `.tar.gz` is byte-identical to the qualified `.tgz` package; both are compressed tar archives accepted by app installation. The handoff ZIP contains the same app plus the user guide and related setup/support documents. A standalone user guide is also attached to the release.
+Download the installable `constellation-0.34.0.tar.gz` and `SHA256SUMS` from [release v0.34.0](https://github.com/LeiterConsulting/constellation/releases/tag/v0.34.0). Repository access is required. The `.tar.gz` is byte-identical to the qualified `.tgz` package; both are compressed tar archives accepted by app installation. The handoff ZIP contains the same app plus the user guide and related setup/support documents. A standalone user guide is also attached to the release.
 
 Calculate the downloaded file's SHA-256 and compare it with its matching line in `SHA256SUMS` before installation:
 
 ```sh
-shasum -a 256 constellation-0.31.1.tar.gz
+shasum -a 256 constellation-0.34.0.tar.gz
 ```
 
 The app digest is `bdd07caff21e3050b2f7c04903963af33575023425863f7645c3b19a4f78c8c3`. Release archives exclude macOS sidecars, private configuration, credentials and live evidence. Download users can continue with Install in Splunk Enterprise below.

@@ -9,7 +9,7 @@ from check_repository import text_issues
 ROOT = Path(__file__).resolve().parents[1]
 VERSION = json.loads((ROOT / 'package.json').read_text())['version']
 DOCS = ('SECURITY.md', 'CHANGELOG.md', 'docs/user-guide.md', 'docs/installation.md',
-        'docs/providers.md', 'docs/security-review.md', 'docs/aitk-setup.md', 'docs/studio-support.md', 'docs/validation.md', 'docs/provider-qualification.md', 'docs/model-benchmark.md',
+        'docs/providers.md', 'docs/security-review.md', 'docs/aitk-setup.md', 'docs/studio-support.md', 'docs/native-coverage.md', 'docs/validation.md', 'docs/provider-qualification.md', 'docs/model-benchmark.md',
         'docs/share-readiness.md', 'docs/architecture.md', 'docs/upgrade-guide.md',
         'docs/roadmap.md', 'docs/development.md', 'docs/product-direction.md',
         'docs/reliability-goal.md', 'tests/fixtures/README.md',
