@@ -5,6 +5,7 @@ const path = require('node:path');
 const base = path.dirname(require.resolve('@splunk/dashboard-presets/package.json'));
 const dir = path.join(base, 'node_modules/@splunk/visualizations');
 const target = path.join(__dirname, '../splunk/constellation/bin/contracts/studio_inventory.json');
+const versions = require('../splunk/constellation/bin/contracts/studio_capabilities.json');
 const presetSource = fs.readFileSync(path.join(base, 'EnterprisePreset.js'), 'utf8');
 const presetViz = new Set([...presetSource.matchAll(/require\("@splunk\/visualizations\/([^"/]+)"\)/g)].map(match => match[1]));
 const allowed = new Set(['type', 'enum', 'minimum', 'maximum', 'minItems', 'maxItems', 'properties', 'patternProperties', 'items', 'anyOf', 'oneOf']);
@@ -26,7 +27,7 @@ for (const file of fs.readdirSync(dir).filter(name => name.endsWith('.config.js'
   const config = require(path.join(dir, file)).default;
   if (!presetViz.has(file.replace('.config.js', ''))) continue;
   visualizations[config.key] = {
-    minimumEnterprise: config.key === 'splunk.networkGraph' ? '10.4' : '10.0',
+    minimumEnterprise: versions.visualizationMinimum[config.key] || '10.0',
     options: Object.fromEntries(Object.entries(config.optionsSchema).map(([name, rule]) => [name, shape(rule)])),
     events: Object.keys(config.events || {}),
     requiredSources: (config.dataContract?.requiredDataSources || []).map(source => source.name),

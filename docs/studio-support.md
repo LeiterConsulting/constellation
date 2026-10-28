@@ -4,7 +4,9 @@ The opt-in shared AITK handler separates inference authority from ordinary autho
 
 Table formatting uses a verified authoring action that compiles to a final SPL `eval` against existing aggregate output fields. `formatTable` is not a native visualization option: newly introduced or changed `options.formatTable` objects are rejected with repair feedback, while unchanged imported properties are preserved. Check the visible timestamp/number result in native Studio in addition to definition readback.
 
-This is the working support contract for the 0.33.0 development preview. Broad document authoring is implemented; complete native parity is not yet qualified. The preview uses the embedded Splunk Dashboard Framework and preserves the original Studio definition for export and native save. Unavailable explicit draft links stay closed without autosaving a blank document; the existing New dashboard and Dashboards actions remain available.
+This is the working support contract for the 0.34.0 development preview. Broad document authoring is implemented; complete native parity is not yet qualified. The preview uses the embedded Splunk Dashboard Framework and preserves the original Studio definition for export and native save. Unavailable explicit draft links stay closed without autosaving a blank document; the existing New dashboard and Dashboards actions remain available.
+
+Native chart source roles and direct bindings receive actual-output checks. Small explicit first drafts can use a compact native plan; imported/advanced work keeps native edits. Explicit chart families cannot be replaced silently by tables. Event filters are checked at their native handler location. The type/option registry gates newly introduced features independently of the embedded renderer.
 
 The [native coverage ledger](native-coverage.md) distinguishes the 29-type/822-option-entry embedded authoring inventory from live/native qualification. Relevant contracts and recipes use the current request, selected element and durable requirements. Native table cell shapes, array evidence, focused sparkline styling, known missing object parents and advanced direct source-field bindings have dedicated modules; unknown existing work remains preserved.
 
@@ -39,7 +41,7 @@ New or changed real-data timecharts must fit their selected window within the 20
 | SPL2 ad hoc | Synthetic execution passed | Synthetic execution passed |
 | SPL2 module-list endpoint | Not available (404) | Not available (404) |
 | Tabs, inputs, tokens, conditional visibility | Version-supported; existing tab/token flow exercised | Version-supported; new agent-created tab exercised |
-| Network graphs / new custom visualization framework | Version-supported; not separately rendered in this slice | Generation gated to existing configuration |
+| Network graphs / new custom visualization framework | Synthetic network topology rendered in light/dark; extension assets remain unqualified | New network graphs gated; imported configuration preserved |
 | Auto-refresh capability | Present for current lab user | Available under pre-10.4 behavior |
 | Provider connection | Direct Ollama edits passed. AITK named-connection inference remains unsuccessful in this environment. | OpenAI, Ollama and an existing AITK connection exercised; AITK multi-page creation/editing passed through the existing approved connection; upstream model/token settings were not re-read in the current cohort. |
 

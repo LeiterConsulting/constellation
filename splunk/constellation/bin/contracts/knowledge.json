@@ -260,5 +260,55 @@
     ],
     "source": "https://help.splunk.com/en/splunk-enterprise/create-dashboards-and-reports/dashboard-studio/10.4/visualizations/table",
     "text": "Table options.columnFormat is an object keyed by exact output field names, including fields literally named label or value. Each column value is an object. For a field named label use options.columnFormat.label.width=220, or columnFormat={\"label\":{\"width\":220}}. Width is a pixel number of at least 30, or a supported DOS binding. Never store an array of column descriptors, a JSON-encoded string, or width directly under columnFormat. Preserve other column settings, options, native report references, event handlers and layout. A presentation-only width edit does not require changing a report or query."
+  },
+  {
+    "id": "native-flow-shapes",
+    "title": "Native flow and relationship data",
+    "minimumEnterprise": "10.0",
+    "tags": [
+      "sankey",
+      "linkgraph",
+      "link graph",
+      "flow diagram"
+    ],
+    "source": "https://help.splunk.com/en/splunk-enterprise/create-dashboards-and-reports/dashboard-studio/10.2/visualizations/sankey-diagrams",
+    "text": "Sankey output has exact source and target columns plus a nonnegative numeric link weight, normally value. Use explicit linkValues for another verified weight field. A link graph instead connects adjacent ordered columns; fieldOrder chooses exact output names. Do not substitute a Sankey for a multi-column path graph or invent missing relationships. Preserve the selected data scope, null measurements and unrelated work."
+  },
+  {
+    "id": "native-multivariate-shapes",
+    "title": "Native multivariate chart data",
+    "minimumEnterprise": "10.0",
+    "tags": [
+      "parallelcoordinates",
+      "parallel coordinates",
+      "punchcard",
+      "punch card"
+    ],
+    "source": "https://help.splunk.com/en/splunk-enterprise/create-dashboards-and-reports/dashboard-studio/10.4/visualizations/parallel-coordinates",
+    "text": "Parallel coordinates use the first result column as the category and later columns as numeric axes. Project the intended ordered category and measurements; do not include an unrelated text dimension among the axes. Parallel coordinates do not support native interactions. Punchcards use separate x/y category series and a nonnegative numeric size series. Use actual verified fields, with native seriesByName bindings and no fabricated constants."
+  },
+  {
+    "id": "native-timeline-shapes",
+    "title": "Native timeline time and duration",
+    "minimumEnterprise": "10.2",
+    "tags": [
+      "timeline",
+      "interval",
+      "duration"
+    ],
+    "source": "https://help.splunk.com/en/splunk-enterprise/create-dashboards-and-reports/dashboard-studio/10.4/visualizations/timelines",
+    "text": "For native ds.search timelines use standard _time, whose search values are epoch seconds and whose Studio series is adapted to timestamps, or an ISO timestamp string. Binding a custom numeric epoch-ms series directly fails native rendering in qualified versions. For start_ms derive start_iso with strftime(start_ms/1000,\"%Y-%m-%dT%H:%M:%S.%3N%:z\"), preserving original fields, and bind x to start_iso. Bind y to the lane and duration to verified nonnegative milliseconds. Native version checks still apply; durationUnit begins in 10.6. Never guess input units. Use table to project the intended output columns in order."
+  },
+  {
+    "id": "native-network-shapes",
+    "title": "Native network link and node sources",
+    "minimumEnterprise": "10.4",
+    "tags": [
+      "network graph",
+      "networkgraph",
+      "nodeSource"
+    ],
+    "source": "https://help.splunk.com/en/splunk-enterprise/create-dashboards-and-reports/dashboard-studio/10.4/visualizations/network-graph",
+    "text": "Network graphs have primary link rows and may have a separate nodeSource for node attributes. Bind source/target to link IDs, nodeIds to node identifiers, and numeric styling/positions to the matching node-source fields. Preserve the distinction between node and link sources. Use explicit native series selectors for custom field names. Do not create a node relationship from coincidental values or reuse link weights as node metrics without evidence. This type requires Splunk 10.4."
   }
 ]

@@ -9695,7 +9695,7 @@
       ]
     },
     "splunk.timeline": {
-      "minimumEnterprise": "10.0",
+      "minimumEnterprise": "10.2",
       "options": {
         "x": {
           "anyOf": [
@@ -9921,7 +9921,7 @@
       "requiredSources": []
     },
     "splunk.treemap": {
-      "minimumEnterprise": "10.0",
+      "minimumEnterprise": "10.6",
       "options": {
         "additionalTooltipFields": {
           "anyOf": [

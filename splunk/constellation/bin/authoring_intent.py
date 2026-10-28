@@ -1,9 +1,11 @@
 """Check explicit, observable page requests against the resulting native document."""
 import re
 from provider_service import ProviderError
+from native_intent import validate_native_intent
 
 
 def validate_page_intent(prompt, message, document, previous, focus, purposes=None):
+    validate_native_intent(prompt, document, previous, focus)
     problems = []
     tabs = document.get('layout', {}).get('tabs', {}).get('items', [])
     if not previous.get('visualizations') and not previous.get('dataSources') and document!=previous:

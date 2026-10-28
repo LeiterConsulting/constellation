@@ -99,3 +99,9 @@ To revise navigation, select its table and describe the destination and filter: 
 The save line shows **Saving draft…** until Splunk confirms the private draft. Small pending changes also have a recovery copy in the current tab. After refresh, **Recovered unsaved changes from this tab** means the app restored and resumed saving those changes. An interrupted agent request returns to the composer and is not sent again automatically.
 
 If the save line says **Keep this tab open until saved**, wait for **Draft saved** before refreshing or closing. This can happen with large attachments or blocked/full browser storage. The tab copy lasts at most six hours and is not a backup across tab closure. If another session changed the draft, use the existing save-as-copy action to keep both versions. See [data and retention](../SECURITY.md#drafts-and-retention).
+
+## Request a native chart
+
+Name the chart and the question it should answer. For example, after inspecting suitable fields: “Create Relationships and Timing pages. Show a Sankey of source to target weighted by volume, parallel coordinates for the numeric comparison, and a timeline of each operation.” State units when they are known. Select the resulting chart to refine just its appearance or interaction.
+
+Constellation checks available native features and actual output fields before applying a change. It preserves the previous draft if it cannot finish a valid result. A chart imported from a newer Studio version can remain in the definition while the preview explains that the connected instance cannot display it. See the [coverage ledger](native-coverage.md) for tested cases and remaining limits; availability and definition readback alone do not prove every native behavior.

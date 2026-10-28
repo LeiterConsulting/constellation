@@ -425,6 +425,9 @@ class AgentService:
             context['formattingOnly'] = 'Format only existing numeric columns through formatTable. Omit absent or already-readable timestamps. Do not add aggregates, columns, search or binding edits.'
         from table_sort import exact_table_sort
         local_sort = exact_table_sort(prompt, focus.get('id'), document, profile, table_receipt, attachments)
+        from native_events import exact_event_set
+        local_event = exact_event_set(prompt, focus.get('id'), document, attachments)
+        local_proposal = local_sort or local_event
         guidance = retrieve_guidance(prompt, document, environment, real_data=bool(profile), brief=brief, focus=focus)
         context['retrievedGuidance'] = guidance
         context['nativeAuthoring'] = authoring_contract(prompt, document, environment, brief, focus)
@@ -477,10 +480,10 @@ class AgentService:
         next_purposes = purposes
         for attempt in range(MAX_MODEL_CALLS):
             try:
-                if attempt == 0 and local_sort:
+                if attempt == 0 and local_proposal:
                     # Exact literal intent uses the same compiler and every
                     # final validator, without asking a model to invent DOS.
-                    response = {'status': 'completed', 'output': [{'content': [{'type': 'output_text', 'text': json.dumps(local_sort)}]}]}
+                    response = {'status': 'completed', 'output': [{'content': [{'type': 'output_text', 'text': json.dumps(local_proposal)}]}]}
                 else:
                     recovery.model_call()
                     self.progress('model', attempt + 1)
@@ -646,7 +649,7 @@ class AgentService:
                     profile['independentMeasurements'] = data.independent_populations
                     profile['retainSourceRows'] = retain_source_rows(prompt, brief)
                     profile.update(profile_policy(prompt, brief, environment))
-                if getattr(budget, 'compact', False):
+                if getattr(budget, 'compact', False) or getattr(budget, 'native_plan', False):
                     # This turn began on an empty verified canvas. Its rejected
                     # composition is transient, never accepted user work. Replan
                     # compactly against the exact original, retaining receipts
@@ -672,6 +675,7 @@ class AgentService:
                              *(['Built in ' + str(budget.stages) + ' internal stages; applied together'] if budget.stages > 1 else []),
                              *(['Omitted invalid optional next-step suggestions'] if suggestions_omitted else []),
                              *(['Compiled an exact selected-table sort; all normal validation retained.'] if local_sort else []),
+                             *(['Compiled an exact native literal-token interaction; all normal validation retained.'] if local_event else []),
                              'Validated ' + str(len(result['changes'])) + ' Studio changes'],
                 'dataContext': profile['scope'] if profile else None, 'dataProfile': profile, 'searchReceipts': receipts,
                 'knowledgeSources': [{key: item[key] for key in ('id', 'title', 'source')} for item in guidance],

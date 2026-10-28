@@ -6,6 +6,7 @@ import json
 from provider_service import ProviderError
 from compatibility import feature_profile
 from native_transport import native_read_retry, transport_failure
+from studio_inventory import native_types
 
 TIME_RANGES = {'-15m', '-1h', '-24h', '-7d'}
 
@@ -14,13 +15,6 @@ READ_COMMANDS = {'search', 'from', 'makeresults', 'stats', 'timechart', 'chart',
                  'rex', 'fillnull', 'streamstats', 'eventstats', 'mvexpand', 'mvcombine',
                  'convert', 'spath', 'top', 'rare', 'untable', 'xyseries', 'transpose',
                  'addtotals', 'addcoltotals', 'tstats', 'metadata'}
-COMMON_VIZ = ['splunk.singlevalue', 'splunk.singlevalueicon', 'splunk.singlevalueradial',
-              'splunk.line', 'splunk.area', 'splunk.column', 'splunk.bar', 'splunk.table',
-              'splunk.pie', 'splunk.scatter', 'splunk.bubble', 'splunk.treemap', 'splunk.punchcard',
-              'splunk.sankey', 'splunk.linkgraph', 'splunk.map', 'splunk.markdown',
-              'splunk.rectangle', 'splunk.ellipse', 'splunk.fillergauge', 'splunk.markergauge',
-              'splunk.timeline', 'splunk.richtext', 'splunk.image', 'splunk.parallelcoordinates', 'splunk.events', 'splunk.choropleth.svg']
-COMMON_VIZ.append('abslayout.line')
 
 
 def read_only_query(query, language='spl'):
@@ -190,7 +184,7 @@ class SearchService:
                   'spl': 'available' if 'search' in context.get('capabilities', []) else 'restricted',
                   'spl2': {'adhoc': 'not_checked', 'modules': modules.get('unavailable', 'available')},
                   'features': features,
-                  'visualizations': COMMON_VIZ + (['splunk.networkGraph'] if features['networkGraph'] else []),
+                  'visualizations': native_types({'version': version}),
                   'preview': {'rows': 200, 'seconds': 5, 'timeRange': 'last 15 minutes',
                               'externalNavigation': 'paused', 'customVisualizations': 'native Studio only'}}
         if probe:

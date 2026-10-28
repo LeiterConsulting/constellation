@@ -4,6 +4,14 @@ from compatibility import version_tuple
 from provider_service import ProviderError
 from table_cells import validate_table_options
 from native_options import validate_options
+from studio_versions import validate_native_version
+from studio_inventory import INVENTORY
+
+
+def supports_event(pattern, event):
+    expression = ''.join('[A-Za-z0-9_.-]+' if part.startswith('<') else re.escape(part)
+                         for part in re.split(r'(<[^>]+>)', pattern))
+    return re.fullmatch(expression, event) is not None
 
 
 def feature_contract():
@@ -60,7 +68,9 @@ def validate_features(document, previous, environment):
         for key, item in document.get(root, {}).items():
             if not isinstance(item, dict): raise ProviderError('Studio items must be objects.')
             before = previous.get(root, {}).get(key, {})
-            if root in ('visualizations', 'inputs'): validate_options(item, before)
+            if root in ('visualizations', 'inputs'):
+                validate_options(item, before)
+                validate_native_version(item, before, environment.get('version', ''))
             if root == 'dataSources' and item.get('type') == 'ds.savedSearch' and item != before:
                 options, old_options = item.get('options', {}), before.get('options', {})
                 if not isinstance(options.get('ref'), str) or not options['ref'].strip():
@@ -75,6 +85,10 @@ def validate_features(document, previous, environment):
                 validate_table_options(options, old_options, environment)
                 if 'formatTable' in options and ('formatTable' not in old_options or options['formatTable'] != old_options['formatTable']):
                     raise ProviderError('formatTable is an authoring action, not a native table option. Return an op:formatTable action using the selected table and its verified focusedSourceReceipt. For new tables or broader calculation edits, format output aliases with final SPL eval after aggregation. Do not save options.formatTable; Studio ignores it.')
+            if root == 'visualizations' and item.get('type') in INVENTORY['visualizations']:
+                options, old_options = item.get('options', {}), before.get('options', {})
+                if 'events' in options and options['events'] != old_options.get('events') and 'events' not in INVENTORY['visualizations'][item['type']]['options']:
+                    raise ProviderError('Event filters belong in eventHandlers[].options.events, not visualization options.events. Preserve chart options; add the requested native event handler only.', 422, 'native_event_location')
             if root == 'visualizations' and item.get('type', '').startswith('splunk.'):
                 for label in ('title', 'description'):
                     value = item.get('options', {}).get(label)
@@ -115,12 +129,19 @@ def validate_features(document, previous, environment):
                     if visibility.get(mode + 'WhenConditions', 'all-true') not in ('all-true', 'any-true'):
                         raise ProviderError('Visibility conditions use all-true or any-true matching.')
             handlers = item.get('eventHandlers', [])
-            if handlers != before.get('eventHandlers', []):
+            if handlers != before.get('eventHandlers', []) or (root == 'visualizations' and item.get('type') != before.get('type')):
                 if not isinstance(handlers, list) or len(handlers) > 50: raise ProviderError('Use up to 50 event handlers per Studio item.')
                 for handler in handlers:
                     if not isinstance(handler, dict) or not isinstance(handler.get('type'), str) or not isinstance(handler.get('options', {}), dict):
                         raise ProviderError('Each Studio event handler needs a type and options.')
                     options = handler.get('options', {})
+                    if root == 'visualizations' and (item.get('type') != before.get('type') or handler not in before.get('eventHandlers', [])) and item.get('type') in INVENTORY['visualizations']:
+                        events = INVENTORY['visualizations'][item['type']]['events']
+                        if not events:
+                            raise ProviderError('This native visualization does not support interactions. Keep existing imported handlers; use an adjacent supported chart or button for new navigation.', 422, 'native_event')
+                        requested = options.get('events', [])
+                        if not isinstance(requested, list) or any(not isinstance(event, str) or not any(supports_event(pattern, event) for pattern in events) for event in requested):
+                            raise ProviderError('Choose events supported by native ' + item['type'] + ': ' + ', '.join(events)[:400], 422, 'native_event')
                     if handler['type'] == 'drilldown.switchToTab' and options.get('tabId') not in layouts:
                         raise ProviderError('A tab action refers to a missing Studio layout.')
                     if handler['type'] == 'drilldown.setToken':

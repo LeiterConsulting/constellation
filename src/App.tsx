@@ -165,6 +165,7 @@ export default function App({ initialColorScheme }: { initialColorScheme: 'light
     void providerRequest<ProviderSettings>('settings', undefined, controller.signal).then(setConnection).catch(() => { /* Settings explains connection errors on request. */ })
       .finally(() => { if (!controller.signal.aborted) setConnectionLoading(false); });
     void providerRequest<DataDiscovery>('discovery', undefined, controller.signal).then(setDiscovery).catch(() => { /* An existing search remains available in the data chooser. */ });
+    void providerRequest<Environment>('environment', undefined, controller.signal).then(setEnvironment).catch(() => { /* Explicit Environment checks can retry and explain access errors. */ });
     void (async () => {
       try {
         setStorageError('');
@@ -358,7 +359,7 @@ export default function App({ initialColorScheme }: { initialColorScheme: 'light
           <IdeaText><strong>{idea.label}</strong><span>{idea.reason}</span></IdeaText>
         </IdeaButton>)}</IdeaGrid><Muted role="status">{starters.loading ? 'Finding useful questions in your recent data…' : starters.ideas.length ? 'Based on inspected fields in recent data. Choose a question to edit before building.' : discovery ? discovery.warning || 'Choose data or bring an existing search to find a useful starting question.' : isSplunk() ? 'Checking the data available in this Splunk instance…' : 'Open the installed Splunk app to discover real data.'}</Muted></> : null}
         {connection?.capabilities?.images ? <Actions><Button onClick={() => { setCollapsed(false); attachmentInput.current?.click(); }} disabled={thinking}>{connection.capabilities.pdf ? 'Start from a sketch or PDF' : 'Start from a sketch'}</Button></Actions> : null}
-      </EmptyCanvas> : <Preview definition={revision.definition} revision={revision.number} tokens={tokens} activeTab={activeTab} onTokens={onTokens} onTab={onTab} onSelect={onSelect} searchResults={searches.results} searchVersion={searches.version} searchMessages={searches.messages} selected={selected} selecting={selecting}/> }
+      </EmptyCanvas> : <Preview definition={revision.definition} revision={revision.number} tokens={tokens} activeTab={activeTab} onTokens={onTokens} onTab={onTab} onSelect={onSelect} searchResults={searches.results} searchVersion={searches.version} searchMessages={searches.messages} selected={selected} selecting={selecting} nativeTypes={environment?.visualizations}/> }
       {status ? <Muted role="status">{status}</Muted> : null}{saved ? <Link to={saved.url} openInNewContext appearance="standalone">Open saved dashboard in native Studio</Link> : null}
       </Canvas>
       <Conversation ref={conversationElement} style={{ height: panelHeight }} $floating={floating} $collapsed={collapsed} aria-label="Dashboard conversation">

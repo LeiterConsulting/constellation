@@ -4,7 +4,7 @@ A conversational canvas for creating and editing **Splunk Dashboard Studio** das
 
 Describe an operational question, choose data available to your Splunk user, and watch a dashboard take shape. Select a chart, input or page to refine it through chat. Start from a blank canvas, an existing Studio definition, or an image/PDF reference when the selected provider supports it.
 
-**Status: 0.33.0 development preview (unreleased).** This is a new codebase, separate from Splunk Dashboard Generator. It is not a production release or Splunk Cloud certified app. The repository is currently private and is being prepared for a future public release.
+**Status: 0.34.0 development preview (unreleased).** This is a new codebase, separate from Splunk Dashboard Generator. It is not a production release or Splunk Cloud certified app. The repository is currently private and is being prepared for a future public release.
 
 ## Download and start
 
@@ -42,6 +42,8 @@ This app remains self-contained inside Splunk: React/TypeScript, the Splunk Dash
 
 ## Current development
 
+- Native type/option release boundaries are separate from the embedded renderer. New unavailable features are rejected; imported configurations remain intact and receive a preview notice.
+- Specialized chart source roles, ordered numeric axes, time bindings and supported events receive actual-output validation. Bounded native-chart creation uses a smaller plan while retaining every final check.
 - Versioned structural contracts and attributed native recipes reach the agent using the request, selected element and durable Draft requirements. Smaller creation/editing paths retain relevant guidance.
 - Native table sparklines can be created alongside scalar aggregates and styled across every row through verified selected-column edits. Actual array output is checked before styling.
 - Missing-value behavior follows the native target: older Studio asks for a trend chart or explicitly accepted, labelled zero fill; supported newer-target queries preserve missing buckets and genuine observed zero separately.
@@ -61,7 +63,7 @@ Search previews use the current user's permissions and a read-only command subse
 
 Multi-page actual-data creation and focused edits have been exercised through OpenAI, Ollama and AITK. Earlier AITK qualification verified a 16,000-token budget; a 2,000-token setting could return no completion. The app does not query or infer its current upstream model/token limits. Settings distinguishes a small connection test from full authoring and exposes reported or unknown limits. Compact creation reduces avoidable output while retaining all validation gates. These are bounded provider/model/environment checks, not a general success-rate or 1.0 acceptance claim.
 
-The [latest qualification](docs/validation.md#0330-report-sources-and-input-lifecycles--october-28-2026) covers final-package non-admin two-page creation, focused sparkline editing and report-backed edits through all three providers, with exact draft reopen and private native readback. OpenAI creation recovered in two calls; the other eight turns used one call each. Both native versions received separate report-preview, cancellation and input-state checks. Earlier broader cohorts retain their own package identity and scope. These operated samples are separate from unaided-user or general reliability acceptance.
+The [latest qualification](docs/validation.md#0340-native-chart-shapes-and-release-boundaries--october-28-2026) records specialized native chart cases, ordinary-user provider journeys and the exact development package. Readback, browser rendering and offline validation are reported separately. These operated samples remain separate from unaided-user or general reliability acceptance.
 
 **Before 1.0:** historical latency tails, broader model/native/imported/SPL2 and complex measurement semantics, independent delivery/storage security review, fresh-install/upgrade/rollback/cluster testing, unaided UX/accessibility and bundle reduction remain open. AITK on the second tested target remains blocked by maintainer permissions. See the [release gates](docs/roadmap.md), [support contract](docs/studio-support.md) and [qualification protocol](docs/provider-qualification.md).
 
@@ -78,7 +80,7 @@ python3.13 scripts/package_app.py
 npm run dev -- --port 5178
 ```
 
-The local preview demonstrates the canvas with illustrative data. Provider settings, live searches, server-backed drafts and native saves require the installed Splunk app. Packaging creates `artifacts/constellation-0.33.0.tgz`; release `.tar.gz` assets contain those exact bytes. Build artifacts and dependencies stay outside Git. See [development and release checks](docs/development.md).
+The local preview demonstrates the canvas with illustrative data. Provider settings, live searches, server-backed drafts and native saves require the installed Splunk app. Packaging creates `artifacts/constellation-0.34.0.tgz`; release `.tar.gz` assets contain those exact bytes. Build artifacts and dependencies stay outside Git. See [development and release checks](docs/development.md).
 
 ## Data and credentials
 

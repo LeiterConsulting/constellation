@@ -13,6 +13,7 @@ import ElementFocus from './ElementFocus';
 import { navigationTarget } from './pages';
 import { usePreviewHeight } from './usePreviewHeight';
 import { previewTokenSnapshot, resetDefaults } from './previewDefaults';
+import { nativeSupportMessage } from './previewCompatibility';
 
 // Metadata lookup only. This utility never constructs or runs a data source.
 const inputPreset = new Preset({ presetDefinition: EnterprisePreset, SnapshotDataSource: undefined });
@@ -51,8 +52,9 @@ interface Props {
   searchVersion: number;
   searchMessages?: Record<string, string>;
   selected: string; selecting: boolean;
+  nativeTypes?: string[];
 }
-export default memo(function Preview({ definition, revision, tokens, activeTab, onTokens, onTab, onSelect, searchResults, searchVersion, searchMessages, selected, selecting }: Props) {
+export default memo(function Preview({ definition, revision, tokens, activeTab, onTokens, onTab, onSelect, searchResults, searchVersion, searchMessages, selected, selecting, nativeTypes }: Props) {
   const frame=useRef<HTMLDivElement>(null);
   const height=usePreviewHeight(frame);
   const inputDefaults = useMemo(() => getInputDefaultTokens({ definition: definition as unknown as DashboardJSON, preset: inputPreset }), [definition]);
@@ -61,9 +63,13 @@ export default memo(function Preview({ definition, revision, tokens, activeTab, 
   const preview = useMemo(() => {
     const result = previewDefinition(definition, searchResults, tokens, searchMessages, inputDefaults);
     for (const [id, visualization] of Object.entries(result.visualizations)) {
+      const unsupported = nativeSupportMessage(visualization.type, nativeTypes);
       if (!Object.hasOwn(EnterprisePreset.visualizations || {}, visualization.type)) {
         result.visualizations[id] = { type: 'splunk.markdown', title: visualization.title,
           options: { markdown: `**Open in native Studio**\n\nThe embedded renderer does not include ${visualization.type}. Its original configuration is preserved.`, backgroundColor: 'transparent' } };
+      } else if (unsupported) {
+        result.visualizations[id] = { type: 'splunk.markdown', title: visualization.title,
+          options: { markdown: unsupported, backgroundColor: 'transparent' } };
       }
     }
     if (!isSplunk() && result.inputs && typeof result.inputs === 'object') {
@@ -73,7 +79,7 @@ export default memo(function Preview({ definition, revision, tokens, activeTab, 
       if (Array.isArray(result.layout.globalInputs)) result.layout.globalInputs = result.layout.globalInputs.filter(id => !removed.has(String(id)));
     }
     return result as unknown as DashboardJSON;
-  }, [definition, searchResults, tokens, searchMessages, inputDefaults]);
+  }, [definition, searchResults, tokens, searchMessages, inputDefaults, nativeTypes]);
   const plugin = useMemo(() => ({ onEventTrigger: (event: { [key: string]: unknown }) => {
     if (selecting) return;
     if (typeof event.type === 'string' && /click$/.test(event.type) && typeof event.targetId === 'string') {

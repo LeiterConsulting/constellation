@@ -1,5 +1,15 @@
 # Architecture
 
+## Native chart contracts and planning (0.34)
+
+`studio_versions.py` reads curated type/option boundaries from `studio_capabilities.json`, independently of renderer age. The inventory generator uses the same type minima; retrieval filters unavailable options. Unchanged imported properties survive edits. Startup reads environment metadata without an execution probe, and `previewCompatibility.ts` supplies notices only in the private preview clone. Native export remains exact.
+
+`native_shapes.py` checks source roles using current-user bounded outputs held in the request. Its limited direct-selector resolver distinguishes source aliases and field order; it does not interpret general DOS or send result values to a provider. Changing a visualization type or options revalidates the attached source. `native_intent.py` checks explicit creation/conversion requests separately from valid syntax. Native event validation uses the inventory and preserves unchanged imported handlers.
+
+`native_creation.py` reduces small, explicit, blank-canvas SPL requests to one plan with chart pipelines, channel fields and page membership. Ollama receives a flat chart list with exact total/page bounds. The compiler emits ordinary search, native visualization and page actions; it does not execute searches, create data, grant permissions or accept the result. All normal native/version, actual-search, scope/population, intent and measurement validators still run. Rejected plans recompile against only their original empty document within the same recovery budget. Existing work, auxiliary sources, explicit layout, styling, navigation and unsupported plan families keep the complete native path. Provider adapters remain separate.
+
+`native_events.py` recognizes one bounded, literal selected-chart event/token request. It validates the selected native family/event, preserves other handlers, and supplies a proposal through the same acceptance loop with zero inference. Compound requests, attachments, dynamic event values and ambiguous clauses keep model authoring; this is not a general prompt compiler.
+
 ## Native sources, options and token defaults (0.33)
 
 `source_service.py` resolves search/chain/report references with the current-user runtime. Exact report/app names are encoded into a fixed native saved-search endpoint. Its request-local metadata cache grants no owner execution, and resolved queries retain token, read-only, time and result guards. Preview requests carry the source dependency closure and current token values; the native reference remains unchanged. A report's query can supply a selected imported element's field profile. Replay warnings distinguish the bounded current-user search from native scheduling, permissions and app knowledge.

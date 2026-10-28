@@ -1,5 +1,11 @@
 # Updating Constellation
 
+## 0.34 native shapes, planning and version boundaries
+
+Draft schema remains 3; no credential, draft or native-view migration runs. Refresh workspace tabs after installation. Keep documented native type/option minima in `studio_capabilities.json`, regenerate the inventory after changing type boundaries, and review official release notes separately from SDK metadata. An imported unsupported visualization remains intact in storage/export while its preview explains the target limitation. Never rewrite an imported query merely on load.
+
+Keep source-role validation, explicit native intent, compact native planning and exact literal events in their separate modules. Native planning is for bounded new SPL boards with unambiguous chart families; existing, auxiliary-source and advanced requests retain full native editing. Do not broaden eligibility by dropping requested features. Requalify semicolon lists, exact page/chart counts, ordered fields, source aliases, standard versus custom timestamps, inherited handlers after type changes, literal event filters, optional preservation clauses and unchanged unrelated work. Rejected plans recompile only their original empty base with cached receipts and all normal recovery/search limits. Dynamic payloads, ambiguous literals and compound interactions retain the model path. Native rendering, partial data, unknown DOS and version/theme behavior remain separate evidence.
+
 ## 0.33 native reference and preview contracts
 
 Draft schema remains 3. No credential, draft, report or native-view migration runs. Refresh workspace tabs. The added direct `@splunk/dashboard-definition` dependency is pinned to the existing Framework 29.9.0 runtime. Keep native input-token conversion behind the preview adapter rather than reimplementing it in provider code.

@@ -1,8 +1,8 @@
 # Validation status
 
-Snapshot: **0.33.0 development preview, unreleased, October 28, 2026**. This file is a sanitized summary. Private lab addresses, credentials, screenshots, transcripts, raw search data and detailed runtime receipts are excluded from the repository.
+Snapshot: **0.34.0 development preview, unreleased, October 28, 2026**. This file is a sanitized summary. Private lab addresses, credentials, screenshots, transcripts, raw search data and detailed runtime receipts are excluded from the repository.
 
-See the [0.33.0 report and input lifecycle checks](#0330-report-sources-and-input-lifecycles--october-28-2026) for current development evidence. Earlier cohorts below retain their own scope and failures. The latest published release remains 0.31.1.
+See the [0.34.0 native chart checks](#0340-native-chart-shapes-and-release-boundaries--october-28-2026) for current development evidence. Earlier cohorts below retain their own scope and failures. The latest published release remains 0.31.1.
 
 ## Release downloads
 
@@ -12,8 +12,8 @@ See the [0.33.0 report and input lifecycle checks](#0330-report-sources-and-inpu
 
 | Check | Observed result |
 | --- | --- |
-| Python unit suites | 469 tests passed on Python 3.9 and 3.13, including report permissions/references/chains, literal native options, extension metadata, native handler version gates and retained provider/native/measurement regressions. |
-| Frontend unit suites | 116 tests passed, including report source transport, waiting inputs, reset/initial defaults, structural inventory drift and retained delivery/focus/starter regressions. |
+| Python unit suites | 501 tests passed locally on Python 3.13, including specialized source shapes, native intent/planning, exact literal events, release boundaries and retained regressions. Python 3.9 runs in CI; the local Docker daemon did not respond to this check. |
+| Frontend unit suites | 117 tests passed, including the version-availability notice, inventory drift and retained report/input/delivery/focus regressions. |
 | TypeScript and production build | Passed; bundle-size warning remains. |
 | Deterministic app package | Generated with SHA-256 receipt. |
 | Splunk AppInspect 4.3.1, precert | 0 errors, 0 failures, 0 future failures, 7 warnings, 1 skipped, 116 successes, 128 not applicable on the tested app archive. |
@@ -28,6 +28,30 @@ The AppInspect result applies to the tested development archive. The seven warni
 | 10.4.4 | 1.26.6 | Native roundtrips, synthetic SPL/SPL2, PDF interactions and prior page/focus checks; current repeated non-admin OpenAI/Ollama wide-data creation, editing, native saves and selected UI/native navigation. |
 
 The 0.31 cohort extends current real-data creation/editing to 10.4.4 through OpenAI and Ollama. Earlier full-interface journeys retain their own versions and scope. AITK 6.2 shared inference passed on 10.2.8; the 10.4.4 target has AITK 6.1 without a usable configured connection and remains blocked by maintainer permissions. Do not infer instance-independent provider availability from app installation.
+
+## 0.34.0 Native chart shapes and release boundaries — October 28, 2026
+
+**Scope.** This increment separates documented native type/option availability from the embedded renderer, preserves unchanged imported features and supplies an unavailable-version preview notice. Seven specialized families receive bounded source-role checks, attributed guidance and authored synthetic cases. Explicit creation/conversion intent and native event support are checked independently of schema validity. Small new SPL boards can use family-specific native plans; the compiler supplies normal searches/bindings/pages and retains every final validator. Ollama uses a flat chart list. Exact selected-chart literal token requests compile through normal validation without inference. Single-chart/odd-final rows use the available page width, and an unrequested default title derives from requested page labels.
+
+**Final archive.** The unreleased **0.34.0 build 50** archive is SHA-256 `d9082f7bebded1f124fbc3508fec049d0fcb1b909b06a1b3e6752e82cecf26c9` (475 regular files; 5,496,852 bytes). Both recorded targets installed these exact download bytes over verified management TLS without restart. Archive review found one app root, no macOS sidecars/resource forks or extended tar metadata, and no private runtime configuration. All 501 backend tests passed locally on Python 3.13; 117 frontend tests and the production build passed with the existing size warning. AppInspect 4.3.1 precert returned zero errors/failures/future failures, seven warnings and one skip. Local Python 3.9 execution could not be repeated because Docker was unresponsive; the repository CI matrix checks that version separately. This is neither a new published release nor Cloud certification.
+
+**Native rendering.** Authored searches exercised Sankey, parallel coordinates, timeline, link graph, donut and punchcard on both recorded native versions in light/dark themes; native 10.4 additionally rendered a directed network with a separate node source. Ordinary-user bounded source queries supplied the fixture outputs. The synthetic administrator browser cohort verified actual chart rendering separately from ordinary-user authoring/API permissions. Timeline raw custom epoch-ms bindings initially produced invalid dates/empty bars. Standard `_time` and an explicitly formatted ISO series rendered correct intervals; new direct custom-number bindings now receive precise feedback. Native 10.2 and the newer embedded renderer also differed in Sankey value-label presentation, and reduced-opacity parallel lines were faint in native dark themes. These are not pixel-parity or accessibility acceptance claims. A selected parallel opacity edit in the app preserved every other definition property and its conversation across refresh. An imported future treemap retained its exact native definition while the preview displayed the version notice.
+
+**Provider journeys.** Three separate ordinary authors used real freezer data to create Overview/Device details, native table sparklines, an independent Wi-Fi population, a row-filtered detail table and return navigation. The missing-bucket guard paused before inference; explicit acceptance allowed labelled native zero fill. Focused table styling, exact draft/conversation reopen and private native copy readback were checked. A separate explicitly synthetic journey requested Relationships/Timing with Sankey, ordered parallel axes and ISO-bound timeline, followed by a selected opacity edit and literal node-click token. Browser rendering copies preserved exact provider definitions under the signed-in test operator; ordinary authors' private copies were not made shared. Direct private-view URLs under another signed-in browser owner returned 404; exact operator-private copies supplied the rendering check without relaxing author ACLs. This administrator browser cohort does not prove a non-admin browser walkthrough.
+
+| Provider | Real creation / style seconds (calls) | Native creation / style seconds (calls) | Literal event seconds (calls) |
+| --- | --- | --- | --- |
+| OpenAI | 29.08 (1) / 3.98 (1) | 12.30 (1) / 2.15 (1) | 0.76 (0) |
+| Ollama | 14.89 (1) / 5.65 (1) | 22.22 (2) / 12.74 (1) | 0.89 (0) |
+| AITK 6.2 | 26.13 (1) / 17.01 (1) | 22.28 (1) / 16.24 (1) | 0.73 (0) |
+
+All fifteen final turns passed. Ollama native creation used one automatic repair; the other model-backed turns used one call. Three exact literal-event turns intentionally used zero inference. These bounded operated results are neither a provider-model success rate nor a controlled latency benchmark. Both native versions separately passed ordinary-user report replay, token-filtered chains, cancellation, unchanged-report and metadata-only extension checks.
+
+**Failures retained.** Superseded candidates exposed table substitutions, misuse of existing-page helpers during creation, malformed native source references, chart repetition across pages, misplaced event filters and a dynamic row value substituted for a requested literal. One prototype guard/schema also missed later families in semicolon lists and constrained models incorrectly; an explicit regression now covers that failure. Family-specific binding objects, flat membership, conservative eligibility and exact literal-event compilation corrected these paths without increasing recovery/search budgets or forwarding result values. Earlier HTTP 504/422 and intermediate definition-only successes remain separate from the final cohort. Fixture-harness errors included an implicit `_time` projection and an invalid boolean network direction setting; authored fixtures now use explicit ordered projection and the native string option.
+
+**Cleanup.** All five disposable accounts, their private configurations/native copies, task-owned gallery/rendering/report/control fixtures and the copied owner-only OpenAI key were removed. The temporary password file was deleted. Both original administrator configuration sets remained exact (78 and five records), including the primary target’s 36 original drafts, listing/preferences and provider settings. AITK policy, protected backing writers and upstream connection parameters remained unchanged. Only agent-created test tabs were closed. Detailed receipts/screenshots remain local.
+
+**Remaining gates.** The [coverage ledger](native-coverage.md) defines the finite cases and open work. Maps/SVG assets, custom extension contracts/rendering, scheduled-report cache/owner/app-context equivalence, all interaction payloads, dynamic/cascading inputs, complex imported/grid/SPL2 cases, partial-data rendering, themes/accessibility and newer-release trials remain open. There is no tested Enterprise 10.6 target for treemap/newer options. AITK on the second target still needs maintainer-side configuration/permission work. Existing SHC, delivery/latency/bundle and unaided-user acceptance gates remain. No percentage is assigned to an undefined set of native combinations; the latest published development release remains 0.31.1.
 
 ## 0.33.0 Report sources and input lifecycles — October 28, 2026
 

@@ -13,7 +13,7 @@ Current intent, selection and durable Draft requirements select bounded native c
 | Cartesian | Line, area, bar, column, scatter, bubble | All axes, legends, channels, ranges and imported combinations |
 | Indicators | Single value, icon, radial, filler/marker gauges | Thresholds, trends, units, trellis and themes |
 | Tables | Projection, numeric/date formatting, native sparklines, cell formats, row links | Full option combinations, null arrays, larger/partial outputs, pagination and footers |
-| Specialized | Pie, treemap, punchcard, sankey, link/network graph, parallel coordinates, timeline | Actual source shapes, interactions and native rendering for each |
+| Specialized | Pie, treemap, punchcard, sankey, link/network graph, parallel coordinates, timeline | Selected finite source/render cases below; remaining shapes, options and interactions |
 | Geographic | Map and SVG choropleth | Assets, layers, coordinate/shape bindings and permissions |
 | Decoration | Markdown, rich text, image, rectangle, ellipse, native `abslayout.line` | Media lifecycle, layering, imported styling and themes |
 | Events | Native events visualization | Workflow actions and permission-dependent behavior |
@@ -25,6 +25,26 @@ Current intent, selection and durable Draft requirements select bounded native c
 | Platform operations | Normal native Studio definitions and copies | Scheduling/export/sharing/permissions use native Splunk controls; relevant native properties must survive |
 
 This is the embedded renderer inventory, not every Studio version or installed extension. Minimum versions do not qualify future releases. Network graphs and newer table null-display options have a separate 10.4 boundary from older native sparklines.
+
+## Version boundaries and executable cases (0.34)
+
+The shared capability registry separates native availability from the newer embedded renderer. Timeline starts at Enterprise 10.2, network graph at 10.4 and treemap at 10.6. Selected newer option names have their own boundaries. New/changed unsupported features fail with feedback; unchanged imports survive and their unavailable visualizations display a preview notice. This curated registry is not a claim that every option has been version-qualified. Sources: [10.4 release history](https://help.splunk.com/en/splunk-enterprise/create-dashboards-and-reports/dashboard-studio/10.4/whats-new-in-dashboard-studio/whats-new-in-dashboard-studio), [10.6 additions](https://help.splunk.com/en/splunk-enterprise/create-dashboards-and-reports/dashboard-studio/10.6/whats-new-in-dashboard-studio/whats-new-in-dashboard-studio).
+
+The portable [authored fixture](../tests/fixtures/native_chart_shapes.json) defines seven finite source-shape cases. These are synthetic searches, separate from the real-data provider journeys. Both recorded native versions rendered the applicable cases in light and dark themes; network topology was checked on 10.4 only.
+
+| Family | Bounded case and guard | Still separate |
+| --- | --- | --- |
+| Sankey | Exact source/target, numeric weights, three links; native node-click literal token in the preview and Studio | All event payloads, cycles, large/partial graphs, color/trellis combinations |
+| Parallel coordinates | Category first, two ordered numeric axes; reject an accidental text axis; selected opacity edit preserves unrelated properties | Every axis/filter option, missing-value rendering, broad accessibility/contrast acceptance |
+| Timeline | Three intervals in two lanes using standard `_time`; explicit ISO conversion also compared on 10.2 | All time zones, missing starts/durations, overlapping intervals and event combinations |
+| Link graph | Three ordered relationship columns; reject missing/duplicate fieldOrder entries | Dynamic field order, full node/edge styling and interactions |
+| Pie/donut | Three category/value slices, explicit source bindings | All labels, legends, negative/null behavior and drilldowns |
+| Punchcard | Two-by-two categories and nonnegative numeric sizes | All sizing, coloring, time axes and interactions |
+| Network graph | Three nodes/three directed links and separate node metadata source, on native 10.4 | Every auxiliary styling option, physics/layout, interactions and custom extensions |
+
+Native timeline rendering exposed a difference from a numeric-only source check: a custom raw epoch-ms binding failed while standard `_time` and an explicitly formatted timestamp rendered correctly. New direct timeline bindings therefore require native `_time` or ISO strings. Unit conversion must use declared units, preserve original fields and stay in that chart's pipeline. This is qualified adapter behavior, not a general rewrite of imported searches.
+
+Small explicit new SPL dashboards can use typed native plans for six of these families. Family-specific binding keys constrain model output, Ollama receives one flat list with explicit page membership, and ordinary compilers supply source IDs/geometry. Auxiliary sources, advanced styling/layout/navigation and existing work retain full native edits. Explicit creation/conversion guards reject chart-family substitutions. Supported event names and event-filter placement receive separate validation; unchanged imported handlers remain intact. Exact selected-chart literal token requests compile without inference through those same checks. Dynamic payloads and compound interactions remain separate model/native qualification work.
 
 ## Safeguards and completion gates
 

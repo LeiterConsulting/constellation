@@ -56,6 +56,23 @@ class AuthoringBudget:
             request['max_output_tokens'] = CREATE_OUTPUT_TOKENS if self.creation else EDIT_OUTPUT_TOKENS
             request['text']['format']['schema'] = copy.deepcopy(self.schema)
         request['instructions'] = self.instructions + '\n\nCURRENT SERVER-CONTROLLED STAGE (takes precedence over whole-dashboard completion instructions):\n' + context['authoringStage']
+        if self.creation and context.get('nativeAuthoring', {}).get('relevantOptions'):
+            # Existing-target helpers are not creation actions. AITK previously
+            # selected pageMeta repeatedly, then substituted tables for charts.
+            items = request['text']['format']['schema']['properties']['changes']['items']
+            if 'anyOf' in items:
+                items['anyOf'] = [item for item in items['anyOf'] if not any(
+                    name in item.get('properties', {}).get('op', {}).get('enum', [])
+                    for name in ('pageMeta', 'buttonRoute', 'route', 'formatTable', 'tableSparkline'))]
+            from native_intent import requested_types
+            native = requested_types(context['request'])
+            if native:
+                # The simple chart action cannot express these native families.
+                # Omit it instead of inviting a table substitute; native edits,
+                # typed searches/pages and all final validators remain available.
+                if 'anyOf' in items:
+                    items['anyOf'] = [item for item in items['anyOf'] if 'chart' not in item.get('properties', {}).get('op', {}).get('enum', [])]
+                request['instructions'] += '\nExplicit native chart types required: ' + ', '.join(sorted(native)) + '. Create them using targeted set actions with complete visualization JSON and source-based options. Do not use a table substitute. page creates pages; pageMeta only edits existing metadata and is unavailable here.'
         compose = (self.provider in ('ollama', 'aitk') and self.phase == 'complete' and self.creation and context.get('dataProfile')
                    and context['dataProfile'].get('scope', {}).get('language', 'spl') == 'spl' and empty_canvas(document))
         self.compact = bool(compose and compact_goal(context) and bounded_aitk_creation(context)
@@ -73,6 +90,15 @@ class AuthoringBudget:
                 panels = explicit_panel_count(context['request']) if re.search(r'\bexactly\s+\w+\s+(?:charts|panels|tiles|visualizations)\b', context['request'], re.I) else None
                 request['text']['format']['schema']['properties']['changes']['items'] = outline_schema(RECIPE_COMPOSE_ACTION, count, panels)
             request['text']['format']['schema']['properties']['changes']['maxItems'] = 1
+        from native_creation import eligible, schema_for, instructions as native_instructions
+        self.native_plan = bool(self.creation and self.phase == 'complete' and eligible(context, document)
+            and all(part.get('type') == 'input_text' for item in request['input'] for part in item['content']))
+        if self.native_plan:
+            self.compact = False
+            self.native_flat = self.provider == 'ollama'
+            request['instructions'] = native_instructions(self.native_flat)
+            request['text']['format']['schema']['properties']['changes'].update(items=schema_for(context['request'], self.native_flat), minItems=1, maxItems=1)
+            request['max_output_tokens'] = 4500
         if self.creation and context.get('dataProfile'):
             request['instructions'] += '\n\n' + CONCISE_CREATION
             properties = request['text']['format']['schema'].get('properties', {})
@@ -83,6 +109,8 @@ class AuthoringBudget:
                 for field, maximum in (('label', 48), ('prompt', 200), ('reason', 100)):
                     if field in suggestion: suggestion[field]['maxLength'] = maximum
         content = request['input'][0]['content']
+        if self.native_plan:
+            context = {key: context[key] for key in ('request', 'definition', 'canvasState', 'environment', 'history', 'focus', 'pagePurposes', 'dashboardBrief', 'modelLimits', 'dataProfile') if key in context}
         if self.compact:
             # These stable standard-chart actions do not need the unrelated
             # catalog or advanced native-action examples. Preserve the exact
@@ -120,7 +148,7 @@ class AuthoringBudget:
         # contracts are needed only by paths that can actually emit native edits;
         # specialized query/navigation compilers hold those properties unchanged.
         context['retrievedGuidance'] = self.context.get('retrievedGuidance', [])
-        if not (self.compact or any(context.get(flag) for flag in ('formattingOnly', 'rowNavigationOnly', 'routeOnly', 'buttonRouteOnly', 'pageMetadataOnly', 'calculationOnly', 'tableSparklineOnly'))):
+        if not (self.compact or self.native_plan or any(context.get(flag) for flag in ('formattingOnly', 'rowNavigationOnly', 'routeOnly', 'buttonRouteOnly', 'pageMetadataOnly', 'calculationOnly', 'tableSparklineOnly'))):
             if 'nativeAuthoring' in self.context: context['nativeAuthoring'] = self.context['nativeAuthoring']
         # A conservative estimate, not a tokenizer or a verified upstream limit.
         # Drop only rolling history; the durable brief and exact document remain.
@@ -148,6 +176,9 @@ class AuthoringBudget:
 
     def actions(self, actions, document):
         """Keep page identity stable when completing this turn's new foundation."""
+        if getattr(self, 'native_plan', False):
+            from native_creation import expand
+            return expand(actions, document, self.context.get('dataProfile'), self.context['request'])
         if getattr(self, 'compact', False) and isinstance(actions, list):
             actions = [nested_outline(action) for action in actions]
         if getattr(self, 'compact', False) and isinstance(actions, list):
@@ -216,6 +247,8 @@ class AuthoringBudget:
             envelope=dict(envelope,recoveryFeedback={key:value for key,value in envelope.get('recoveryFeedback',{}).items()if key not in ('candidateDefinition','placementHint')},
                           request='Return one corrected complete search pipeline for calculationOnly.sourceId against its original pipeline, retaining every existing output field and adding the exact requested alias. Use actual search feedback, not a previous completed goal.')
             envelope['recoveryFeedback']['editsApplyTo']='original'
+        if getattr(self, 'native_plan', False):
+            envelope = dict(envelope, rejectedOutput='', request='Return ONE complete corrected nativeCompose plan for the same original goal, retaining every requested chart family and verified source. No separate native edits.')
         retain_compact = getattr(self,'compact',False)and envelope.get('recoveryFeedback',{}).get('editsApplyTo')=='original'
         if retain_compact:
             envelope=dict(envelope,rejectedOutput='',request='Return ONE complete corrected compose plan for the current original goal. The server supplies all IDs, positions, filters and navigation. Do not emit ordinary or native edits.')

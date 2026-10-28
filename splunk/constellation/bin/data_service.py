@@ -5,6 +5,7 @@ from provider_service import ProviderError
 from studio_inventory import STATIC_VISUALIZATIONS, INVENTORY
 from table_cells import array_kind, validate_sparkline_output
 from native_bindings import option_bindings
+from native_shapes import validate_shape
 from search_service import read_only_query, TIME_RANGES
 from token_service import resolve_query_tokens, validate_wildcard_filters
 from search_scope import scoped_suffix
@@ -132,7 +133,7 @@ class DataService:
 
     def validate_searches(self, document, previous, profile):
         receipts = self.receipts = []
-        usable = {}
+        usable, outputs = {}, {}
         static_types = STATIC_VISUALIZATIONS
         layouts = document.get('layout', {}).get('layoutDefinitions') or {'legacy': document.get('layout', {})}
         placed = {item.get('item') for layout in layouts.values() for item in layout.get('structure', [])}
@@ -154,7 +155,7 @@ class DataService:
         for identifier, visualization in document.get('visualizations', {}).items():
             old = previous.get('visualizations', {}).get(identifier, {})
             channels = ('x', 'y', 'y2', 'category', 'majorValue', 'table', 'columnFormat', 'tableFormat')
-            if (visualization.get('dataSources') != old.get('dataSources') or
+            if (visualization.get('type') != old.get('type') or visualization.get('options') != old.get('options') or visualization.get('dataSources') != old.get('dataSources') or
                     visualization.get('eventHandlers') != old.get('eventHandlers') or
                     any(visualization.get('options', {}).get(key) != old.get('options', {}).get(key) for key in channels)):
                 needed.update(visualization.get('dataSources', {}).values())
@@ -186,6 +187,7 @@ class DataService:
                 problems.append('Source ' + identifier[:100] + ': ' + str(error)[:600] + (' ' + hint if hint else ''))
                 continue
             fields = [field['name'] for field in result['fields']]
+            outputs[identifier] = result
             try:
                 for visualization in document.get('visualizations', {}).values():
                     if visualization.get('type') == 'splunk.table' and visualization.get('dataSources', {}).get('primary') == identifier:
@@ -240,6 +242,9 @@ class DataService:
                     missing = set(names) - usable[source]
                     if missing:
                         problems.append('Native ' + root + ' ' + identifier[:100] + ', ' + path[:160] + ': missing actual source fields ' + ', '.join(sorted(missing))[:180] + '. Use verified output aliases and preserve existing calculations.')
+                if root == 'visualizations':
+                    try: validate_shape(item, outputs)
+                    except ProviderError as error: problems.append(str(error))
         if problems:
             raise ProviderError('\n'.join(problems[:16])[:10000])
         return receipts

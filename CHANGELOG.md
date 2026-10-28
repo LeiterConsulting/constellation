@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.34.0 - Unreleased
+
+- Separate documented native visualization/option release boundaries from the embedded renderer, including timeline, network and treemap availability. Preserve unchanged imports and show an unavailable-version notice in the preview.
+- Add bounded actual-output checks and attributed guidance for Sankey, parallel coordinates, timeline, link/network graphs, pie and punchcard source shapes. Native timelines use adapted `_time` or explicitly converted timestamp strings.
+- Compile small native-chart creation plans into ordinary guarded searches, source bindings and pages; use explicit flat chart membership for Ollama, full-width single/odd-final charts and meaningful page-derived fallback titles. Existing dashboards and advanced configuration keep targeted native editing.
+- Compile exact selected-chart literal token interactions without inference, retaining native event checks and all ordinary validators. Dynamic/compound requests keep model authoring.
+- Reject silent substitutions for explicitly requested native chart families and validate supported event names, inherited handlers after type changes and event-filter placement.
+- Add portable authored synthetic chart fixtures and preserve all existing scope, permission, measurement, recovery and persistence guards.
+
 ## 0.33.0 - Unreleased
 
 - Resolve readable saved-report references and chains for guarded current-user preview replay, with explicit differences from native schedules, permissions and app context. Selected imported reports supply field context without manually pasting SPL.

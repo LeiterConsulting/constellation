@@ -1,0 +1,284 @@
+{
+  "schemaVersion": 1,
+  "evidence": "Authored synthetic qualification cases. Native execution/rendering evidence is recorded separately in docs/validation.md.",
+  "cases": [
+    {
+      "id": "flow",
+      "type": "splunk.sankey",
+      "minimumEnterprise": "10.0",
+      "options": {
+        "linkValues": "> primary | seriesByName(\"value\")",
+        "labelDisplay": "values"
+      },
+      "sources": {
+        "primary": {
+          "fields": [
+            "source",
+            "target",
+            "value"
+          ],
+          "rows": [
+            [
+              "Intake",
+              "Processing",
+              12
+            ],
+            [
+              "Processing",
+              "Storage",
+              9
+            ],
+            [
+              "Processing",
+              "Review",
+              3
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "id": "axes",
+      "type": "splunk.parallelcoordinates",
+      "minimumEnterprise": "10.0",
+      "options": {
+        "lineOpacity": 0.7
+      },
+      "sources": {
+        "primary": {
+          "fields": [
+            "category",
+            "cpu",
+            "latency"
+          ],
+          "rows": [
+            [
+              "A",
+              15,
+              30
+            ],
+            [
+              "B",
+              40,
+              20
+            ],
+            [
+              "C",
+              70,
+              60
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "id": "intervals",
+      "type": "splunk.timeline",
+      "minimumEnterprise": "10.2",
+      "options": {
+        "x": "> primary | seriesByName(\"_time\")",
+        "y": "> primary | seriesByName(\"lane\")",
+        "duration": "> primary | seriesByName(\"duration_ms\")",
+        "category": "> primary | seriesByName(\"category\")"
+      },
+      "sources": {
+        "primary": {
+          "fields": [
+            "_time",
+            "lane",
+            "duration_ms",
+            "category"
+          ],
+          "rows": [
+            [
+              1700000000.0,
+              "A",
+              60000,
+              "Work"
+            ],
+            [
+              1700000060.0,
+              "B",
+              120000,
+              "Review"
+            ],
+            [
+              1700000180.0,
+              "A",
+              60000,
+              "Work"
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "id": "paths",
+      "type": "splunk.linkgraph",
+      "minimumEnterprise": "10.0",
+      "options": {
+        "fieldOrder": [
+          "entry",
+          "service",
+          "store"
+        ],
+        "linkWidth": 3
+      },
+      "sources": {
+        "primary": {
+          "fields": [
+            "entry",
+            "service",
+            "store"
+          ],
+          "rows": [
+            [
+              "A",
+              "Worker",
+              "Store"
+            ],
+            [
+              "B",
+              "Worker",
+              "Cache"
+            ],
+            [
+              "C",
+              "Reader",
+              "Store"
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "id": "parts",
+      "type": "splunk.pie",
+      "minimumEnterprise": "10.0",
+      "options": {
+        "label": "> primary | seriesByName(\"label\")",
+        "value": "> primary | seriesByName(\"value\")",
+        "showDonutHole": true
+      },
+      "sources": {
+        "primary": {
+          "fields": [
+            "label",
+            "value"
+          ],
+          "rows": [
+            [
+              "A",
+              12
+            ],
+            [
+              "B",
+              9
+            ],
+            [
+              "C",
+              3
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "id": "density",
+      "type": "splunk.punchcard",
+      "minimumEnterprise": "10.0",
+      "options": {
+        "x": "> primary | seriesByName(\"hour\")",
+        "y": "> primary | seriesByName(\"resource\")",
+        "size": "> primary | seriesByName(\"size\")"
+      },
+      "sources": {
+        "primary": {
+          "fields": [
+            "hour",
+            "resource",
+            "size"
+          ],
+          "rows": [
+            [
+              8,
+              "A",
+              3
+            ],
+            [
+              9,
+              "A",
+              7
+            ],
+            [
+              8,
+              "B",
+              5
+            ],
+            [
+              9,
+              "B",
+              1
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "id": "network",
+      "type": "splunk.networkGraph",
+      "minimumEnterprise": "10.4",
+      "options": {
+        "source": "> primary | seriesByName(\"from\")",
+        "target": "> primary | seriesByName(\"to\")",
+        "nodeIds": "> nodeSource | seriesByName(\"id\")",
+        "nodeValues": "> nodeSource | seriesByName(\"magnitude\")",
+        "nodeTexts": "> nodeSource | seriesByName(\"id\")",
+        "layout": "grid",
+        "showDirection": "oneWay"
+      },
+      "sources": {
+        "primary": {
+          "fields": [
+            "from",
+            "to"
+          ],
+          "rows": [
+            [
+              "A",
+              "B"
+            ],
+            [
+              "B",
+              "C"
+            ],
+            [
+              "A",
+              "C"
+            ]
+          ]
+        },
+        "nodeSource": {
+          "fields": [
+            "id",
+            "magnitude"
+          ],
+          "rows": [
+            [
+              "A",
+              10
+            ],
+            [
+              "B",
+              20
+            ],
+            [
+              "C",
+              30
+            ]
+          ]
+        }
+      }
+    }
+  ]
+}
