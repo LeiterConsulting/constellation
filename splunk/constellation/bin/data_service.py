@@ -141,6 +141,13 @@ class DataService:
         for identifier, visualization in document.get('visualizations', {}).items():
             if visualization == previous.get('visualizations', {}).get(identifier): continue
             required = INVENTORY['visualizations'].get(visualization.get('type'), {}).get('requiredSources', [] if visualization.get('type') in static_types else ['primary'])
+            # Native Studio uses the same type for a decorative SVG icon and a
+            # value with an icon. Only the explicit literal hidden-value form
+            # without data bindings is source-free; ordinary metrics stay checked.
+            if (visualization.get('type') == 'splunk.singlevalueicon' and
+                    visualization.get('options', {}).get('showValue') is False and
+                    not visualization.get('dataSources') and not list(option_bindings(visualization))):
+                required = []
             if any(not visualization.get('dataSources', {}).get(alias) for alias in required):
                 missing_bindings.append(identifier)
             if identifier not in previous.get('visualizations', {}) and identifier not in placed:

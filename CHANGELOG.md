@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.37.0 — unreleased
+
+- Added native SVG icon upload/reuse and an icon registry beside shared raster images, with passive SVG and byte validation.
+- Added reviewed portable dashboard export/import with collection-aware assets, SHA-256 checksums and fresh destination reference mapping; no new privileges or external service.
+- Preserved decorative icons without invented searches, selected metric bindings and unrelated native properties. Fixed stale library reads and HTTP-host checksum/placement failures.
+- Kept shared-upload disclosure and transfer controls in the existing media/export/import flows; clarified the dashboard-file import label.
+
 ## 0.36.0 - Unreleased
 
 - Add a shared Studio image picker/upload in More, with native permissions, explicit sharing language, selected-image replacement and additive absolute-page placement. Resolve bounded native raster references in preview; retain media references on native saves and explain cross-instance dependencies.

@@ -18,6 +18,8 @@ import type { DashboardContextProviderProps } from '@splunk/dashboard-context';
 import Preview from './Preview';
 import Brand from './Brand';
 import DashboardImages from './DashboardImages';
+import PortableDashboard from './PortableDashboard';
+import { readPortable, type PortableDashboard as PortableFile } from './portableAssets';
 import { placeDashboardImage } from './dashboardAssets';
 import { applyEdit, cleanDashboardUrl, createBlank, createStarter, validateDefinition, fromStudioXml, type Edit, type Revision, type StudioDefinition } from './document';
 import { isSplunk, providerRequest, providerLabel, failureActivity, type ProviderSettings } from './api';
@@ -48,6 +50,7 @@ export default function App({ initialColorScheme }: { initialColorScheme: 'light
   const [collapsed, setCollapsed] = useState(false);
   const [revision, setRevision] = useState<Revision>(() => ({ number: 0, definition: createBlank() }));
   const [brief, setBrief] = useState<DashboardBrief>({ purpose: '', requirements: '' });
+  const [portable,setPortable] = useState<false | 'export' | PortableFile>(false);
   const [imagesOpen, setImagesOpen] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const moreFocus = useRef<HTMLButtonElement>(null);
@@ -249,7 +252,7 @@ export default function App({ initialColorScheme }: { initialColorScheme: 'light
   const load = async (definition: StudioDefinition) => {
     generation.current?.abort(); generation.current = null; setThinking(false);
     setBusy(true);
-    try { if (unavailableDraft || await persistence.flush()) activate(definition); } finally { setBusy(false); }
+    try { if (!unavailableDraft && !await persistence.flush()) return false; activate(definition); return true; } finally { setBusy(false); }
   };
   const submit = async (request?: string, scopeOverride?: DataScope) => {
     const text = (request || prompt).trim(); if (!text || !storageReady || connectionLoading) return;
@@ -317,10 +320,11 @@ export default function App({ initialColorScheme }: { initialColorScheme: 'light
       <Button onClick={event => void openPicker(event.currentTarget)} disabled={busy || thinking || (!storageReady && !unavailableDraft)}>Dashboards</Button>
       <Button appearance="primary" onClick={event => { modalReturnFocus.current = event.currentTarget; void persistence.flush().then(ok => { if (ok) setSaveOpen(true); }); }} disabled={busy || !isSplunk() || empty || thinking || !storageReady}>Save to Splunk</Button>
       <Dropdown focusToggleReasons={['escapeKey', 'tabKey', 'toggleClick']} toggle={<Button elementRef={moreFocus} isMenu>More</Button>}><Menu style={{ width: 220 }}>
-        <Menu.Item disabled={thinking || !storageReady || !isSplunk()} onClick={() => { modalReturnFocus.current = moreFocus.current; setImagesOpen(true); }}>Dashboard images</Menu.Item>
+        <Menu.Item disabled={thinking || !storageReady || !isSplunk()} onClick={() => { modalReturnFocus.current = moreFocus.current; setImagesOpen(true); }}>Images and icons</Menu.Item>
         <Menu.Item disabled={thinking || !storageReady} onClick={() => { modalReturnFocus.current = moreFocus.current; void persistence.flush().then(ok => { if (ok) setDetailsOpen(true); }); }}>Draft details and history</Menu.Item>
         <Menu.Item disabled={empty || !isSplunk() || thinking} onClick={() => void (async () => { if (!await persistence.flush()) return; const link = workspaceLink(window.location.href, draftId, activeTab, selected || undefined); try { await navigator.clipboard.writeText(link); setStatus('Copied a private draft link. Splunk access is required.'); } catch { setCopiedLink(link); modalReturnFocus.current = moreFocus.current; setModal('link'); } })()}>Copy draft link</Menu.Item>
         <Menu.Item onClick={exportJson}>Export JSON</Menu.Item>
+        <Menu.Item disabled={!isSplunk() || thinking || !storageReady} onClick={()=>{modalReturnFocus.current=moreFocus.current;setPortable('export');}}>Export with assets</Menu.Item>
         <Menu.Item onClick={() => { modalReturnFocus.current = moreFocus.current; setModal('source'); }}>Show source</Menu.Item>
         <Menu.Item disabled={!isSplunk() || thinking} onClick={() => { modalReturnFocus.current = moreFocus.current; setEnvironmentOpen(true); setEnvironmentError(''); void providerRequest<Environment>('environment', { probe: true }).then(setEnvironment).catch(error => setEnvironmentError(error instanceof Error ? error.message : 'Environment discovery failed.')); }}>Environment</Menu.Item>
         <Menu.Item onClick={() => setTheme(previous => previous === 'light' ? 'dark' : 'light')}>{theme === 'light' ? 'Dark' : 'Light'} theme</Menu.Item>
@@ -407,9 +411,9 @@ export default function App({ initialColorScheme }: { initialColorScheme: 'light
       onDeleted={id => { if (id === draftId) activate(createBlank(), undefined, true); }}
       onNative={item => activate(fromStudioXml(item.xml))}
       onImport={() => { setImportError(''); setModal(null); fileInput.current?.click(); }} onExample={() => activate(createStarter())}/> : null}
-    <input ref={fileInput} type="file" accept=".json,application/json" hidden aria-label="Choose a Studio JSON file" onChange={async event => {
+    <input ref={fileInput} type="file" accept=".json,application/json" hidden aria-label="Choose a dashboard file" onChange={async event => {
       const file = event.target.files?.[0]; event.target.value = ''; if (!file) return;
-      try { if (file.size > 1_000_000) throw new Error('Choose a definition under 1 MB.'); await load(validateDefinition(JSON.parse(await file.text()))); }
+      try { if (file.size > 18_000_000) throw new Error('Choose a portable file under 18 MB.'); const value=JSON.parse(await file.text()); if(value?.format==='constellation-dashboard')setPortable(await readPortable(value)); else await load(validateDefinition(value)); }
       catch (failure) { setImportError(failure instanceof SyntaxError ? 'This file is not valid Studio JSON. Check the file and try again.' : failure instanceof Error ? failure.message : 'The file could not be opened.'); }
     }}/>
     {dataChooser ? <DataChooser discovery={discovery} initial={dataChooser.scope} initialGoal={dataChooser.goal ?? prompt} returnFocus={modalReturnFocus}
@@ -418,9 +422,10 @@ export default function App({ initialColorScheme }: { initialColorScheme: 'light
       const before=revisionRef.current,next={number:before.number+1,definition:changePage(before.definition,id,name)};
       setHistory(items=>[...items.slice(-19),before]);setFuture([]);setRevision(next);setPagePurposes(values=>({...values,[id]:purpose}));setActiveTab(id);setSelected(`page:${id}`);setSaved(null);setStatus('Page updated. Describe what you want on this page in the conversation.');
     }}/>:null}
+    {portable ? <PortableDashboard definition={revision.definition} file={portable==='export'?undefined:portable} onImport={load} returnFocus={modalReturnFocus} onClose={()=>closeDialog(()=>setPortable(false))}/> : null}
     {imagesOpen ? <DashboardImages returnFocus={modalReturnFocus} onClose={() => closeDialog(() => setImagesOpen(false))} onChoose={asset => {
       const next=placeDashboardImage(revision.definition,asset,activeTab,selected);
-        setHistory(items=>[...items.slice(-19),revision]);setFuture([]);setRevision({number:revision.number+1,definition:next.definition});setSaved(null);setImagesOpen(false);onSelect(next.id);addMessage('Updated the dashboard image. Select it and ask for a change to refine its size or placement.');
+        setHistory(items=>[...items.slice(-19),revision]);setFuture([]);setRevision({number:revision.number+1,definition:next.definition});setSaved(null);setImagesOpen(false);onSelect(next.id);addMessage('Updated the dashboard asset. Select it and ask for a change to refine its size or placement.');
     }}/> : null}
     {detailsOpen ? <DraftDetails id={draftId} brief={brief} scope={dataContext ? `${dataContext.index || 'Existing search'} · ${previewRanges.find(range => range.value === dataContext.earliest)?.label}` : ''} returnFocus={modalReturnFocus}
       onClose={() => { setDetailsOpen(false); requestAnimationFrame(() => modalReturnFocus.current?.focus()); }} onSave={value => { setBrief(value); setProposals(null); setStatus('Dashboard brief updated.'); }}

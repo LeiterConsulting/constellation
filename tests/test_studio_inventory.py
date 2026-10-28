@@ -95,6 +95,19 @@ class StudioInventoryTests(unittest.TestCase):
         doc['layout']['structure'] = []
         with self.assertRaisesRegex(ProviderError, 'Place each new visualization'): data.validate_searches(doc, {}, profile)
 
+    def test_decorative_icon_keeps_metric_and_placement_guards(self):
+        data = DataService(DataRuntime()); profile = data.profile({'index': 'fixture_index'})
+        doc = blank()['definition']
+        doc['visualizations']['icon'] = {'type': 'splunk.singlevalueicon', 'options': {'showValue': False, 'icon': 'splunk-enterprise-kvstore://fixture'}}
+        doc['layout'] = {'type': 'absolute', 'structure': [{'item': 'icon'}]}
+        self.assertEqual(data.validate_searches(doc, {}, profile), [])
+        for show in (True, 'false', None):
+            doc['visualizations']['icon']['options']['showValue'] = show
+            with self.assertRaisesRegex(ProviderError, 'Bind visualization'): data.validate_searches(doc, {}, profile)
+        doc['visualizations']['icon']['options']['showValue'] = False
+        doc['layout']['structure'] = []
+        with self.assertRaisesRegex(ProviderError, 'Place each new visualization'): data.validate_searches(doc, {}, profile)
+
 
 class NativeTableCellTests(unittest.TestCase):
     def document(self, config):

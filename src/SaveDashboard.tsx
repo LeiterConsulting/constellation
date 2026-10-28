@@ -37,7 +37,7 @@ export default function SaveDashboard({ definition, theme, onSaved, onClose, ret
             {apps.map(item => <Select.Option key={item.name} value={item.name} label={item.label}/>)}</Select>
         </ControlGroup>
         <Muted>This creates a new private Dashboard Studio copy. Your working draft and conversation stay in Constellation. Existing dashboards are never overwritten.</Muted>
-        {hasSharedImages(definition) ? <Message type="info">This dashboard uses shared Studio images stored in this Splunk instance. Sharing the dashboard keeps those references. JSON exports and app packages do not contain the uploaded image files.</Message> : null}
+        {hasSharedImages(definition) ? <Message type="info">This dashboard uses shared Studio images or icons stored in this Splunk instance. Sharing the dashboard keeps those references. JSON exports and app packages do not contain uploaded files. Use More → Export with assets to move supported media to another instance.</Message> : null}
         <Muted>Native Studio runs the saved searches and their configured time ranges. The canvas uses bounded preview snapshots.</Muted>
         {busy ? <Muted role="status">Saving and checking the dashboard…</Muted> : null}
       </>}

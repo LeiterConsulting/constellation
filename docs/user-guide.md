@@ -106,16 +106,18 @@ Name the chart and the question it should answer. For example, after inspecting 
 
 Constellation checks available native features and actual output fields before applying a change. It preserves the previous draft if it cannot finish a valid result. A chart imported from a newer Studio version can remain in the definition while the preview explains that the connected instance cannot display it. See the [coverage ledger](native-coverage.md) for tested cases and remaining limits; availability and definition readback alone do not prove every native behavior.
 
-## Images on a dashboard
-
-Open **More → Dashboard images**. Choose an existing shared Studio image, or choose a PNG, JPEG, GIF or WebP under 4 MB and select **Upload shared image**. Then select **Use image**. An existing selected image is replaced in place; otherwise the image is added below the current absolute page's elements. Select it and use chat to change its size, placement or options. Grid pages need an absolute-layout page for an image.
-
-Studio's uploaded images are shared with other Splunk users, including when the dashboard is private. Uploads use your native Studio permissions; Constellation does not grant broader access. An ordinary author may reuse readable images without upload permission. Manage shared-image deletion in native Studio because other dashboards may depend on the same file.
-
-Dashboard images stay in this Splunk instance and their bytes are not sent to the model. **Attach sketch or PDF** is a different action: it sends a reference to a model with verified input support. A saved dashboard keeps native media references. JSON exports and app packages do not include uploaded image files; moving between instances requires those dependencies too.
-
 ## Dependent choices
 
 Ask for a parent input and a child input whose choices come from a filtered search, such as “Choose a source type, then show devices from that source type.” The agent uses inspected fields and native dropdown or multiselect inputs. Ask for All, the first search result or no initial choice as needed. Existing buttons and filters remain part of the draft.
 
 On Splunk 10.4 and later, native cascading reset can return the child to its default when the parent's query token changes. Earlier versions support dependent searches, with reset behavior configured separately. Unset inputs wait for a choice; missing data is not filled with invented choices. Run or refresh searches to load current choices.
+
+## Images, SVG icons and another Splunk instance
+
+Use **More → Images and icons** to choose a shared asset or upload a file. PNG/JPEG/GIF/WebP files can be up to 4 MB; SVG icons can be up to 500 KB. SVGs must contain passive shapes/paths and local gradients, without scripts, external resources or CSS styles. Export those styles as presentation attributes if needed. SVGs go into the native icon library; raster files go into the native image library. Select an existing image or single-value icon before **Use asset** to replace only its asset reference. Otherwise an asset is added below existing work on the active absolute-layout page. Select it and ask for a size, placement or color change.
+
+These files are shared with other Splunk users even when the dashboard is private. Upload requires native Studio permissions, usually admin, power or sc_admin. Ordinary authors can reuse accessible media. File bytes are not sent to your model; **Attach sketch or PDF** remains a separate conversational-reference feature.
+
+To move supported artwork with a dashboard, choose **More → Export with assets**. On the destination, use **Dashboards → Import dashboard file** and select the portable JSON. Review its artwork and sharing notice, then choose **Upload shared assets and import**. The app verifies the file, uploads fresh shared records and opens a new private draft with remapped references. Check the preview and use **Save to Splunk** for a normal native dashboard. Data, reports, lookups, packaged files and external URLs must be available separately. Conversation and provider settings are excluded. Keep portable files private when their artwork or search definitions are sensitive.
+
+If an upload is interrupted, the app does not repeat it or delete shared records. Your draft is retained. Review Studio's libraries before importing again; some uploads may already exist. Export can be cancelled while reading assets. Import does not offer cancellation during shared writes, so its outcome can be verified.

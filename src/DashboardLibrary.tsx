@@ -103,7 +103,7 @@ export default function DashboardLibrary({ onClose, onOpen, onNative, onUpdated,
           {item.canManage ? <Button disabled={busy} aria-label={`Delete saved ${item.title}`} onClick={() => void nativeAction(item, 'delete')}>Delete</Button> : null}
         </Actions>{renameEditor('native', item.name)}</LibraryRow>)}
         {!busy && !native.some(item => matching(item.title)) ? <Muted>{filter.trim() ? 'No Studio dashboards match your search.' : 'No Studio dashboards saved in this app yet.'}</Muted> : null}
-        <Actions><Button disabled={busy} onClick={onImport}>Import Studio JSON</Button><Button disabled={busy} onClick={onExample}>Open example dashboard</Button></Actions><Muted>The example contains illustrative data.</Muted>
+        <Actions><Button disabled={busy} onClick={onImport}>Import dashboard file</Button><Button disabled={busy} onClick={onExample}>Open example dashboard</Button></Actions><Muted>Import Studio JSON or a Constellation portable file. The example contains illustrative data.</Muted>
       </>}
     </Modal.Body><Modal.Footer><Button disabled={busy} onClick={onClose}>Close</Button></Modal.Footer>
   </Modal>;
