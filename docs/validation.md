@@ -12,11 +12,11 @@ See the [0.36.0 media/input checks](#0360-native-media-and-dependent-menus--octo
 
 | Check | Observed result |
 | --- | --- |
-| Python unit suites | 513 tests passed locally on Python 3.13, including geographic/source contracts, native plans, exact assets, source-bound context and retained regressions. Python 3.9 runs in CI; local execution on that version was not repeated. |
-| Frontend unit suites | 117 tests passed, including the version-availability notice, inventory drift and retained report/input/delivery/focus regressions. |
-| TypeScript and production build | Passed; bundle-size warning remains. |
+| Python unit suites | 527 tests passed locally on Python 3.13, including native media/menu contracts, query-token cycles, bounded planning and retained regressions. Python 3.9 and 3.13 also passed CI on the runtime change; local Python 3.9 execution was not repeated. |
+| Frontend unit suites | 120 tests passed, including native media references, inert chain dependency metadata and retained report/input/delivery/focus regressions. |
+| TypeScript and production build | Passed on Node 22, with identical accepted installed payload; bundle-size warning remains. |
 | Deterministic app package | Generated with SHA-256 receipt. |
-| Splunk AppInspect 4.3.1, precert | 0 errors, 0 failures, 0 future failures, 7 warnings, 1 skipped, 116 successes, 128 not applicable on the tested app archive. |
+| Splunk AppInspect 4.3.1, precert | 0 errors, 0 failures, 0 future failures, 7 warnings, 1 skipped, 117 successes, 127 not applicable on the current 0.36 app archive. |
 
 The AppInspect result applies to the tested development archive. The seven warnings cover Splunk UI/framework telemetry detection, Python migration, Cloud-role compatibility and a public-IP example inside the bundled network-chart schema. The detected address was traced to a third-party documentation example, not lab configuration. Review the full local report before distributing a new archive. Repository/CI changes alone do not establish a fresh AppInspect result. This is not Splunk Cloud certification, a security audit or production qualification.
 
