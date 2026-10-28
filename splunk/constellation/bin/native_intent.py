@@ -7,6 +7,8 @@ import re
 from provider_service import ProviderError
 
 ALIASES = {
+    'splunk.map': r'(?:marker|bubble|geographic|geospatial|choropleth)[ -]map|splunk\.map',
+    'splunk.choropleth.svg': r'choropleth[ -]svg|svg[ -]choropleth|splunk\.choropleth\.svg',
     'splunk.sankey': r'sankey(?:\s+diagram)?',
     'splunk.parallelcoordinates': r'parallel[ -]?coordinates',
     'splunk.timeline': r'timeline',

@@ -1,0 +1,175 @@
+{
+  "schemaVersion": 1,
+  "evidence": "Authored synthetic finite cases. No real locations, events or user files. Native rendering is qualified separately.",
+  "cases": [
+    {
+      "id": "markers",
+      "type": "splunk.map",
+      "options": {
+        "showBaseLayer": false,
+        "center": [
+          35,
+          -40
+        ],
+        "zoom": 1,
+        "layers": [
+          {
+            "type": "marker",
+            "latitude": "> primary | seriesByName(\"lat\")",
+            "longitude": "> primary | seriesByName(\"lon\")"
+          }
+        ]
+      },
+      "source": {
+        "fields": [
+          "site",
+          "lat",
+          "lon",
+          "volume"
+        ],
+        "rows": [
+          [
+            "A",
+            40,
+            -75,
+            12
+          ],
+          [
+            "B",
+            35,
+            -110,
+            4
+          ],
+          [
+            "C",
+            50,
+            10,
+            8
+          ]
+        ]
+      }
+    },
+    {
+      "id": "bubbles",
+      "type": "splunk.map",
+      "options": {
+        "showBaseLayer": false,
+        "center": [
+          35,
+          -40
+        ],
+        "zoom": 1,
+        "layers": [
+          {
+            "type": "bubble",
+            "latitude": "> primary | seriesByName(\"lat\")",
+            "longitude": "> primary | seriesByName(\"lon\")",
+            "bubbleSize": "> primary | seriesByName(\"volume\")"
+          }
+        ]
+      },
+      "source": {
+        "fields": [
+          "site",
+          "lat",
+          "lon",
+          "volume"
+        ],
+        "rows": [
+          [
+            "A",
+            40,
+            -75,
+            12
+          ],
+          [
+            "B",
+            35,
+            -110,
+            4
+          ],
+          [
+            "C",
+            50,
+            10,
+            8
+          ]
+        ]
+      }
+    },
+    {
+      "id": "regions",
+      "type": "splunk.map",
+      "options": {
+        "showBaseLayer": false,
+        "zoom": 1,
+        "layers": [
+          {
+            "type": "choropleth",
+            "source": "geo://default/world",
+            "areaIds": "> primary | seriesByName(\"region\")",
+            "areaValues": "> primary | seriesByName(\"volume\")"
+          }
+        ]
+      },
+      "source": {
+        "fields": [
+          "region",
+          "volume"
+        ],
+        "rows": [
+          [
+            "Canada",
+            12
+          ],
+          [
+            "France",
+            4
+          ],
+          [
+            "Japan",
+            8
+          ]
+        ]
+      }
+    },
+    {
+      "id": "floor",
+      "type": "splunk.choropleth.svg",
+      "options": {
+        "svg": "data:image/svg+xml,%3Csvg%20width%3D%22300%22%20height%3D%22130%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20300%20130%22%3E%3Cpath%20fill%3D%22%23999999%22%20id%3D%22A%22%20d%3D%22M10%2010H130V120H10Z%22%2F%3E%3Cpath%20fill%3D%22%23999999%22%20id%3D%22B%22%20d%3D%22M170%2010H290V120H170Z%22%2F%3E%3C%2Fsvg%3E",
+        "areaIds": "> primary | seriesByName(\"region\")",
+        "areaValues": "> primary | seriesByName(\"volume\")",
+        "areaColors": "> areaValues | rangeValue(areaColorsRangeConfig)"
+      },
+      "context": {
+        "areaColorsRangeConfig": [
+          {
+            "to": 6,
+            "value": "#118832"
+          },
+          {
+            "from": 6,
+            "value": "#D94E17"
+          }
+        ]
+      },
+      "source": {
+        "fields": [
+          "region",
+          "volume"
+        ],
+        "rows": [
+          [
+            "A",
+            4
+          ],
+          [
+            "B",
+            12
+          ]
+        ]
+      }
+    }
+  ]
+}

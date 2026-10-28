@@ -50,7 +50,7 @@ Use a GitHub noreply address for new commits if you want to avoid publishing a p
 
 ## CI
 
-The GitHub workflow runs Python tests on 3.9 and 3.13, frontend tests, a production build/package, publication checks and Gitleaks history scanning. Actions are pinned to reviewed commit SHAs and use read-only repository permissions. The workflow does not need provider keys, Splunk credentials, live lab connectivity or deployment rights. The Gitleaks action is configured for a personal-account repository; an organization transfer may require its separate license configuration.
+The GitHub workflow runs Python tests on 3.9 and 3.13, frontend tests, a production build/package, publication checks and Gitleaks history scanning. Actions are pinned to reviewed commit SHAs and use read-only repository permissions. Only the secret-scanning job also receives `pull-requests: read` so it can enumerate private PR commits; comments and uploads remain disabled. The workflow does not need provider keys, Splunk credentials, live lab connectivity or deployment rights. The Gitleaks action is configured for a personal-account repository; an organization transfer may require its separate license configuration.
 
 CI does not claim native Studio acceptance or Cloud certification. AppInspect and live checks must be repeated against the exact release archive and affected environment/provider contracts. See [validation](validation.md).
 

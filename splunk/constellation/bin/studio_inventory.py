@@ -36,6 +36,8 @@ def authoring_contract(prompt, document, environment, brief=None, focus=None):
         if key == 'splunk.parallelcoordinates': aliases += ['parallel coordinates', 'parallel-coordinates']
         if key == 'splunk.linkgraph': aliases += ['link graph', 'link-graph']
         if key == 'splunk.networkGraph': aliases += ['network graph', 'network-graph']
+        if key == 'splunk.map': aliases += ['marker map', 'bubble map', 'geographic', 'geospatial']
+        if key == 'splunk.choropleth.svg': aliases += ['svg', 'choropleth svg', 'svg choropleth']
         score = 100 if key == selected else 0
         score += sum(10 for alias in aliases if re.search(r'(?<!\w)' + re.escape(alias) + r'(?!\w)', text))
         if score: ranked.append((score, key))
@@ -57,6 +59,7 @@ def authoring_contract(prompt, document, environment, brief=None, focus=None):
             score = 20 if name.lower() in text else 0
             if rule.get('binding') and re.match(r'^>\s*(primary|nodeSource)\b', rule['binding']): score += 8
             if name in ('x', 'y', 'category', 'majorValue', 'table', 'columnFormat', 'tableFormat'): score += 5
+            if key == 'splunk.map' and name == 'layers': score += 30
             priorities.append((score, name, rule))
         priorities.sort(key=lambda entry: (-entry[0], entry[1]))
         chosen = {}

@@ -111,6 +111,8 @@ class AuthoringBudget:
         content = request['input'][0]['content']
         if self.native_plan:
             context = {key: context[key] for key in ('request', 'definition', 'canvasState', 'environment', 'history', 'focus', 'pagePurposes', 'dashboardBrief', 'modelLimits', 'dataProfile') if key in context}
+            from native_creation import bound_profile
+            context['dataProfile'] = bound_profile(context.get('dataProfile'))
         if self.compact:
             # These stable standard-chart actions do not need the unrelated
             # catalog or advanced native-action examples. Preserve the exact
@@ -249,6 +251,10 @@ class AuthoringBudget:
             envelope['recoveryFeedback']['editsApplyTo']='original'
         if getattr(self, 'native_plan', False):
             envelope = dict(envelope, rejectedOutput='', request='Return ONE complete corrected nativeCompose plan for the same original goal, retaining every requested chart family and verified source. No separate native edits.')
+            from native_creation import bound_profile
+            envelope['recoveryFeedback'] = dict(envelope.get('recoveryFeedback', {}))
+            if 'dataProfile' in envelope['recoveryFeedback']:
+                envelope['recoveryFeedback']['dataProfile'] = bound_profile(envelope['recoveryFeedback']['dataProfile'])
         retain_compact = getattr(self,'compact',False)and envelope.get('recoveryFeedback',{}).get('editsApplyTo')=='original'
         if retain_compact:
             envelope=dict(envelope,rejectedOutput='',request='Return ONE complete corrected compose plan for the current original goal. The server supplies all IDs, positions, filters and navigation. Do not emit ordinary or native edits.')

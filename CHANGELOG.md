@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.35.0 - Unreleased
+
+- Add bounded geographic coordinate, size, area-value and inline SVG identifier checks without geocoding, fetching assets or inventing missing values. Supply attributed map-layer and SVG guidance to native authoring.
+- Extend small native creation plans to explicit marker/bubble maps and a supplied literal/data-URI SVG. Compile nested layers, source bindings, a neutral SVG color scale and page geometry through all existing validators.
+- Keep append-only native planning's verified base search on the server during initial requests and repair. Field metadata, units and constraints remain in model context; the compiler retains the exact selected query and scope.
+- Enable native read-only `geostats`, `geom` and `iplocation` within the existing query/time/result guards. Recognize singular explicit chart counts.
+- Record ordinary-user geographic/freezer provider checks, exact browser-selected map edits and a separate user-confirmed native SVG render/click check. Retain broader asset, interaction, input and deployment qualification gates.
+
 ## 0.34.0 - 2026-10-28
 
 - Separate documented native visualization/option release boundaries from the embedded renderer, including timeline, network and treemap availability. Preserve unchanged imports and show an unavailable-version notice in the preview.

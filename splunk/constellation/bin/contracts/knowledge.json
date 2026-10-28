@@ -310,5 +310,38 @@
     ],
     "source": "https://help.splunk.com/en/splunk-enterprise/create-dashboards-and-reports/dashboard-studio/10.4/visualizations/network-graph",
     "text": "Network graphs have primary link rows and may have a separate nodeSource for node attributes. Bind source/target to link IDs, nodeIds to node identifiers, and numeric styling/positions to the matching node-source fields. Preserve the distinction between node and link sources. Use explicit native series selectors for custom field names. Do not create a node relationship from coincidental values or reuse link weights as node metrics without evidence. This type requires Splunk 10.4."
+  },
+  {
+    "id": "geographic-layers",
+    "title": "Native map layers and coordinate meaning",
+    "minimumEnterprise": "10.0",
+    "tags": [
+      "map",
+      "geographic",
+      "geospatial",
+      "marker",
+      "bubble",
+      "choropleth",
+      "latitude",
+      "longitude"
+    ],
+    "source": "https://help.splunk.com/en/splunk-enterprise/create-dashboards-and-reports/dashboard-studio/10.4/visualizations/maps",
+    "text": "Map data channels belong inside options.layers, not the root options. Use {type:\"marker\",latitude:\"> primary | seriesByName('lat')\",longitude:\"> primary | seriesByName('lon')\"}; bubble layers add bubbleSize with a numeric series/frame. Coordinates are geographic degrees, latitude -90..90 and longitude -180..180. Verify meaning/units; never invent locations, swap axes or fill unknown coordinates with zero. Retain or explain unlocated observations. Choropleth layers use areaIds, numeric areaValues and native source geo://default/world or geo://default/us. Area identifiers must match that geography. Preserve unrelated layers, searches and interactions during edits. Custom tile servers and image assets have separate permissions/rendering; their configuration is not proof of availability."
+  },
+  {
+    "id": "svg-areas",
+    "title": "Data-driven SVG shapes",
+    "minimumEnterprise": "10.0",
+    "tags": [
+      "svg",
+      "choropleth",
+      "shape",
+      "floorplan",
+      "campus",
+      "areaIds",
+      "areaValues"
+    ],
+    "source": "https://help.splunk.com/en/splunk-enterprise/create-dashboards-and-reports/dashboard-studio/10.4/visualizations/choropleth-svg",
+    "text": "splunk.choropleth.svg uses options.svg for the supplied literal SVG/data URI or an existing native asset reference. Do not invent an upload ID or replace an existing user image. Inline paths need unique id attributes and d outlines. Bind areaIds to a series whose values match those path IDs and areaValues to the intended numeric measurement. areaColors can use > areaValues | rangeValue(areaColorsRangeConfig), with thresholds in visualization.context. Retain missing values and explain unmatched/unmapped records. Imported opaque asset references are preserved; no asset fetch or upload is implied by validation. Use the documented area.click event for supported token interactions."
   }
 ]

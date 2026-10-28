@@ -4,7 +4,7 @@ A conversational canvas for creating and editing **Splunk Dashboard Studio** das
 
 Describe an operational question, choose data available to your Splunk user, and watch a dashboard take shape. Select a chart, input or page to refine it through chat. Start from a blank canvas, an existing Studio definition, or an image/PDF reference when the selected provider supports it.
 
-**Status: 0.34.0 development preview.** This is a new codebase, separate from Splunk Dashboard Generator. It is not a production release or Splunk Cloud certified app. The repository is currently private and is being prepared for a future public release.
+**Status: 0.35.0 development preview (unreleased).** This is a new codebase, separate from Splunk Dashboard Generator. It is not a production release or Splunk Cloud certified app. The repository is currently private and is being prepared for a future public release.
 
 ## Download and start
 
@@ -41,6 +41,8 @@ Start with the [user guide](docs/user-guide.md). AITK administrators should foll
 This app remains self-contained inside Splunk: React/TypeScript, the Splunk Dashboard Framework, Splunk UI Toolkit and bundled Python REST handlers. It requires no separate agent platform, worker service or vector database. Retrieval currently uses bundled, attributed guidance filtered by version and intent; semantic RAG and verified cross-dataset relationships remain future work.
 
 ## Current development
+
+- Geographic layers and SVG source roles receive bounded checks. Small explicit new map/SVG boards use compiled source bindings and layout; the verified base search stays on the server. Native geographic read transforms retain the existing guards.
 
 - Native type/option release boundaries are separate from the embedded renderer. New unavailable features are rejected; imported configurations remain intact and receive a preview notice.
 - Specialized chart source roles, ordered numeric axes, time bindings and supported events receive actual-output validation. Bounded native-chart creation uses a smaller plan while retaining every final check.
@@ -80,7 +82,7 @@ python3.13 scripts/package_app.py
 npm run dev -- --port 5178
 ```
 
-The local preview demonstrates the canvas with illustrative data. Provider settings, live searches, server-backed drafts and native saves require the installed Splunk app. Packaging creates `artifacts/constellation-0.34.0.tgz`; release `.tar.gz` assets contain those exact bytes. Build artifacts and dependencies stay outside Git. See [development and release checks](docs/development.md).
+The local preview demonstrates the canvas with illustrative data. Provider settings, live searches, server-backed drafts and native saves require the installed Splunk app. Packaging creates `artifacts/constellation-0.35.0.tgz`; release `.tar.gz` assets contain those exact bytes. Build artifacts and dependencies stay outside Git. See [development and release checks](docs/development.md).
 
 ## Data and credentials
 

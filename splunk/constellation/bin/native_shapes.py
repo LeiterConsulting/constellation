@@ -9,8 +9,11 @@ import math
 import re
 from measurement_constraints import pipeline_commands
 from provider_service import ProviderError
+from native_geography import validate_geography
 
 CONTRACTS = {
+    'splunk.map': {'source': 'Put coordinate/area bindings INSIDE options.layers[]. Marker/bubble layers select finite latitude (-90..90) and longitude (-180..180) in degrees. Bubble sizes are nonnegative; choropleth layers select areaIds/areaValues with a native geo://default/world or geo://default/us source. Do not infer coordinates or geocode without a verified data relationship. Explicitly retain/explain unlocated observations; never turn missing coordinates into zero.', 'events': ['map.load', 'map.click']},
+    'splunk.choropleth.svg': {'source': 'options.svg is the supplied literal SVG/data URI or existing native asset reference; never invent an upload ID. Inline paths need unique id and d attributes. areaIds selects exact matching IDs and areaValues a numeric series; areaColors can use a native context mapping. Missing values remain missing. Opaque assets are preserved, not fetched or claimed verified.', 'events': ['area.click']},
     'splunk.sankey': {'source': 'Exact source and target fields; linkValues selects one numeric weight. Missing measurements stay null.', 'events': ['node.click', 'link.click']},
     'splunk.linkgraph': {'source': 'Ordered adjacent relationship columns; fieldOrder is an array of exact output field names or a native field selector.', 'events': ['node.click', 'node.mouseover']},
     'splunk.parallelcoordinates': {'source': 'First output column is the category; subsequent columns are numeric axes. Project the intended ordered columns in the search.', 'events': []},
@@ -84,6 +87,9 @@ def validate_shape(item, outputs):
     if kind not in CONTRACTS: return
     aliases = item.get('dataSources', {}); source = aliases.get('primary')
     if source not in outputs: return
+    if kind in ('splunk.map', 'splunk.choropleth.svg'):
+        validate_geography(item, outputs, direct_fields)
+        return
     result = outputs[source]; fields = [field['name'] for field in result['fields']]
     options = item.get('options', {})
 

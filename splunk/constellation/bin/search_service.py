@@ -14,7 +14,8 @@ READ_COMMANDS = {'search', 'from', 'makeresults', 'stats', 'timechart', 'chart',
                  'where', 'fields', 'table', 'rename', 'sort', 'head', 'bin', 'dedup',
                  'rex', 'fillnull', 'streamstats', 'eventstats', 'mvexpand', 'mvcombine',
                  'convert', 'spath', 'top', 'rare', 'untable', 'xyseries', 'transpose',
-                 'addtotals', 'addcoltotals', 'tstats', 'metadata'}
+                 'addtotals', 'addcoltotals', 'tstats', 'metadata',
+                 'geostats', 'geom', 'iplocation'}
 
 
 def read_only_query(query, language='spl'):
