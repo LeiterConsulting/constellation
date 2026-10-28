@@ -1,10 +1,15 @@
 # Constellation
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/branding/exports/banner-compact-dark.png">
+  <img src="assets/branding/exports/banner-compact-light.png" alt="">
+</picture>
+
 A conversational canvas for creating and editing **Splunk Dashboard Studio** dashboards.
 
 Describe an operational question, choose data available to your Splunk user, and watch a dashboard take shape. Select a chart, input or page to refine it through chat. Start from a blank canvas, an existing Studio definition, or an image/PDF reference when the selected provider supports it.
 
-**Status: 0.35.0 development preview (unreleased).** This is a new codebase, separate from Splunk Dashboard Generator. It is not a production release or Splunk Cloud certified app. The repository is currently private and is being prepared for a future public release.
+**Status: 0.36.0 development preview (unreleased).** This is a new codebase, separate from Splunk Dashboard Generator. It is not a production release or Splunk Cloud certified app. The repository is currently private and is being prepared for a future public release.
 
 ## Download and start
 

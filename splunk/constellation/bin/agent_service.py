@@ -19,6 +19,7 @@ from studio_inventory import authoring_contract
 from table_sparkline import focused_schema as sparkline_schema, INSTRUCTIONS as SPARKLINE_INSTRUCTIONS, ACTION as TABLE_SPARKLINE_ACTION
 from table_cells import validate_sparkline_request
 from sparkline_queries import profile_policy, gap_limit, validate_native_gap_policy
+from native_inputs import validate_menu_intent, additive_menu_plan, validate_additive_menus
 from authoring_actions import ACTION_SCHEMA, compile_actions, validate_chart_placement
 from scope_intent import inferred_range
 from agent_feedback import validate_data_claims, presentation_message, validate_blank_claim
@@ -59,6 +60,17 @@ The compiler supplies native bindings.
 3. Place every chart with typed page/layout items using the SAME chart id. Include
 all searches, charts and their page placements in one complete proposal. Add native
 navigation using button/link actions. Never omit placement, even for one chart.
+For new dynamic dropdowns/multiselects prefer op:menu
+{id,inputType,title,token,sourceId,labelField,valueField,defaultMode,cascading}.
+inputType is input.dropdown or input.multiselect; defaultMode is all, first or none.
+Use op:search for each menu source pipeline with exact verified output fields.
+The menu compiler supplies native DOS bindings, All choice and global placement,
+preserving every existing input, button and page. Do not also edit /inputs or layout.
+Child source pipelines filter using parent tokens with |s everywhere, including
+All comparisons: FIELD=$parent|s$ OR $parent|s$="*". Never put quotes around |s.
+Set cascading=true only on 10.4+ when automatic dependency reset is requested;
+earlier targets use dependent searches without that reset option. Existing inputs
+and advanced styling retain targeted native set/remove edits.
 These actions use ordinary strings, not nested JSON encoding. Use native set/remove
 for focused property edits or features outside these typed builders; preserve unknown
 properties and unrelated work. Do not replace existing source/chart collections just
@@ -399,6 +411,8 @@ class AgentService:
                                   'providerManaged': saved.get('provider') == 'aitk',
                                   'reason': 'AITK model/output limits are managed by its named connection and are unverified here.' if saved.get('provider') == 'aitk' else 'Unknown capacities must not be inferred from model IDs. Use concise typed changes.'}
         if profile: context['dataProfile'] = profile
+        menu_plan = additive_menu_plan(prompt, document, profile, attachments)
+        if menu_plan: context['newMenusOnly'] = menu_plan
         if table_receipt: context['focusedSourceReceipt'] = table_receipt
         format_only = table_receipt and not attachments and formatting_only(prompt, focus.get('id'), document)
         row_only = row_navigation.eligible(prompt,document,focus.get('id'),profile,table_receipt,attachments)
@@ -571,6 +585,8 @@ class AgentService:
                 validate_chart_placement(draft, document)
                 validate_blank_claim(result['message'], draft, document, profile)
                 if budget.phase == 'complete':
+                    validate_menu_intent(prompt, draft, document)
+                    if menu_plan: validate_additive_menus(draft, document)
                     validate_page_intent(prompt, result['message'], draft, document, focus, next_purposes)
                     validate_route_intent(prompt,draft,document,profile,focus)
                 if not profile:
@@ -649,7 +665,7 @@ class AgentService:
                     profile['independentMeasurements'] = data.independent_populations
                     profile['retainSourceRows'] = retain_source_rows(prompt, brief)
                     profile.update(profile_policy(prompt, brief, environment))
-                if getattr(budget, 'compact', False) or getattr(budget, 'native_plan', False):
+                if getattr(budget, 'compact', False) or getattr(budget, 'native_plan', False) or getattr(budget, 'menu_plan', False):
                     # This turn began on an empty verified canvas. Its rejected
                     # composition is transient, never accepted user work. Replan
                     # compactly against the exact original, retaining receipts

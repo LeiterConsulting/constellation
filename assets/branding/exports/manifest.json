@@ -1,0 +1,239 @@
+{
+  "schemaVersion": 1,
+  "assets": [
+    {
+      "path": "assets/branding/exports/banner-dark.png",
+      "width": 1600,
+      "height": 640,
+      "hasAlpha": true,
+      "purpose": "Documentation or introductory banner; not a permanent canvas header",
+      "shippedInApp": false,
+      "sha256": "cc3727abfdeffc8439d484a550c278afbc22c2030f461094a8f89c7f76ed1d5d"
+    },
+    {
+      "path": "assets/branding/exports/banner-compact-dark.png",
+      "width": 1600,
+      "height": 400,
+      "hasAlpha": true,
+      "purpose": "Compact documentation or release banner",
+      "shippedInApp": false,
+      "sha256": "d87801251c78e3a69e20c7b452ba84af2a2839e1f5fbeee4a2e2651b248e452b"
+    },
+    {
+      "path": "assets/branding/exports/wordmark-dark.png",
+      "width": 640,
+      "height": 144,
+      "hasAlpha": true,
+      "purpose": "Transparent wordmark for a dark background",
+      "shippedInApp": false,
+      "sha256": "a2c783c72ec8f631e0085bbfc29c620710a79e5c28a3836d84a856281ca2f2ba"
+    },
+    {
+      "path": "assets/branding/exports/social-dark.png",
+      "width": 1200,
+      "height": 630,
+      "hasAlpha": true,
+      "purpose": "Repository social preview; upload separately, not part of the app",
+      "shippedInApp": false,
+      "sha256": "26751fd1ca5bf2e690493ac471a5cc158e7bbf134d85df6c4dc00616a6292a89"
+    },
+    {
+      "path": "assets/branding/exports/mark-dark-20.png",
+      "width": 20,
+      "height": 20,
+      "hasAlpha": true,
+      "purpose": "Transparent brand mark for a dark background; not a native sidebar icon URL",
+      "shippedInApp": false,
+      "sha256": "e712392dee8f4952adf52e1fb25f45b94bca1be2436e862a6788d2af5507c68b"
+    },
+    {
+      "path": "assets/branding/exports/mark-dark-24.png",
+      "width": 24,
+      "height": 24,
+      "hasAlpha": true,
+      "purpose": "Transparent brand mark for a dark background; not a native sidebar icon URL",
+      "shippedInApp": false,
+      "sha256": "f978d4fba0a84f8beaee1804aff2c0f981977a70759e02054b7401936cd682fb"
+    },
+    {
+      "path": "assets/branding/exports/mark-dark-32.png",
+      "width": 32,
+      "height": 32,
+      "hasAlpha": true,
+      "purpose": "Transparent brand mark for a dark background; not a native sidebar icon URL",
+      "shippedInApp": false,
+      "sha256": "fd7bea076434672242c0767658cceda04a3bb2325975be5f6872af2ee3d60280"
+    },
+    {
+      "path": "assets/branding/exports/mark-dark-48.png",
+      "width": 48,
+      "height": 48,
+      "hasAlpha": true,
+      "purpose": "Transparent brand mark for a dark background; not a native sidebar icon URL",
+      "shippedInApp": false,
+      "sha256": "087b2f651130a855c37c157107795c42204d7d759a6a45e69d4eebdd8124f2f6"
+    },
+    {
+      "path": "assets/branding/exports/mark-dark-512.png",
+      "width": 512,
+      "height": 512,
+      "hasAlpha": true,
+      "purpose": "Transparent brand mark for a dark background; not a native sidebar icon URL",
+      "shippedInApp": false,
+      "sha256": "3f03958d32301342331f84c36ef62444c202f863e92d56f0774bfd540815c151"
+    },
+    {
+      "path": "assets/branding/exports/banner-light.png",
+      "width": 1600,
+      "height": 640,
+      "hasAlpha": true,
+      "purpose": "Documentation or introductory banner; not a permanent canvas header",
+      "shippedInApp": false,
+      "sha256": "979b8d003323eafaf5274f0f53e5095b2d78bd742b104398c7aecfce4886aceb"
+    },
+    {
+      "path": "assets/branding/exports/banner-compact-light.png",
+      "width": 1600,
+      "height": 400,
+      "hasAlpha": true,
+      "purpose": "Compact documentation or release banner",
+      "shippedInApp": false,
+      "sha256": "b010440fcd926b2931a897e3aa5dca1b164f67047ea207732887e535aa49dc4b"
+    },
+    {
+      "path": "assets/branding/exports/wordmark-light.png",
+      "width": 640,
+      "height": 144,
+      "hasAlpha": true,
+      "purpose": "Transparent wordmark for a light background",
+      "shippedInApp": false,
+      "sha256": "53a9bda52624bda4594c19be95aace76dfb78aecd043be2d4d77cafaa6fe041f"
+    },
+    {
+      "path": "assets/branding/exports/social-light.png",
+      "width": 1200,
+      "height": 630,
+      "hasAlpha": true,
+      "purpose": "Repository social preview; upload separately, not part of the app",
+      "shippedInApp": false,
+      "sha256": "b9e926ebe09f35d11dc73b6751f40b8287f67392274dd49952fdc7ab85e42806"
+    },
+    {
+      "path": "assets/branding/exports/mark-light-20.png",
+      "width": 20,
+      "height": 20,
+      "hasAlpha": true,
+      "purpose": "Transparent brand mark for a light background; not a native sidebar icon URL",
+      "shippedInApp": false,
+      "sha256": "03db966db4944b6194c4c8b1071006bf3983e581cb4ef25c818c55138d2b0ea3"
+    },
+    {
+      "path": "assets/branding/exports/mark-light-24.png",
+      "width": 24,
+      "height": 24,
+      "hasAlpha": true,
+      "purpose": "Transparent brand mark for a light background; not a native sidebar icon URL",
+      "shippedInApp": false,
+      "sha256": "99af344189c246d6349c1dfb835c663d39761091427b3947bf11aadefeed31ba"
+    },
+    {
+      "path": "assets/branding/exports/mark-light-32.png",
+      "width": 32,
+      "height": 32,
+      "hasAlpha": true,
+      "purpose": "Transparent brand mark for a light background; not a native sidebar icon URL",
+      "shippedInApp": false,
+      "sha256": "9b93d651a8bceae1d40f841e07bc707b710cc8fb37723fa0434c605599c20350"
+    },
+    {
+      "path": "assets/branding/exports/mark-light-48.png",
+      "width": 48,
+      "height": 48,
+      "hasAlpha": true,
+      "purpose": "Transparent brand mark for a light background; not a native sidebar icon URL",
+      "shippedInApp": false,
+      "sha256": "05e6330d5c9db2521a3effd1d7bdbb47d9f9853c3f412b5c2d0ded4875d4cff5"
+    },
+    {
+      "path": "assets/branding/exports/mark-light-512.png",
+      "width": 512,
+      "height": 512,
+      "hasAlpha": true,
+      "purpose": "Transparent brand mark for a light background; not a native sidebar icon URL",
+      "shippedInApp": false,
+      "sha256": "d6466807a2cfaf7ceaec051c93dec7a1e083eacbf59a5297414ec8c88373c508"
+    },
+    {
+      "path": "assets/branding/exports/listing-splash.png",
+      "width": 623,
+      "height": 350,
+      "hasAlpha": true,
+      "purpose": "623 by 350 Splunkbase splash artwork; promotional illustration, not a live screenshot",
+      "shippedInApp": false,
+      "sha256": "ca17c9c2a6d70a011c11042d891e88cb103103d65258cc389100c46f2d73e940"
+    },
+    {
+      "path": "splunk/constellation/static/appIcon.png",
+      "width": 36,
+      "height": 36,
+      "hasAlpha": true,
+      "purpose": "Native Splunk app-branding asset",
+      "shippedInApp": true,
+      "sha256": "8ec7de5c756c69a22d5a72da39de76ed32920edd87d275726621d29593c8e903"
+    },
+    {
+      "path": "splunk/constellation/static/appIcon_2x.png",
+      "width": 72,
+      "height": 72,
+      "hasAlpha": true,
+      "purpose": "Native Splunk app-branding asset",
+      "shippedInApp": true,
+      "sha256": "f2c07646699f0c5df3563000a1ea614aedd419a395d2ca90101b1026be04a1da"
+    },
+    {
+      "path": "splunk/constellation/static/appIconAlt.png",
+      "width": 36,
+      "height": 36,
+      "hasAlpha": true,
+      "purpose": "Native Splunk app-branding asset",
+      "shippedInApp": true,
+      "sha256": "8ec7de5c756c69a22d5a72da39de76ed32920edd87d275726621d29593c8e903"
+    },
+    {
+      "path": "splunk/constellation/static/appIconAlt_2x.png",
+      "width": 72,
+      "height": 72,
+      "hasAlpha": true,
+      "purpose": "Native Splunk app-branding asset",
+      "shippedInApp": true,
+      "sha256": "f2c07646699f0c5df3563000a1ea614aedd419a395d2ca90101b1026be04a1da"
+    },
+    {
+      "path": "splunk/constellation/static/appLogo.png",
+      "width": 160,
+      "height": 40,
+      "hasAlpha": true,
+      "purpose": "Native Splunk app-branding asset",
+      "shippedInApp": true,
+      "sha256": "f650c00b80ce0ce143d0b1f72d18af9ba2e03ca574dc300d64da6c33721036eb"
+    },
+    {
+      "path": "splunk/constellation/static/appLogo_2x.png",
+      "width": 320,
+      "height": 80,
+      "hasAlpha": true,
+      "purpose": "Native Splunk app-branding asset",
+      "shippedInApp": true,
+      "sha256": "cbb72d29e15fe367ab1835591945aca4fd7c709b5c253f890c7a19f113d3bff0"
+    },
+    {
+      "path": "src/assets/constellation-mark.png",
+      "width": 512,
+      "height": 512,
+      "hasAlpha": true,
+      "purpose": "Decorative in-app title mask, bundled into the frontend",
+      "shippedInApp": true,
+      "sha256": "1b74399cdd6f61b1ae4ca88c6d679e543105b83cfc63c321eecdf2291bb5e102"
+    }
+  ]
+}
