@@ -1,5 +1,9 @@
 # Updating Constellation
 
+## 0.31.1 unavailable draft links
+
+Refresh workspace tabs after installing. No credential, draft or native migration runs; schema remains 3. An explicit unavailable link now keeps editing/autosave disabled while offering the existing New dashboard and Dashboards actions. Only an explicit document activation resumes persistence. Keep failed storage initialization distinct from this known-unavailable state, and never flush the temporary blank canvas before opening another document. Requalify foreign/deleted links, refresh, library open/close, deliberate new creation and reopening an owned draft; compare record counts and the active preference before and after unavailable-link navigation.
+
 ## 0.31 wide-event inspection and runtime identity
 
 No credential, draft or native-dashboard migration runs; schema remains 3. Refresh workspace tabs after installation. Field inspection now omits `_raw`, applies the existing metadata priority before the native field cap, and keeps an intact leading sample within the existing result-size limit. A reduced sample is partial, with presence, numeric and multivalue counts based only on its retained rows. A single oversized extracted row still requires a narrower supplied search. Ordinary chart previews and all final search validation retain their strict size/time/row limits.

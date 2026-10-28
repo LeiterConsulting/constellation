@@ -66,6 +66,8 @@ A field inspection marked **partial** is a bounded sample, not a complete count 
 
 Each workspace keeps its own draft link. Refresh returns to that draft even if you open another draft in a different tab. Draft links still require the owning Splunk user; they do not grant access to another user.
 
+If a link is unavailable, nothing is saved or replaced. Use **Dashboards** to reopen your own work or **New dashboard** to start. Deleted drafts remain in **Trash** until you restore them.
+
 
 ### Explain field meanings once
 

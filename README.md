@@ -4,7 +4,7 @@ A conversational canvas for creating and editing **Splunk Dashboard Studio** das
 
 Describe an operational question, choose data available to your Splunk user, and watch a dashboard take shape. Select a chart, input or page to refine it through chat. Start from a blank canvas, an existing Studio definition, or an image/PDF reference when the selected provider supports it.
 
-**Status: 0.31.0 development preview.** This is a new codebase, separate from Splunk Dashboard Generator. It is not a production release or Splunk Cloud certified app. The repository is currently private and is being prepared for a future public release.
+**Status: 0.31.1 development preview.** This is a new codebase, separate from Splunk Dashboard Generator. It is not a production release or Splunk Cloud certified app. The repository is currently private and is being prepared for a future public release.
 
 ## What works today
 
@@ -39,7 +39,7 @@ npm run dev -- --port 5178
 
 Open the local URL printed by Vite. Standalone mode demonstrates the canvas and authored example data; provider Settings, live Splunk searches, server-backed drafts and native saves require an installed Splunk app.
 
-The package is written to `artifacts/constellation-0.31.0.tgz`, with its digest in `artifacts/SHA256SUMS`. Build artifacts and dependencies are not committed. See [installation](docs/installation.md) to install the package and configure a provider in the app.
+The package is written to `artifacts/constellation-0.31.1.tgz`, with its digest in `artifacts/SHA256SUMS`. Build artifacts and dependencies are not committed. See [installation](docs/installation.md) to install the package and configure a provider in the app.
 
 ## Compatibility and boundaries
 
@@ -62,6 +62,8 @@ Multi-page actual-data creation and focused edits have been exercised through Op
 0.29 gives eligible Ollama creation one bounded chart list with explicit page membership, retaining the ordinary compiler and all validation. Exact-field stored-unit declarations now persist alongside recorded/measured forms; contextual follow-ons omit already-answered unit questions while retaining uncertainty and conversion decisions. The interface and recovery budgets stay unchanged. See [architecture](docs/architecture.md#bounded-ollama-outline-and-unit-context-029) and [validation](docs/validation.md).
 
 0.30 gives ordinary Ollama and AITK calculations distinct aggregate/raw-table plan shapes, with advanced pipeline fallback and the same validation. See [architecture](docs/architecture.md#calculation-specific-compact-recipes-030) and [validation](docs/validation.md) for qualification.
+
+0.31.1 keeps unavailable draft links closed until the user chooses New dashboard or opens their own work from Dashboards. Opening or refreshing a foreign, missing or deleted link no longer creates an unwanted blank draft. The [latest qualification](docs/validation.md#0311-unavailable-links-and-concurrent-authors--october-28-2026) separates concurrent backend trials from final-package browser and provider checks.
 
 ## Data and credentials
 

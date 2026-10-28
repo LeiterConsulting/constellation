@@ -1,8 +1,8 @@
 # Validation status
 
-Snapshot: **0.31.0 development preview, October 27, 2026**. This file is a sanitized summary. Private lab addresses, credentials, screenshots, transcripts, raw search data and detailed runtime receipts are excluded from the repository.
+Snapshot: **0.31.1 development preview, October 28, 2026**. This file is a sanitized summary. Private lab addresses, credentials, screenshots, transcripts, raw search data and detailed runtime receipts are excluded from the repository.
 
-See the [0.31 wide-data qualification](#0310-wide-data-grounding-and-scoped-edits--october-27-2026) for current evidence. Earlier cohorts below retain their own scope and failures.
+See the [0.31.1 startup and concurrent-author checks](#0311-unavailable-links-and-concurrent-authors--october-28-2026) for current evidence. Earlier cohorts below retain their own scope and failures.
 
 ## Local verification
 
@@ -24,6 +24,30 @@ The AppInspect result applies to the tested development archive. The seven warni
 | 10.4.4 | 1.26.6 | Native roundtrips, synthetic SPL/SPL2, PDF interactions and prior page/focus checks; current repeated non-admin OpenAI/Ollama wide-data creation, editing, native saves and selected UI/native navigation. |
 
 The 0.31 cohort extends current real-data creation/editing to 10.4.4 through OpenAI and Ollama. Earlier full-interface journeys retain their own versions and scope. AITK 6.2 shared inference passed on 10.2.8; the 10.4.4 target has AITK 6.1 without a usable configured connection and remains blocked by maintainer permissions. Do not infer instance-independent provider availability from app installation.
+
+## 0.31.1 Unavailable links and concurrent authors — October 28, 2026
+
+**Defect and fix.** Opening a foreign draft link correctly denied that draft but also autosaved a replacement blank draft and changed the active preference. The workspace now stays unopened, with persistence/editing disabled and the existing New dashboard and Dashboards actions available. It does not change the unavailable URL or substitute other work. Explicit document activation resumes normal saving. No backend, provider, permission, draft schema or validation contract changed.
+
+On the final package, an ordinary author opened/refreshed a foreign link and opened/closed Dashboards without changing the exact draft list or active preference. Deliberate New dashboard created exactly one draft. After moving that test draft to recoverable Trash, its link stayed unavailable without creating or restoring anything. Dashboards reopened an owned freezer draft; canvas selection followed by a conversational summary sort changed only its source query, used zero inference, retained the cutoff and all unrelated native properties, and preserved conversation/Overview through refresh. Row-to-detail and return navigation worked in the preview. A missing-link refresh on Enterprise 10.4.4 also preserved its original draft list/preference; that second-version UI check used the administrator, not a new ordinary-user provider cohort.
+
+**Concurrent backend regression before the UI-only patch.** Three ordinary authors ran overlapping OpenAI, Ollama and managed AITK flows on Enterprise 10.2.8, using CPU, reachability and freezer indexes. Two rounds per dataset/provider passed: **18 flows / 72 turns**, one model call per turn and no repairs. Each flow covered blank two-page/four-chart creation, selected maximum calculation, number/date formatting, existing-button editing, exact draft/conversation reopen, owner-private native copies in Search & Reporting and peer denial. The archive was the unchanged 0.31.0 build 46 identified below; no server/runtime change was made during these trials.
+
+| Provider | Flows / turns | Creation median (range), seconds | Edit median, seconds |
+| --- | --- | --- | --- |
+| OpenAI | 6 / 24 | 24.60 (18.77–35.13) | 5.99 |
+| Ollama | 6 / 24 | 19.99 (15.17–31.43) | 7.04 |
+| AITK 6.2 | 6 / 24 | 27.12 (23.66–28.35) | 19.62 |
+
+All three deliberately disconnected original creation responses recovered their original validated reply with one model call and confirmed acknowledgement. Three additional model-stage Stop trials acknowledged cancellation in 0.027–0.055 seconds and denied delivery/late edits; handler exit took 23.31 seconds for OpenAI, 14.77 for Ollama and 2.22 for AITK. Stop is cooperative, not proof of upstream billing cancellation. A peer was denied poll/result/ack/cancel with both learned original handles and handles re-signed using its own session key. Background settings/draft reads and bounded preview start/poll/cancel passed. These are short single-head overlapping cohorts, not a production saturation test or a fresh 30-minute soak.
+
+**Final package.** The **0.31.1 build 47** archive has SHA-256 `bdd07caff21e3050b2f7c04903963af33575023425863f7645c3b19a4f78c8c3` (460 files; 5,434,558 bytes). Both recorded Enterprise versions installed it over verified management TLS without restart. It contains no macOS extras, resource forks, private configuration or extended archive metadata. The three providers then completed another overlapping ordinary-user freezer flow each: **3 flows / 12 turns**, one call per turn, no repairs, exact draft/native readback and peer denial. Creation took 26.77 seconds for OpenAI, 16.32 for Ollama and 30.29 for AITK. This final cohort is distinct from the 18 pre-patch flows. The additional browser sort above is separate from those twelve model turns.
+
+Independent native synthetic probes checked all 84 source transformations across both archives: known means/maxima/counts, raw columns/nulls, both detail selections and unchanged numerical Overview populations. Separate probes on all nine freezer definitions retained exactly 150°F, excluded 150.1°F/180°F, kept missing measurements unknown and preserved independent Wi-Fi/event populations. Fixtures were neither ingested nor sent to providers. A final private trace snapshot covered 2,348 handler requests: expected peer/cancel denials and three injected disconnects, with no other observed HTTP or transport failure. An independent ordinary-user native catalog read took 0.10 seconds in this window. That does not establish why earlier reads took 7–14 seconds or close the intermittent-timeout investigation.
+
+The existing 429 backend tests passed on Python 3.9 and 3.13, all 106 frontend tests passed and the Node 22 production build passed. Fresh AppInspect 4.3.1 precert on this archive reported zero errors/failures/future failures, seven warnings and one skip. The bundle-size warning remains. Four temporary users, 27 owned configuration objects, 21 native views and one copied owner-only OpenAI record were removed; the password file was deleted. All 36 original administrator drafts/preferences/settings and 78 original configuration contents were exact after cleanup. AITK policy/protected writers stayed unchanged, its upstream connection parameters were not read or written, the original browser account was restored and test tabs closed. The single unwanted empty administrator draft created while reproducing the bug was verified empty, removed, and the original preference/configuration hashes restored exactly.
+
+**Remaining 1.0 gates.** The second target still lacks AITK maintainer discovery permission. Historical latency tails, broader model/native/imported/SPL2 and complex measurement semantics, independent delivery/storage security review, fresh-install/upgrade/rollback/cluster deployment, unaided-user/accessibility/reflow trials and bundle reduction remain open. No new GitHub release is created by this development update; the repository stays private. This is bounded regression evidence, not a general success-rate estimate, full native parity, Cloud certification or 1.0 acceptance.
 
 ## 0.31.0 Wide-data grounding and scoped edits — October 27, 2026
 

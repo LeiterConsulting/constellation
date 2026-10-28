@@ -82,6 +82,7 @@ export default function App({ initialColorScheme }: { initialColorScheme: 'light
   const [proposals, setProposals] = useState<Proposals>(null);
   const [draftId, setDraftId] = useState(newDraftId);
   const [storageReady, setStorageReady] = useState(!isSplunk());
+  const [unavailableDraft, setUnavailableDraft] = useState(false);
   const [storageError, setStorageError] = useState('');
   const [storageAttempt, setStorageAttempt] = useState(0);
   const [dataContext, setDataContext] = useState<DataScope | null>(null);
@@ -134,6 +135,7 @@ export default function App({ initialColorScheme }: { initialColorScheme: 'light
     const state = restored?.state;
     if (restored) persistence.adopt(restored, pending);
     setDraftId(nextDraftId);
+    setUnavailableDraft(false); setStorageReady(true);
     setRevision({ number, definition }); setSelected(validFocus(definition,state?.selected || '')?state?.selected || '':'');
     setPagePurposes(state?.pagePurposes||{}); setBrief(state?.brief || { purpose: '', requirements: '' }); setDetailsOpen(false);
     navigationFocus.current=state?.tokens?.default?.constellation_focus;
@@ -181,7 +183,8 @@ export default function App({ initialColorScheme }: { initialColorScheme: 'light
             if(route.focus&&validFocus(record.state.definition,route.focus))setSelected(route.focus);
           }
         } else if(initialRoute.current.draft) {
-          setStatus('This draft link is unavailable to your Splunk user. Choose a draft from Dashboards.');
+          setUnavailableDraft(true);
+          return;
         }
         setStorageReady(true);
       } catch (failure) { if (!controller.signal.aborted) setStorageError(failure instanceof Error ? failure.message : 'Drafts could not be restored.'); }
@@ -241,7 +244,7 @@ export default function App({ initialColorScheme }: { initialColorScheme: 'light
   const load = async (definition: StudioDefinition) => {
     generation.current?.abort(); generation.current = null; setThinking(false);
     setBusy(true);
-    try { if (await persistence.flush()) activate(definition); } finally { setBusy(false); }
+    try { if (unavailableDraft || await persistence.flush()) activate(definition); } finally { setBusy(false); }
   };
   const submit = async (request?: string, scopeOverride?: DataScope) => {
     const text = (request || prompt).trim(); if (!text || !storageReady || connectionLoading) return;
@@ -300,13 +303,13 @@ export default function App({ initialColorScheme }: { initialColorScheme: 'light
   };
   const openPicker = async (target: HTMLElement) => {
     modalReturnFocus.current = target;
-    if (await persistence.flush()) setModal('open');
+    if (unavailableDraft || await persistence.flush()) setModal('open');
   };
   return <SplunkThemeProvider family="enterprise" colorScheme={theme} density="compact"><GlobalStyle/><Shell>
     <Header><h1>Constellation</h1><Actions style={{ marginLeft: 'auto' }}>
       <Button onClick={event => { modalReturnFocus.current = event.currentTarget; setSettingsOpen(true); }} disabled={!isSplunk()}>Settings</Button>
-      <Button onClick={() => void load(createBlank())} disabled={busy || !storageReady}>New dashboard</Button>
-      <Button onClick={event => void openPicker(event.currentTarget)} disabled={busy || thinking || !storageReady}>Dashboards</Button>
+      <Button onClick={() => void load(createBlank())} disabled={busy || (!storageReady && !unavailableDraft)}>New dashboard</Button>
+      <Button onClick={event => void openPicker(event.currentTarget)} disabled={busy || thinking || (!storageReady && !unavailableDraft)}>Dashboards</Button>
       <Button appearance="primary" onClick={event => { modalReturnFocus.current = event.currentTarget; void persistence.flush().then(ok => { if (ok) setSaveOpen(true); }); }} disabled={busy || !isSplunk() || empty || thinking || !storageReady}>Save to Splunk</Button>
       <Dropdown focusToggleReasons={['escapeKey', 'tabKey', 'toggleClick']} toggle={<Button elementRef={moreFocus} isMenu>More</Button>}><Menu style={{ width: 220 }}>
         <Menu.Item disabled={thinking || !storageReady} onClick={() => { modalReturnFocus.current = moreFocus.current; void persistence.flush().then(ok => { if (ok) setDetailsOpen(true); }); }}>Draft details and history</Menu.Item>
@@ -319,7 +322,7 @@ export default function App({ initialColorScheme }: { initialColorScheme: 'light
     </Actions></Header>
     {storageError ? <MessageBar type="error">{storageError}<Button onClick={() => setStorageAttempt(value => value + 1)}>Retry loading drafts</Button></MessageBar> : null}
     <Workspace $floating={floating || collapsed}>
-      <Canvas><CanvasHeading><div><h2>{revision.definition.title || 'Untitled dashboard'}</h2><Muted role="status">{persistence.status}{searches.status ? ` · ${searches.status}` : ''}</Muted>{revision.definition.description ? <details><summary>About this dashboard</summary><Muted>{String(revision.definition.description)}</Muted></details> : null}</div><Actions>
+      <Canvas><CanvasHeading><div><h2>{unavailableDraft ? 'No draft opened' : revision.definition.title || 'Untitled dashboard'}</h2><Muted role="status">{unavailableDraft ? 'Nothing has been saved.' : persistence.status}{searches.status ? ` · ${searches.status}` : ''}</Muted>{revision.definition.description ? <details><summary>About this dashboard</summary><Muted>{String(revision.definition.description)}</Muted></details> : null}</div><Actions>
         <Button disabled={thinking||!storageReady} onClick={event=>{modalReturnFocus.current=event.currentTarget;setPagesOpen(true);}}>Pages</Button>
         {!empty?<Button elementRef={selectionToggle} aria-pressed={selecting} disabled={thinking} onClick={()=>setSelecting(value=>!value)}>{selecting?'Cancel selection':'Select element'}</Button>:null}
         <Button disabled={!history.length || thinking} onClick={() => { const previous = history[history.length - 1]; setFuture(items => [...items, revision]); setHistory(items => items.slice(0, -1)); setRevision({ ...previous, number: revision.number + 1 }); setSaved(null); setStatus('Last document change undone.'); }}>Undo</Button>
@@ -343,7 +346,10 @@ export default function App({ initialColorScheme }: { initialColorScheme: 'light
         catch (failure) { setStatus(failure instanceof Error ? failure.message : 'A new draft could not be saved.'); }
       })()}>Save as new draft</Button></Actions></MessageBar> : null}
       {selecting?<Muted role="status">Select an element on the canvas to focus the conversation. Escape cancels; the focus list also supports keyboard selection.</Muted>:null}
-      {empty ? <EmptyCanvas $floating={floating && !collapsed} aria-label="New dashboard canvas">
+      {unavailableDraft ? <EmptyCanvas $floating={floating && !collapsed} aria-label="Unavailable draft">
+        <h2>This draft isn’t available.</h2>
+        <Muted>Draft links require the original owner’s Splunk account. Open Dashboards to choose your work, or New dashboard to start.</Muted>
+      </EmptyCanvas> : empty ? <EmptyCanvas $floating={floating && !collapsed} aria-label="New dashboard canvas">
         <h2>{thinking ? 'Building your dashboard…' : hasConversation ? 'Let’s answer your question.' : 'Start with your Splunk data.'}</h2>
         <Muted>{hasConversation ? 'Your dashboard will appear here as we build. Follow the conversation for progress.' : 'Choose a question your data can answer, or describe what you want to understand in the conversation.'}</Muted>
         {!hasConversation ? <><Actions><Button appearance="primary" disabled={!storageReady || !isSplunk()} onClick={event => { modalReturnFocus.current = event.currentTarget; setDataChooser({}); }}>Choose Splunk data</Button>

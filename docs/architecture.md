@@ -2,6 +2,10 @@
 
 Constellation is a Splunk app with an embedded browser workspace and current-user Python REST handlers. It does not require a separately deployed orchestration platform, database or vector service.
 
+## Unavailable draft links (0.31.1)
+
+An explicit draft link that cannot be restored leaves persistence and editing unready. It does not replace the URL, fall back to the most recent draft, checkpoint a blank snapshot or save a new record. The existing New dashboard and Dashboards actions remain available, bypassing a flush only in this unopened state. Activating an explicitly chosen new/imported/owned document resumes ordinary persistence and URL handling. Pending recovery still requires the authenticated owner and existing schema/deletion checks. Storage failures retain their separate retry state; no provider, backend or migration contract changes.
+
 ## Wide-event inspection and packaged runtime (0.31)
 
 Discovery uses the existing field-role ordering before the 100-field native response cap, then the existing 60-field agent context cap. It excludes `_raw` and retains an intact leading row sample within the one-million-byte JSON result bound. If extracted fields still exceed that bound, completion is partial and counts describe only retained rows. One oversized extracted row fails explicitly. No value is shortened or coerced to fit. Ordinary preview jobs and dashboard validation retain strict oversize rejection, current-user scope and the existing row/time limits. `preview_jobs.py` owns this internal discovery path; `field_context.py` owns field ordering and metadata; `search_evidence.py` allowlists its fixed partial reason.
