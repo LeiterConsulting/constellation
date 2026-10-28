@@ -8,7 +8,8 @@
     "spl2DataSources": "10.2",
     "networkGraph": "10.4",
     "customVisualizationFramework": "10.4",
-    "nativeUnsetTokens": "10.4"
+    "nativeUnsetTokens": "10.4",
+    "cascadingInputs": "10.4"
   },
   "visualizationMinimum": {
     "splunk.timeline": "10.2",
@@ -16,16 +17,52 @@
     "splunk.treemap": "10.6"
   },
   "optionMinimum": {
-    "*": { "trellisSortBy": "10.6", "trellisSortOrder": "10.6" },
-    "splunk.timeline": { "durationUnit": "10.6" },
-    "splunk.singlevalue": { "underLabelColor": "10.6", "sparklineNullValueDisplay": "10.4" },
-    "splunk.singlevalueicon": { "underLabelColor": "10.6" },
-    "splunk.singlevalueradial": { "underLabelColor": "10.6" },
-    "splunk.pie": { "legendDisplay": "10.4" },
-    "splunk.line": { "acceleratedRender": "10.4" },
-    "splunk.linkgraph": { "nodeLabelOverflow": "10.4" },
-    "splunk.fillergauge": { "trellisSplitBy": "10.4", "trellisColumns": "10.4", "trellisMinColumnWidth": "10.4", "trellisPageCount": "10.4", "trellisRowHeight": "10.4" },
-    "splunk.markergauge": { "trellisSplitBy": "10.4", "trellisColumns": "10.4", "trellisMinColumnWidth": "10.4", "trellisPageCount": "10.4", "trellisRowHeight": "10.4" }
+    "*": {
+      "trellisSortBy": "10.6",
+      "trellisSortOrder": "10.6"
+    },
+    "splunk.timeline": {
+      "durationUnit": "10.6"
+    },
+    "splunk.singlevalue": {
+      "underLabelColor": "10.6",
+      "sparklineNullValueDisplay": "10.4"
+    },
+    "splunk.singlevalueicon": {
+      "underLabelColor": "10.6"
+    },
+    "splunk.singlevalueradial": {
+      "underLabelColor": "10.6"
+    },
+    "splunk.pie": {
+      "legendDisplay": "10.4"
+    },
+    "splunk.line": {
+      "acceleratedRender": "10.4"
+    },
+    "splunk.linkgraph": {
+      "nodeLabelOverflow": "10.4"
+    },
+    "splunk.fillergauge": {
+      "trellisSplitBy": "10.4",
+      "trellisColumns": "10.4",
+      "trellisMinColumnWidth": "10.4",
+      "trellisPageCount": "10.4",
+      "trellisRowHeight": "10.4"
+    },
+    "splunk.markergauge": {
+      "trellisSplitBy": "10.4",
+      "trellisColumns": "10.4",
+      "trellisMinColumnWidth": "10.4",
+      "trellisPageCount": "10.4",
+      "trellisRowHeight": "10.4"
+    },
+    "input.dropdown": {
+      "isCascadingInput": "10.4"
+    },
+    "input.multiselect": {
+      "isCascadingInput": "10.4"
+    }
   },
   "versionSources": [
     "https://help.splunk.com/en/splunk-enterprise/create-dashboards-and-reports/dashboard-studio/10.4/whats-new-in-dashboard-studio/whats-new-in-dashboard-studio",

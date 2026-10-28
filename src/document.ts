@@ -1,4 +1,6 @@
 import starter from './starter.json';
+import { previewDependencyQuery } from './previewSources';
+import { previewImage } from './mediaReferences';
 import { initializePreviewDefaults, type InputDefaults } from './previewDefaults';
 
 export type JsonObject = Record<string, unknown>;
@@ -85,7 +87,7 @@ export function previewDefinition(definition: StudioDefinition, results: Record<
   initializePreviewDefaults(preview, definition, tokens, inputDefaults);
   // Loading an imported document must never execute its queries or external links.
   for (const [id, source] of Object.entries(preview.dataSources || {})) if (source.type !== 'ds.test') {
-    preview.dataSources![id] = results[id] ? { type: 'ds.test', options: { data: results[id] } } : { type: 'ds.test', options: { data: { fields: [], columns: [] } } };
+    preview.dataSources![id] = results[id] ? { type: 'ds.test', options: { data: results[id], query: previewDependencyQuery(definition,id) } } : { type: 'ds.test', options: { data: { fields: [], columns: [] }, query: previewDependencyQuery(definition,id) } };
   }
   // Missing search results are a waiting state, not a native source error. Keep
   // labels/layout visible without a red error or a misleading empty chart.
@@ -103,7 +105,7 @@ export function previewDefinition(definition: StudioDefinition, results: Record<
     if (!object(node)) return;
     if (Array.isArray(node.eventHandlers)) node.eventHandlers = node.eventHandlers.filter(handler => object(handler) && ['drilldown.setToken', 'drilldown.switchToTab', 'drilldown.setTimeRange', 'drilldown.resetTokens', 'drilldown.unsetTokens'].includes(String(handler.type)));
     for (const [key, child] of Object.entries(node)) {
-      if (['src', 'href', 'url'].includes(key) && typeof child === 'string') delete node[key];
+      if (['src', 'href', 'url'].includes(key) && typeof child === 'string') { if (key !== 'src' || !previewImage(child)) delete node[key]; }
       else if (key === 'markdown' && typeof child === 'string') node[key] = child.replace(/!\[[^\]]*\]\([^)]*\)/g, '[Image omitted in preview]').replace(/\[([^\]]*)\]\([^)]*\)/g, '$1').replace(/<[^>]+>/g, '');
       else stripExternalActions(child);
     }

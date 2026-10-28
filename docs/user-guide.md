@@ -105,3 +105,17 @@ If the save line says **Keep this tab open until saved**, wait for **Draft saved
 Name the chart and the question it should answer. For example, after inspecting suitable fields: “Create Relationships and Timing pages. Show a Sankey of source to target weighted by volume, parallel coordinates for the numeric comparison, and a timeline of each operation.” State units when they are known. Select the resulting chart to refine just its appearance or interaction.
 
 Constellation checks available native features and actual output fields before applying a change. It preserves the previous draft if it cannot finish a valid result. A chart imported from a newer Studio version can remain in the definition while the preview explains that the connected instance cannot display it. See the [coverage ledger](native-coverage.md) for tested cases and remaining limits; availability and definition readback alone do not prove every native behavior.
+
+## Images on a dashboard
+
+Open **More → Dashboard images**. Choose an existing shared Studio image, or choose a PNG, JPEG, GIF or WebP under 4 MB and select **Upload shared image**. Then select **Use image**. An existing selected image is replaced in place; otherwise the image is added below the current absolute page's elements. Select it and use chat to change its size, placement or options. Grid pages need an absolute-layout page for an image.
+
+Studio's uploaded images are shared with other Splunk users, including when the dashboard is private. Uploads use your native Studio permissions; Constellation does not grant broader access. An ordinary author may reuse readable images without upload permission. Manage shared-image deletion in native Studio because other dashboards may depend on the same file.
+
+Dashboard images stay in this Splunk instance and their bytes are not sent to the model. **Attach sketch or PDF** is a different action: it sends a reference to a model with verified input support. A saved dashboard keeps native media references. JSON exports and app packages do not include uploaded image files; moving between instances requires those dependencies too.
+
+## Dependent choices
+
+Ask for a parent input and a child input whose choices come from a filtered search, such as “Choose a source type, then show devices from that source type.” The agent uses inspected fields and native dropdown or multiselect inputs. Ask for All, the first search result or no initial choice as needed. Existing buttons and filters remain part of the draft.
+
+On Splunk 10.4 and later, native cascading reset can return the child to its default when the parent's query token changes. Earlier versions support dependent searches, with reset behavior configured separately. Unset inputs wait for a choice; missing data is not filled with invented choices. Run or refresh searches to load current choices.

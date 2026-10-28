@@ -1,5 +1,14 @@
 # Updating Constellation
 
+## 0.36 native media and dependent inputs
+
+No draft, connection or native-dashboard migration runs. Refresh existing workspace tabs after upgrading. Native Studio image records remain in the instance's shared KV store; Constellation does not create a private asset store or change its permissions. Uploaded files are not part of dashboard JSON or the Constellation package. Moving a dashboard to another instance requires its media/knowledge-object dependencies. Keep source handling, image registry and native menu compilation separate from providers and privileged credential handlers.
+
+Snapshot sources retain flattened dependency queries but never extend references or executable native source types. Requalify parent/child changes, All/first/none defaults, cancellation, refresh and reopen when changing this boundary. Original reset defaults and unknown native properties must survive. New automatic-reset authoring needs Splunk 10.4; earlier targets can use dependent searches with explicitly separate reset behavior. Saved-report dependency discovery, expression-driven dependencies and every dynamic-default/namespace combination remain open gates.
+
+The approved identity adds the native launcher assets and a theme-aware heading. Build 52 changes cache identity through the existing packaging mechanism. Large banners, source artwork and export tooling remain outside the installed app. No navigation-host migration is part of branding.
+
+
 The [0.34.0 release](https://github.com/LeiterConsulting/constellation/releases/tag/v0.34.0) includes the previously unpublished 0.32 and 0.33 increments described below. Install its reviewed archive through normal Splunk app management, then refresh existing workspace tabs. Retain backups and follow Splunk's reported restart requirements.
 
 ## 0.35 geographic contracts and plans (unreleased)

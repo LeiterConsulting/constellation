@@ -1,0 +1,22 @@
+Built-in image generation. Generated artwork contains no product screenshot,
+customer data, credentials, host details or external brand marks.
+The approved Constellation master was the dark banner's style reference;
+the dark banner was the light banner's edit target.
+Final exports use deterministic sizing and typesetting in export_branding.cjs.
+
+Dark banner
+-----------
+Use case: ads-marketing.
+Asset type: wide horizontal Constellation banner backdrop, approximately 4:1.
+Input image: style reference only, the approved Constellation dashboard-and-creation mark. Preserve that visual language; do not reproduce a second logo.
+Primary request: a restrained, premium monochrome banner suggesting that connected data becomes an editable dashboard. Flat ink-charcoal backdrop (#1f2329); a few softly separated rounded dashboard panels concentrated on the right-hand third, with one thin rising connection ending in a small four-point creation spark. Use subtle graphite panel fills and pale gray edges, very slight depth, crisp geometry, ample negative space. It should feel calm, useful and precise.
+Composition: keep the left 62 percent completely empty and uniform ink-charcoal for a logo and typeset title to be composited later. Keep the motif safely inset from every edge, entirely to the right. Wide landscape, no border.
+Constraints: NO text, letters, numbers, wordmark, brand names, duplicate logo, UI labels, real metrics, screenshots, glitter, star fields, decorative particles, gradients across the empty area, rainbow colors, circuitry, robots or stock AI brains. Do not alter the supplied approved mark; use it only as an aesthetic reference.
+
+Light banner
+------------
+Use case: lighting-weather.
+Asset type: matching light Constellation banner backdrop.
+Input image: edit target is the dark banner.
+Primary request: create the light-background companion of this banner. Preserve the wide horizontal layout, the exact dashboard-panel arrangement, the circular nodes, connection and four-point spark on the right, their relative sizes and the large completely empty left area. Change only the palette and lighting to very light neutral gray (#f5f6f7) background, softly raised pale-gray panels with refined charcoal-gray edges, a charcoal connection and restrained dark-gray spark. Crisp, calm, monochrome, subtle depth. Flat, uniform background on the left.
+Constraints: no text, wordmark, letters, metrics, extra shapes, particles, colorful accents, border or watermark. Do not change the composition or distort the symbol.

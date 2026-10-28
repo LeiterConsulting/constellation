@@ -17,6 +17,7 @@ from table_sparkline import ACTION as TABLE_SPARKLINE_ACTION, compile_sparkline
 from measurement_constraints import normalize_measurements
 from native_text_encoding import normalize_reference_text
 from compact_creation import COMPOSE_ACTION, expand_compose
+from input_actions import MENU_ACTION, compile_menu
 from route_actions import ROUTE_ACTION, BUTTON_ROUTE_ACTION, compile_route, compile_button_route
 
 LEGACY_CHANGE = {'type': 'object', 'properties': {
@@ -43,7 +44,7 @@ PAGE_ACTION['properties']['op'] = {'type': 'string', 'enum': ['page']}
 PAGE_ACTION['properties']['purpose'] = {'type': 'string', 'maxLength': 1200}
 PAGE_ACTION['properties']['moveItems'] = {'type': 'boolean', 'description': 'Move these items off their previous pages when true; otherwise allow reuse.'}
 PAGE_ACTION['required'].extend(['purpose', 'moveItems'])
-ACTION_SCHEMA = {'anyOf': [COMPOSE_ACTION, LEGACY_CHANGE, DASHBOARD_ACTION, SEARCH_ACTION, *CHART_ACTION_SCHEMA['anyOf'], TOKEN_ACTION, FILTER_ACTION, TABLE_FORMAT_ACTION, TABLE_SPARKLINE_ACTION, LAYOUT_ACTION, PAGE_ACTION, PAGE_META_ACTION, LINK_ACTION, BUTTON_ACTION, ROUTE_ACTION, BUTTON_ROUTE_ACTION]}
+ACTION_SCHEMA = {'anyOf': [COMPOSE_ACTION, MENU_ACTION, LEGACY_CHANGE, DASHBOARD_ACTION, SEARCH_ACTION, *CHART_ACTION_SCHEMA['anyOf'], TOKEN_ACTION, FILTER_ACTION, TABLE_FORMAT_ACTION, TABLE_SPARKLINE_ACTION, LAYOUT_ACTION, PAGE_ACTION, PAGE_META_ACTION, LINK_ACTION, BUTTON_ACTION, ROUTE_ACTION, BUTTON_ROUTE_ACTION]}
 
 
 def validate_chart_placement(document, previous):
@@ -99,8 +100,17 @@ def compile_actions(document, actions, profile=None, table_receipt=None):
     result, links, buttons, filters, formats, typed = [], [], [], [], [], False
     sparklines = []
     routes = []
+    menus, menu_tokens = [], set()
     for action in actions:
         if not isinstance(action, dict): raise ProviderError('Each authoring action must be an object.')
+        if action.get('op') == 'menu':
+            key, item = compile_menu(action, document)
+            if key in menus or action['token'] in menu_tokens: raise ProviderError('Use distinct new menu IDs and tokens.')
+            menu_tokens.add(action['token'])
+            menus.append(key)
+            if 'inputs' not in document and not any(change.get('path') == '/inputs' for change in result): result.append({'op': 'set', 'path': '/inputs', 'value': '{}'})
+            result.append({'op': 'set', 'path': '/inputs/' + key, 'value': json.dumps(item)})
+            continue
         if action.get('op') in ('route','buttonRoute'): routes.append(action); continue
         if action.get('op')=='pageMeta':result.append(compile_page_meta(document,action));continue
         if action.get('op') == 'dashboard': result.extend(compile_dashboard(action)); continue
@@ -194,6 +204,14 @@ def compile_actions(document, actions, profile=None, table_receipt=None):
         if tab is None: tabs.append({'layoutId': identifier, 'label': label})
         else: tab['label'] = label
         layout.setdefault('globalInputs', [])
+    if menus:
+        globals_ = layout.setdefault('globalInputs', [])
+        if not isinstance(globals_, list): raise ProviderError('Native globalInputs must be an array before adding menus.')
+        for key in menus:
+            if key not in globals_: globals_.append(key)
+        if not typed:
+            if any(change.get('path', '').startswith('/layout') for change in result): raise ProviderError('Menu actions supply global placement; do not also replace layout or globalInputs.')
+            result.append({'op': 'set', 'path': '/layout/globalInputs', 'value': json.dumps(globals_)})
     if token_changes:
         if any(str(action.get('path', '')).split('/')[1:2] == ['defaults'] for action in result):
             raise ProviderError('Use typed token actions or native /defaults edits in one batch, not both.')

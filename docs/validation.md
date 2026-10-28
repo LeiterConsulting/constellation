@@ -1,8 +1,8 @@
 # Validation status
 
-Snapshot: **0.35.0 development preview, unreleased, October 28, 2026**. This file is a sanitized summary. Private lab addresses, credentials, screenshots, transcripts, raw search data and detailed runtime receipts are excluded from the repository.
+Snapshot: **0.36.0 development preview, unreleased, October 28, 2026**. This file is a sanitized summary. Private lab addresses, credentials, screenshots, transcripts, raw search data and detailed runtime receipts are excluded from the repository.
 
-See the [0.35.0 geographic checks](#0350-geographic-native-authoring--october-28-2026) for current development evidence. Earlier cohorts below retain their own scope and failures. The latest published development preview is 0.34.0.
+See the [0.36.0 media/input checks](#0360-native-media-and-dependent-menus--october-28-2026) for current development evidence. The [0.35.0 geographic checks](#0350-geographic-native-authoring--october-28-2026) retain their own accepted package identity. Earlier cohorts below retain their own scope and failures. The latest published development preview is 0.34.0.
 
 ## Release downloads
 
@@ -12,11 +12,11 @@ See the [0.35.0 geographic checks](#0350-geographic-native-authoring--october-28
 
 | Check | Observed result |
 | --- | --- |
-| Python unit suites | 513 tests passed locally on Python 3.13, including geographic/source contracts, native plans, exact assets, source-bound context and retained regressions. Python 3.9 runs in CI; local execution on that version was not repeated. |
-| Frontend unit suites | 117 tests passed, including the version-availability notice, inventory drift and retained report/input/delivery/focus regressions. |
-| TypeScript and production build | Passed; bundle-size warning remains. |
+| Python unit suites | 527 tests passed locally on Python 3.13, including native media/menu contracts, query-token cycles, bounded planning and retained regressions. Python 3.9 and 3.13 also passed CI on the runtime change; local Python 3.9 execution was not repeated. |
+| Frontend unit suites | 120 tests passed, including native media references, inert chain dependency metadata and retained report/input/delivery/focus regressions. |
+| TypeScript and production build | Passed on Node 22, with identical accepted installed payload; bundle-size warning remains. |
 | Deterministic app package | Generated with SHA-256 receipt. |
-| Splunk AppInspect 4.3.1, precert | 0 errors, 0 failures, 0 future failures, 7 warnings, 1 skipped, 116 successes, 128 not applicable on the tested app archive. |
+| Splunk AppInspect 4.3.1, precert | 0 errors, 0 failures, 0 future failures, 7 warnings, 1 skipped, 117 successes, 127 not applicable on the current 0.36 app archive. |
 
 The AppInspect result applies to the tested development archive. The seven warnings cover Splunk UI/framework telemetry detection, Python migration, Cloud-role compatibility and a public-IP example inside the bundled network-chart schema. The detected address was traced to a third-party documentation example, not lab configuration. Review the full local report before distributing a new archive. Repository/CI changes alone do not establish a fresh AppInspect result. This is not Splunk Cloud certification, a security audit or production qualification.
 
@@ -913,3 +913,27 @@ This remains a private development preview. General expression lineage, cross-un
 Final browser checks on the installed archive selected each provider's existing temperature chart, prepared the contextual rolling-baseline suggestion, sent it through chat and verified the rendered result, preservation and refresh/reopen. All three passed; Ollama required two automatic repairs. Independent readback retained other charts/sources/layout and the scoped Fahrenheit definition. The OpenAI baseline used three buckets; AITK used five, illustrating why the averaging window must be explained rather than silently assumed. AITK's row navigation and return button worked in the preview. Its refined private native save matched exact independent readback and opened in Studio's editor with Save disabled, without incidental normalization. These bounded checks do not retest every UI control or every native feature.
 
 The two disposable users, copied owner-only OpenAI key, owned test drafts/configuration, private native copies and jobs were removed; backing AITK collection writers, inference policy, token budget and ordinary credential-read denial were retained. The original administrator browser session was restored and only the validation tab was closed. During the run, the administrator draft list gained a draft and an original draft's summary changed. All original IDs and Trash were retained; current drafts/active preference were preserved rather than overwritten with the older snapshot. Raw receipts and screenshots remain local and excluded from Git and the handoff.
+
+## 0.36.0 native media and dependent menus — October 28, 2026
+
+Exact final package SHA-256: `2fd2c86388a84de5af083764c37fd0ff7f74a6305bb79cc6916b6951c2baecaa`; 484 regular files, 5,548,331 compressed bytes. The same bytes installed on Enterprise 10.2.8 and 10.4.4 through verified management TLS without restart. Archive inspection found no macOS resource forks, sidecars, PAX metadata or development artwork/tooling. Six native branding PNGs have the documented dimensions; the bundled title mask follows the Splunk theme. All 26 approved export-manifest hashes matched.
+
+Offline: **527 Python 3.13 tests and 120 frontend tests passed**, production build/package passed. The frontend tests and production build also passed on Node 22.23.4. All 484 installed files and uncompressed tar bytes matched the accepted build exactly; the original qualified compressed archive was retained across packaging-runtime compression differences. The inherited bundle-size warning remains. AppInspect 4.3.1 local precert on these bytes: **0 errors, 0 failures, 0 future failures, 7 warnings, 1 skip, 117 successes and 127 not applicable**. The compressed archive secret scan passed. These are local checks, not Splunk Cloud certification.
+
+Four disposable ordinary-user accounts on the primary target covered three author providers and an isolated peer. Each provider created the real-data two-page freezer dashboard, edited its selected table sparkline, added two dependent global menus from verified source-type/device fields and edited a selected native image. All twelve final turns passed with **one model call each and no repairs**. The cutoff oracle excluded temperatures above 150°F while retaining exactly 150°F and independent Wi-Fi observations. Native source bindings, row navigation/return, draft/conversation exact reopen, private native saves/readback and six peer-denial checks passed. Native media remained readable through the shared collection; an ordinary author's upload was denied under unchanged native permissions. The API upload's raster data and metadata were verified separately from its server-added ownership fields.
+
+| Provider | Create two pages | Selected table style | Add dependent menus | Selected image option |
+| --- | ---: | ---: | ---: | ---: |
+| OpenAI | 26.82 s | 3.85 s | 8.45 s | 3.32 s |
+| Ollama | 36.99 s | 8.94 s | 21.59 s | 25.58 s |
+| AITK | 25.14 s | 17.70 s | 23.46 s | 16.66 s |
+
+These are one configured-model case per provider in a bounded concurrent lab cohort, not reliability percentages, a controlled latency benchmark or an unaided new-user walkthrough. The provider menu case on 10.2 deliberately used dependent searches without the newer automatic-reset option. AITK on the secondary target retains its earlier configuration/permission gate.
+
+Separate signed-in administrator browser fixtures on both native versions rendered shared raster media and query-backed choices in the preview. The 10.4 fixture changed a selected child from N1 to All when its parent changed from North to South, with only South children/results afterward; the corresponding native Studio fixture behaved the same. Refresh restored selected values. Switching through the dashboard list to a second draft restored its South/S2 selection and separate conversation; reopening the original restored North/All, including after refresh. Final renderer updates retained input control identity during results refresh. The browser also exercised shared-image reuse/additive placement, selected-image chat changes in both directions, private Save to Splunk/readback and light/dark heading/menu contrast. These fixture/browser checks are distinct from ordinary-user API authoring. The automated browser's file-chooser event did not complete on native Studio, so native upload/read/denial evidence does not qualify the complete graphical file-picker journey.
+
+Earlier candidate evidence remains separate: snapshot sources with extend were rejected as invalid chains; an Ollama proposal removed a return button and was rejected; later proposals stopped at a search-only partial result, and recovery hit the existing conservative context limit. Flattened inert dependency metadata, additive menu compilation, explicit completion/preservation checks and a bounded menu-only planning path corrected the final tested case without raising limits or weakening validators.
+
+Remaining gates include full graphical file-picker acceptance, shared deletion/dependency management, cross-instance media bundling, SVG/icon upload lifecycle, complete namespace/report/expression dependencies and dynamic-first/default combinations, larger/compound menu requests, broader non-admin browser/role/theme/accessibility coverage, search-head clusters, remaining native option combinations and production/Cloud acceptance. No complete native-parity claim or percentage is assigned.
+
+Cleanup removed the four disposable author/peer accounts, the copied owner-only test key, two shared test images and task-owned test documents. All 78 protected primary configuration records and five protected secondary records matched their original hashes; original drafts, connection settings, upstream AITK access policy and native media permissions were retained. Local browser screenshots and detailed evidence remain outside Git.

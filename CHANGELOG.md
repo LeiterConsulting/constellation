@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.36.0 - Unreleased
+
+- Add a shared Studio image picker/upload in More, with native permissions, explicit sharing language, selected-image replacement and additive absolute-page placement. Resolve bounded native raster references in preview; retain media references on native saves and explain cross-instance dependencies.
+- Preserve literal query-token dependencies in inert search/chain snapshots without unsupported chain extension. Retain original input/reset defaults and gate native automatic cascading reset at Splunk 10.4.
+- Compile small new global dropdown/multiselect actions with canonical native DOS mappings, All/first/none modes and additive placement. Check newly introduced query-token cycles and explicit menu counts; partial source-only work cannot satisfy a complete menu request.
+- Integrate the approved Constellation identity in the theme-aware title, six native launcher assets and README. Keep source artwork, banners and export tooling outside the installed app.
+- Preserve provider adapters, search/measurement validation, credential boundaries and native unknown-property preservation. This increment remains a development preview with explicit native coverage limits.
+
 ## 0.35.0 - Unreleased
 
 - Add bounded geographic coordinate, size, area-value and inline SVG identifier checks without geocoding, fetching assets or inventing missing values. Supply attributed map-layer and SVG guidance to native authoring.

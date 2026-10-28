@@ -5,6 +5,7 @@ from provider_service import ProviderError
 from table_cells import validate_table_options
 from native_options import validate_options
 from studio_versions import validate_native_version
+from native_inputs import validate_input_dependencies
 from studio_inventory import INVENTORY
 
 
@@ -29,6 +30,7 @@ def feature_contract():
 
 def validate_features(document, previous, environment):
     """Check changed native interactions; retain future/unknown existing features."""
+    validate_input_dependencies(document, previous)
     expressions = document.get('expressions', {})
     if not isinstance(expressions, dict): raise ProviderError('Studio expressions must be an object.')
     for group in ('conditions', 'eval'):

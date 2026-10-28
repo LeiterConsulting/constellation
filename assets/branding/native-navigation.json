@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "status": "mapping-only-not-activated",
+  "requiresModernNavigationHost": true,
+  "customImageURLsSupported": false,
+  "existingViewRoutes": {
+    "workspace": {
+      "label": "Constellation",
+      "splunk10_4Icon": "chartpanels",
+      "splunk10_6Icon": "ChartPanels"
+    },
+    "dashboards": {
+      "label": "Dashboards",
+      "splunk10_4Icon": "layerstriple",
+      "splunk10_6Icon": "LayersTriple"
+    }
+  },
+  "references": [
+    "https://dev.splunk.com/enterprise/reference/dashboardnav/",
+    "https://dev.splunk.com/enterprise/docs/developapps/createapps/addnavsplunkapp",
+    "https://help.splunk.com/en/splunk-enterprise/release-notes-and-updates/release-notes/10.4/modern-navigation-ui-changes",
+    "https://help.splunk.com/en/splunk-enterprise/release-notes-and-updates/release-notes/10.6/modern-navigation-ui-changes"
+  ]
+}

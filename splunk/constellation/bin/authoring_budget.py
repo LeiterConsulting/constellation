@@ -146,11 +146,25 @@ class AuthoringBudget:
         if context.get('tableSparklineOnly'):
             context = {key: context[key] for key in ('request', 'focus', 'focusedSourceReceipt', 'dashboardBrief', 'history', 'modelLimits', 'tableSparklineOnly') if key in context}
             request['max_output_tokens'] = min(request['max_output_tokens'], 1500)
+        self.menu_plan = bool(context.get('newMenusOnly'))
+        if self.menu_plan:
+            from input_actions import MENU_ACTION, MENU_INSTRUCTIONS
+            from search_chart_actions import SEARCH_ACTION
+            from native_creation import bound_profile
+            from compatibility import version_tuple
+            context = {key: context[key] for key in ('request','environment','history','dashboardBrief','modelLimits','dataProfile','newMenusOnly') if key in context}
+            context['dataProfile'] = bound_profile(context.get('dataProfile'))
+            menu_schema = copy.deepcopy(MENU_ACTION)
+            menu_schema['properties']['inputType']['enum'] = [context['newMenusOnly']['inputType']]
+            if version_tuple(context.get('environment', {}).get('version', '')) < (10, 4): menu_schema['properties']['cascading']['enum'] = [False]
+            request['text']['format']['schema']['properties']['changes'].update(items={'anyOf':[copy.deepcopy(SEARCH_ACTION),menu_schema]},minItems=context['newMenusOnly']['count'],maxItems=context['newMenusOnly']['count']*2)
+            request['instructions'] = MENU_INSTRUCTIONS
+            request['max_output_tokens'] = min(request['max_output_tokens'], 3500)
         # Keep retrieved evidence through every small request path. Native option
         # contracts are needed only by paths that can actually emit native edits;
         # specialized query/navigation compilers hold those properties unchanged.
         context['retrievedGuidance'] = self.context.get('retrievedGuidance', [])
-        if not (self.compact or self.native_plan or any(context.get(flag) for flag in ('formattingOnly', 'rowNavigationOnly', 'routeOnly', 'buttonRouteOnly', 'pageMetadataOnly', 'calculationOnly', 'tableSparklineOnly'))):
+        if not (self.compact or self.native_plan or any(context.get(flag) for flag in ('formattingOnly', 'rowNavigationOnly', 'routeOnly', 'buttonRouteOnly', 'pageMetadataOnly', 'calculationOnly', 'tableSparklineOnly', 'newMenusOnly'))):
             if 'nativeAuthoring' in self.context: context['nativeAuthoring'] = self.context['nativeAuthoring']
         # A conservative estimate, not a tokenizer or a verified upstream limit.
         # Drop only rolling history; the durable brief and exact document remain.
@@ -178,6 +192,9 @@ class AuthoringBudget:
 
     def actions(self, actions, document):
         """Keep page identity stable when completing this turn's new foundation."""
+        if getattr(self, 'menu_plan', False):
+            if not isinstance(actions, list) or any(not isinstance(action, dict) or action.get('op') not in ('menu','search') for action in actions):
+                raise ProviderError('Return one complete additive menu/search proposal; no raw native or unrelated actions.', 422, 'menu_plan')
         if getattr(self, 'native_plan', False):
             from native_creation import expand
             return expand(actions, document, self.context.get('dataProfile'), self.context['request'])
@@ -229,6 +246,12 @@ class AuthoringBudget:
 
     def feedback(self, request, envelope):
         """Keep the current candidate and latest feedback, not every failed reply."""
+        if getattr(self, 'menu_plan', False):
+            from native_creation import bound_profile
+            envelope = dict(envelope, rejectedOutput='', request='Return a complete corrected menu/search plan for the SAME original request. The server recompiles against the original; include every requested new menu and its searches. Preserve all existing work.')
+            envelope['recoveryFeedback'] = {key:value for key,value in envelope.get('recoveryFeedback',{}).items() if key not in ('candidateDefinition','placementHint')}
+            if 'dataProfile' in envelope['recoveryFeedback']: envelope['recoveryFeedback']['dataProfile'] = bound_profile(envelope['recoveryFeedback']['dataProfile'])
+            envelope['recoveryFeedback']['editsApplyTo'] = 'original'
         if self.context.get('rowNavigationOnly'):
             envelope = dict(envelope,recoveryFeedback={key:value for key,value in envelope.get('recoveryFeedback',{}).items() if key not in ('candidateDefinition','placementHint')},
                             request='Return one complete corrected rowDetail plan for the same original request. The server recompiles this uncommitted detail page; never emit native or separate navigation actions.')

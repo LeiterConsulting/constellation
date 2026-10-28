@@ -15,9 +15,9 @@ Current intent, selection and durable Draft requirements select bounded native c
 | Tables | Projection, numeric/date formatting, native sparklines, cell formats, row links | Full option combinations, null arrays, larger/partial outputs, pagination and footers |
 | Specialized | Pie, treemap, punchcard, sankey, link/network graph, parallel coordinates, timeline | Selected finite source/render cases below; remaining shapes, options and interactions |
 | Geographic | Marker/bubble/region layers and SVG choropleth; bounded coordinate/size/value and literal path-ID checks | Selected finite cases below; uploaded/opaque assets, all layers, partial/missing rendering and permissions |
-| Decoration | Markdown, rich text, image, rectangle, ellipse, native `abslayout.line` | Media lifecycle, layering, imported styling and themes |
+| Decoration | Markdown, rich text, native image upload/reuse and bounded raster preview, rectangle, ellipse, native `abslayout.line` | Shared deletion, cross-instance packaging, SVG/icon upload, layering and all media policies |
 | Events | Native events visualization | Workflow actions and permission-dependent behavior |
-| Inputs | Dropdown, multiselect, text, number, timerange, button; original reset defaults retained across token restoration | Cascading choices, namespaces, all dynamic-first/default combinations and all states |
+| Inputs | Dropdown, multiselect, text, number, timerange, button; additive native menu actions, version-gated cascading reset and retained defaults | Complete namespaces, report/expression dependencies, all dynamic-first/default combinations and all states |
 | Interactions | Set/reset tokens, qualified 10.4+ unset, set time range, switch tab, custom URL | Every supported event/field combination; older native unset is gated; external preview navigation remains paused |
 | Layout/state | Absolute/grid, pages, global inputs, conditions, evaluated tokens, defaults | Complex grids, reused/conditional elements and large imported definitions |
 | Sources | Bounded current-user SPL search/chain/report replay, selected imported report profiling, verified ad hoc SPL2 | Native scheduled report cache/owner/app-context semantics, unsupported report SPL, SPL2 module/view management and complex SPL2 |

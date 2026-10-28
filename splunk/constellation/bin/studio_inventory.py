@@ -73,7 +73,7 @@ def authoring_contract(prompt, document, environment, brief=None, focus=None):
         if unavailable: contract['unavailableOptionsUntil'] = unavailable
         if key in DATA_CONTRACTS: contract['dataContract'] = DATA_CONTRACTS[key]
         if len(json.dumps(dict(contracts, **{key: contract}))) <= 14000: contracts[key] = contract
-    inputs = {key: value for key, value in INVENTORY.get('inputOptions', {}).items()
+    inputs = {key: available_options(key, value, environment.get('version', '')) for key, value in INVENTORY.get('inputOptions', {}).items()
               if key == selected_input or key.removeprefix('input.') in text}
     return {'rendererVersion': INVENTORY['rendererVersion'], 'visualizations': available,
             'unavailableVisualizationsUntil': {key: item['minimumEnterprise'] for key, item in INVENTORY['visualizations'].items() if key not in available},
