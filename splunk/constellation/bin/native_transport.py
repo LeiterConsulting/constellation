@@ -9,13 +9,15 @@ from urllib.error import URLError
 
 def transport_failure(error):
     cause = error.reason if isinstance(error, URLError) else error
+    status = str(getattr(error, 'statusCode', ''))
+    if status in ('401', '403', '404'): return False
     # Certificate/identity errors require configuration repair, never bypass.
     if isinstance(cause, ssl.SSLError): return False
     if isinstance(cause, (ConnectionError, TimeoutError, socket.gaierror,
                           http.client.IncompleteRead, http.client.RemoteDisconnected,
                           json.JSONDecodeError)): return True
-    if type(cause).__name__ in ('ServerNotFoundError', 'SocketError', 'ConnectTimeout', 'ReadTimeout'): return True
-    return str(getattr(error, 'statusCode', '')) in ('502', '503', '504')
+    if type(cause).__name__ in ('ServerNotFoundError', 'SocketError', 'ConnectTimeout', 'ReadTimeout', 'SplunkdConnectionException'): return True
+    return status in ('502', '503', '504')
 
 
 def native_read_retry(call, resource, namespace, method, timeout, check_cancel=None, clock=time.monotonic, **kwargs):

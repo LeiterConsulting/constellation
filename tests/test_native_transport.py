@@ -10,6 +10,22 @@ from data_service import DataService
 
 NS='/servicesNS/fixture-user/constellation'
 class NativeTransportTests(unittest.TestCase):
+    def test_splunk_connection_wrapper_keeps_read_budget_and_never_replays_mutations(self):
+        class SplunkdConnectionException(Exception): pass
+        for method,path,count in [('GET',NS+'/data/indexes',2),('POST',NS+'/search/v2/jobs/fixture_1/results',2),('POST',NS+'/search/v2/jobs',1),('POST','/servicesNS/nobody/constellation/constellation/aitk/infer',1)]:
+            call=Mock(side_effect=SplunkdConnectionException('fixture-private timeout'))
+            with self.assertRaises(SplunkdConnectionException):native_read_retry(call,path,NS,method,20)
+            self.assertEqual(call.call_count,count)
+        error=SplunkdConnectionException('fixture-private');error.statusCode=403
+        call=Mock(side_effect=error)
+        with self.assertRaises(SplunkdConnectionException):native_read_retry(call,NS+'/data/indexes',NS,'GET',20)
+        self.assertEqual(call.call_count,1)
+        rest=types.ModuleType('splunk.rest');rest.simpleRequest=Mock(side_effect=SplunkdConnectionException('fixture-private timeout'))
+        splunk=types.ModuleType('splunk');splunk.rest=rest
+        with patch.dict(sys.modules,{'splunk':splunk,'splunk.rest':rest}):
+            with self.assertRaises(ProviderError)as caught:SearchService('fixture-user','fixture-session').request(NS+'/data/indexes')
+        self.assertEqual(caught.exception.status,503);self.assertEqual(caught.exception.code,'splunk_transport')
+        self.assertNotIn('fixture-private',str(caught.exception));self.assertNotIn('Simplify',str(caught.exception))
     def test_retries_read_once_with_remaining_deadline_and_same_identity(self):
         call=Mock(side_effect=[socket.gaierror(8,'fixture-private'),({'status':200},b'{}')]);clock=Mock(side_effect=[10,12,12])
         self.assertEqual(native_read_retry(call,NS+'/data/indexes',NS,'GET',20,clock=clock,sessionKey='fixture-session')[1],b'{}')

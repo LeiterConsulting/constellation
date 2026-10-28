@@ -1,5 +1,21 @@
 # Updating Constellation
 
+## 0.31 wide-event inspection and runtime identity
+
+No credential, draft or native-dashboard migration runs; schema remains 3. Refresh workspace tabs after installation. Field inspection now omits `_raw`, applies the existing metadata priority before the native field cap, and keeps an intact leading sample within the existing result-size limit. A reduced sample is partial, with presence, numeric and multivalue counts based only on its retained rows. A single oversized extracted row still requires a narrower supplied search. Ordinary chart previews and all final search validation retain their strict size/time/row limits.
+
+Keep field ordering in `field_context.py`, search-job sampling in `preview_jobs.py` and the fixed completion-reason allowlist in `search_evidence.py`. Do not truncate individual values, widen the user's scope/time range, treat uninspected fields as absent, or turn sample coverage into complete source coverage. Requalify raw-heavy events, wide extracted fields, missing/multivalue values and unchanged ordinary preview rejection.
+
+Changed real-data bindings containing SPL-style `eval` or `sort` commands receive ordinary validation feedback; row sorting belongs in the search after aggregation/projection. Quoted text and unchanged native expressions are preserved. This narrow lexical check is not a full DOS parser. Keep recovery atomic and bounded, with original columns and row navigation intact. Native `SplunkdConnectionException` is now classified as a service interruption, never invalid SPL or a reason to repair the user's query. Only the existing allowlisted reads may retry once within their original deadline; dispatch, inference, control and writes are never replayed.
+
+`table_sort.py` compiles one literal selected-table ordering request into a query-only change. It requires a verified output field and an exclusive `ds.search` source; attachments, compound/ambiguous requests, shared dependencies, chains and SPL2 keep the model path. Preservation clauses are parsed without nested unbounded regular expressions. The result goes through the ordinary compiler, native/features, actual searches/output, measurement/population, scope and atomic acceptance checks. It saves inference only; it does not skip validation or increase recovery limits. Requalify both directions, actual numerical order, unrelated-work preservation and service-failure propagation before extending this grammar.
+
+An exact existing-return-button rename can also compile locally when the stated destination already matches its native page and the new label fits the existing rectangle. Preserve its handlers, tokens, geometry and unknown properties byte-for-byte. Do not use this label-only path to infer another destination or resize a button.
+
+Index catalogs now have a defensive request-local snapshot in `SearchService`; the REST handler still creates a fresh runtime for each authenticated request. Never promote this to a process/global, session or cross-user cache. Requalify current-user restrictions, disabled/metric indexes, fresh field inspections, separate runtimes and service-failure propagation. A catalog is metadata, never proof that a search is allowed or that an index is empty.
+
+The package pins persistent driver configuration as well as entry-module names to the runtime content hash. Splunk can share processes across endpoints with the same driver configuration; a renamed entry alone can retain previously imported modules. The build helper in `scripts/package_runtime.py` preserves control and privileged-handler separation, capabilities and token settings. Verify changed behavior after an upgrade, including an in-place reinstall, rather than accepting the installed version label alone. Do not update during active authoring; complete or stop runs first. Deployment and cluster restart requirements still follow the target's normal upgrade process.
+
 ## 0.30 calculation-specific recipes
 
 No credential, draft or native-dashboard migration runs; schema remains 3. Refresh workspace tabs after installation. Keep the new kind-specific recipe wire schema in `creation_recipes.py`, separate from flat page membership in `creation_outline.py` and the existing composition/native compiler. Old complete recipes remain valid when their inapplicable fields are empty. Never discard nonempty columns/grouping/metrics or unknown properties to accept a mismatched kind.
@@ -111,7 +127,7 @@ Run the Python suite under supported Python 3.9 and 3.13, frontend tests, TypeSc
 
 Exercise changed behavior on the target Splunk/Studio versions: create from a real dataset, refine conversationally, refresh/reopen, inspect save state, save a private native copy, read it back and check native rendering. Retest providers and attachments when their adapters/contracts change. Preserve synthetic fixtures as synthetic evidence and label bounded live counts as potentially incomplete.
 
-The package content hash includes bundled Python and JSON contracts. Guidance/version-only updates therefore receive a fresh handler entry and do not depend on restarting Splunk to discard a stale worker. Existing credentials are retained through their restricted Splunk storage path; never package local configuration or keys.
+The package content hash includes bundled Python and JSON contracts. Guidance/version-only runtime updates therefore receive a fresh handler entry and driver configuration. Confirm loaded behavior on each deployment; a version string alone does not prove worker replacement. Existing credentials are retained through their restricted Splunk storage path; never package local configuration or keys.
 
 ## Recovery and page contracts in 0.7.0
 

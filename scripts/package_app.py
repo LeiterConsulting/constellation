@@ -9,6 +9,7 @@ import re
 import tarfile
 from xml.sax.saxutils import escape
 from check_repository import path_issues, text_issues
+from package_runtime import pin_driver_revision
 
 ROOT = Path(__file__).resolve().parents[1]
 source = ROOT / 'splunk' / 'constellation'
@@ -47,7 +48,7 @@ files['constellation/appserver/static/' + css_name] = host_css
 workspace_path = 'constellation/default/data/ui/views/workspace.xml'
 files[workspace_path] = files[workspace_path].replace(b'script="boot.js"', f'script="{boot_name}"'.encode()).replace(b'constellation-host.css', css_name.encode())
 # Persistent REST workers can retain imported Python modules after an update.
-# A changed entry script gets its own driver identity without restarting Splunk.
+# Pin both the entry module and driver configuration to the runtime content.
 handler_path = 'constellation/bin/constellation_handler.py'
 if handler_path in files:
     handler_source = files.pop(handler_path)
@@ -56,6 +57,7 @@ if handler_path in files:
     files['constellation/bin/' + handler_module + '.py'] = handler_source
     restmap_path = 'constellation/default/restmap.conf'
     files[restmap_path] = files[restmap_path].replace(b'constellation_handler.py', (handler_module + '.py').encode()).replace(b'constellation_handler.', (handler_module + '.').encode())
+    files[restmap_path] = pin_driver_revision(files[restmap_path], handler_id)
     inference_path = 'constellation/bin/aitk_inference_handler.py'
     if inference_path in files:
         inference_module = 'aitk_inference_handler_' + handler_id

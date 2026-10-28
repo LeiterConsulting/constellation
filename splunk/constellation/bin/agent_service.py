@@ -311,7 +311,8 @@ class AgentService:
         fast = quick_edit(prompt, document, body.get('selected', ''), body.get('attachments', [])) if body.get('attachments', []) == [] else None
         if fast:
             self.progress('validate')
-            return {'revision': revision, 'message': 'Updated the selected chart. Its search and other dashboard elements are preserved.',
+            return {'revision': revision, 'message': ('Updated the selected button label. Its destination and all other elements are preserved.'
+                    if body.get('selected') in document.get('inputs', {}) else 'Updated the selected chart. Its search and other dashboard elements are preserved.'),
                     'changes': fast, 'suggestions': [], 'repaired': False,
                     'activity': ['Applied an exact presentation edit locally; no model request or data search was needed.'],
                     'model': saved['model'], 'brief': brief, 'pagePurposes': validate_purposes(body.get('pagePurposes', {}), document),
@@ -403,6 +404,8 @@ class AgentService:
             context['tableEditing'] = 'formatTable is unavailable for this broader edit. Start with the verified existing search. Add requested calculations through search/native query edits and update explicit table projections to show requested new fields. Format new aliases with final SPL eval after aggregation if needed.'
         if format_only:
             context['formattingOnly'] = 'Format only existing numeric columns through formatTable. Omit absent or already-readable timestamps. Do not add aggregates, columns, search or binding edits.'
+        from table_sort import exact_table_sort
+        local_sort = exact_table_sort(prompt, focus.get('id'), document, profile, table_receipt, attachments)
         guidance = retrieve_guidance(prompt, document, environment, real_data=bool(profile))
         context['retrievedGuidance'] = guidance
         instructions = (FORMAT_INSTRUCTIONS if format_only else CREATION_INSTRUCTIONS if profile and context['canvasState'] == 'blank' else
@@ -449,9 +452,14 @@ class AgentService:
         next_purposes = purposes
         for attempt in range(MAX_MODEL_CALLS):
             try:
-                recovery.model_call()
-                self.progress('model', attempt + 1)
-                response = self.provider.complete(saved, request)
+                if attempt == 0 and local_sort:
+                    # Exact literal intent uses the same compiler and every
+                    # final validator, without asking a model to invent DOS.
+                    response = {'status': 'completed', 'output': [{'content': [{'type': 'output_text', 'text': json.dumps(local_sort)}]}]}
+                else:
+                    recovery.model_call()
+                    self.progress('model', attempt + 1)
+                    response = self.provider.complete(saved, request)
                 self.progress('validate', attempt + 1)
             except ProviderError as error:
                 error.recovery = recovery.evidence()
@@ -629,6 +637,7 @@ class AgentService:
                              *['Guidance: ' + item['title'] for item in guidance],
                              *(['Built in ' + str(budget.stages) + ' internal stages; applied together'] if budget.stages > 1 else []),
                              *(['Omitted invalid optional next-step suggestions'] if suggestions_omitted else []),
+                             *(['Compiled an exact selected-table sort; all normal validation retained.'] if local_sort else []),
                              'Validated ' + str(len(result['changes'])) + ' Studio changes'],
                 'dataContext': profile['scope'] if profile else None, 'dataProfile': profile, 'searchReceipts': receipts,
                 'knowledgeSources': [{key: item[key] for key in ('id', 'title', 'source')} for item in guidance],

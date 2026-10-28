@@ -10,6 +10,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'splunk/constellati
 from preview_jobs import PreviewJobs
 from search_service import SearchService
 from provider_service import ProviderError
+from data_service import DataService
 
 
 class JobRuntime(SearchService):
@@ -29,6 +30,75 @@ class JobRuntime(SearchService):
 
 
 class PreviewJobTests(unittest.TestCase):
+    def wide_runtime(self, rows):
+        runtime = JobRuntime(rows=len(rows)); original = runtime.request
+        names = sorted({name for row in rows for name in row})
+        def request(path, method='GET', fields=None, optional=False):
+            if path.endswith('/results'):
+                runtime.calls.append((path, method, fields))
+                return {'fields': [{'name': name} for name in names], 'results': rows, 'messages': runtime.messages}
+            return original(path, method, fields, optional)
+        runtime.request = request
+        runtime.datasets = lambda: {'indexes': [{'name': 'fixture'}]}
+        return runtime
+
+    def test_discovery_omits_raw_without_relaxing_chart_preview_limit(self):
+        rows = [{'_time': '1000', 'temperature_f': 0, '_raw': 'PRIVATE' * 200000}]
+        runtime = self.wide_runtime(rows)
+        profile = DataService(runtime).profile({'index': 'fixture'})
+        self.assertEqual(profile['sampledRows'], 1)
+        self.assertEqual(profile['completion']['state'], 'complete')
+        self.assertNotIn('_raw', json.dumps(profile)); self.assertNotIn('PRIVATE', json.dumps(profile))
+        self.assertTrue(next(f for f in profile['fields'] if f['name'] == 'temperature_f')['numeric'])
+        with self.assertRaises(ProviderError) as error:
+            runtime.preview({'query': 'search index="fixture"'})
+        self.assertEqual(error.exception.status, 413)
+        self.assertEqual(runtime.calls[-1][2], {'action': 'cancel'})
+
+    def test_discovery_size_sampling_preserves_cells_counts_and_partial_evidence(self):
+        rows = [{'wide': ['\u2603' * 50000, 'PRIVATE'], 'value': 0},
+                {'wide': ['\u2603' * 50000, 'PRIVATE']},
+                {'wide': ['\u2603' * 50000, 'PRIVATE'], 'value': '2'},
+                {'wide': ['\u2603' * 50000, 'PRIVATE'], 'value': 'unknown'}]
+        runtime = self.wide_runtime(rows); before = copy.deepcopy(rows)
+        runtime.meta['isFinalized'] = '1'
+        runtime.messages = [{'type': 'WARN', 'text': 'PRIVATE diagnostic'}]
+        result = runtime.preview({'query': 'search index="fixture"', 'fieldDiscovery': True})
+        self.assertEqual(result['results'], rows[:3]); self.assertEqual(rows, before)
+        self.assertLessEqual(len(json.dumps(result['results']).encode('utf-8')), 1_000_000)
+        self.assertEqual(result['state'], 'partial'); self.assertEqual(result['evidence']['resultCount'], 4)
+        self.assertIn('retained sample', result['warning']); self.assertIn('resource limit', result['warning'])
+        self.assertIn('diagnostics', result['warning']); self.assertNotIn('PRIVATE', result['warning'])
+        self.assertEqual(sum(path.endswith('/jobs') for path, _, _ in runtime.calls), 1)
+        profile = DataService(runtime).profile({'index': 'fixture'})
+        self.assertEqual(profile['sampledRows'], 3); self.assertEqual(profile['completion']['state'], 'partial')
+        self.assertIn('retained sample', json.dumps(profile['completion']))
+        fields = {f['name']: f for f in profile['fields']}
+        self.assertEqual(fields['value']['coverage'], {'missing': 1, 'numeric': 2, 'multivalue': 0, 'basis': 'sample_rows'})
+        self.assertEqual(fields['wide']['coverage']['multivalue'], 3)
+        self.assertNotIn('PRIVATE', json.dumps(profile))
+        self.assertEqual(profile['baseQuery'], 'search index="fixture"')
+
+    def test_single_oversized_extracted_row_fails_explicitly_and_cancels(self):
+        runtime = self.wide_runtime([{'wide': 'x' * 1_000_000}])
+        with self.assertRaises(ProviderError) as error:
+            DataService(runtime).profile({'index': 'fixture'})
+        self.assertEqual(error.exception.status, 413); self.assertEqual(error.exception.code, 'profile_too_large')
+        self.assertEqual(runtime.calls[-1][2], {'action': 'cancel'})
+        self.assertEqual(sum(path.endswith('/jobs') for path, _, _ in runtime.calls), 1)
+
+    def test_discovery_prioritizes_useful_fields_before_native_field_cap(self):
+        row = {'a_nested_' + str(i): 'fixture' for i in range(120)}
+        row.update({'_time': '1000', 'host': 'fixture_host', 'response_time_ms': '3', 'status': 'observed'})
+        runtime = self.wide_runtime([row])
+        profile = DataService(runtime).profile({'index': 'fixture'})
+        names = {field['name'] for field in profile['fields']}
+        self.assertTrue({'_time', 'host', 'response_time_ms', 'status'} <= names)
+        self.assertEqual(len(names), 60)
+        ordinary = runtime.preview({'query': 'search index="fixture"'})
+        self.assertEqual(len(ordinary['fields']), 100)
+        self.assertNotIn('response_time_ms', {field['name'] for field in ordinary['fields']})
+
     def test_complete_partial_and_unknown_evidence_are_distinct(self):
         for meta, rows, state in [({},150,'complete'), ({'isFinalized':'1'},1,'partial'), ({},201,'partial'),
                                   ({'resultCount':'unknown'},1,'partial'), ({'isDone':'0','isFinalized':'1'},0,'partial')]:

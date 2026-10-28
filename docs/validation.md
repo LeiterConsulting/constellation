@@ -1,14 +1,14 @@
 # Validation status
 
-Snapshot: **0.30.0 development preview, October 27, 2026**. This file is a sanitized summary. Private lab addresses, credentials, screenshots, transcripts, raw search data and detailed runtime receipts are excluded from the repository.
+Snapshot: **0.31.0 development preview, October 27, 2026**. This file is a sanitized summary. Private lab addresses, credentials, screenshots, transcripts, raw search data and detailed runtime receipts are excluded from the repository.
 
-See the [0.30 recipe qualification](#0300-calculation-specific-recipes--october-27-2026) for current evidence. Earlier cohorts below retain their own scope and failures.
+See the [0.31 wide-data qualification](#0310-wide-data-grounding-and-scoped-edits--october-27-2026) for current evidence. Earlier cohorts below retain their own scope and failures.
 
 ## Local verification
 
 | Check | Observed result |
 | --- | --- |
-| Python unit suites | 409 tests passed on Python 3.9 and 3.13, including kind-specific/legacy recipes, flat recipe membership, actual-output rejection, bounded recovery and retained authority/search/native/field-context regressions. |
+| Python unit suites | 429 tests passed on Python 3.9 and 3.13, including wide-event samples, request-local catalog isolation, persistent-driver identity, scoped sort/label compilers, transport classification and retained provider/native/measurement regressions. |
 | Frontend unit suites | 106 tests passed, including scoped repeated-unit suppression, conflicting/mixed units, exact field-name collisions, suggestion invalidation and retained delivery/focus/starter regressions. |
 | TypeScript and production build | Passed; bundle-size warning remains. |
 | Deterministic app package | Generated with SHA-256 receipt. |
@@ -21,9 +21,43 @@ The AppInspect result applies to the tested development archive. The seven warni
 | Splunk Enterprise | Dashboard Studio | Selected live exercises |
 | --- | --- | --- |
 | 10.2.8 | 1.23.12 | Native roundtrips, real-data creation, recovery, multi-page selection/drilldowns/persistence, OpenAI image/PDF authoring, Ollama edits, AITK text edits/readiness. |
-| 10.4.4 | 1.26.6 | Native roundtrips, synthetic SPL/SPL2, PDF native interactions, Ollama edits, prior page/focus exercises and current row-budget check. |
+| 10.4.4 | 1.26.6 | Native roundtrips, synthetic SPL/SPL2, PDF interactions and prior page/focus checks; current repeated non-admin OpenAI/Ollama wide-data creation, editing, native saves and selected UI/native navigation. |
 
-The full 0.7.1 creation/switch/reopen journey was run on the 10.2.8 target, not repeated in full on 10.4.4. AITK succeeded through an existing configured connection on one target; another target returned no usable completion. Do not infer instance-independent provider availability from app installation.
+The 0.31 cohort extends current real-data creation/editing to 10.4.4 through OpenAI and Ollama. Earlier full-interface journeys retain their own versions and scope. AITK 6.2 shared inference passed on 10.2.8; the 10.4.4 target has AITK 6.1 without a usable configured connection and remains blocked by maintainer permissions. Do not infer instance-independent provider availability from app installation.
+
+## 0.31.0 Wide-data grounding and scoped edits — October 27, 2026
+
+The final **0.31.0 build 46** archive is SHA-256 `eba7766ca2330702daff7ee7c8b0c2096625a40bd4910a4ccb30c6c96e0a5bb2` (460 files; 5,433,870 bytes). Both targets installed the exact archive without restart over verified management TLS. All 67 Python modules and the unchanged browser entry matched source/build; four packaged persistent drivers carry the runtime fingerprint. No macOS files, resource forks, private configuration or extended archive metadata were present. AppInspect 4.3.1 precert returned zero errors/failures/future failures, seven warnings and one skip. The browser-entry size warning remains. The second lab's existing Splunk Web uses HTTP; this is not a Web TLS qualification.
+
+**Changes and actual failure evidence.** A wide, nested collector dataset failed field inspection with HTTP 413 before authoring could start. Discovery now excludes raw event text, prioritizes identifiers/measurements before the native field cap, and retains intact leading rows within the existing byte limit. Reduced samples carry a fixed partial reason and actual retained-row counts. Cells are never shortened or coerced; ordinary previews still reject oversized results. The live 200-row inspection succeeded and exposed the host field. Synthetic fixtures separately prove byte-limited partial sampling, missing/multivalue evidence, single-row refusal and unchanged strict chart limits.
+
+An in-place reinstall retained earlier imported behavior despite new handler entry names. Pinning the persistent driver configuration to the runtime fingerprint loaded the changed behavior on both targets. This fixes an observed update boundary, not every deployment/cluster upgrade scenario.
+
+Ollama also emitted SPL-style sorting inside a DOS binding and repeated it through three repair attempts. Changed real-data bindings now reject that syntax. An exact selected-table ordering request compiles to a query-only edit using verified outputs and an exclusive SPL source, through every ordinary validator. An exact existing-return-button rename preserves its verified destination and native rectangle without inference; overlong labels fail safely. Compound, shared, ambiguous, attachment, chain and SPL2 requests retain ordinary authoring. These are narrow compilers, not general intent or DOS validation.
+
+Native `SplunkdConnectionException` timeouts had been misclassified as query errors. They now remain service interruptions, with the existing single safe-read retry and original deadline; inference and mutations are never replayed. Independent catalog reads took about 7–14 seconds, and the old turn enumerated the catalog twice. A defensive snapshot now removes duplicate catalog reads only within one authenticated request. Field inspection and actual searches still execute, and new requests/users get fresh catalogs. This is a demonstrated source of avoidable work; the root cause of every native timeout remains unproven.
+
+**Final-package ordinary-author cohort.** Four temporary accounts per target provided separate provider authors and an isolation peer. Authors had no administrator, credential-store or native AITK configuration/invocation capability. OpenAI used `gpt-6-luna`, Ollama `qwen3-coder:latest`, and primary AITK 6.2 the existing approved shared connection, with its model/token settings unchanged.
+
+| Target/provider | Complete flows / turns | Creation seconds | Inference behavior |
+| --- | --- | --- | --- |
+| Enterprise 10.2.8 / OpenAI | 1 / 4 | 24.42 | One call per turn; no repair |
+| Enterprise 10.2.8 / Ollama | 1 / 4 | 17.77 | One call per turn; no repair |
+| Enterprise 10.2.8 / AITK 6.2 | 1 / 4 | 22.87 | One call per turn; no repair |
+| Enterprise 10.4.4 / OpenAI | 2 / 8 | 18.35–19.08 | Creation/count: one call; sort/label: zero |
+| Enterprise 10.4.4 / Ollama | 2 / 8 | 10.11–10.16 | Creation/count: one call; sort/label: zero |
+
+All **seven flows / 28 turns** passed: 20 one-call model turns and eight deterministic edits, with no repair. Primary freezer flows covered blank two-page/four-chart creation, a selected maximum, number/date formatting and existing navigation editing. The held-out collector flows covered blank two-page/four-chart creation, a selected count, sorting and a return-button label. Exact draft/conversation reopen, private native copies in Search & Reporting, owner ACLs and peer denial passed. Authors ran sequentially within each target with overlap between targets; this is a bounded regression, not repeated three-author contention, a long soak or a controlled speedup measurement. Collector sorts took 1.07–1.61 seconds; label edits 0.38–0.49 seconds in this sample.
+
+Independent native synthetic probes checked all 12 freezer source transformations, both detail selections and unchanged Overview populations. Three separate cutoff probes retained exactly 150°F, excluded 150.1°F/180°F, preserved missing readings as unknown and kept independent Wi-Fi/event populations. Four collector sort probes verified exact descending numeric order/counts and query-only changes. Fixture rows were not ingested or sent to models. Actual profiles/previews retained their bounds and partial labels. Fresh ordinary-user SPL2 ad hoc probes passed on both versions; module endpoints were unavailable. This does not qualify full SPL2/native feature coverage.
+
+**Final browser/native check.** The ordinary Ollama author reopened its final collector draft, selected the summary and requested ascending sorting in chat. Activity recorded zero model requests. Exact independent readback proved only that source query changed; every other native property stayed exact, and conversation/Overview survived refresh. A separate numerical probe verified ascending order. Save to Splunk created a private copy in Search & Reporting; native Studio rendered it with normal Edit/Actions controls and working row/detail/return navigation. Peer draft/native access remained denied. An earlier OpenAI browser title-only walkthrough retained its own candidate scope and is not counted as another final-package flow.
+
+Both controlled original-response losses in the accepted collector cohort recovered the original validated reply and acknowledged it without inference replay. All 28 cohort acknowledgements were checked in recorded replies. A post-flow final-package trace snapshot contained 690 handler requests, eight expected private-draft 404 denials, four injected disconnects (two from earlier harness attempts), and no other HTTP/transport failure. The window includes exploratory reads and driver attempts, not only the accepted cohort. It does not explain older interruptions or establish concurrent-user reliability.
+
+**Retained exploratory failures and limits.** Earlier candidates hit native connection timeouts, an Ollama creation-label encoding failure, repeated invalid DOS sorting and session-bound control 403s. Later API drivers pinned an explicit Splunk session; this does not prove the cause of every earlier 403, and session ownership/signatures were not weakened. A driver initially assumed optional fresh data-context fields would be present after a local presentation edit; correcting it preserved the existing API/UI contract. These failed/superseded attempts remain local and separate from acceptance. Remaining 1.0 work includes native-catalog timeout/latency tails under renewed concurrent load, broader held-out model/creation variance, second-target AITK setup, native/SPL2/imported/complex semantic coverage, independent delivery/storage security and deployment/upgrade/cluster checks, unaided usability/accessibility and bundle reduction.
+
+**AITK setup boundary and cleanup.** The second target's maintainer lacks `list_ai_commander_config`; Splunk rejected a temporary capability-role assignment as not grantable. That unassigned temporary role was deleted, original administrator roles verified unchanged, and the administrator setup guide now explains effective-capability/delegation checks. No ordinary author received credential-store authority, and no AITK policy/connection/collection ACL was changed. After testing, cleanup removed eight temporary users, 53 owned configuration objects, 29 private native views, four owned jobs, both copied owner-only OpenAI records and the second target's temporary author role. All 39 original administrator drafts/preferences/settings and 83 original configuration contents were preserved; primary protected AITK permissions and second-target original ACLs stayed exact. Password files were deleted, administrator browser login restored and test panels closed. Raw evidence/screenshots remain local. This is a development preview, not 1.0 or Cloud certification.
 
 ## 0.30.0 Calculation-specific recipes — October 27, 2026
 

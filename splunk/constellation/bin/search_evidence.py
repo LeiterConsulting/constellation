@@ -8,6 +8,7 @@ REASONS = {
     'Only the first 200 result rows are shown.',
     'Splunk did not verify completion.',
     'Splunk reported search diagnostics; results may be incomplete.',
+    'Field inspection reached the result-size limit; coverage refers only to the retained sample.',
 }
 
 

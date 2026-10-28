@@ -44,16 +44,20 @@ def present(value):
     return value is not None and value != '' and value != []
 
 
+def field_priority(entry):
+    """Keep the same metadata-only ordering before native and profile caps."""
+    if not isinstance(entry, dict): return 9
+    name = entry.get('name', '')
+    if not isinstance(name, str): return 9
+    if name == '_time': return 0
+    if name.startswith(('_','date_')) or name in ('source','sourcetype','index','linecount','punct','splunk_server','splunk_server_group'): return 8
+    return {'measurement':1,'identifier':2,'category':3,'counter':4}.get(name_context(name)['role'], 5)
+
+
 def sample_fields(result):
     rows = result['results'][:200]
     fields = []
-    def priority(entry):
-        name = entry.get('name', '')
-        if not isinstance(name, str): return 9
-        if name == '_time': return 0
-        if name.startswith(('_','date_')) or name in ('source','sourcetype','index','linecount','punct','splunk_server','splunk_server_group'): return 8
-        return {'measurement':1,'identifier':2,'category':3,'counter':4}.get(name_context(name)['role'], 5)
-    for entry in sorted(result['fields'], key=priority)[:80]:
+    for entry in sorted(result['fields'], key=field_priority)[:80]:
         name = entry['name']
         if not isinstance(name, str) or len(name) > 200 or name in ('_raw', '_cd', '_bkt', '_serial'): continue
         values = [row[name] for row in rows if present(row.get(name))]

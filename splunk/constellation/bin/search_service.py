@@ -1,6 +1,7 @@
 """Current-session discovery and bounded read-only preview searches."""
 import re
 from urllib.parse import quote, parse_qsl
+import copy
 import json
 from provider_service import ProviderError
 from compatibility import feature_profile
@@ -200,11 +201,19 @@ class SearchService:
         return result
 
     def datasets(self):
+        if hasattr(self, '_dataset_catalog'):
+            return copy.deepcopy(self._dataset_catalog)
         result = self.request(self.namespace + '/data/indexes', optional=True)
-        return {'indexes': [{'name': item['name'], 'kind': item.get('content', {}).get('datatype', 'event')}
+        catalog = {'indexes': [{'name': item['name'], 'kind': item.get('content', {}).get('datatype', 'event')}
                             for item in result.get('entry', []) if item.get('content', {}).get('disabled') not in (True, 1, '1')],
                 'status': result.get('unavailable', 'available'),
                 'note': 'Catalog visibility is not proof of search access. No indexed events were sampled.'}
+        # Each REST request creates its own current-user runtime. Discovery,
+        # profiling and repair share only this metadata snapshot, never a
+        # process/global cache or search results. Native searches still enforce
+        # the caller's actual permissions on every dispatch.
+        self._dataset_catalog = copy.deepcopy(catalog)
+        return catalog
 
     def preview(self, body):
         language = body.get('language', 'spl')

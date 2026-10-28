@@ -48,7 +48,24 @@ def full_width_table(prompt, document, selected):
 
 
 def quick_edit(prompt, document, selected, attachments):
-    if attachments or not isinstance(selected, str) or selected not in document['visualizations']: return None
+    if attachments or not isinstance(selected, str): return None
+    if selected in document.get('inputs', {}):
+        button = document['inputs'][selected]
+        match = re.fullmatch(r'Rename only this selected existing return button to "([^"\n]{1,200})" and keep its destination ([^.!?]+)\. Preserve its position, size and every other element and interaction\.', prompt, re.I)
+        if not match or button.get('type') != 'input.button': return None
+        targets = {handler.get('options', {}).get('tabId') for handler in button.get('eventHandlers', []) if handler.get('type') == 'drilldown.switchToTab'}
+        pages = [tab for tab in document.get('layout', {}).get('tabs', {}).get('items', []) if str(tab.get('label', '')).casefold() == match[2].strip().casefold()]
+        if len(pages) != 1 or targets != {pages[0]['layoutId']}: return None
+        placements = [item for page in document['layout'].get('layoutDefinitions', {}).values() for item in page.get('structure', []) if item.get('item') == selected]
+        if len(placements) != 1: return None
+        from page_service import button_label_width
+        from provider_service import ProviderError
+        if placements[0].get('position', {}).get('w', 0) < button_label_width(match[1]):
+            raise ProviderError('That label will not fit the current button width. Use a shorter label or allow resizing. Your draft is unchanged.', 422, 'button_label_fit')
+        changes = [{'op': 'set', 'path': '/inputs/' + selected.replace('~', '~0').replace('/', '~1') + '/options/label', 'value': json.dumps(match[1])}]
+        apply_changes(document, changes)
+        return changes
+    if selected not in document['visualizations']: return None
     placement = full_width_table(prompt, document, selected)
     if placement: return placement
     viz = document['visualizations'][selected]

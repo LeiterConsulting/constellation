@@ -9,6 +9,7 @@ from population_guard import validate_populations
 from search_evidence import sample_completion, empty_columns, verified_null_columns
 from search_hints import preview_repair_hint
 from field_context import sample_fields, enrich_profile, validate_missing_measurements, validate_definitions
+from measurement_constraints import pipeline_commands
 
 
 def spl_literal(value):
@@ -208,8 +209,10 @@ class DataService:
                 if not isinstance(binding, str) or not binding.lstrip().startswith(('>', '$')):
                     problems.append('Visualization ' + identifier[:100] + ', channel ' + channel + ': bind to search output, not constant sample values.')
                     continue
-                if binding != previous.get('visualizations', {}).get(identifier, {}).get('options', {}).get(channel) and re.search(r'\|\s*eval\s+', binding, re.I):
-                    problems.append('Visualization ' + identifier[:100] + ', channel ' + channel + ': SPL eval is not a native DOS binding function. Format fields in the ds.search query with eval round/strftime after aggregation, then bind the existing output fields with seriesByName/frameBySeriesNames. Preserve query scope and temperature/Wi-Fi exclusions.')
+                if (binding != previous.get('visualizations', {}).get(identifier, {}).get('options', {}).get(channel)
+                        and any(re.match(r'(?:eval|sort)\s+', command, re.I)
+                                for _start, _end, command in pipeline_commands('| ' + binding))):
+                    problems.append('Visualization ' + identifier[:100] + ', channel ' + channel + ': SPL eval/sort commands are not native DOS binding functions. Put row sorting in the ds.search query after aggregation or table projection; format fields there with eval round/strftime after aggregation. Bind the existing output fields with seriesByName/frameBySeriesNames. Preserve columns, query scope and temperature/Wi-Fi exclusions.')
                     continue
                 for args in re.findall(r'(?:seriesByName|frameBySeriesNames)\(([^)]*)\)', binding):
                     names = re.findall(r'''['"]([^'"]+)['"]''', args)

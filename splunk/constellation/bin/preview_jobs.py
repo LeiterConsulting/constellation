@@ -12,6 +12,27 @@ from datetime import datetime, timezone
 from provider_service import ProviderError
 
 ROWS, SECONDS = 200, 5
+RESULT_BYTES = 1_000_000
+
+
+def discovery_sample(rows):
+    """Retain intact leading rows within the existing encoded-result budget.
+
+    Field inspection needs presence/type evidence, not raw event text. Never
+    shorten a cell: that could turn multivalue or missing evidence into fiction.
+    Ordinary chart previews do not use this metadata-only sampling path.
+    """
+    retained, size = [], 2  # JSON array brackets; default JSON output is ASCII.
+    for row in rows:
+        added = len(json.dumps(row)) + (2 if retained else 0)
+        if size + added > RESULT_BYTES:
+            if not retained:
+                raise ProviderError('One event exceeds the field-inspection size limit. Inspect a search that selects fewer fields.',
+                                    413, 'profile_too_large')
+            return retained, 'Field inspection reached the result-size limit; coverage refers only to the retained sample.'
+        retained.append(row)
+        size += added
+    return retained, ''
 
 
 def flag(value):
@@ -63,7 +84,7 @@ class PreviewJobs:
         self.runtime.request(path + '/control', 'POST', {'action': 'cancel'})
         return {'state': 'cancelled'}
 
-    def poll(self, handle):
+    def poll(self, handle, field_discovery=False):
         from search_service import search_feedback
         path, earliest = self.path(handle)
         try:
@@ -94,11 +115,18 @@ class PreviewJobs:
             raise ProviderError('The preview search failed. ' + search_feedback(' '.join(str(m.get('text', '')) for m in errors)), 422, 'preview_failed')
         raw_rows = result.get('results', [])
         fields = result.get('fields') or [{'name': name} for name in (raw_rows[0] if raw_rows else {})]
-        names = [f['name'] for f in fields if isinstance(f, dict) and isinstance(f.get('name'), str)][:100]
+        if field_discovery:
+            from field_context import field_priority
+            fields = sorted(fields, key=field_priority)
+        names = [f['name'] for f in fields if isinstance(f, dict) and isinstance(f.get('name'), str)
+                 and (not field_discovery or f['name'] != '_raw')][:100]
         rows = [{k: v for k, v in row.items() if k in names} for row in raw_rows[:ROWS] if isinstance(row, dict)]
-        if len(json.dumps(rows)) > 1_000_000:
-            raise ProviderError('The preview rows exceeded the allowed size. Select fewer fields.', 413)
         reasons = []
+        if field_discovery:
+            rows, sampling_reason = discovery_sample(rows)
+            if sampling_reason: reasons.append(sampling_reason)
+        elif len(json.dumps(rows)) > RESULT_BYTES:
+            raise ProviderError('The preview rows exceeded the allowed size. Select fewer fields.', 413)
         if flag(meta.get('isFinalized')): reasons.append('Search stopped at a resource limit.')
         count = number(meta.get('resultCount'))
         if len(raw_rows) > ROWS or (count is not None and count > ROWS): reasons.append('Only the first 200 result rows are shown.')
@@ -120,7 +148,7 @@ class PreviewJobs:
             while time.monotonic() < deadline:
                 check = getattr(self.runtime, 'check_cancel', None)
                 if check: check()
-                result = self.poll(handle)
+                result = self.poll(handle, field_discovery=True) if field_discovery else self.poll(handle)
                 if result['state'] != 'running': return result
                 time.sleep(0.15)
             raise ProviderError('The bounded preview did not finish. Simplify the search or refresh to retry.', 422, 'preview_timeout')
