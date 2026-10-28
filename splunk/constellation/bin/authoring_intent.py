@@ -8,6 +8,17 @@ def validate_page_intent(prompt, message, document, previous, focus, purposes=No
     validate_native_intent(prompt, document, previous, focus)
     problems = []
     tabs = document.get('layout', {}).get('tabs', {}).get('items', [])
+    # An uploaded, unbound SVG is still a new-dashboard scaffold, not an
+    # existing analytical board. Exact page counts must include its first tab.
+    scaffold = (not previous.get('dataSources') and bool(previous.get('visualizations')) and
+                all(item.get('type')=='splunk.choropleth.svg' and not item.get('dataSources')
+                    for item in previous['visualizations'].values()))
+    if scaffold and document != previous:
+        exact = re.search(r'\b(?:build|create|make)\s+exactly\s+(one|two|three|four|five|six|[1-9][0-9]?)[ -]pages?\b', prompt, re.I)
+        if exact:
+            requested = {'one':1,'two':2,'three':3,'four':4,'five':5,'six':6}.get(exact[1].lower(),int(exact[1]) if exact[1].isdigit() else 0)
+            if len(tabs)!=requested:
+                problems.append('Build exactly '+str(requested)+' pages in this new SVG dashboard, including its existing scaffold page. Reuse/rename that page instead of leaving an extra Overview tab. Preserve the existing map ID and asset.')
     if not previous.get('visualizations') and not previous.get('dataSources') and document!=previous:
         count=re.search(r'\bexactly\s+(one|two|three|four|five|six|seven|eight|[1-9][0-9]?)\s+(?:charts|panels|tiles|visualizations)\b',prompt,re.I)
         repeated=re.search(r'\b(?:reuse|repeat|copy)\b[^.!?]{0,80}\b(?:pages|tabs)\b',prompt,re.I)

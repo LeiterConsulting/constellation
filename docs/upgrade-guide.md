@@ -1,5 +1,11 @@
 # Updating Constellation
 
+## 0.38 SVG maps and dependency review
+
+Draft schema remains 3; no credential, draft, asset or native-view migration runs. Refresh workspace tabs. SVG choropleths belong in Studio’s image collection, while decorative icons retain their icon collection. Do not broaden native upload ACLs. Portable writers now emit version 2; readers retain version 1. New files require this version to interpret dependency receipts and bundled packaged media. Older packaged references remain destination-specific.
+
+Keep current-user asset inspection, passive content validation, portable-slot remapping, dependency metadata and provider authoring separate. Typed SVG binding and the narrow first-map/summary plan must preserve the original map ID/asset and recompile repairs against the original scaffold, never an accepted partial result. Do not widen planner eligibility by dropping advanced layout/input requests. Requalify SVG path-ID mismatch, selected-binding preservation, missing private reports, query fingerprint differences, explicit report-search copies, effective time ranges, negotiated raster formats, redirect refusal and uncertain uploads when changing these contracts. Report inclusion must remain opt-in, read-only and viewer-executed. Lookup/macro/custom-extension/module migration and full native semantics remain separate gates.
+
 ## 0.37 SVG icons and portable assets
 
 No draft, credential or native-dashboard migration runs. Refresh workspace tabs. Images and icons remain in their separate native shared collections with unchanged ACLs; no ordinary-user upload privilege is added. Passive SVG validation is shared across upload, preview and import. Unsupported existing artwork remains stored unchanged; use native Studio for formats outside the bounded preview. Portable files have an explicit version, collection-qualified IDs and integrity receipts. Extend remapping by verified media slots rather than general string replacement. Requalify failed/uncertain uploads, missing permissions, file tampering, HTTP-host checksums, selected metric preservation and cross-instance native save/reopen when changing this boundary. A portable dashboard moves supported artwork, not data, knowledge objects, conversations or provider settings.

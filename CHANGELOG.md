@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.38.0 — unreleased
+
+- Add upload/reuse and portable transfer of passive SVG choropleth maps through Studio’s native image collection, preserving bindings, handlers and geometry on selected replacement.
+- Compile existing-map field/selection bindings from a typed action to avoid nested JSON encoding while preserving unknown native work.
+- Supply bounded path-ID metadata to the agent without artwork bytes; validate changed bindings against accessible native SVGs under the caller’s permissions.
+- Bundle supported same-origin packaged media, detecting actual raster signatures when Splunk serves WebP at a PNG URL. Keep external resources and dynamic slots outside transfer.
+- Check destination report/index/lookup/macro/source dependencies before shared writes. Offer explicit compatible-report search inclusion with viewer execution and no schedules, caches or owner privileges.
+- Read version-1 portable files and write version 2 with dependency receipts. Preserve native assets, private drafts and unknown properties without a migration or permission expansion.
+- Allow new derived category aliases to read a masked measurement while retaining protection against source-field overwrite, refill and extraction. Clarify SVG token/control authoring and fix map-library switching.
+- Record bounded provider, transfer, native rendering and permission evidence separately in [validation](docs/validation.md); complete parity remains open.
+
 ## 0.37.0 — unreleased
 
 - Added native SVG icon upload/reuse and an icon registry beside shared raster images, with passive SVG and byte validation.

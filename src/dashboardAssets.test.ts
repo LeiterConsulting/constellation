@@ -16,6 +16,9 @@ describe('native shared images and safe preview', () => {
   it('replaces only a selected icon and preserves its metric bindings',()=>{
     const doc=createBlank();doc.dataSources={s:{type:'ds.search',options:{query:'| stats count'}}};doc.visualizations.icon={type:'splunk.singlevalueicon',options:{icon:'splunk-enterprise-kvstore://old',showValue:true},dataSources:{primary:'s'},future:{keep:true}};const before=structuredClone(doc), changed=placeDashboardImage(doc,{id:'new_icon',name:'New',kind:'icon'},'layout_main','icon');const expected=structuredClone(doc);expected.visualizations.icon.options!.icon='splunk-enterprise-kvstore://new_icon';expect(changed.definition).toEqual(expected);expect(doc).toEqual(before);
   });
+  it('replaces only a selected choropleth asset without changing bindings or events',()=>{
+    const doc=createBlank();doc.visualizations.map={type:'splunk.choropleth.svg',options:{svg:'splunk-enterprise-kvstore://old',areaIds:'> primary | seriesByName(\"area\")'},dataSources:{primary:'s'},future:{keep:true}};doc.dataSources={s:{type:'ds.search',options:{query:'| stats count by area'}}};const expected=structuredClone(doc);expected.visualizations.map.options!.svg='splunk-enterprise-kvstore://new_map';expect(placeDashboardImage(doc,{id:'new_map',name:'Map',kind:'image',usage:'map'},'layout_main','map').definition).toEqual(expected);
+  });
   it('adds below existing work, replaces only the selected image reference and rejects a grid page', () => {
     const nativeCrypto=globalThis.crypto;vi.stubGlobal('crypto',{getRandomValues:nativeCrypto.getRandomValues.bind(nativeCrypto)});
     const doc=createBlank();doc.visualizations.keep={type:'splunk.table',future:{retain:true}};

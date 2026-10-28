@@ -9,12 +9,12 @@ import { isSplunk } from './api';
 import { validateDefinition, type StudioDefinition } from './document';
 
 import { assetType } from './mediaReferences';
-import { svgDataUri, validateAssetData } from './svgAssets';
+import { svgDataUri, svgAreaIds, validateAssetData } from './svgAssets';
 export { hasSharedImages, previewImage } from './mediaReferences';
 export type AssetKind = 'image' | 'icon';
 const collection = (kind: AssetKind) => kind === 'icon' ? 'splunk-dashboard-icons' : 'splunk-dashboard-images';
 const validId = (id: unknown): id is string => typeof id === 'string' && /^[A-Za-z0-9_-]{1,128}$/.test(id);
-export interface DashboardAsset { id: string; name: string; kind?: AssetKind; }
+export interface DashboardAsset { id: string; name: string; kind?: AssetKind; usage?: 'map'; }
 
 async function nativeAsset<T>(path: string, data?: Record<string, unknown>): Promise<T> {
   if (!isSplunk()) throw new Error('Open the installed Splunk app to use shared images.');
@@ -47,11 +47,12 @@ export async function readDashboardImage(file: File): Promise<string> {
   if (!valid) throw new Error('The file contents do not match its image type.');
   return new Promise((resolve,reject) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result)); reader.onerror = () => reject(new Error('The image could not be read.')); reader.readAsDataURL(file); });
 }
-export async function uploadDashboardAsset(file: File): Promise<DashboardAsset> {
+export async function uploadDashboardAsset(file: File, usage?: 'map'): Promise<DashboardAsset> {
   const dataURI = await readDashboardImage(file);
-  const kind: AssetKind = dataURI.startsWith('data:image/svg+xml;') ? 'icon' : 'image';
+  const kind: AssetKind = dataURI.startsWith('data:image/svg+xml;') && usage!=='map' ? 'icon' : 'image';
+  if (usage==='map') svgAreaIds(dataURI);
   const name = file.name.slice(0,200);
-  return uploadAssetData({ name, kind, dataURI });
+  return {...await uploadAssetData({ name, kind, dataURI }),usage};
 }
 export async function uploadAssetData({ name, kind, dataURI }: { name: string; kind: AssetKind; dataURI: string }): Promise<DashboardAsset> {
   validateAssetData(dataURI, kind);
@@ -90,6 +91,9 @@ export function placeDashboardImage(document: StudioDefinition, asset: Dashboard
   const src = `${assetType}://${asset.id}`;
   const image = selected && definition.visualizations[selected];
   const icon = asset.kind === 'icon';
+  if (asset.usage==='map' && image && image.type==='splunk.choropleth.svg') {
+    image.options={...image.options,svg:src};return {definition:validateDefinition(definition),id:selected};
+  }
   if (image && image.type === (icon ? 'splunk.singlevalueicon' : 'splunk.image')) { image.options = { ...image.options, [icon ? 'icon' : 'src']: src }; return { definition: validateDefinition(definition), id: selected }; }
   type Layout = { type?: string; options?: Record<string, unknown>; structure?: Array<{ position?: {x?: number; y?: number; w?: number; h?: number} } & Record<string, unknown>> };
   const layouts = definition.layout.layoutDefinitions as Record<string, Layout> | undefined;
@@ -99,7 +103,7 @@ export function placeDashboardImage(document: StudioDefinition, asset: Dashboard
   const y = Math.max(0,...(target.structure || []).map(item => Number(item.position?.y || 0) + Number(item.position?.h || 0))) + 20;
   const width = Number(target.options?.width || 1200);
   if (width < 100 || !Number.isFinite(y) || y > 100_000) throw new Error('This page has no supported space for a new image.');
-  definition.visualizations[id] = icon ? { type: 'splunk.singlevalueicon', title: 'Icon', options: { icon: src, showValue: false, iconColor: '> themes.defaultFontColor' } } : { type: 'splunk.image', title: 'Image', options: { src, preserveAspectRatio: true } };
+  definition.visualizations[id] = asset.usage==='map' ? { type:'splunk.choropleth.svg', title:'SVG map', options:{svg:src} } : icon ? { type: 'splunk.singlevalueicon', title: 'Icon', options: { icon: src, showValue: false, iconColor: '> themes.defaultFontColor' } } : { type: 'splunk.image', title: 'Image', options: { src, preserveAspectRatio: true } };
   target.structure = [...(target.structure || []), { type: 'block', item: id, position: { x: 20, y, w: Math.min(320,width-40), h: 160 } }];
   target.options = { ...target.options, height: Math.max(Number(target.options?.height || 800),y+200) };
   return { definition: validateDefinition(definition), id };

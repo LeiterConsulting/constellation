@@ -4,9 +4,9 @@ The opt-in shared AITK handler separates inference authority from ordinary autho
 
 Table formatting uses a verified authoring action that compiles to a final SPL `eval` against existing aggregate output fields. `formatTable` is not a native visualization option: newly introduced or changed `options.formatTable` objects are rejected with repair feedback, while unchanged imported properties are preserved. Check the visible timestamp/number result in native Studio in addition to definition readback.
 
-This is the working support contract for the unreleased 0.37.0 development preview. Broad document authoring is implemented; complete native parity is not yet qualified. The preview uses the embedded Splunk Dashboard Framework and preserves the original Studio definition for export and native save. Unavailable explicit draft links stay closed without autosaving a blank document; the existing New dashboard and Dashboards actions remain available.
+This is the working support contract for the unreleased 0.38.0 development preview. Broad document authoring is implemented; complete native parity is not yet qualified. The preview uses the embedded Splunk Dashboard Framework and preserves the original Studio definition for export and native save. Unavailable explicit draft links stay closed without autosaving a blank document; the existing New dashboard and Dashboards actions remain available.
 
-Native chart source roles and direct bindings receive actual-output checks. Geographic checks cover finite coordinate limits, sizes/values and supplied SVG path identifiers; opaque assets are not fetched. Native geographic read transforms retain current-user and bounded-search guards. Small explicit first drafts can use a compact native plan; imported/advanced work keeps native edits. Explicit chart families cannot be replaced silently by tables. Event filters are checked at their native handler location. The type/option registry gates newly introduced features independently of the embedded renderer.
+Native chart source roles and direct bindings receive actual-output checks. Geographic checks cover finite coordinate limits, sizes/values and supplied SVG path identifiers; accessible native SVG image records receive bounded caller-only path-ID inspection; arbitrary external assets are not fetched. Native geographic read transforms retain current-user and bounded-search guards. Small explicit first drafts can use a compact native plan; imported/advanced work keeps native edits. Explicit chart families cannot be replaced silently by tables. Event filters are checked at their native handler location. The type/option registry gates newly introduced features independently of the embedded renderer.
 
 The [native coverage ledger](native-coverage.md) distinguishes the 29-type/822-option-entry embedded authoring inventory from live/native qualification. Relevant contracts and recipes use the current request, selected element and durable requirements. Native table cell shapes, array evidence, focused sparkline styling, known missing object parents and advanced direct source-field bindings have dedicated modules; unknown existing work remains preserved.
 
@@ -90,6 +90,12 @@ Explicit upper Fahrenheit exclusions bound to verified numeric temperature field
 
 Selected SPL table edits receive verified output-field/type metadata. Explicit table-only formatting uses an evidence-dependent typed action preserving the aggregation, aliases, bindings and row field. Missing/already-readable columns are not invented. Shared-source formatting and broader semantic changes require ordinary native editing; the typed action fails safely. Changed searches revalidate existing bindings even when chart configuration is unchanged.
 
+
+## Portable assets and dependency review
+
+Native raster images, passive SVG icons and SVG choropleth maps can be reused/uploaded with Studio permissions. Maps require unique outlined path IDs and fit the 250 KB map guard; other passive SVG uploads fit 500 KB. Provider context includes bounded path identifiers, never uploaded artwork bytes. Supported native and same-origin packaged media can be transferred with hashes and fresh references. External/dynamic assets remain native-only.
+
+Portable import checks recognized destination dependencies before writes. Missing reports, changed report-query fingerprints, absent literal indexes and recognized missing lookups/macros block import. Catalog presence is not search proof; parameterized macros, custom visualizations, other source/modules and opaque dependencies require review. Optional compatible-report inclusion copies the exact read-only search/time settings into viewer-executed ds.search; no schedules, cached results, owner permissions or app-specific configuration are copied. This does not establish complete cross-instance equivalence.
 
 ## Visible table metrics
 

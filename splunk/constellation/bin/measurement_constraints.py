@@ -107,6 +107,33 @@ def without_misplaced_cutoff(suffix, rule):
     return suffix
 
 
+def derived_eval(command, source_fields):
+    """Allow explicit new aliases without permitting measured-field mutation.
+
+    Split only top-level assignments; commas inside functions/strings are not
+    assignment boundaries. Unknown/dynamic left-hand syntax stays guarded.
+    """
+    match = re.match(r'^eval\s+(.+)$', command, re.I | re.S)
+    if not match: return False
+    text, starts, depth, quoted, escaped = match[1], [0], 0, None, False
+    for index, char in enumerate(text):
+        if escaped: escaped = False; continue
+        if char == '\\': escaped = True; continue
+        if quoted:
+            if char == quoted: quoted = None
+        elif char in ('"', "'"): quoted = char
+        elif char == '(': depth += 1
+        elif char == ')':
+            depth -= 1
+            if depth < 0: return False
+        elif char == ',' and depth == 0: starts.append(index + 1)
+    if quoted or escaped or depth: return False
+    for start, end in zip(starts, [x-1 for x in starts[1:]] + [len(text)]):
+        assignment = re.fullmatch(r'\s*([A-Za-z_]\w*)\s*=\s*(.+?)\s*', text[start:end], re.S)
+        if not assignment or assignment[1] in source_fields: return False
+    return True
+
+
 def normalize_measurements(document, previous, profile):
     rules = profile.get('measurementConstraints', []) if profile else []
     if not rules: return []
@@ -143,7 +170,8 @@ def normalize_measurements(document, previous, profile):
             before_parts = []
             for _start, _end, part in pipeline_commands(suffix):
                 if re.match(r'(?:stats|timechart|chart)\b', part, re.I): break
-                before_parts.append(part)
+                if not derived_eval(part, {item['name'] for item in profile.get('fields', [])} | {r['field'] for r in rules}):
+                    before_parts.append(part)
                 if profile.get('retainSourceRows') and re.match(r'(?:where|search)\b',part,re.I):
                     selected = re.fullmatch(r'search\s+' + re.escape(field) + r'=\$[A-Za-z_]\w*\|s\$',part,re.I)
                     if not selected and re.search(r'(?<![\w.])' + re.escape(field) + r'(?![\w.])',field_syntax(part)):

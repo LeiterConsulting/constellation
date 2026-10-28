@@ -18,7 +18,7 @@ export async function recoverRead<T>(safe: boolean, milliseconds: number, signal
 
 export function retryableRead(action: string, body?: Record<string, unknown>): boolean {
   if (!body) return ['settings', 'environment', 'datasets', 'discovery', 'drafts'].includes(action);
-  return ['profile', 'preview'].includes(action)
+  return ['profile', 'preview', 'dependencies'].includes(action)
     || (action === 'run' && ['poll', 'result'].includes(String(body.action)))
     || (action === 'preview_job' && body.action === 'poll')
     || (action === 'drafts' && body.action === 'read');

@@ -14,6 +14,7 @@ from dashboard_library import DashboardLibrary
 from authoring_progress import AuthoringProgress
 from credential_store import CredentialStore
 from openai_connection import OpenAIStoreProxy, OpenAIClientProxy
+from dashboard_dependencies import DashboardDependencies
 
 
 def author(service, runtime, body):
@@ -66,6 +67,7 @@ class ConstellationHandler(PersistentServerConnectionApplication):
                       ('POST','environment'): lambda: runtime.environment(body.get('probe') is True),
                       ('GET','datasets'): runtime.datasets,
                       ('GET','discovery'): lambda: DataService(runtime).discovery(),
+                      ('POST','dependencies'): lambda: DashboardDependencies(runtime).operation(body),
                       ('POST','profile'): lambda: DataService(runtime).profile(body),
                       ('GET','drafts'): lambda: DraftService(session['user'], session['authtoken']).listing(),
                       ('POST','drafts'): lambda: DraftService(session['user'], session['authtoken']).operation(body),
