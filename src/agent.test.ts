@@ -49,11 +49,40 @@ describe('agent edits and search previews', () => {
 
 
 describe('native token defaults and quoting',()=>{
+  it('uses defaults only before a token snapshot exists, preserving absent and null unset values', () => {
+    const doc = createStarter();
+    doc.defaults = { tokens: { default: { choice: { value: 'A' } } } };
+    doc.inputs = { choice: { type: 'input.dropdown', options: { token: 'choice', defaultValue: 'A' } } };
+    doc.dataSources = { query: { type: 'ds.search', options: { query: 'search index=fixture choice=$choice|s$' } },
+      report: { type: 'ds.savedSearch', options: { app: 'search', ref: 'Fixture report' } } };
+    expect(searchRequest(doc, 'query').query).toContain('choice="A"');
+    const snapshots: NonNullable<Parameters<typeof searchRequest>[2]>[] = [{ default: {} }, { default: { choice: null } }];
+    for (const value of snapshots) {
+      expect(() => searchRequest(doc, 'query', value)).toThrow(/Choose a value/);
+      expect(searchRequest(doc, 'report', value).sourceRequest!.tokens).toEqual(value);
+    }
+    expect(searchRequest(doc, 'query', { default: { choice: 'B' } }).query).toContain('choice="B"');
+  });
   it('resolves native defaults before renderer token notifications and rejects doubled quotes',()=>{
     const doc=createStarter();doc.defaults={tokens:{default:{device:{value:'*'}}}};
     doc.dataSources!.native={type:'ds.search',options:{query:'search index=main device=$device|s$'}};
     expect(searchRequest(doc,'native').query).toBe('search index=main device="*"');
     doc.dataSources!.native.options!.query='search index=main device="$device|s$"';
     expect(()=>searchRequest(doc,'native')).toThrow('already adds quotes');
+  });
+  it('keeps report references and chain identity for server resolution, with a complete cache key', () => {
+    const doc = createStarter();
+    doc.dataSources = {
+      report: { type: 'ds.savedSearch', options: { ref: 'Fixture report', app: 'search' } },
+      chain: { type: 'ds.chain', options: { extend: 'report', query: '| where device=$device|s$' } },
+      unused: { type: 'ds.search', options: { query: 'search index=unrelated' } },
+    };
+    const request = searchRequest(doc, 'chain', { default: { device: 'A' } });
+    expect(request.query).toBe('');
+    expect(Object.keys(request.sourceRequest!.sources).sort()).toEqual(['chain', 'report']);
+    expect(request.sourceRequest!.tokens.default.device).toBe('A');
+    expect(request.key).not.toBe(searchRequest(doc, 'chain', { default: { device: 'B' } }).key);
+    doc.dataSources.report.options!.ref = 'Another fixture report';
+    expect(request.key).not.toBe(searchRequest(doc, 'chain', { default: { device: 'A' } }).key);
   });
 });

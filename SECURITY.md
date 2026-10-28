@@ -1,5 +1,11 @@
 # Security and data handling
 
+## Report and extension references
+
+Report preview resolution reads an exact app/name using the authenticated caller. It runs permitted SPL in the existing bounded current-user search jobs, never as the report owner or through a scheduled job's credentials. Read-only commands, tokens, scope/populations and result limits still apply. Native Studio output retains its reference and normal report execution policy; the preview explicitly labels that difference. Original report definitions are not changed.
+
+Explicit Environment checks can read accessible visualization configuration metadata. Only bounded app/name/framework fields are returned. Descriptions, search fragments and extension code are not fetched or executed. Discovery alone does not authorize renderer registration or prove extension safety/compatibility.
+
 ## Reporting a vulnerability
 
 Use GitHub's private vulnerability reporting feature on this repository when available. If it is not enabled, contact the repository maintainers privately; if necessary, open a minimal issue requesting a private reporting channel without vulnerability details or sensitive attachments. Do not include credentials, indexed data, user documents or exploit details in public issues.

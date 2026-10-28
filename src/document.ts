@@ -1,4 +1,5 @@
 import starter from './starter.json';
+import { initializePreviewDefaults, type InputDefaults } from './previewDefaults';
 
 export type JsonObject = Record<string, unknown>;
 export interface Visualization extends JsonObject { type: string; title?: string; options?: JsonObject; dataSources?: Record<string, string>; }
@@ -76,17 +77,12 @@ export function applyEdits(revision: Revision, expectedRevision: number, edits: 
   return { number: revision.number + 1, definition: draft.definition };
 }
 
-export function previewDefinition(definition: StudioDefinition, results: Record<string, { fields: Array<{ name: string }>; columns: unknown[][] }> = {}, tokens?: {default?:Record<string,unknown>}, messages: Record<string, string> = {}): StudioDefinition {
+export function previewDefinition(definition: StudioDefinition, results: Record<string, { fields: Array<{ name: string }>; columns: unknown[][] }> = {}, tokens?: {default?:Record<string,unknown>}, messages: Record<string, string> = {}, inputDefaults: InputDefaults = {}): StudioDefinition {
   const preview = structuredClone(definition);
   // Framework initialization gives static defaults precedence over initial bindings.
   // Mirror current values only in the preview clone so result refreshes and reopen
   // preserve the current filter without changing native export defaults.
-  if (tokens?.default) {
-    const defaults = (preview.defaults ||= {}) as JsonObject;
-    const namespaces = (defaults.tokens ||= {}) as JsonObject;
-    const values = (namespaces.default ||= {}) as Record<string,JsonObject>;
-    for (const [key,value] of Object.entries(tokens.default)) values[key] = {...values[key],value};
-  }
+  initializePreviewDefaults(preview, definition, tokens, inputDefaults);
   // Loading an imported document must never execute its queries or external links.
   for (const [id, source] of Object.entries(preview.dataSources || {})) if (source.type !== 'ds.test') {
     preview.dataSources![id] = results[id] ? { type: 'ds.test', options: { data: results[id] } } : { type: 'ds.test', options: { data: { fields: [], columns: [] } } };
@@ -97,7 +93,7 @@ export function previewDefinition(definition: StudioDefinition, results: Record<
     const sourceId = visualization.dataSources?.primary;
     if (sourceId && definition.dataSources?.[sourceId]?.type !== 'ds.test' && !results[sourceId]) {
       const source = definition.dataSources?.[sourceId];
-      const nativeOnly = source && !['ds.search', 'ds.spl2', 'ds.chain'].includes(source.type);
+      const nativeOnly = source && !['ds.search', 'ds.spl2', 'ds.chain', 'ds.savedSearch'].includes(source.type);
       preview.visualizations[id] = { type: 'splunk.markdown', title: visualization.title,
         options: { markdown: nativeOnly ? 'Open this dashboard in native Studio to run this source type. Its configuration is preserved.' : messages[sourceId] || 'Search results pending.' } };
     }
@@ -105,7 +101,7 @@ export function previewDefinition(definition: StudioDefinition, results: Record<
   const stripExternalActions = (node: unknown) => {
     if (Array.isArray(node)) { node.forEach(stripExternalActions); return; }
     if (!object(node)) return;
-    if (Array.isArray(node.eventHandlers)) node.eventHandlers = node.eventHandlers.filter(handler => object(handler) && ['drilldown.setToken', 'drilldown.switchToTab', 'drilldown.setTimeRange'].includes(String(handler.type)));
+    if (Array.isArray(node.eventHandlers)) node.eventHandlers = node.eventHandlers.filter(handler => object(handler) && ['drilldown.setToken', 'drilldown.switchToTab', 'drilldown.setTimeRange', 'drilldown.resetTokens', 'drilldown.unsetTokens'].includes(String(handler.type)));
     for (const [key, child] of Object.entries(node)) {
       if (['src', 'href', 'url'].includes(key) && typeof child === 'string') delete node[key];
       else if (key === 'markdown' && typeof child === 'string') node[key] = child.replace(/!\[[^\]]*\]\([^)]*\)/g, '[Image omitted in preview]').replace(/\[([^\]]*)\]\([^)]*\)/g, '$1').replace(/<[^>]+>/g, '');

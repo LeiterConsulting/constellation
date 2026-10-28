@@ -17,11 +17,11 @@ Current intent, selection and durable Draft requirements select bounded native c
 | Geographic | Map and SVG choropleth | Assets, layers, coordinate/shape bindings and permissions |
 | Decoration | Markdown, rich text, image, rectangle, ellipse, native `abslayout.line` | Media lifecycle, layering, imported styling and themes |
 | Events | Native events visualization | Workflow actions and permission-dependent behavior |
-| Inputs | Dropdown, multiselect, text, number, timerange, button | Cascading choices, namespaces, dynamic choices and all states |
-| Interactions | Set/unset/reset tokens, set time range, switch tab, custom URL | Every supported event/field combination; external preview navigation remains paused |
+| Inputs | Dropdown, multiselect, text, number, timerange, button; original reset defaults retained across token restoration | Cascading choices, namespaces, all dynamic-first/default combinations and all states |
+| Interactions | Set/reset tokens, qualified 10.4+ unset, set time range, switch tab, custom URL | Every supported event/field combination; older native unset is gated; external preview navigation remains paused |
 | Layout/state | Absolute/grid, pages, global inputs, conditions, evaluated tokens, defaults | Complex grids, reused/conditional elements and large imported definitions |
-| Sources | Bounded current-user SPL search/chain, verified ad hoc SPL2 | Saved-report preview execution, SPL2 module/view management and complex SPL2 |
-| Custom assets | Definitions retained; preview placeholder | Installed-extension discovery, contracts, compatible renderer registration and qualification |
+| Sources | Bounded current-user SPL search/chain/report replay, selected imported report profiling, verified ad hoc SPL2 | Native scheduled report cache/owner/app-context semantics, unsupported report SPL, SPL2 module/view management and complex SPL2 |
+| Custom assets | Definitions retained; accessible extension metadata discovered on Environment checks; preview placeholder | Configuration contracts, compatible sandboxed renderer registration and native qualification |
 | Platform operations | Normal native Studio definitions and copies | Scheduling/export/sharing/permissions use native Splunk controls; relevant native properties must survive |
 
 This is the embedded renderer inventory, not every Studio version or installed extension. Minimum versions do not qualify future releases. Network graphs and newer table null-display options have a separate 10.4 boundary from older native sparklines.
@@ -32,7 +32,9 @@ Known missing options/context, table-format and query-parameter objects can be m
 
 Full support requires executable version-specific cases: create, edit imported configuration, preserve unrelated work, execute as an ordinary user, render in preview, save/reopen in Studio and exercise interactions. Include light/dark themes, partial/missing data and unsupported capabilities. Provider success remains separate from compiler and native behavior.
 
-Next coverage gates are saved-search/report resolution, installed custom assets, specialized chart/data shapes, complete input/interaction lifecycles and complex imported/grid/SPL2 cases. Model claims or a passing connection test cannot close them.
+Changed literal option shapes receive inventory-based checks across the embedded types, without claiming complete JSON-schema or DOS validation. Readable report references and chains can be replayed as guarded current-user SPL. Original reports are never changed or dispatched as their owner. Native Studio may use a scheduled cache, different report permissions and app context; preview labels that difference.
+
+Next coverage gates are native scheduled report semantics, custom asset contracts/rendering, specialized chart/data shapes, complete input/interaction lifecycles and complex imported/grid/SPL2 cases. Model claims or a passing connection test cannot close them. No percentage is assigned to an undefined set of option combinations.
 
 Independent-user feedback also motivates an always-available field reference, clearer durable instructions and reusable verified recipes. These should use this contract foundation and progressive disclosure, without another configuration workspace.
 

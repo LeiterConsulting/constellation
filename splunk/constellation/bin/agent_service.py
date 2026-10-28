@@ -338,9 +338,9 @@ class AgentService:
             if len(requested) == 1: scope = {'index': requested[0], 'earliest': '-24h'}
         if not scope:
             selected_source = document['visualizations'].get(str(body.get('selected', '')), {}).get('dataSources', {}).get('primary')
-            search_ids = [key for key, value in document.get('dataSources', {}).items() if value.get('type') in ('ds.search', 'ds.spl2')]
+            search_ids = [key for key, value in document.get('dataSources', {}).items() if value.get('type') in ('ds.search', 'ds.spl2', 'ds.savedSearch')]
             chosen = selected_source or (search_ids[0] if len(search_ids) == 1 else None)
-            if chosen and document.get('dataSources', {}).get(chosen, {}).get('type') in ('ds.search', 'ds.spl2', 'ds.chain'):
+            if chosen and document.get('dataSources', {}).get(chosen, {}).get('type') in ('ds.search', 'ds.spl2', 'ds.chain', 'ds.savedSearch'):
                 query, language = data.resolve_query(document, chosen)
                 source_range = document['dataSources'][chosen].get('options', {}).get('queryParameters', {}).get('earliest')
                 scope = {'query': query, 'language': language, 'earliest': source_range if source_range in ('-15m', '-1h', '-24h', '-7d') else '-24h'}
@@ -349,6 +349,9 @@ class AgentService:
             scope = dict(scope, earliest=inferred_range(prompt) or scope.get('earliest', '-24h'))
         self.progress('profile')
         profile = data.profile(scope) if scope else None
+        if profile and getattr(getattr(data, '_source_resolver', None), 'used_report', False):
+            from source_service import REPORT_WARNING
+            profile['note'] += ' ' + REPORT_WARNING
         confirmed_intent = recorded_unit_intent(profile, prompt, safe_history) if profile else prompt
         if profile:
             profile = enrich_profile(profile, confirmed_intent)

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.33.0 - Unreleased
+
+- Resolve readable saved-report references and chains for guarded current-user preview replay, with explicit differences from native schedules, permissions and app context. Selected imported reports supply field context without manually pasting SPL.
+- Validate changed literal options against pinned structural contracts across the embedded visualization/input inventory, preserving unchanged and unknown properties. Report reference changes retain scope, population and read-only guards.
+- Preserve original reset defaults separately from restored token snapshots, retain local reset/unset interactions, and distinguish waiting inputs from failed searches. New unset actions require the qualified 10.4 boundary.
+- Add metadata-only extension discovery to Environment checks without downloading or executing extension code. Native extension rendering remains a qualification gate.
+- Improve per-column table guidance and repair feedback for exact field names and object shapes.
+
 ## 0.32.0 - Unreleased
 
 - Add a versioned inventory of 29 embedded Studio visualization types and 822 option entries, with relevant option contracts, attributed feature recipes and a dependency drift check.

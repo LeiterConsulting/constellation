@@ -233,5 +233,32 @@
     ],
     "source": "https://help.splunk.com/en/splunk-enterprise/create-dashboards-and-reports/dashboard-studio/10.4/use-data-sources/data-source-options-and-properties",
     "text": "Native sources include ds.search, ds.chain, ds.savedSearch and ds.test; verified SPL2 environments add ds.spl2 and separately discovered ds.spl2.view. ds.chain extends a base source; preserve fields/grain and base-result limits. Do not replace an existing saved-search/report reference with an invented inline search. Saved-search execution and arbitrary custom sources remain native-only unless the app can validate current-user execution. Search refresh settings and dashboard auto-refresh are distinct; the latter requires the reported capability on newer versions. Preserve unknown source options and native defaults. Metadata retrieval never grants access or permission to schedule or write data."
+  },
+  {
+    "id": "report-sources",
+    "title": "Native saved report references and bounded replay",
+    "minimumEnterprise": "10.0",
+    "tags": [
+      "report",
+      "reports",
+      "saved search",
+      "savedsearch",
+      "ds.savedsearch"
+    ],
+    "source": "https://help.splunk.com/en/splunk-enterprise/create-dashboards-and-reports/dashboard-studio/10.4/use-data-sources/call-saved-searches",
+    "text": "Use ds.savedSearch with options.ref set to an exact readable report name and options.app set to its app, so saving a native copy into another app retains the reference. Do not put query/name in its options. Add a ds.chain source with options.extend pointing to the report and a query suffix for transformations; never edit the original report. Constellation preview resolves the permitted report SPL and reruns it as the current user under the selected bounded window and read-only guards. Native Studio may instead use scheduled cached results, report execution permissions and app-scoped knowledge. Do not claim those execution paths are identical. Macros, writes and unsupported report SPL remain native-only."
+  },
+  {
+    "id": "native-table-columns",
+    "title": "Native table column widths and per-column options",
+    "minimumEnterprise": "10.0",
+    "tags": [
+      "columnformat",
+      "column width",
+      "width",
+      "resize"
+    ],
+    "source": "https://help.splunk.com/en/splunk-enterprise/create-dashboards-and-reports/dashboard-studio/10.4/visualizations/table",
+    "text": "Table options.columnFormat is an object keyed by exact output field names, including fields literally named label or value. Each column value is an object. For a field named label use options.columnFormat.label.width=220, or columnFormat={\"label\":{\"width\":220}}. Width is a pixel number of at least 30, or a supported DOS binding. Never store an array of column descriptors, a JSON-encoded string, or width directly under columnFormat. Preserve other column settings, options, native report references, event handlers and layout. A presentation-only width edit does not require changing a report or query."
   }
 ]

@@ -64,7 +64,7 @@ def authoring_contract(prompt, document, environment, brief=None, focus=None):
     inputs = {key: value for key, value in INVENTORY.get('inputOptions', {}).items()
               if key == selected_input or key.removeprefix('input.') in text}
     return {'rendererVersion': INVENTORY['rendererVersion'], 'visualizations': available,
-            'inputs': INVENTORY['inputs'], 'eventHandlers': INVENTORY['eventHandlers'],
+            'inputs': INVENTORY['inputs'], 'eventHandlers': [kind for kind in INVENTORY['eventHandlers'] if kind != 'drilldown.unsetTokens' or version_tuple(environment.get('version', '')) >= (10, 4)],
             'relevantInputOptions': inputs,
             'dataSources': INVENTORY['dataSources'], 'layouts': INVENTORY['layouts'],
             'relevantOptions': contracts,

@@ -1,8 +1,8 @@
 # Validation status
 
-Snapshot: **0.32.0 development preview, unreleased, October 28, 2026**. This file is a sanitized summary. Private lab addresses, credentials, screenshots, transcripts, raw search data and detailed runtime receipts are excluded from the repository.
+Snapshot: **0.33.0 development preview, unreleased, October 28, 2026**. This file is a sanitized summary. Private lab addresses, credentials, screenshots, transcripts, raw search data and detailed runtime receipts are excluded from the repository.
 
-See the [0.32.0 native contract and sparkline checks](#0320-native-contracts-and-table-sparklines--october-28-2026) for current development evidence. Earlier cohorts below retain their own scope and failures. The latest published release remains 0.31.1.
+See the [0.33.0 report and input lifecycle checks](#0330-report-sources-and-input-lifecycles--october-28-2026) for current development evidence. Earlier cohorts below retain their own scope and failures. The latest published release remains 0.31.1.
 
 ## Release downloads
 
@@ -12,8 +12,8 @@ See the [0.32.0 native contract and sparkline checks](#0320-native-contracts-and
 
 | Check | Observed result |
 | --- | --- |
-| Python unit suites | 452 tests passed on Python 3.9 and 3.13, including native inventory selection, container preservation, direct bindings, actual array outputs, per-row sparkline styling, missing-bucket policies and retained provider/native/measurement regressions. |
-| Frontend unit suites | 107 tests passed, including structural inventory drift and retained delivery/focus/starter regressions. |
+| Python unit suites | 469 tests passed on Python 3.9 and 3.13, including report permissions/references/chains, literal native options, extension metadata, native handler version gates and retained provider/native/measurement regressions. |
+| Frontend unit suites | 116 tests passed, including report source transport, waiting inputs, reset/initial defaults, structural inventory drift and retained delivery/focus/starter regressions. |
 | TypeScript and production build | Passed; bundle-size warning remains. |
 | Deterministic app package | Generated with SHA-256 receipt. |
 | Splunk AppInspect 4.3.1, precert | 0 errors, 0 failures, 0 future failures, 7 warnings, 1 skipped, 116 successes, 128 not applicable on the tested app archive. |
@@ -28,6 +28,30 @@ The AppInspect result applies to the tested development archive. The seven warni
 | 10.4.4 | 1.26.6 | Native roundtrips, synthetic SPL/SPL2, PDF interactions and prior page/focus checks; current repeated non-admin OpenAI/Ollama wide-data creation, editing, native saves and selected UI/native navigation. |
 
 The 0.31 cohort extends current real-data creation/editing to 10.4.4 through OpenAI and Ollama. Earlier full-interface journeys retain their own versions and scope. AITK 6.2 shared inference passed on 10.2.8; the 10.4.4 target has AITK 6.1 without a usable configured connection and remains blocked by maintainer permissions. Do not infer instance-independent provider availability from app installation.
+
+## 0.33.0 Report sources and input lifecycles — October 28, 2026
+
+**Changes.** Native `ds.savedSearch` references and their chains now resolve readable report SPL through exact app/name lookups under the current user. Preview and validation retain the existing read-only, time, result and cancellation guards. Selected imported report panels can obtain field profiles without the user supplying report SPL. Reports remain unchanged; no scheduled job, report-owner identity or cached-result permission is borrowed. Known changed literal options receive structural checks across the embedded visualization/input inventory, preserving unknown and unchanged imported properties. Environment checks discover bounded accessible extension metadata without fetching or running extension assets.
+
+**Input lifecycle.** Preview initialization uses the restored token snapshot, while reset retains original native defaults. Unset tokens remain unset across renderer remounts and refresh; dependent panels say they are waiting for input. Explicitly empty restored snapshots were checked against both inline and report-backed panels, so defaults cannot silently repopulate searches. Browser checks on both Enterprise versions verified restored B/20 results, reset to A/10, and matching dynamic dropdown state. On Studio 10.4, native unset removed the token and cleared the input; the same native fixture did not clear it on 10.2. New unset actions are therefore gated to 10.4+, with older imported handlers preserved. These synthetic administrator browser checks are distinct from the ordinary-user API/model cohort.
+
+**Exact final archive.** The unreleased **0.33.0 build 49** archive is SHA-256 `0126335c509e63a17c6f2518293c8b81e87244bac4dacfadd072d41bd5549efb` (470 regular files; 5,462,089 bytes). Both recorded Enterprise targets installed these bytes over verified management TLS without restart. All 76 Python source files and the browser entry matched the checkout/build, accounting for content-derived handler names. Inspection found one app root, no macOS sidecars/resource forks, no private runtime configuration and no extended tar metadata. All 469 backend tests passed on Python 3.9 and 3.13, 116 frontend tests passed, and the production build passed with the existing bundle-size warning. AppInspect precert returned zero errors, failures or future failures, seven warnings and one skip. This is not a new published release or Cloud certification.
+
+**Final-package ordinary-user cohort.** Three separate ordinary authors on Enterprise 10.2.8 used real freezer data through OpenAI, Ollama and managed AITK 6.2. Each gap-preservation request paused with zero inference; authors explicitly accepted labelled native zero fill before two-page creation. Each then styled the selected table, reopened the exact draft/conversation and saved a private native copy. Independent native synthetic probes retained the 150°F boundary and independent Wi-Fi population; they were not ingested or sent to models. A separate synthetic report-backed table edit per provider omitted manually supplied data context, verified automatic profiling, and preserved the exact report reference, report search and unrelated native properties.
+
+| Provider | Creation seconds / calls | Selected style seconds / calls | Report edit seconds / calls |
+| --- | --- | --- | --- |
+| OpenAI | 34.30 / 2 | 4.15 / 1 | 2.84 / 1 |
+| Ollama | 16.91 / 1 | 6.43 / 1 | 13.09 / 1 |
+| AITK 6.2 | 25.87 / 1 | 17.09 / 1 | 14.75 / 1 |
+
+These nine successful turns include one recovered OpenAI creation; they are a bounded regression sample, not a general success rate or controlled latency benchmark. Both versions separately passed non-admin report preview, token-filtered chain, cancellation and unchanged-report checks. Metadata discovery returned accessible extensions without downloading files; discovered names do not qualify configuration or rendering support.
+
+**Failures retained.** Superseded candidates exposed an Ollama report edit with an invalid column-format shape, guidance ranking that displaced the sparkline recipe, an offline renderer import that required a browser global, and an empty token namespace that let the Framework reapply defaults. The final adapter supplies native null unset bindings before initialization. Precise table guidance, narrowed retrieval tags and separation of pure defaults logic from renderer imports corrected those cases before the final cohort. Final-package OpenAI creation needed one automatic repair, with no user rephrasing or validation-budget increase. A separate attempt stopped during TLS connection setup with a connection reset before its author request; a fresh journey ran without replaying inference. That trace identifies a connection-layer failure for this attempt, not the cause of every historical delivery failure. A fixture-harness request omitted its required selection and correctly received 422 before the test value was corrected. Native Studio 10.4 also displayed a missing/cancelled report-job error after unset/reset; refresh rendered A/10 again. The preview replay succeeded, but native report cache/job lifecycle equivalence remains unqualified.
+
+**Cleanup.** All disposable author/peer accounts, author-owned configurations and native copies, administrator fixture drafts/views, task-owned reports and copied owner-only OpenAI keys were removed after the cohorts. Temporary password files were deleted. All original administrator configuration contents remained exact: 78 records on the primary target and five on the secondary; the primary's 36 original drafts/list/preferences/settings were preserved. AITK policy and protected backing writers stayed unchanged, upstream connection parameters were not read or written, and only agent-created test tabs were closed. Detailed receipts and screenshots remain local.
+
+**Remaining parity gates.** Report owner/app-context/scheduled-cache semantics, compatible custom extension contracts/rendering, specialized visualization source shapes and interactions, complex input/grid/imported/SPL2 lifecycles, themes/accessibility and representative version/model trials remain open. Earlier delivery/storage/deployment, latency/bundle and unaided-user gates remain; second-target AITK maintainer permission is still unresolved. No native parity percentage is assigned to an undefined set of option combinations. The app remains a self-contained private development preview; 0.31.1 remains Latest.
 
 ## 0.32.0 Native contracts and table sparklines — October 28, 2026
 

@@ -7,7 +7,7 @@ describe('Studio document boundaries', () => {
     definition.dataSources!.ds_external = { type: 'ds.search', options: { query: 'index=fixture | stats count' } };
     definition.visualizations.viz_trend.dataSources = { primary: 'ds_external' };
     expect(previewDefinition(definition, {}, undefined, { ds_external: 'Search preview failed. Refresh searches to retry.' }).visualizations.viz_trend.options?.markdown).toContain('failed');
-    definition.dataSources!.ds_external.type = 'ds.savedSearch';
+    definition.dataSources!.ds_external.type = 'ds.spl2.view';
     expect(previewDefinition(definition).visualizations.viz_trend.options?.markdown).toContain('native Studio');
     expect(definition.dataSources!.ds_external.options?.query).toBe('index=fixture | stats count');
     expect(definition.visualizations.viz_trend.type).not.toBe('splunk.markdown');
@@ -101,6 +101,18 @@ describe('Studio document boundaries', () => {
     expect(preview.visualizations.viz_trend.containerOptions).toEqual(definition.visualizations.viz_trend.containerOptions);
     expect(preview.visualizations.viz_trend.eventHandlers).toEqual(definition.visualizations.viz_trend.eventHandlers);
   });
+  it('keeps local unset-token interactions while blocking external navigation', () => {
+    const definition = createStarter();
+    const handlers = [
+      { type: 'drilldown.unsetTokens', options: { tokenNames: ['selected_device'] } },
+      { type: 'drilldown.resetTokens', options: { tokenNames: ['selected_device'] } },
+      { type: 'drilldown.customUrl', options: { url: 'https://example.com' } },
+    ];
+    definition.visualizations.viz_trend.eventHandlers = handlers;
+    const preview = previewDefinition(definition);
+    expect(preview.visualizations.viz_trend.eventHandlers).toEqual(handlers.slice(0, 2));
+    expect(definition.visualizations.viz_trend.eventHandlers).toHaveLength(3);
+  });
 
 });
 
@@ -110,5 +122,14 @@ describe('preview filter continuity',()=>{
     const preview=previewDefinition(definition,{}, {default:{device:'Freezer Temp Monitor'}});
     expect(preview.defaults).toEqual({tokens:{default:{device:{value:'Freezer Temp Monitor'}}}});
     expect(definition.defaults).toEqual({tokens:{default:{device:{value:'*'}}}});
+  });
+  it('keeps an explicitly unset token unset across renderer initialization without losing reset defaults', () => {
+    const definition = createStarter();
+    definition.defaults = { tokens: { default: { choice: { value: 'A' } } } };
+    definition.inputs = { choice: { type: 'input.dropdown', options: { token: 'choice', defaultValue: 'A', items: [{ label: 'A', value: 'A' }] } } };
+    const preview = previewDefinition(definition, {}, { default: {} });
+    expect(preview.defaults).toEqual({ tokens: { default: { choice: { value: null } } } });
+    expect((preview.inputs as Record<string, { options: Record<string, unknown> }>).choice.options).not.toHaveProperty('defaultValue');
+    expect((definition.inputs as Record<string, { options: Record<string, unknown> }>).choice.options.defaultValue).toBe('A');
   });
 });

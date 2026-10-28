@@ -1,5 +1,11 @@
 # Updating Constellation
 
+## 0.33 native reference and preview contracts
+
+Draft schema remains 3. No credential, draft, report or native-view migration runs. Refresh workspace tabs. The added direct `@splunk/dashboard-definition` dependency is pinned to the existing Framework 29.9.0 runtime. Keep native input-token conversion behind the preview adapter rather than reimplementing it in provider code.
+
+Requalify report owner/app/read restrictions, macro/write refusal, exact references, selected-source auto-profiling, scope/populations and cancellation. Never turn report replay into owner dispatch or label it a scheduled cached result. Requalify reset after restoring a non-default token, explicit unset and empty snapshots across remount/refresh, dependent waiting states, unknown input defaults and native rendering on each target. New unset authoring is gated to 10.4; older imports are preserved. Environment probes may list accessible extension metadata, not install or execute it.
+
 ## 0.32 native authoring contracts
 
 Draft schema stays 3; no credential, native-view or draft migration runs. Refresh workspace tabs after installation. Regenerate/review `studio_inventory.json` with `node scripts/update_studio_inventory.cjs` when upgrading Framework dependencies; the frontend drift check must pass. Structural metadata, version gates, execution support and native acceptance remain separate.

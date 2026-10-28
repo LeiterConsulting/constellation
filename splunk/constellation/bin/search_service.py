@@ -194,6 +194,8 @@ class SearchService:
                   'preview': {'rows': 200, 'seconds': 5, 'timeRange': 'last 15 minutes',
                               'externalNavigation': 'paused', 'customVisualizations': 'native Studio only'}}
         if probe:
+            from extension_service import installed_extensions
+            result['customVisualizations'] = installed_extensions(self)
             try:
                 sample = self.preview({'query': '| makeresults count=3 | stats count() AS generated_rows', 'language': 'spl2'})
                 result['spl2']['adhoc'] = 'verified' if sample['results'] == [{'generated_rows': '3'}] else 'not_verified'
@@ -217,8 +219,9 @@ class SearchService:
         return catalog
 
     def preview(self, body):
-        language = body.get('language', 'spl')
-        query = read_only_query(body.get('query'), language)
+        from source_service import preview_query
+        raw_query, language, source_warning = preview_query(self, body)
+        query = read_only_query(raw_query, language)
         earliest = body.get('earliest', '-15m')
         if earliest not in TIME_RANGES:
             raise ProviderError('Choose a supported bounded preview time range.')
@@ -230,6 +233,7 @@ class SearchService:
         else:
             result = self.execute(query, earliest)
         result['language'] = language
+        if source_warning: result['warning'] = (result.get('warning', '') + ' ' + source_warning).strip()
         return result
 
     def job(self, body):
@@ -239,10 +243,15 @@ class SearchService:
         if action in ('poll', 'cancel'):
             return getattr(jobs, action)(body.get('handle'))
         if action != 'start': raise ProviderError('Choose a valid preview job action.')
-        query = read_only_query(body.get('query'), body.get('language', 'spl'))
+        from source_service import preview_query
+        raw_query, language, source_warning = preview_query(self, body)
+        query = read_only_query(raw_query, language)
         earliest = body.get('earliest', '-15m')
         if earliest not in TIME_RANGES: raise ProviderError('Choose a supported preview time range.')
-        return jobs.start(query, earliest)
+        result = jobs.start(query, earliest)
+        if source_warning: result['sourceWarning'] = source_warning
+        result['language'] = language
+        return result
 
     def execute(self, query, earliest='-15m'):
         """Internal discovery and validation use the same completion contract."""

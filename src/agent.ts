@@ -12,6 +12,7 @@ export interface Environment {
   spl2: { adhoc: string; modules: string };
   features: Record<string, boolean>; visualizations: string[];
   preview: { rows: number; seconds: number; timeRange: string; externalNavigation: string; customVisualizations: string };
+  customVisualizations?: { status: string; partial: boolean; items: Array<{ app: string; name: string; framework: string }>; execution: string };
 }
 export interface SearchResult { state: 'complete' | 'partial'; evidence: { state: 'complete' | 'partial'; checkedAt: string; reasons: string[]; resultCount: number | null; finalized: boolean; earliest: string; latest: string }; fields: Array<{ name: string }>; results: Array<Record<string, unknown>>; language: string; bounded: boolean; warning: string; }
 export interface PreviewRows { fields: Array<{ name: string }>; columns: unknown[][]; }
@@ -60,13 +61,20 @@ export async function readAttachment(file: File): Promise<Attachment> {
   return { name: file.name.slice(0, 200), data };
 }
 
-export function searchRequest(definition: StudioDefinition, id: string, tokens?: TokenState): { query: string; language: 'spl' | 'spl2'; key: string } {
+export interface SourceRequest { sources: NonNullable<StudioDefinition['dataSources']>; id: string; tokens: { default: Record<string, unknown> }; }
+export function searchRequest(definition: StudioDefinition, id: string, tokens?: TokenState): { query: string; language: 'spl' | 'spl2'; key: string; sourceRequest?: SourceRequest } {
   const seen = new Set<string>();
+  let report = false;
   const resolve = (sourceId: string): { query: string; language: 'spl' | 'spl2' } => {
     if (seen.has(sourceId)) throw new Error('A chain search contains a cycle.');
     seen.add(sourceId);
     const source = definition.dataSources?.[sourceId];
     const query = source?.options?.query;
+    if (source?.type === 'ds.savedSearch') {
+      if (typeof source.options?.ref !== 'string' || !source.options.ref.trim()) throw new Error('Choose an exact saved report name.');
+      report = true;
+      return { query: '', language: 'spl' };
+    }
     if (!source || typeof query !== 'string' || !['ds.search', 'ds.spl2', 'ds.chain'].includes(source.type)) throw new Error('This source requires native Studio or a query before it can run.');
     if (source.type === 'ds.chain') {
       const parent = resolve(String(source.options?.extend || source.extend || ''));
@@ -77,14 +85,19 @@ export function searchRequest(definition: StudioDefinition, id: string, tokens?:
   const result = resolve(id);
   if (/["']\$[A-Za-z0-9_.:-]+\|s\$["']/.test(result.query)) throw new Error('The |s token filter already adds quotes. Remove surrounding quotes in the source query.');
   const defaults = definition.defaults as {tokens?:{default?:Record<string,{value:unknown}>}} | undefined;
-  const values: Record<string, unknown> = { ...Object.fromEntries(Object.entries(defaults?.tokens?.default || {}).map(([key,value])=>[key,value.value])), ...tokens?.default };
-  for (const input of Object.values((definition.inputs || {}) as Record<string, { options?: { token?: string; defaultValue?: string } }>)) {
+  const values: Record<string, unknown> = tokens?.default !== undefined ? { ...tokens.default }
+    : Object.fromEntries(Object.entries(defaults?.tokens?.default || {}).map(([key,value])=>[key,value.value]));
+  if (tokens?.default === undefined) for (const input of Object.values((definition.inputs || {}) as Record<string, { options?: { token?: string; defaultValue?: string } }>)) {
     if (input.options?.token && !Object.hasOwn(values, input.options.token)) values[input.options.token] = input.options.defaultValue;
+  }
+  if (report) {
+    const sourceRequest: SourceRequest = { id, sources: Object.fromEntries([...seen].map(key => [key, definition.dataSources![key]])), tokens: { default: values } };
+    return { query: '', language: 'spl', sourceRequest, key: JSON.stringify(sourceRequest) };
   }
   result.query = result.query.replace(/\$([A-Za-z0-9_.:-]+)(\|s)?\$/g, (_whole, token: string, quote?: string) => {
     const raw = values[token];
     const items = Array.isArray(raw) ? raw : [raw];
-    if (!items.length || items.some(value => !['string', 'number', 'boolean'].includes(typeof value))) throw new Error(`Choose a value for ${token} before running its search.`);
+    if (!items.length || items.some(value => !['string', 'number', 'boolean'].includes(typeof value))) throw Object.assign(new Error(`Choose a value for ${token} before running its search.`), { code: 'preview_token_unset' });
     const strings = items.map(value => String(value));
     if (quote) return strings.map(value => JSON.stringify(value)).join(',');
     if (strings.some(value => !/^[A-Za-z0-9_.:-]+$/.test(value))) throw new Error(`Use the |s token filter for ${token} in this query.`);

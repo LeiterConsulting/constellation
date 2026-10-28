@@ -77,7 +77,7 @@ def resolve_query_tokens(query, document, supplied=None):
         value = values.get(name)
         entries = value if isinstance(value, list) else [value]
         if not entries or len(entries) > 100 or any(type(entry) not in (str, int, float, bool) or len(str(entry)) > 4000 for entry in entries):
-            raise ProviderError('Choose a value or define an input/default for preview token: ' + name)
+            raise ProviderError('Choose a value or define an input/default for preview token: ' + name, 422, 'preview_token_unset')
         strings = [str(entry) if type(entry) is not bool else str(entry).lower() for entry in entries]
         if quoted: return ','.join(json.dumps(entry) for entry in strings)
         if any(not re.fullmatch(r'[A-Za-z0-9_.:-]+', entry) for entry in strings):

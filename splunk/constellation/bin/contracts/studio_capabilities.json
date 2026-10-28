@@ -1,9 +1,14 @@
 {
   "schemaVersion": 1,
   "minimumEnterprise": {
-    "tabs": "10.0", "absoluteAndGrid": "10.0", "tokensAndDrilldowns": "10.0",
-    "conditionalVisibility": "10.2", "spl2DataSources": "10.2",
-    "networkGraph": "10.4", "customVisualizationFramework": "10.4"
+    "tabs": "10.0",
+    "absoluteAndGrid": "10.0",
+    "tokensAndDrilldowns": "10.0",
+    "conditionalVisibility": "10.2",
+    "spl2DataSources": "10.2",
+    "networkGraph": "10.4",
+    "customVisualizationFramework": "10.4",
+    "nativeUnsetTokens": "10.4"
   },
   "autoRefreshCapabilitySince": "10.4",
   "autoRefreshCapability": "auto_refresh_dashboards",

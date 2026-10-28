@@ -2,7 +2,7 @@
 import json
 import re
 from provider_service import ProviderError
-from studio_inventory import STATIC_VISUALIZATIONS
+from studio_inventory import STATIC_VISUALIZATIONS, INVENTORY
 from table_cells import array_kind, validate_sparkline_output
 from native_bindings import option_bindings
 from search_service import read_only_query, TIME_RANGES
@@ -73,18 +73,9 @@ class DataService:
                 'note': 'Field metadata from at most 200 recent returned events and 5 seconds, not complete source coverage. Missing counts refer only to the inspected sample. Event values are excluded.'}, body.get('question', ''))
 
     def resolve_query(self, document, identifier, seen=None):
-        seen = set() if seen is None else seen
-        if identifier in seen: raise ProviderError('A chain search contains a cycle.')
-        seen.add(identifier)
-        source = document.get('dataSources', {}).get(identifier, {})
-        options = source.get('options', {})
-        query = options.get('query', '')
-        if source.get('type') == 'ds.chain':
-            parent, language = self.resolve_query(document, options.get('extend', source.get('extend')), seen)
-            return parent.rstrip() + ' | ' + query.lstrip('| ').strip(), language
-        if source.get('type') not in ('ds.search', 'ds.spl2'):
-            raise ProviderError('Use a search or a compatible chain source for this real-data draft.')
-        return query, 'spl2' if source['type'] == 'ds.spl2' else 'spl'
+        from source_service import SourceResolver
+        if not hasattr(self, '_source_resolver'): self._source_resolver = SourceResolver(self.runtime)
+        return self._source_resolver.resolve(document.get('dataSources', {}), identifier, seen)
 
     def inspect_source(self, document, identifier, source, profile):
         if source.get('type') == 'ds.test':
@@ -148,7 +139,8 @@ class DataService:
         missing_bindings, unplaced = [], []
         for identifier, visualization in document.get('visualizations', {}).items():
             if visualization == previous.get('visualizations', {}).get(identifier): continue
-            if visualization.get('type') not in static_types and not visualization.get('dataSources', {}).get('primary'):
+            required = INVENTORY['visualizations'].get(visualization.get('type'), {}).get('requiredSources', [] if visualization.get('type') in static_types else ['primary'])
+            if any(not visualization.get('dataSources', {}).get(alias) for alias in required):
                 missing_bindings.append(identifier)
             if identifier not in previous.get('visualizations', {}) and identifier not in placed:
                 unplaced.append(identifier)
@@ -177,12 +169,12 @@ class DataService:
         problems = []
         for identifier, source in pending:
             try:
-                if source.get('options', {}).get('query') != previous.get('dataSources', {}).get(identifier, {}).get('options', {}).get('query'):
-                    validate_wildcard_filters(source.get('options', {}).get('query', ''), document)
+                if source != previous.get('dataSources', {}).get(identifier):
                     query, language = self.resolve_query(document, identifier)
+                    validate_wildcard_filters(query, document)
                     suffix = scoped_suffix(query, profile)
                     if suffix is not None: validate_missing_measurements(suffix, profile, language)
-                    if self.independent_populations: validate_populations(source.get('options', {}).get('query', ''), profile)
+                    if self.independent_populations: validate_populations(query, profile)
                 language, result = self.inspect_source(document, identifier, source, profile)
             except ProviderError as error:
                 if error.status >= 500 or error.code in ('recovery_budget', 'author_cancelled', 'author_expired'): raise

@@ -1,7 +1,9 @@
 """Native Studio interaction contract, validated without executing expressions."""
 import re
+from compatibility import version_tuple
 from provider_service import ProviderError
 from table_cells import validate_table_options
+from native_options import validate_options
 
 
 def feature_contract():
@@ -58,6 +60,16 @@ def validate_features(document, previous, environment):
         for key, item in document.get(root, {}).items():
             if not isinstance(item, dict): raise ProviderError('Studio items must be objects.')
             before = previous.get(root, {}).get(key, {})
+            if root in ('visualizations', 'inputs'): validate_options(item, before)
+            if root == 'dataSources' and item.get('type') == 'ds.savedSearch' and item != before:
+                options, old_options = item.get('options', {}), before.get('options', {})
+                if not isinstance(options.get('ref'), str) or not options['ref'].strip():
+                    raise ProviderError('A native report source needs its exact options.ref name.', 422, 'report_reference')
+                if 'app' not in options and item.get('type') != before.get('type'):
+                    raise ProviderError('Set options.app to the report app so the reference survives saving into another app.', 422, 'report_reference')
+                for name in ('query', 'name'):
+                    if name in options and options[name] != old_options.get(name):
+                        raise ProviderError('Native ds.savedSearch uses ref/app, not options.' + name + '. Edit a ds.chain suffix to transform report output; the original report is not changed.', 422, 'report_reference')
             if root == 'visualizations' and item.get('type') == 'splunk.table':
                 options, old_options = item.get('options', {}), before.get('options', {})
                 validate_table_options(options, old_options, environment)
@@ -116,6 +128,9 @@ def validate_features(document, previous, environment):
                         if not isinstance(tokens, list) or any(not isinstance(token, dict) or not isinstance(token.get('token'), str) or not token['token'] or not ('value' in token or 'key' in token) for token in tokens):
                             raise ProviderError('Token actions need token names and a value or event key.')
                     if handler['type'] in ('drilldown.resetTokens', 'drilldown.unsetTokens'):
+                        if (handler['type'] == 'drilldown.unsetTokens' and version_tuple(environment.get('version', '')) < (10, 4)
+                                and handler not in before.get('eventHandlers', [])):
+                            raise ProviderError('Native unsetTokens is qualified from Splunk 10.4. Preserve existing imported handlers; for this target use a reset to original defaults or an explicitly requested set-token value instead.', 422, 'native_handler_version')
                         for field in ('tokenNames', 'tokenNamespaces'):
                             names = options.get(field, [])
                             if not isinstance(names, list) or any(not isinstance(name, str) or not name for name in names):
