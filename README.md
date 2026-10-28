@@ -6,6 +6,23 @@ Describe an operational question, choose data available to your Splunk user, and
 
 **Status: 0.31.1 development preview.** This is a new codebase, separate from Splunk Dashboard Generator. It is not a production release or Splunk Cloud certified app. The repository is currently private and is being prepared for a future public release.
 
+## Download and start
+
+Get [Constellation 0.31.1](https://github.com/LeiterConsulting/constellation/releases/tag/v0.31.1), the latest published development preview. Repository access is required.
+
+| Download | Use |
+| --- | --- |
+| [Splunk app · tar.gz](https://github.com/LeiterConsulting/constellation/releases/download/v0.31.1/constellation-0.31.1.tar.gz) | Install or update Constellation through Splunk app management. |
+| [App and documentation bundle](https://github.com/LeiterConsulting/constellation/releases/download/v0.31.1/constellation-0.31.1-handoff.zip) | The same app, user guide, setup instructions and reviewed support/validation documents. |
+| [Standalone user guide](https://github.com/LeiterConsulting/constellation/releases/download/v0.31.1/constellation-0.31.1-user-guide.md) | A walkthrough of creation, focused editing, drafts and native saves. |
+| [SHA256SUMS](https://github.com/LeiterConsulting/constellation/releases/download/v0.31.1/SHA256SUMS) | Verify the downloaded files. |
+
+1. Have an administrator install the app from file using the [installation guide](docs/installation.md). Refresh workspace tabs after an update; follow Splunk's reported restart requirements.
+2. Open **Constellation → Settings**, configure OpenAI, Ollama or an administrator-approved AITK connection, and test the selected model. Keys stay in Splunk; no credentials are included in the release.
+3. Choose **New dashboard**, select accessible Splunk data or an existing search, and describe the question. Select an element to refine it in chat. Check **Draft saved** before leaving; use **Save to Splunk** to create a normal private Studio dashboard.
+
+Start with the [user guide](docs/user-guide.md). AITK administrators should follow the [setup guide](docs/aitk-setup.md); a passing small model test does not qualify every dashboard task or attachment type.
+
 ## What works today
 
 - A live dashboard canvas beside one conversation panel that docks, floats and collapses.
@@ -22,24 +39,15 @@ Describe an operational question, choose data available to your Splunk user, and
 
 This app remains self-contained inside Splunk: React/TypeScript, the Splunk Dashboard Framework, Splunk UI Toolkit and bundled Python REST handlers. It requires no separate agent platform, worker service or vector database. Retrieval currently uses bundled, attributed guidance filtered by version and intent; semantic RAG and verified cross-dataset relationships remain future work.
 
-For a first user, follow the [user guide](docs/user-guide.md). Review the [handoff audit](docs/share-readiness.md) before sharing the preview.
+## What changed in this release
 
-## Quick start for developers
+- Smaller verified calculation plans improve ordinary Ollama/AITK creation while retaining actual search, output, measurement, scope and native validation.
+- Source-scoped unit declarations prevent redundant confirmation suggestions; unknown or conflicting units remain explicit.
+- Wide-event inspection prioritizes useful fields, excludes raw event text and labels reduced samples partial. Catalog metadata is reused only within one authenticated request.
+- Exact selected-table sorting and return-button label edits can avoid inference while preserving unrelated native work. Broader requests retain model authoring.
+- Unavailable draft links stay closed until the user chooses New dashboard or opens their own work. They no longer autosave an unwanted blank draft.
 
-Use Node.js 22 and npm, plus Python 3.13 for local checks and packaging. The backend is also tested on Python 3.9 for the supported Splunk runtime boundary.
-
-```sh
-npm ci
-npm test
-python3 -m unittest discover -s tests
-npm run build
-npm run package
-npm run dev -- --port 5178
-```
-
-Open the local URL printed by Vite. Standalone mode demonstrates the canvas and authored example data; provider Settings, live Splunk searches, server-backed drafts and native saves require an installed Splunk app.
-
-The package is written to `artifacts/constellation-0.31.1.tgz`, with its digest in `artifacts/SHA256SUMS`. Build artifacts and dependencies are not committed. See [installation](docs/installation.md) to install the package and configure a provider in the app.
+See the [changelog](CHANGELOG.md) for version history and [validation](docs/validation.md) for exact package hashes, tested journeys and retained failures.
 
 ## Compatibility and boundaries
 
@@ -49,21 +57,24 @@ Search previews use the current user's permissions and a read-only command subse
 
 Multi-page actual-data creation and focused edits have been exercised through OpenAI, Ollama and AITK. Earlier AITK qualification verified a 16,000-token budget; a 2,000-token setting could return no completion. The app does not query or infer its current upstream model/token limits. Settings distinguishes a small connection test from full authoring and exposes reported or unknown limits. Compact creation reduces avoidable output while retaining all validation gates. These are bounded provider/model/environment checks, not a general success-rate or 1.0 acceptance claim.
 
-0.16 hardens opt-in shared AITK inference and adds owner-only OpenAI key handling. A non-admin author completed the two-page sensor creation/edit/native-save journey through all three providers without credential-store permissions. Shared AITK requires protected connection metadata and a trusted execution owner; actual data searches and persistence retain the author's permissions. A fresh [independent agent source review](docs/security-review.md) found no remaining actionable issue in the reviewed patches. Deployment review and Cloud/cluster acceptance remain separate gates. See [AITK setup](docs/aitk-setup.md), [validation](docs/validation.md) and the [qualification protocol](docs/provider-qualification.md).
+The [latest qualification](docs/validation.md#0311-unavailable-links-and-concurrent-authors--october-28-2026) records 18 overlapping non-admin flows / 72 turns on the unchanged backend, followed by three final-package flows / twelve turns across OpenAI, Ollama and managed AITK. All passed without model repairs. Browser checks on the final package verified unavailable links, reopening, selection, a conversational sort, refresh and preview navigation. These operated samples are separate from unaided-user or general reliability acceptance.
 
-0.25 adds bounded read delivery recovery and waits for a running handler after loss of its original author response, without replaying inference. The [delivery qualification](docs/validation.md#0250-rest-delivery-and-held-out-datasets--october-27-2026) records the observed client DNS failure, controlled delivery tests, repeated ordinary-user dataset flows and remaining 1.0 gates. Earlier uncorrelated failures remain separate from the reproduced cause.
+**Before 1.0:** historical latency tails, broader model/native/imported/SPL2 and complex measurement semantics, independent delivery/storage security review, fresh-install/upgrade/rollback/cluster testing, unaided UX/accessibility and bundle reduction remain open. AITK on the second tested target remains blocked by maintainer permissions. See the [release gates](docs/roadmap.md), [support contract](docs/studio-support.md) and [qualification protocol](docs/provider-qualification.md).
 
-0.26 adds recovery of pending draft changes across refresh, exact readback after a lost save response, and one cancellation dispatch per run. Recovery keeps revision conflicts and never restarts an interrupted agent request. See [architecture](docs/architecture.md#pending-save-recovery-026) and [validation](docs/validation.md) for bounds and load evidence.
+## Development
 
-0.27 extends exact eval-separator compilation to fresh compact SPL tables and strengthens creation/repair guidance for commas and string quotes. Actual search, output, measurement and native validation remain mandatory. See [validation](docs/validation.md) for the longer non-admin soak and observed latency.
+Use Node.js 22/npm and Python 3.13. Backend compatibility is also tested on Python 3.9.
 
-0.28 compiles common AITK first-draft calculations and bindings from one verified recipe, preserves explicit raw fields and defaults ordinary row navigation to its detail page while keeping Overview independent. The UI and validation bounds are unchanged; see [architecture](docs/architecture.md#first-draft-searches-and-page-scope-028) and [validation](docs/validation.md) for eligibility and evidence.
+```sh
+npm ci
+npm test
+python3.13 -m unittest discover -s tests
+npm run build
+python3.13 scripts/package_app.py
+npm run dev -- --port 5178
+```
 
-0.29 gives eligible Ollama creation one bounded chart list with explicit page membership, retaining the ordinary compiler and all validation. Exact-field stored-unit declarations now persist alongside recorded/measured forms; contextual follow-ons omit already-answered unit questions while retaining uncertainty and conversion decisions. The interface and recovery budgets stay unchanged. See [architecture](docs/architecture.md#bounded-ollama-outline-and-unit-context-029) and [validation](docs/validation.md).
-
-0.30 gives ordinary Ollama and AITK calculations distinct aggregate/raw-table plan shapes, with advanced pipeline fallback and the same validation. See [architecture](docs/architecture.md#calculation-specific-compact-recipes-030) and [validation](docs/validation.md) for qualification.
-
-0.31.1 keeps unavailable draft links closed until the user chooses New dashboard or opens their own work from Dashboards. Opening or refreshing a foreign, missing or deleted link no longer creates an unwanted blank draft. The [latest qualification](docs/validation.md#0311-unavailable-links-and-concurrent-authors--october-28-2026) separates concurrent backend trials from final-package browser and provider checks.
+The local preview demonstrates the canvas with illustrative data. Provider settings, live searches, server-backed drafts and native saves require the installed Splunk app. Packaging creates `artifacts/constellation-0.31.1.tgz`; release `.tar.gz` assets contain those exact bytes. Build artifacts and dependencies stay outside Git. See [development and release checks](docs/development.md).
 
 ## Data and credentials
 

@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.31.1 - 2026-10-28
+
+- Keep unavailable explicit draft links unopened instead of saving an unwanted blank draft or replacing the active preference. The existing New dashboard and Dashboards actions resume persistence only after an explicit document choice.
+- Verify foreign/deleted links, refresh, library open/close, deliberate new creation and owned-draft reopening in the installed browser. Preserve original drafts and preferences on both tested Enterprise versions.
+- Record overlapping non-admin creation/editing, delivery recovery, cooperative Stop, peer denial and independent temperature/population probes. Separate the 18-flow backend cohort from the three final-package provider flows and additional browser checks.
+- Publish the latest development preview with the exact qualified app bytes, user guide, documentation bundle and SHA-256 receipts. Improve the README's download/setup path and retain explicit 1.0 qualification limits.
+
+## 0.31.0 - 2026-10-27
+
+- Prioritize useful extracted fields before the native inspection cap, exclude raw event text and retain intact leading rows within the existing byte bound. Mark reduced inspection samples partial; ordinary previews still reject oversized results.
+- Reuse a defensive index-catalog snapshot only within one authenticated request. Preserve fresh metadata for new requests/users and actual current-user search validation.
+- Pin persistent driver configuration to the runtime fingerprint so in-place updates load changed Python behavior while preserving privileged/control separation.
+- Compile exact selected-table sorts and existing return-button label changes without inference when verified scope, output, destination and geometry make the edit unambiguous. Retain ordinary validation and fallback for broader requests.
+- Reject newly changed real-data bindings containing SPL-style eval/sort commands. Classify native connection-wrapper timeouts as service interruptions rather than spending query/model repairs.
+- Record wide-data and scoped-edit qualification on both tested Enterprise versions, preserving earlier failures and the second-target AITK permission boundary.
+
 ## 0.30.0 - 2026-10-27
 
 - Give compact search recipes distinct stats, timechart and raw-table shapes. Models no longer need to fill irrelevant empty properties; runtime retains the old complete form without discarding populated or unknown fields.

@@ -4,6 +4,10 @@ Snapshot: **0.31.1 development preview, October 28, 2026**. This file is a sanit
 
 See the [0.31.1 startup and concurrent-author checks](#0311-unavailable-links-and-concurrent-authors--october-28-2026) for current evidence. Earlier cohorts below retain their own scope and failures.
 
+## Release downloads
+
+[Release v0.31.1](https://github.com/LeiterConsulting/constellation/releases/tag/v0.31.1) is the latest published development preview. Its installable `.tar.gz` contains the exact qualified `.tgz` bytes: SHA-256 `bdd07caff21e3050b2f7c04903963af33575023425863f7645c3b19a4f78c8c3`. Release preparation updates documentation and the handoff ZIP without changing the installed app. The release also includes a standalone user guide and `SHA256SUMS` for all downloadable artifacts. Archive inspection and local AppInspect remain distinct from production or Cloud acceptance.
+
 ## Local verification
 
 | Check | Observed result |
@@ -47,7 +51,7 @@ Independent native synthetic probes checked all 84 source transformations across
 
 The existing 429 backend tests passed on Python 3.9 and 3.13, all 106 frontend tests passed and the Node 22 production build passed. Fresh AppInspect 4.3.1 precert on this archive reported zero errors/failures/future failures, seven warnings and one skip. The bundle-size warning remains. Four temporary users, 27 owned configuration objects, 21 native views and one copied owner-only OpenAI record were removed; the password file was deleted. All 36 original administrator drafts/preferences/settings and 78 original configuration contents were exact after cleanup. AITK policy/protected writers stayed unchanged, its upstream connection parameters were not read or written, the original browser account was restored and test tabs closed. The single unwanted empty administrator draft created while reproducing the bug was verified empty, removed, and the original preference/configuration hashes restored exactly.
 
-**Remaining 1.0 gates.** The second target still lacks AITK maintainer discovery permission. Historical latency tails, broader model/native/imported/SPL2 and complex measurement semantics, independent delivery/storage security review, fresh-install/upgrade/rollback/cluster deployment, unaided-user/accessibility/reflow trials and bundle reduction remain open. No new GitHub release is created by this development update; the repository stays private. This is bounded regression evidence, not a general success-rate estimate, full native parity, Cloud certification or 1.0 acceptance.
+**Remaining 1.0 gates.** The second target still lacks AITK maintainer discovery permission. Historical latency tails, broader model/native/imported/SPL2 and complex measurement semantics, independent delivery/storage security review, fresh-install/upgrade/rollback/cluster deployment, unaided-user/accessibility/reflow trials and bundle reduction remain open. Publication as v0.31.1 retains the same qualified app bytes and development-preview status; the repository stays private. This is bounded regression evidence, not a general success-rate estimate, full native parity, Cloud certification or 1.0 acceptance.
 
 ## 0.31.0 Wide-data grounding and scoped edits — October 27, 2026
 

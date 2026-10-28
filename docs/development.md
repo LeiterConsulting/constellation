@@ -40,6 +40,14 @@ Use synthetic, non-sensitive fixtures. Keep generated PDFs in ignored `output/`;
 
 Use a GitHub noreply address for new commits if you want to avoid publishing a personal email. Repository publication checks do not rewrite existing author metadata.
 
+## Publishing a release
+
+1. Align the app version/build, README, changelog, installation/upgrade instructions and current validation summary. Retain the development-preview label and the exact scope of historical versus final-package tests.
+2. Use the exact qualified app archive and its recorded hash. A documentation-only release preparation may rebuild the handoff ZIP, but must not replace accepted app bytes with a different archive. Review the new handoff documents and verify its embedded app and user guide exactly.
+3. Publish the `.tgz` bytes under the versioned `.tar.gz` download name, alongside the documentation ZIP, versioned standalone user guide and a `SHA256SUMS` covering all three assets. Inspect every archive member: one app root, regular files only, no macOS sidecars/resource forks, extended tar metadata, private runtime configuration or live evidence. Create aliases using byte copies rather than retarring a Finder directory.
+4. Run staged publication checks and Gitleaks, commit/push, and wait for CI on that exact commit. Tag that reviewed commit and publish the release as Latest only when requested. GitHub's Latest designation is a download pointer; the release notes still identify this app as a development preview. Preserve repository visibility and license status.
+5. Download every published asset again, compare its digest with the local receipt, inspect the downloaded archives, and verify GitHub's latest-release tag and asset list. Keep detailed local receipts outside Git.
+
 ## CI
 
 The GitHub workflow runs Python tests on 3.9 and 3.13, frontend tests, a production build/package, publication checks and Gitleaks history scanning. Actions are pinned to reviewed commit SHAs and use read-only repository permissions. The workflow does not need provider keys, Splunk credentials, live lab connectivity or deployment rights. The Gitleaks action is configured for a personal-account repository; an organization transfer may require its separate license configuration.
