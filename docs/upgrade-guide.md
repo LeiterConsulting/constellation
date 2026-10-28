@@ -1,5 +1,9 @@
 # Updating Constellation
 
+## 0.37 SVG icons and portable assets
+
+No draft, credential or native-dashboard migration runs. Refresh workspace tabs. Images and icons remain in their separate native shared collections with unchanged ACLs; no ordinary-user upload privilege is added. Passive SVG validation is shared across upload, preview and import. Unsupported existing artwork remains stored unchanged; use native Studio for formats outside the bounded preview. Portable files have an explicit version, collection-qualified IDs and integrity receipts. Extend remapping by verified media slots rather than general string replacement. Requalify failed/uncertain uploads, missing permissions, file tampering, HTTP-host checksums, selected metric preservation and cross-instance native save/reopen when changing this boundary. A portable dashboard moves supported artwork, not data, knowledge objects, conversations or provider settings.
+
 ## 0.36 native media and dependent inputs
 
 No draft, connection or native-dashboard migration runs. Refresh existing workspace tabs after upgrading. Native Studio image records remain in the instance's shared KV store; Constellation does not create a private asset store or change its permissions. Uploaded files are not part of dashboard JSON or the Constellation package. Moving a dashboard to another instance requires its media/knowledge-object dependencies. Keep source handling, image registry and native menu compilation separate from providers and privileged credential handlers.

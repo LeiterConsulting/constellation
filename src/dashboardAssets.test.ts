@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { DashboardDefinition } from '@splunk/dashboard-definition';
 import { getCompleteSearchQuery } from '@splunk/datasource-utils';
 import { createBlank, previewDefinition } from './document';
@@ -13,14 +13,18 @@ describe('native shared images and safe preview', () => {
     expect(previewImage('/static/app/constellation/appIcon.png')).toBe(true);
     for(const src of ['javascript:alert(1)','//example.com/a.png','splunk-enterprise-kvstore://../x','/static/app/x/../x.png','/static/app/x/%2e%2e/x.png'])expect(previewImage(src)).toBe(false);
   });
+  it('replaces only a selected icon and preserves its metric bindings',()=>{
+    const doc=createBlank();doc.dataSources={s:{type:'ds.search',options:{query:'| stats count'}}};doc.visualizations.icon={type:'splunk.singlevalueicon',options:{icon:'splunk-enterprise-kvstore://old',showValue:true},dataSources:{primary:'s'},future:{keep:true}};const before=structuredClone(doc), changed=placeDashboardImage(doc,{id:'new_icon',name:'New',kind:'icon'},'layout_main','icon');const expected=structuredClone(doc);expected.visualizations.icon.options!.icon='splunk-enterprise-kvstore://new_icon';expect(changed.definition).toEqual(expected);expect(doc).toEqual(before);
+  });
   it('adds below existing work, replaces only the selected image reference and rejects a grid page', () => {
+    const nativeCrypto=globalThis.crypto;vi.stubGlobal('crypto',{getRandomValues:nativeCrypto.getRandomValues.bind(nativeCrypto)});
     const doc=createBlank();doc.visualizations.keep={type:'splunk.table',future:{retain:true}};
     const layouts=doc.layout.layoutDefinitions as Record<string,{structure:unknown[];type:string}>;layouts.layout_main.structure=[{item:'keep',type:'block',position:{x:20,y:700,w:100,h:200}}];
     const before=structuredClone(doc),placed=placeDashboardImage(doc,{id:'fixture_image',name:'Fixture'},'layout_main');
     expect(doc).toEqual(before);expect(placed.definition.visualizations.keep).toEqual(doc.visualizations.keep);expect(hasSharedImages(placed.definition)).toBe(true);
     const changed=placeDashboardImage(placed.definition,{id:'other_image',name:'Other'},'layout_main',placed.id);
     const expected=structuredClone(placed.definition);expected.visualizations[placed.id].options!.src='splunk-enterprise-kvstore://other_image';expect(changed.definition).toEqual(expected);
-    layouts.layout_main.type='grid';expect(()=>placeDashboardImage(doc,{id:'fixture_image',name:'Fixture'})).toThrow('absolute');
+    layouts.layout_main.type='grid';expect(()=>placeDashboardImage(doc,{id:'fixture_image',name:'Fixture'})).toThrow('absolute');vi.stubGlobal('crypto',nativeCrypto);
   });
 });
 

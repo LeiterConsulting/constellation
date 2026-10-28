@@ -13,7 +13,7 @@ import ElementFocus from './ElementFocus';
 import { navigationTarget } from './pages';
 import { usePreviewHeight } from './usePreviewHeight';
 import { previewTokenSnapshot, resetDefaults } from './previewDefaults';
-import { dashboardImageRegistry } from './dashboardAssets';
+import { dashboardImageRegistry, dashboardIconRegistry } from './dashboardAssets';
 import { nativeSupportMessage } from './previewCompatibility';
 
 // Metadata lookup only. This utility never constructs or runs a data source.
@@ -57,6 +57,7 @@ interface Props {
 }
 export default memo(function Preview({ definition, revision, documentId, tokens, activeTab, onTokens, onTab, onSelect, searchResults, searchMessages, selected, selecting, nativeTypes, cascadingInputs }: Props) {
   const imageRegistry = useMemo(dashboardImageRegistry, []);
+  const iconRegistry = useMemo(dashboardIconRegistry, []);
   const frame=useRef<HTMLDivElement>(null);
   const height=usePreviewHeight(frame);
   const inputDefaults = useMemo(() => getInputDefaultTokens({ definition: definition as unknown as DashboardJSON, preset: inputPreset }), [definition]);
@@ -98,7 +99,7 @@ export default memo(function Preview({ definition, revision, documentId, tokens,
   } }), [definition, onSelect, selecting]);
   const renderKey = `${documentId}:${revision}`;
   return <RendererFrame ref={frame} style={{ height }} role="region" aria-label="Dashboard preview"><RendererBoundary key={renderKey}>
-    <DashboardContextProvider key={renderKey} preset={EnterprisePreset} imageRegistry={imageRegistry} initialDefinition={preview}
+    <DashboardContextProvider key={renderKey} preset={EnterprisePreset} imageRegistry={imageRegistry} iconRegistry={iconRegistry} initialDefinition={preview}
       initialTokenBinding={initialTokens} initialTab={activeTab} onTokenBindingChange={onTokens}
       onActiveTabChange={onTab} dashboardPlugin={plugin}>
       <><SyncPreviewDefinition preview={preview} defaults={originalDefaults as DashboardJSON['defaults']} inputs={nativeInputs}/><DashboardCore width="100%" height="100%" />

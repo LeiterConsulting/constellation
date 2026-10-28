@@ -1,8 +1,8 @@
 # Validation status
 
-Snapshot: **0.36.0 development preview, unreleased, October 28, 2026**. This file is a sanitized summary. Private lab addresses, credentials, screenshots, transcripts, raw search data and detailed runtime receipts are excluded from the repository.
+Snapshot: **0.37.0 development preview, unreleased, October 28, 2026**. This file is a sanitized summary. Private lab addresses, credentials, screenshots, transcripts, raw search data and detailed runtime receipts are excluded from the repository.
 
-See the [0.36.0 media/input checks](#0360-native-media-and-dependent-menus--october-28-2026) for current development evidence. The [0.35.0 geographic checks](#0350-geographic-native-authoring--october-28-2026) retain their own accepted package identity. Earlier cohorts below retain their own scope and failures. The latest published development preview is 0.34.0.
+See the [0.37.0 asset checks](#0370-svg-icons-and-portable-assets--october-28-2026) for current development evidence. The [0.36.0 media/input checks](#0360-native-media-and-dependent-menus--october-28-2026) retain their earlier scope. The [0.35.0 geographic checks](#0350-geographic-native-authoring--october-28-2026) retain their own accepted package identity. Earlier cohorts below retain their own scope and failures. The latest published development preview is 0.34.0.
 
 ## Release downloads
 
@@ -12,11 +12,11 @@ See the [0.36.0 media/input checks](#0360-native-media-and-dependent-menus--octo
 
 | Check | Observed result |
 | --- | --- |
-| Python unit suites | 527 tests passed locally on Python 3.13, including native media/menu contracts, query-token cycles, bounded planning and retained regressions. Python 3.9 and 3.13 also passed CI on the runtime change; local Python 3.9 execution was not repeated. |
-| Frontend unit suites | 120 tests passed, including native media references, inert chain dependency metadata and retained report/input/delivery/focus regressions. |
-| TypeScript and production build | Passed on Node 22, with identical accepted installed payload; bundle-size warning remains. |
+| Python unit suites | 529 tests passed locally on Python 3.13, including decorative-icon data requirements, bounded hex encoding and retained regressions. Current CI results are recorded with the PR; local Python 3.9 execution was not repeated. |
+| Frontend unit suites | 131 tests passed, including passive SVG, integrity/tampering, collection-qualified remapping, partial upload failure, HTTP checksum/placement and retained regressions. |
+| TypeScript and production build | Passed on Node 22; bundle-size warning remains. |
 | Deterministic app package | Generated with SHA-256 receipt. |
-| Splunk AppInspect 4.3.1, precert | 0 errors, 0 failures, 0 future failures, 7 warnings, 1 skipped, 117 successes, 127 not applicable on the current 0.36 app archive. |
+| Splunk AppInspect 4.3.1, precert | 0 errors, 0 failures, 0 future failures, 7 warnings, 1 skipped, 117 successes, 127 not applicable on the current 0.37 app archive. |
 
 The AppInspect result applies to the tested development archive. The seven warnings cover Splunk UI/framework telemetry detection, Python migration, Cloud-role compatibility and a public-IP example inside the bundled network-chart schema. The detected address was traced to a third-party documentation example, not lab configuration. Review the full local report before distributing a new archive. Repository/CI changes alone do not establish a fresh AppInspect result. This is not Splunk Cloud certification, a security audit or production qualification.
 
@@ -937,3 +937,23 @@ Earlier candidate evidence remains separate: snapshot sources with extend were r
 Remaining gates include full graphical file-picker acceptance, shared deletion/dependency management, cross-instance media bundling, SVG/icon upload lifecycle, complete namespace/report/expression dependencies and dynamic-first/default combinations, larger/compound menu requests, broader non-admin browser/role/theme/accessibility coverage, search-head clusters, remaining native option combinations and production/Cloud acceptance. No complete native-parity claim or percentage is assigned.
 
 Cleanup removed the four disposable author/peer accounts, the copied owner-only test key, two shared test images and task-owned test documents. All 78 protected primary configuration records and five protected secondary records matched their original hashes; original drafts, connection settings, upstream AITK access policy and native media permissions were retained. Local browser screenshots and detailed evidence remain outside Git.
+
+## 0.37.0 SVG icons and portable assets — October 28, 2026
+
+**Exact package.** The unreleased 0.37.0 build 53 archive is SHA-256 `38041eb5a4246ec7ab5a01aa41c795bd373e13a93903539d83018b1e6512d72c` (484 regular files; 5,525,480 bytes). Node 22 production build, 529 Python 3.13 tests and 131 frontend tests passed. AppInspect 4.3.1 precert reports zero errors, failures or future failures; seven warnings, one skip, 117 successes and 127 not applicable remain. Packaging excludes macOS metadata and local evidence. This is a development preview, not Cloud certification or complete Studio parity.
+
+**Graphical media and transfer.** The existing raster file picker/upload was exercised, then the combined SVG icon upload/list switch/placement and undo were checked in the browser. Final-package HTTP-host SVG upload and placement passed. Active SVG markup was rejected before a collection write. A two-asset synthetic dashboard exported from Enterprise 10.2.8 / Studio 1.23.12, imported through the review dialog into Enterprise 10.4.4 / Studio 1.26.6, then exported/imported back. Both directions created fresh collection-qualified references, retained exact artwork bytes and unrelated definition properties, restored after refresh and saved as normal private Studio dashboards with exact readback. Both native Studio versions rendered the raster and SVG. Light/dark canvas and dialog checks passed for the inspected controls; this is not full accessibility acceptance. Media browser checks used administrators; the ordinary-user checks below exercised the installed REST authoring path.
+
+**Ordinary authors.** Three fresh non-admin authors ran one actual esp32 two-page freezer creation plus focused sparkline styling, dependent-menu addition, raster-option edit and decorative-icon-color edit each. All **15 final-package turns passed**, each using one model call and no repair calls. Actual-output validation, the 150°F temperature cutoff oracle, retained independent Wi-Fi population, drilldown/return definitions, exact draft/conversation reopen and native private readback passed. Six peer draft/native access attempts were denied. All three authors read both shared media collections; six upload attempts were denied under unchanged native ACLs. Shared media remains readable independently of private draft/dashboard ownership. AITK on the second target remains a separate open permission/configuration gate.
+
+| Provider | Create | Sparkline edit | Menus | Image edit | Icon edit |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| OpenAI | 23.24 s | 3.71 s | 8.55 s | 3.00 s | 3.11 s |
+| Ollama | 21.23 s | 9.41 s | 18.71 s | 24.28 s | 25.92 s |
+| AITK | 23.24 s | 15.18 s | 24.69 s | 16.21 s | 14.97 s |
+
+These bounded, operated samples are not a general reliability rate, benchmark or unaided-user acceptance. Earlier candidates retained two genuine failures: HTTP import required an unavailable secure-context checksum API, and Ollama exhausted repair on an unencoded literal icon hex color. The final package fixes HTTP checksum/ID compatibility and narrowly encodes that known native string slot before ordinary validation. It does not relax general malformed-JSON, source, geometry, scope or preservation guards. Native Studio's source-free decorative icon form is distinguished from visible metrics, which still require actual sources.
+
+**Remaining boundaries.** Passive SVG is deliberately narrower than every SVG feature; CSS, animation, scripts, entities, external references and foreign markup are rejected. Unknown/dynamic media slots and opaque SVG choropleth asset lifecycle remain open. Portable files bundle supported shared artwork, not reports, lookups, packaged assets, external media, data, conversations or provider configuration. Partial/uncertain upload handling is covered by synthetic transport fixtures; real service-interruption, maximum-size, shared deletion, cluster and unaided-user transfer acceptance remain open. Asset ACLs and privileged provider authority were not broadened.
+
+**Cleanup.** Four temporary accounts, the copied owner-only OpenAI key, their private drafts/views and eight shared test assets were removed. Original administrator configuration contents were verified unchanged against fresh preimages on both instances (78 and five records), including restored active-draft preferences. Original drafts, provider settings, AITK policy and backing collection permissions were preserved. Detailed receipts and screenshots remain local.
