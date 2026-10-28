@@ -1,8 +1,8 @@
 # Validation status
 
-Snapshot: **0.34.0 development preview, October 28, 2026**. This file is a sanitized summary. Private lab addresses, credentials, screenshots, transcripts, raw search data and detailed runtime receipts are excluded from the repository.
+Snapshot: **0.35.0 development preview, unreleased, October 28, 2026**. This file is a sanitized summary. Private lab addresses, credentials, screenshots, transcripts, raw search data and detailed runtime receipts are excluded from the repository.
 
-See the [0.34.0 native chart checks](#0340-native-chart-shapes-and-release-boundaries--october-28-2026) for current development evidence. Earlier cohorts below retain their own scope and failures. The latest published development preview is 0.34.0.
+See the [0.35.0 geographic checks](#0350-geographic-native-authoring--october-28-2026) for current development evidence. Earlier cohorts below retain their own scope and failures. The latest published development preview is 0.34.0.
 
 ## Release downloads
 
@@ -12,7 +12,7 @@ See the [0.34.0 native chart checks](#0340-native-chart-shapes-and-release-bound
 
 | Check | Observed result |
 | --- | --- |
-| Python unit suites | 501 tests passed locally on Python 3.13, including specialized source shapes, native intent/planning, exact literal events, release boundaries and retained regressions. Python 3.9 runs in CI; the local Docker daemon did not respond to this check. |
+| Python unit suites | 513 tests passed locally on Python 3.13, including geographic/source contracts, native plans, exact assets, source-bound context and retained regressions. Python 3.9 runs in CI; local execution on that version was not repeated. |
 | Frontend unit suites | 117 tests passed, including the version-availability notice, inventory drift and retained report/input/delivery/focus regressions. |
 | TypeScript and production build | Passed; bundle-size warning remains. |
 | Deterministic app package | Generated with SHA-256 receipt. |
@@ -28,6 +28,30 @@ The AppInspect result applies to the tested development archive. The seven warni
 | 10.4.4 | 1.26.6 | Native roundtrips, synthetic SPL/SPL2, PDF interactions and prior page/focus checks; current repeated non-admin OpenAI/Ollama wide-data creation, editing, native saves and selected UI/native navigation. |
 
 The 0.31 cohort extends current real-data creation/editing to 10.4.4 through OpenAI and Ollama. Earlier full-interface journeys retain their own versions and scope. AITK 6.2 shared inference passed on 10.2.8; the 10.4.4 target has AITK 6.1 without a usable configured connection and remains blocked by maintainer permissions. Do not infer instance-independent provider availability from app installation.
+
+## 0.35.0 Geographic native authoring — October 28, 2026
+
+**Package and scope.** The unreleased **0.35.0 build 51** archive is SHA-256 `4f0415029b7600779c3a28a2fe87883d3d0579a2d046afa9fd6570d3d1ffa967` (476 regular files; 5,478,336 bytes). It was built in an isolated checkout, excluding concurrent branding work, and installed on both recorded Enterprise targets over verified management TLS without restart. The 513 Python 3.13 tests, 117 frontend tests and production build passed; the existing large-bundle warning remains. Exact-archive AppInspect 4.3.1 precert returned zero errors/failures/future failures, seven warnings and one skip. Python 3.9 remains a CI check. This candidate is separate from the published 0.34.0 release and does not establish Cloud certification.
+
+**Implementation.** A separate geographic module checks provable coordinate ranges, scalar numeric sizes/values and supplied SVG path identifiers, retaining nulls and opaque native assets without fetching resources. Attributed contracts keep map channels inside native layers. The bounded planner supports explicit marker/bubble maps and a single supplied literal/data-URI SVG, providing selectors and layout through normal final validation. Initial and repair model context omit the already bound base search while the compiler keeps its exact original scope/profile. The existing unknown-model staging policy remains. Geographic read transforms retain all normal command, time, permission and result limits. Singular explicit chart counts now reach the bounded planner.
+
+**Final ordinary-author cohort.** Three temporary non-admin authors used their existing configured provider models to create Locations/Floor plan from a clearly synthetic supplied query and SVG, edit only the selected SVG background, then add a literal area-click token. Each draft/conversation reopened exactly and each private native copy read back exactly. A separate real-data freezer flow created Overview/Device details, native table sparklines, a row-linked detail table and return navigation, then styled only its selected sparkline column. Its gap guard paused before inference; explicit labelled zero fill was accepted. Independent synthetic transformation probes checked the 150°F cutoff and independent Wi-Fi population without ingestion or model exposure.
+
+| Provider | Geographic creation / style seconds (calls) | Literal event seconds (calls) | Freezer creation / style seconds (calls) |
+| --- | --- | --- | --- |
+| OpenAI | 30.96 (2) / 3.63 (1) | 0.70 (0) | 27.76 (1) / 3.78 (1) |
+| Ollama | 13.34 (1) / 27.10 (2) | 0.72 (0) | 26.35 (1) / 8.08 (1) |
+| AITK 6.2 | 21.72 (1) / 16.23 (1) | 0.70 (0) | 25.88 (1) / 17.03 (1) |
+
+All fifteen final turns passed. OpenAI geographic creation and Ollama's selected SVG style edit each used one automatic repair; the other model-backed turns used one call. Literal interaction turns intentionally used zero inference. These small operated cohorts are not general provider success rates, a controlled latency benchmark or unaided-user acceptance.
+
+**Native and browser evidence.** Authored marker, bubble and country-region fixtures rendered on both recorded Studio versions. Separate ordinary-user probes completed `geostats`, `geom` and `iplocation` on both targets. A browser-selected marker-map request changed only `options.showScale`, preserving every other definition property; its selection and conversation restored after refresh. That browser session was an administrator and is separate from ordinary-user API checks. Automated SVG frames were blank in both Studio and Constellation even though a user independently confirmed two colored areas and the `Selected: picked` native click result in a normal browser on the synthetic 10.2 fixture. Record this human native check separately from generated copies, embedded preview fidelity and non-admin browser acceptance.
+
+**Failures retained.** Before the bounded geographic planner, AITK exhausted repair on invalid basic chart actions and missing bindings; Ollama exhausted repair on conflicting native/typed layouts. The next Ollama candidate repeated generating commands from the supplied base in appended pipelines and was rejected. Keeping the verified base server-side removed the observed creation failure without relaxing scope, search or recovery checks. Intermediate package results remain separate from the final isolated archive. A fixture initially omitted explicit fill/dimensions; both literal/data-URI automated SVG attempts remained blank. The human check applies to the recorded data-URI fixture with explicit fill/dimensions, not every SVG variant. Review also caught an unrelated imported-SVG preservation edge case when its source was not checked; a regression and source-presence gate corrected it before the final archive and repeated cohort.
+
+**Cleanup.** Both cohorts' temporary authors, copied owner-only OpenAI keys, private test drafts/native views, task-owned administrator fixtures and password files were removed. Original administrator configuration contents remained exact on both targets (78 and five records), including the primary target's 36 original drafts, preferences and provider settings. AITK inference policy and protected backing writers remained unchanged; upstream connection parameters were not read or written. Only task-created browser tabs were closed. Detailed evidence remains local.
+
+**Remaining gates.** The [coverage ledger](native-coverage.md) retains asset upload/ACL/sharing lifecycle, remote/custom assets, every geographic layer/frame/partial-data combination, custom extensions, scheduled-report semantics, broader dynamic inputs/events/imports/grid/SPL2, future-version trials and themes/accessibility. The second target's AITK maintainer configuration and the existing deployment/delivery/storage, latency/bundle and unaided-user gates remain open. No universal Studio parity percentage is assigned. Latest remains 0.34.0.
 
 ## 0.34.0 Native chart shapes and release boundaries — October 28, 2026
 

@@ -1,5 +1,13 @@
 # Architecture
 
+## Geographic native authoring (0.35)
+
+`native_geography.py` checks provable coordinate/size/area series in bounded current-user outputs, plus path-ID matches for bounded literal/data-URI SVGs. Its XML inspection rejects document types/entities, never resolves assets and does not repair values. Derived bindings and opaque native assets retain separate qualification. `native_shapes.py` delegates geographic roles without changing other families or provider adapters.
+
+The native planner accepts explicit marker/bubble modes and one user-supplied SVG on an eligible blank SPL canvas. It supplies nested layers, exact asset bytes, native selectors, a neutral continuous SVG palette and page geometry; all existing actual-search, compatibility, scope and atomic checks remain. Existing dashboards, ambiguous/multiple assets, region-map composition and advanced styling keep full native editing. Model context retains field/units/constraint metadata while its copyable base query stays server-side, including during repair. The compiler and validators retain the original complete profile. Unknown model windows still follow the existing staging policy.
+
+Native `geostats`, `geom` and `iplocation` are allowed read transforms within the existing job/time/result bounds and current-user permissions. They introduce no lookup upload, external geocoder, credential access or write command. Geographic database/lookup completeness and empty-location behavior remain source-specific; query success does not establish valid location meaning.
+
 ## Native chart contracts and planning (0.34)
 
 `studio_versions.py` reads curated type/option boundaries from `studio_capabilities.json`, independently of renderer age. The inventory generator uses the same type minima; retrieval filters unavailable options. Unchanged imported properties survive edits. Startup reads environment metadata without an execution probe, and `previewCompatibility.ts` supplies notices only in the private preview clone. Native export remains exact.

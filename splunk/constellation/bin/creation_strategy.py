@@ -16,7 +16,7 @@ def explicit_page_count(prompt):
 
 def explicit_panel_count(prompt):
     names = {'one':1,'two':2,'three':3,'four':4,'five':5,'six':6,'seven':7,'eight':8}
-    matches = re.findall(r'\b(one|two|three|four|five|six|seven|eight|\d+)\s+(?:charts|panels|tiles|visualizations)\b', prompt, re.I)
+    matches = re.findall(r'\b(one|two|three|four|five|six|seven|eight|\d+)\s+(?:charts?|panels?|tiles?|visualizations?)\b', prompt, re.I)
     counts = {names.get(value.lower(), int(value) if value.isdigit() else 0) for value in matches}
     return counts.pop() if len(counts) == 1 else None
 
