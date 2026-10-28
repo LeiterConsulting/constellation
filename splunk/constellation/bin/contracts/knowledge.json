@@ -129,5 +129,109 @@
     ],
     "source": "https://help.splunk.com/en/splunk-enterprise/search/search-manual/10.2/advanced-statistics/commands-for-advanced-statistics",
     "text": "Apply a user-specified exclusion in the correct unit before computing temperature means and deviations. eventstats can retain events while adding a baseline. Label any chosen statistical rule, guard null/zero deviation and keep the zero-outlier case valid. Use count or a zero-inclusive flag aggregate for an outlier KPI. A statistical screen is not an equipment alarm or proof of a fault. An empty outlier subset does not mean the source index has no events."
+  },
+  {
+    "id": "table-sparklines",
+    "title": "Native table sparklines and column renderers",
+    "minimumEnterprise": "10.0",
+    "tags": [
+      "sparkline",
+      "sparklines",
+      "celltypes",
+      "columnformat",
+      "tableformat"
+    ],
+    "source": "https://help.splunk.com/en/splunk-enterprise/create-dashboards-and-reports/dashboard-studio/10.4/visualizations/table",
+    "text": "Use native SPL stats sparkline(avg(verified_numeric_field), suitable_time_span) AS trend BY existing_entity alongside the existing aggregates. This returns chronological per-row arrays; latest(), list() and scalar averages are not time-bucketed trends. Preserve filters, time, grouping, units and existing columns, and expose trend in any explicit options.table projection. Studio automatically recognizes native sparkline arrays. To override rendering, options.columnFormat.FIELD.cellTypes takes a one-dimensional array of TextCell/ArrayCell/SparklineCell or a native DOS pipeline; tableFormat.cellTypes is two-dimensional. sparklineTypes uses line/area with the same dimensions. Per-column settings belong in options.columnFormat keyed by exact output field; named mappings belong in visualization.context. Never format a sparkline alias with tostring/round. sparklineNullValueDisplay (gaps/zero/connect) is a 10.4 option; omit it on older targets. Missing or excluded measurements stay missing unless the user explicitly chooses otherwise. Native SPL sparkline fills empty bins with zero. Older Studio tables cannot preserve gaps: ask before accepting zero fill, or use a separate trend chart. On newer targets the app compiles count-backed null slots to distinguish missing from observed zero. For a verified existing array column use tableSparkline styling when available; native DOS mappings apply to every row, whereas a one-element literal array styles only the first row."
+  },
+  {
+    "id": "native-inputs",
+    "title": "Native inputs and dynamic choices",
+    "minimumEnterprise": "10.0",
+    "tags": [
+      "dropdown",
+      "multiselect",
+      "input",
+      "inputs",
+      "cascading",
+      "choices"
+    ],
+    "source": "https://help.splunk.com/en/splunk-enterprise/create-dashboards-and-reports/dashboard-studio/10.4/make-dashboards-dynamic-and-interactive/inputs/dropdown-and-multiselect",
+    "text": "Create native inputs with type input.dropdown/multiselect/text/number/timerange/button, root title and options. Value inputs use options.token and defaultValue. Dropdown/multiselect static items are [{label,value}]; dynamic inputs bind their dataSources.primary to a verified search and use native items/label/value DOS mappings. Do not invent choices or collect raw event values in inference context. Place an input once, globally or on a page. Token references must match defaults and safe query substitution; timerange uses TOKEN.earliest and TOKEN.latest. Buttons use options.label and native eventHandlers. Keep selected-source/time guards; adding an input does not authorize a broader query."
+  },
+  {
+    "id": "native-interactions",
+    "title": "Native handlers and token lifecycles",
+    "minimumEnterprise": "10.0",
+    "tags": [
+      "reset",
+      "unset",
+      "brush",
+      "range",
+      "drilldown",
+      "navigation",
+      "interaction",
+      "interactions"
+    ],
+    "source": "https://help.splunk.com/en/splunk-enterprise/create-dashboards-and-reports/dashboard-studio/10.2/make-dashboards-dynamic-and-interactive/specify-visibility-conditions-for-panels-and-other-dashboard-elements",
+    "text": "eventHandlers is an array of {type,options}. Supported embedded handlers: drilldown.setToken (tokens:[{token,key or value}]), switchToTab (tabId: exact layout ID), setTimeRange (token: timerange prefix, events:[range.select]), customUrl (url), resetTokens and unsetTokens (tokenNames:[names], tokenNamespaces:[namespaces]). Empty reset/unset selections can affect every token: use explicit names for a focused request. fields/events constrain supported handlers; row keys are row.FIELD.value. Preserve existing handler order and unrelated handlers. Reset restores defaults, unset removes values; they are different operations. Native navigation is preserved, while external preview navigation remains paused."
+  },
+  {
+    "id": "native-assets",
+    "title": "Decorative assets, text and layout",
+    "minimumEnterprise": "10.0",
+    "tags": [
+      "connectedline",
+      "connector",
+      "rectangle",
+      "ellipse",
+      "image",
+      "richtext",
+      "markdown",
+      "background",
+      "decoration"
+    ],
+    "source": "https://help.splunk.com/en/splunk-enterprise/create-dashboards-and-reports/dashboard-studio/10.4/source-code-editor/what-is-a-dashboard-definition",
+    "text": "Native decorative visualizations include splunk.markdown, richtext, image, rectangle, ellipse and connectedLine. They need placement but not a primary search. Use the relevant native option names; do not replace an existing asset or silently fetch/upload media. Absolute pages use positioned blocks; grid layout has different native structure. Keep native canvas size, tab IDs, global inputs, stacking order, unknown layout properties and unrelated work. Do not confuse preview geometry with a request to rewrite native geometry."
+  },
+  {
+    "id": "native-chart-options",
+    "title": "Advanced visualization configuration",
+    "minimumEnterprise": "10.0",
+    "tags": [
+      "gauge",
+      "pie",
+      "bubble",
+      "treemap",
+      "sankey",
+      "punchcard",
+      "map",
+      "choropleth",
+      "parallelcoordinates",
+      "events",
+      "timeline",
+      "trellis",
+      "legend",
+      "axis",
+      "threshold",
+      "color"
+    ],
+    "source": "https://help.splunk.com/en/splunk-enterprise/create-dashboards-and-reports/dashboard-studio/10.2/configuration-options-reference/visualization-configuration-options",
+    "text": "The simple chart action covers only common cartesian, single-value and table bindings. For other native types/options use targeted set/remove edits with nativeAuthoring.relevantOptions. Keep exact case-sensitive option names, required data source channels and root title/description. Data channels use native DOS pipelines against actual output fields, not field-name strings. Color/threshold mappings belong in named visualization.context objects referenced by options. Use theme-aware defaults for contrast. Trellis support is visualization/version specific; preserving imported trellis is not proof that a new arbitrary chart supports it."
+  },
+  {
+    "id": "native-source-types",
+    "title": "Native source types and execution boundaries",
+    "minimumEnterprise": "10.0",
+    "tags": [
+      "savedsearch",
+      "report",
+      "chain",
+      "refresh",
+      "datasource",
+      "datasources"
+    ],
+    "source": "https://help.splunk.com/en/splunk-enterprise/create-dashboards-and-reports/dashboard-studio/10.4/use-data-sources/data-source-options-and-properties",
+    "text": "Native sources include ds.search, ds.chain, ds.savedSearch and ds.test; verified SPL2 environments add ds.spl2 and separately discovered ds.spl2.view. ds.chain extends a base source; preserve fields/grain and base-result limits. Do not replace an existing saved-search/report reference with an invented inline search. Saved-search execution and arbitrary custom sources remain native-only unless the app can validate current-user execution. Search refresh settings and dashboard auto-refresh are distinct; the latter requires the reported capability on newer versions. Preserve unknown source options and native defaults. Metadata retrieval never grants access or permission to schedule or write data."
   }
 ]

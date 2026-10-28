@@ -4,7 +4,9 @@ The opt-in shared AITK handler separates inference authority from ordinary autho
 
 Table formatting uses a verified authoring action that compiles to a final SPL `eval` against existing aggregate output fields. `formatTable` is not a native visualization option: newly introduced or changed `options.formatTable` objects are rejected with repair feedback, while unchanged imported properties are preserved. Check the visible timestamp/number result in native Studio in addition to definition readback.
 
-This is the working support contract for the 0.31.1 development preview. Broad document authoring is implemented; complete native parity is not yet qualified. The preview uses the embedded Splunk Dashboard Framework and preserves the original Studio definition for export and native save. Unavailable explicit draft links stay closed without autosaving a blank document; the existing New dashboard and Dashboards actions remain available.
+This is the working support contract for the 0.32.0 development preview. Broad document authoring is implemented; complete native parity is not yet qualified. The preview uses the embedded Splunk Dashboard Framework and preserves the original Studio definition for export and native save. Unavailable explicit draft links stay closed without autosaving a blank document; the existing New dashboard and Dashboards actions remain available.
+
+The [native coverage ledger](native-coverage.md) distinguishes the 29-type/822-option-entry embedded authoring inventory from live/native qualification. Relevant contracts and recipes use the current request, selected element and durable requirements. Native table cell shapes, array evidence, focused sparkline styling, known missing object parents and advanced direct source-field bindings have dedicated modules; unknown existing work remains preserved.
 
 | Area | Current behavior | Qualification / boundary |
 | --- | --- | --- |

@@ -1,6 +1,7 @@
 """Native Studio interaction contract, validated without executing expressions."""
 import re
 from provider_service import ProviderError
+from table_cells import validate_table_options
 
 
 def feature_contract():
@@ -59,6 +60,7 @@ def validate_features(document, previous, environment):
             before = previous.get(root, {}).get(key, {})
             if root == 'visualizations' and item.get('type') == 'splunk.table':
                 options, old_options = item.get('options', {}), before.get('options', {})
+                validate_table_options(options, old_options, environment)
                 if 'formatTable' in options and ('formatTable' not in old_options or options['formatTable'] != old_options['formatTable']):
                     raise ProviderError('formatTable is an authoring action, not a native table option. Return an op:formatTable action using the selected table and its verified focusedSourceReceipt. For new tables or broader calculation edits, format output aliases with final SPL eval after aggregation. Do not save options.formatTable; Studio ignores it.')
             if root == 'visualizations' and item.get('type', '').startswith('splunk.'):
@@ -113,6 +115,15 @@ def validate_features(document, previous, environment):
                         tokens = options.get('tokens')
                         if not isinstance(tokens, list) or any(not isinstance(token, dict) or not isinstance(token.get('token'), str) or not token['token'] or not ('value' in token or 'key' in token) for token in tokens):
                             raise ProviderError('Token actions need token names and a value or event key.')
+                    if handler['type'] in ('drilldown.resetTokens', 'drilldown.unsetTokens'):
+                        for field in ('tokenNames', 'tokenNamespaces'):
+                            names = options.get(field, [])
+                            if not isinstance(names, list) or any(not isinstance(name, str) or not name for name in names):
+                                raise ProviderError('Native reset/unset actions use tokenNames and tokenNamespaces arrays of nonempty names.')
+                        if any(field in options for field in ('tokens', 'token')):
+                            raise ProviderError('Native reset/unset actions use tokenNames, not tokens/token. Preserve the exact intended token scope.')
+                    if handler['type'] == 'drilldown.setTimeRange' and (not isinstance(options.get('token'), str) or not options['token']):
+                        raise ProviderError('A native time-range action needs options.token, the timerange token prefix.')
     # Deleting a referenced condition is an edit even when the panel is unchanged.
     removed = set(previous.get('expressions', {}).get('conditions', {})) - set(conditions)
     if removed:

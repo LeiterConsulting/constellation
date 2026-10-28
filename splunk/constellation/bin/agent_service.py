@@ -15,6 +15,10 @@ from model_capabilities import attachment_parts
 from prompt_suggestions import SUGGESTION_SCHEMA, normalize_suggestions
 from data_service import DataService
 from knowledge_service import retrieve_guidance
+from studio_inventory import authoring_contract
+from table_sparkline import focused_schema as sparkline_schema, INSTRUCTIONS as SPARKLINE_INSTRUCTIONS, ACTION as TABLE_SPARKLINE_ACTION
+from table_cells import validate_sparkline_request
+from sparkline_queries import profile_policy, gap_limit, validate_native_gap_policy
 from authoring_actions import ACTION_SCHEMA, compile_actions, validate_chart_placement
 from scope_intent import inferred_range
 from agent_feedback import validate_data_claims, presentation_message, validate_blank_claim
@@ -351,6 +355,16 @@ class AgentService:
             profile['measurementConstraints'] = temperature_constraints(confirmed_intent, brief, profile)
             profile['independentMeasurements'] = data.independent_populations
             profile['retainSourceRows'] = retain_source_rows(prompt, brief)
+            profile.update(profile_policy(prompt, brief, environment))
+        if profile and gap_limit(prompt, document, environment, brief):
+            cards = [
+                {'label': 'Keep gaps in a trend chart', 'prompt': 'Omit table sparklines. Use a separate time trend chart that preserves missing values as unknown. Keep the other dashboard requirements.', 'reason': 'Avoid false zero readings in native Studio.'},
+                {'label': 'Use native zero-filled sparklines', 'prompt': 'Allow native table sparkline gaps to display zero and label that behavior. Preserve missing values in all other calculations and keep the other dashboard requirements.', 'reason': 'Accept the native table limitation explicitly.'}]
+            return {'revision': revision, 'message': 'This version of native Studio plots missing table-sparkline buckets as zero. I can use a separate trend chart to keep gaps, or use native sparklines with zero-filled gaps. Which should I use?',
+                    'changes': [], 'suggestions': cards if body.get('suggestionFormat') == 'cards' else [card['prompt'] for card in cards],
+                    'repaired': False, 'activity': ['Checked native table-sparkline missing-value behavior'],
+                    'model': saved['model'], 'dataContext': profile['scope'], 'dataProfile': profile, 'searchReceipts': [],
+                    'recovery': recovery.evidence(), 'brief': brief, 'pagePurposes': purposes}
         table_receipt = data.focused_table_receipt(document, focus.get('id'), profile) if profile and focus['kind'] == 'visualization' else None
         if profile and not profile['sampledRows']:
             return {'revision': revision, 'message': 'No rows were found in the selected data and time range. Choose another dataset or a wider range to continue.',
@@ -390,6 +404,8 @@ class AgentService:
         if button_schema: button_label_preflight(prompt,document,focus.get('id'))
         page_schema = focused_page_meta(prompt,document,focus,attachments)
         calculation = focused_calculation(prompt,focus.get('id'),document,profile,table_receipt,attachments)
+        sparkline = sparkline_schema(prompt, focus.get('id'), document, table_receipt, attachments)
+        if sparkline: context['tableSparklineOnly'] = True
         if route_schema:
             context['routeOnly'] = {key:route_schema['properties'][key]['enum']for key in ('sourceId','pageId','field')}
             context['routeOnly']['destinationLabel'] = next(tab['label']for tab in document['layout']['tabs']['items']if tab['layoutId']==context['routeOnly']['pageId'][0])
@@ -406,11 +422,13 @@ class AgentService:
             context['formattingOnly'] = 'Format only existing numeric columns through formatTable. Omit absent or already-readable timestamps. Do not add aggregates, columns, search or binding edits.'
         from table_sort import exact_table_sort
         local_sort = exact_table_sort(prompt, focus.get('id'), document, profile, table_receipt, attachments)
-        guidance = retrieve_guidance(prompt, document, environment, real_data=bool(profile))
+        guidance = retrieve_guidance(prompt, document, environment, real_data=bool(profile), brief=brief, focus=focus)
         context['retrievedGuidance'] = guidance
+        context['nativeAuthoring'] = authoring_contract(prompt, document, environment, brief, focus)
         instructions = (FORMAT_INSTRUCTIONS if format_only else CREATION_INSTRUCTIONS if profile and context['canvasState'] == 'blank' else
                         FOCUSED_INSTRUCTIONS if focus['kind'] in ('visualization', 'input', 'page') else INSTRUCTIONS)
-        if row_only: instructions = row_navigation.INSTRUCTIONS
+        if sparkline: instructions = SPARKLINE_INSTRUCTIONS
+        elif row_only: instructions = row_navigation.INSTRUCTIONS
         elif route_schema: instructions = ROUTE_INSTRUCTIONS + '\nReturn exactly ONE route action matching routeOnly. No separate edits, queries, filters, tokens or buttons. The server holds the exact original definition. On recovery replace the complete uncommitted route plan for the same current request. Return JSON message,changes,suggestions; give a short result message.'
         elif button_schema: instructions = 'Update only the selected existing navigation button for the CURRENT request. History is previous completed work. Return JSON message,changes,suggestions with exactly ONE buttonRoute action {op:"buttonRoute",id,pageId,label}. Use buttonRouteOnly.id and choose the requested destination from buttonRouteOnly.pages. Preserve its rectangle, all other elements, queries and row filters; the server compiles native handlers against the exact original. Never return table, search or raw native edits. On recovery replace the complete uncommitted buttonRoute plan.'
         elif page_schema: instructions = 'Update only the CURRENT selected page name/purpose. History contains completed previous turns. Return JSON message,changes,suggestions with exactly ONE pageMeta action {op:"pageMeta",layoutId,label,purpose}. Use focus.id, preserve the requested page label exactly, and record its stated purpose. Keep the old label/purpose when unmentioned. The server preserves the entire native page, all queries, geometry, interactions and unknown properties. Page purpose is draft metadata; NEVER emit a native /pagePurposes path, recreate a page or edit a previous button. On recovery replace the complete pageMeta plan.'
@@ -420,7 +438,10 @@ class AgentService:
                    'input': [{'role': 'user', 'content': [{'type': 'input_text', 'text': json.dumps(context)}] + attachments}],
                    'max_output_tokens': CREATE_OUTPUT_TOKENS if context['canvasState'] == 'blank' else EDIT_OUTPUT_TOKENS,
                    'text': {'format': {'type': 'json_schema', 'name': 'studio_changes', 'strict': True, 'schema': SCHEMA}}}
-        if format_only:
+        if sparkline:
+            request['text']['format']['schema'] = copy.deepcopy(SCHEMA)
+            request['text']['format']['schema']['properties']['changes'].update(items=sparkline, minItems=1, maxItems=1)
+        elif format_only:
             # Reduce the action space for this explicit presentation-only turn.
             # Other requests retain the full native contract, not this schema.
             request['text']['format']['schema'] = copy.deepcopy(SCHEMA)
@@ -429,7 +450,8 @@ class AgentService:
             request['text']['format']['schema'] = copy.deepcopy(SCHEMA)
             request['text']['format']['schema']['properties']['changes']['items']['anyOf'] = [
                 action for action in request['text']['format']['schema']['properties']['changes']['items']['anyOf']
-                if action != TABLE_FORMAT_ACTION]
+                if action != TABLE_FORMAT_ACTION and (action != TABLE_SPARKLINE_ACTION or
+                    table_receipt and any(field.get('cellKind') in ('sparkline', 'numericArray') for field in table_receipt.get('fields', [])))]
             if row_only:
                 request['text']['format']['schema']['properties']['changes'].update(items=row_navigation.plan_schema(profile,table_receipt),minItems=1,maxItems=1)
             elif route_schema:
@@ -505,7 +527,13 @@ class AgentService:
                 if calculation:
                     if not isinstance(result['changes'],list)or len(result['changes'])!=1 or not isinstance(result['changes'][0],dict)or result['changes'][0].get('op')!='search'or result['changes'][0].get('id')!=calculation['sourceId']:
                         raise ProviderError('Return one search action for calculationOnly.sourceId, retaining the complete original pipeline and adding the exact requested AS alias. No native or unrelated actions.',422,'calculation_plan')
-                if row_only or route_schema or button_schema or page_schema or calculation:
+                if sparkline:
+                    changes = result['changes']
+                    if (not isinstance(changes, list) or len(changes) != 1 or not isinstance(changes[0], dict)
+                            or set(changes[0]) != set(sparkline['required'])
+                            or any(changes[0].get(key) not in rule.get('enum', []) for key, rule in sparkline['properties'].items())):
+                        raise ProviderError('Return exactly one tableSparkline action using the selected table, verified field and exact allowed style/width. Do not change native properties or searches separately.', 422, 'table_sparkline')
+                if row_only or route_schema or button_schema or page_schema or calculation or sparkline:
                     # A rejected new detail page is transient, not user work.
                     # Recompile its corrected plan against the exact original;
                     # query checks remain cached within the same recovery budget.
@@ -533,6 +561,7 @@ class AgentService:
                 result['changes'] = proposal.changes
                 next_purposes = proposed_purposes(raw_actions, next_purposes, draft)
                 validate_features(draft, document, environment)
+                validate_native_gap_policy(draft, document, profile)
                 validate_chart_placement(draft, document)
                 validate_blank_claim(result['message'], draft, document, profile)
                 if budget.phase == 'complete':
@@ -566,6 +595,7 @@ class AgentService:
                     receipts = data.validate_searches(draft, document, profile)
                 validate_requested_columns(prompt, body.get('selected', ''), draft, receipts)
                 validate_creation_columns(prompt, draft, document, profile, receipts)
+                if budget.phase == 'complete': validate_sparkline_request(prompt, draft, receipts)
                 if calculation:
                     fields=next((set(r.get('fields',[]))for r in receipts if r.get('source')==calculation['sourceId']),set())
                     missing=set(calculation['existingOutputFields'])-fields
@@ -612,6 +642,7 @@ class AgentService:
                     profile['measurementConstraints'] = temperature_constraints(confirmed_intent, brief, profile)
                     profile['independentMeasurements'] = data.independent_populations
                     profile['retainSourceRows'] = retain_source_rows(prompt, brief)
+                    profile.update(profile_policy(prompt, brief, environment))
                 if getattr(budget, 'compact', False):
                     # This turn began on an empty verified canvas. Its rejected
                     # composition is transient, never accepted user work. Replan

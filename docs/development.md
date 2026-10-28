@@ -60,6 +60,10 @@ Use an authorized test instance and keep its connection details outside the repo
 
 Exercise the changed user journey through browser, REST handler, actual data, preview and native readback/rendering. Preserve the original draft; inspect unrelated sources and interactions after edits. Label bounded live results separately from authored examples or mocked responses. Keep raw environment evidence local, then write a sanitized public summary of versions, scope and remaining gates.
 
+## Native option inventory
+
+`node scripts/update_studio_inventory.cjs` regenerates structural metadata from the pinned renderer dependencies. Review the diff and version boundaries; `npm test` checks that the committed inventory matches. Do not copy vendor implementation/prose or treat metadata coverage as native qualification. See [native coverage](native-coverage.md).
+
 ## Maintenance boundaries
 
 Follow [architecture](architecture.md) and [upgrade guide](upgrade-guide.md). Provider changes belong behind adapters; compatibility rules belong in versioned contracts; session changes require migrations. Retain unknown native properties and fail atomically on invalid edits. A future Splunk version is an explicit qualification task, not an automatic consequence of changing a version comparison.

@@ -1,5 +1,11 @@
 # Updating Constellation
 
+## 0.32 native authoring contracts
+
+Draft schema stays 3; no credential, native-view or draft migration runs. Refresh workspace tabs after installation. Regenerate/review `studio_inventory.json` with `node scripts/update_studio_inventory.cjs` when upgrading Framework dependencies; the frontend drift check must pass. Structural metadata, version gates, execution support and native acceptance remain separate.
+
+Keep feature recipes/compilers provider neutral and preserve guidance through every budget path. Requalify missing-parent refusal/preservation, scalar/array evidence, every-row sparkline styles, unrelated properties and advanced bindings. Do not generalize object materialization into arbitrary arrays or bypass native-only source restrictions. See [coverage gates](native-coverage.md).
+
 ## 0.31.1 unavailable draft links
 
 Refresh workspace tabs after installing. No credential, draft or native migration runs; schema remains 3. An explicit unavailable link now keeps editing/autosave disabled while offering the existing New dashboard and Dashboards actions. Only an explicit document activation resumes persistence. Keep failed storage initialization distinct from this known-unavailable state, and never flush the temporary blank canvas before opening another document. Requalify foreign/deleted links, refresh, library open/close, deliberate new creation and reopening an owned draft; compare record counts and the active preference before and after unavailable-link navigation.

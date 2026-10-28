@@ -11,6 +11,9 @@ from input_normalization import normalize_button_actions
 from search_chart_actions import SEARCH_ACTION, CHART_ACTION, CHART_ACTION_SCHEMA, TOKEN_ACTION, compile_search, compile_chart, compile_token, normalize_field_bindings, normalize_event_counts
 from search_chart_actions import FILTER_ACTION, DASHBOARD_ACTION, compile_filter, compile_dashboard, normalize_row_filters
 from table_format import TABLE_FORMAT_ACTION, compile_table_format
+from native_containers import materialize_native_parents
+from sparkline_queries import normalize_sparklines
+from table_sparkline import ACTION as TABLE_SPARKLINE_ACTION, compile_sparkline
 from measurement_constraints import normalize_measurements
 from native_text_encoding import normalize_reference_text
 from compact_creation import COMPOSE_ACTION, expand_compose
@@ -40,7 +43,7 @@ PAGE_ACTION['properties']['op'] = {'type': 'string', 'enum': ['page']}
 PAGE_ACTION['properties']['purpose'] = {'type': 'string', 'maxLength': 1200}
 PAGE_ACTION['properties']['moveItems'] = {'type': 'boolean', 'description': 'Move these items off their previous pages when true; otherwise allow reuse.'}
 PAGE_ACTION['required'].extend(['purpose', 'moveItems'])
-ACTION_SCHEMA = {'anyOf': [COMPOSE_ACTION, LEGACY_CHANGE, DASHBOARD_ACTION, SEARCH_ACTION, *CHART_ACTION_SCHEMA['anyOf'], TOKEN_ACTION, FILTER_ACTION, TABLE_FORMAT_ACTION, LAYOUT_ACTION, PAGE_ACTION, PAGE_META_ACTION, LINK_ACTION, BUTTON_ACTION, ROUTE_ACTION, BUTTON_ROUTE_ACTION]}
+ACTION_SCHEMA = {'anyOf': [COMPOSE_ACTION, LEGACY_CHANGE, DASHBOARD_ACTION, SEARCH_ACTION, *CHART_ACTION_SCHEMA['anyOf'], TOKEN_ACTION, FILTER_ACTION, TABLE_FORMAT_ACTION, TABLE_SPARKLINE_ACTION, LAYOUT_ACTION, PAGE_ACTION, PAGE_META_ACTION, LINK_ACTION, BUTTON_ACTION, ROUTE_ACTION, BUTTON_ROUTE_ACTION]}
 
 
 def validate_chart_placement(document, previous):
@@ -94,6 +97,7 @@ def compile_actions(document, actions, profile=None, table_receipt=None):
     layout = copy.deepcopy(document['layout'])
     defaults, token_changes = copy.deepcopy(document.get('defaults', {})), False
     result, links, buttons, filters, formats, typed = [], [], [], [], [], False
+    sparklines = []
     routes = []
     for action in actions:
         if not isinstance(action, dict): raise ProviderError('Each authoring action must be an object.')
@@ -101,6 +105,7 @@ def compile_actions(document, actions, profile=None, table_receipt=None):
         if action.get('op')=='pageMeta':result.append(compile_page_meta(document,action));continue
         if action.get('op') == 'dashboard': result.extend(compile_dashboard(action)); continue
         if action.get('op') == 'formatTable': formats.append(action); continue
+        if action.get('op') == 'tableSparkline': sparklines.append(action); continue
         if action.get('op') == 'filter': filters.append(action); continue
         if action.get('op') == 'token':
             compile_token(action, defaults); token_changes = True
@@ -212,6 +217,7 @@ def compile_actions(document, actions, profile=None, table_receipt=None):
                                         ' but its button action places it on ' + page_id[:150] + '. Use one consistent placement pageId.')
                 page['structure'] = [item for item in page['structure'] if item.get('item') != identifier]
         result.append({'op': 'set', 'path': '/layout', 'value': json.dumps(layout)})
+    result = materialize_native_parents(document, result)
     if links or buttons or filters or routes:
         candidate = apply_changes(document, result)
         for action in filters:
@@ -231,11 +237,15 @@ def compile_actions(document, actions, profile=None, table_receipt=None):
             result.extend(changes)
             candidate = apply_changes(candidate, changes)
     candidate = apply_changes(document, result)
+    for action in sparklines:
+        changes = compile_sparkline(action, candidate, table_receipt)
+        result.extend(changes)
+        candidate = apply_changes(candidate, changes)
     for action in formats:
         change = compile_table_format(action, candidate, table_receipt)
         result.append(change)
         candidate = apply_changes(candidate, [change])
-    for normalize in (normalize_field_bindings, normalize_event_counts, normalize_row_filters, normalize_measurements):
+    for normalize in (normalize_field_bindings, normalize_event_counts, normalize_row_filters, normalize_measurements, normalize_sparklines):
         bindings = normalize(candidate, document, profile)
         if bindings:
             result.extend(bindings)

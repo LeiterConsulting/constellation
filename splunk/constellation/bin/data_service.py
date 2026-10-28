@@ -2,6 +2,9 @@
 import json
 import re
 from provider_service import ProviderError
+from studio_inventory import STATIC_VISUALIZATIONS
+from table_cells import array_kind, validate_sparkline_output
+from native_bindings import option_bindings
 from search_service import read_only_query, TIME_RANGES
 from token_service import resolve_query_tokens, validate_wildcard_filters
 from search_scope import scoped_suffix
@@ -126,7 +129,10 @@ class DataService:
                 for value in values:
                     try: float(value)
                     except (ValueError, TypeError): numeric = False; break
-                receipt['fields'].append({'name': name, 'numeric': numeric})
+                field = {'name': name, 'numeric': numeric}
+                kind = array_kind(values)
+                if kind: field['cellKind'] = kind
+                receipt['fields'].append(field)
             receipt['status'] = result.get('state', 'unknown')
         except ProviderError as error:
             if error.status >= 500 or error.code in ('recovery_budget', 'author_cancelled', 'author_expired'): raise
@@ -136,7 +142,7 @@ class DataService:
     def validate_searches(self, document, previous, profile):
         receipts = self.receipts = []
         usable = {}
-        static_types = {'splunk.markdown', 'splunk.richtext', 'splunk.rectangle', 'splunk.ellipse', 'splunk.image'}
+        static_types = STATIC_VISUALIZATIONS
         layouts = document.get('layout', {}).get('layoutDefinitions') or {'legacy': document.get('layout', {})}
         placed = {item.get('item') for layout in layouts.values() for item in layout.get('structure', [])}
         missing_bindings, unplaced = [], []
@@ -155,11 +161,16 @@ class DataService:
         needed = set()
         for identifier, visualization in document.get('visualizations', {}).items():
             old = previous.get('visualizations', {}).get(identifier, {})
-            channels = ('x', 'y', 'y2', 'category', 'majorValue', 'table')
+            channels = ('x', 'y', 'y2', 'category', 'majorValue', 'table', 'columnFormat', 'tableFormat')
             if (visualization.get('dataSources') != old.get('dataSources') or
                     visualization.get('eventHandlers') != old.get('eventHandlers') or
                     any(visualization.get('options', {}).get(key) != old.get('options', {}).get(key) for key in channels)):
                 needed.update(visualization.get('dataSources', {}).values())
+            if visualization.get('options') != old.get('options'):
+                needed.update(source for _path, source, _names in option_bindings(visualization))
+        for identifier, item in document.get('inputs', {}).items():
+            if item != previous.get('inputs', {}).get(identifier):
+                needed.update(item.get('dataSources', {}).values())
         pending = [(identifier, source) for identifier, source in document.get('dataSources', {}).items()
                    if source != previous.get('dataSources', {}).get(identifier) or identifier in needed]
         if len(pending) > 8: raise ProviderError('Build at most eight new search sources in one turn.')
@@ -183,6 +194,12 @@ class DataService:
                 problems.append('Source ' + identifier[:100] + ': ' + str(error)[:600] + (' ' + hint if hint else ''))
                 continue
             fields = [field['name'] for field in result['fields']]
+            try:
+                for visualization in document.get('visualizations', {}).values():
+                    if visualization.get('type') == 'splunk.table' and visualization.get('dataSources', {}).get('primary') == identifier:
+                        validate_sparkline_output(visualization, fields, result['results'])
+            except ProviderError as error:
+                problems.append(str(error))
             # Successful filtered searches can legitimately have no matches. In
             # particular, zero statistical outliers must not reject other panels.
             # A returned column can be entirely null in sparse data or after a
@@ -193,6 +210,7 @@ class DataService:
             usable[identifier] = (set(fields) - set(empty)) | (set(empty) & nullable) if result['results'] else set(fields) if fields else None
             receipts.append({'source': identifier, 'language': language, 'rows': len(result['results']),
                              'fields': fields, 'earliest': profile['scope']['earliest'], 'bounded': True, 'completion': result.get('evidence', {'state': 'unknown'}),
+                             'arrayFields': {name: kind for name in fields if (kind := array_kind([row.get(name) for row in result['results']]))},
                              'emptyFields': empty,
                              'status': 'partial' if result.get('state') == 'partial' else 'results' if result['results'] else 'empty'})
         for identifier, visualization in document.get('visualizations', {}).items():
@@ -223,6 +241,13 @@ class DataService:
                                 if re.search(r'\btimechart\b[^|]*\bby\b', query, re.I) else '')
                         problems.append('Visualization ' + identifier[:100] + ', channel ' + channel + ', source ' + source_id[:100] + ': missing output fields ' + ', '.join(missing)[:180] + '. Tested output fields: ' + ', '.join(sorted(usable[source_id]))[:300] + '.' + hint +
                             (' Table projections must match the search output. For a requested NEW metric, add its calculation with the exact alias to the selected search before projecting it. Preserve existing columns and row-navigation fields. For formatting alone, preserve the verified aggregation and aliases.' if channel == 'table' else ''))
+        for root in ('visualizations', 'inputs'):
+            for identifier, item in document.get(root, {}).items():
+                for path, source, names in option_bindings(item):
+                    if source not in usable or usable[source] is None: continue
+                    missing = set(names) - usable[source]
+                    if missing:
+                        problems.append('Native ' + root + ' ' + identifier[:100] + ', ' + path[:160] + ': missing actual source fields ' + ', '.join(sorted(missing))[:180] + '. Use verified output aliases and preserve existing calculations.')
         if problems:
             raise ProviderError('\n'.join(problems[:16])[:10000])
         return receipts

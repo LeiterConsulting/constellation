@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.32.0 - Unreleased
+
+- Add a versioned inventory of 29 embedded Studio visualization types and 822 option entries, with relevant option contracts, attributed feature recipes and a dependency drift check.
+- Retrieve using durable requirements and selection; retain guidance through compact/focused model requests.
+- Guard older native missing-bucket rendering and compile count-backed gaps on newer targets; explicit zero fill is labelled.
+- Validate native table cell shapes and array output; compile verified sparkline column styling for every row while preserving queries and unrelated work.
+- Materialize known missing native object parents as explicit edits; recognize native decorative connectors without requiring a search.
+- Check direct source-field selections in advanced visualization/input options against actual output. Preserve all existing execution, permission and atomic validation boundaries.
+
 ## 0.31.1 - 2026-10-28
 
 - Keep unavailable explicit draft links unopened instead of saving an unwanted blank draft or replacing the active preference. The existing New dashboard and Dashboards actions resume persistence only after an explicit document choice.

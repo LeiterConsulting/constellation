@@ -1,8 +1,8 @@
 # Validation status
 
-Snapshot: **0.31.1 development preview, October 28, 2026**. This file is a sanitized summary. Private lab addresses, credentials, screenshots, transcripts, raw search data and detailed runtime receipts are excluded from the repository.
+Snapshot: **0.32.0 development preview, unreleased, October 28, 2026**. This file is a sanitized summary. Private lab addresses, credentials, screenshots, transcripts, raw search data and detailed runtime receipts are excluded from the repository.
 
-See the [0.31.1 startup and concurrent-author checks](#0311-unavailable-links-and-concurrent-authors--october-28-2026) for current evidence. Earlier cohorts below retain their own scope and failures.
+See the [0.32.0 native contract and sparkline checks](#0320-native-contracts-and-table-sparklines--october-28-2026) for current development evidence. Earlier cohorts below retain their own scope and failures. The latest published release remains 0.31.1.
 
 ## Release downloads
 
@@ -12,8 +12,8 @@ See the [0.31.1 startup and concurrent-author checks](#0311-unavailable-links-an
 
 | Check | Observed result |
 | --- | --- |
-| Python unit suites | 429 tests passed on Python 3.9 and 3.13, including wide-event samples, request-local catalog isolation, persistent-driver identity, scoped sort/label compilers, transport classification and retained provider/native/measurement regressions. |
-| Frontend unit suites | 106 tests passed, including scoped repeated-unit suppression, conflicting/mixed units, exact field-name collisions, suggestion invalidation and retained delivery/focus/starter regressions. |
+| Python unit suites | 452 tests passed on Python 3.9 and 3.13, including native inventory selection, container preservation, direct bindings, actual array outputs, per-row sparkline styling, missing-bucket policies and retained provider/native/measurement regressions. |
+| Frontend unit suites | 107 tests passed, including structural inventory drift and retained delivery/focus/starter regressions. |
 | TypeScript and production build | Passed; bundle-size warning remains. |
 | Deterministic app package | Generated with SHA-256 receipt. |
 | Splunk AppInspect 4.3.1, precert | 0 errors, 0 failures, 0 future failures, 7 warnings, 1 skipped, 116 successes, 128 not applicable on the tested app archive. |
@@ -28,6 +28,32 @@ The AppInspect result applies to the tested development archive. The seven warni
 | 10.4.4 | 1.26.6 | Native roundtrips, synthetic SPL/SPL2, PDF interactions and prior page/focus checks; current repeated non-admin OpenAI/Ollama wide-data creation, editing, native saves and selected UI/native navigation. |
 
 The 0.31 cohort extends current real-data creation/editing to 10.4.4 through OpenAI and Ollama. Earlier full-interface journeys retain their own versions and scope. AITK 6.2 shared inference passed on 10.2.8; the 10.4.4 target has AITK 6.1 without a usable configured connection and remains blocked by maintainer permissions. Do not infer instance-independent provider availability from app installation.
+
+## 0.32.0 Native contracts and table sparklines — October 28, 2026
+
+**Scope.** The pinned renderer's structural inventory records 29 embedded visualization types and 822 option entries, six inputs, six handlers and two layout types. These are authoring metadata, not 822 independently qualified behaviors. Request, selection and durable requirements choose bounded native guidance, which now survives compact/focused request paths. Known missing object containers compile to explicit edits, advanced direct source-field bindings are checked against actual output, and verified table sparkline edits preserve searches and unrelated native properties. See the [coverage ledger](native-coverage.md) for unresolved parity gates.
+
+**Native behavior discovered.** Native SPL value sparklines fill empty time buckets with zero. Native Studio 10.2 also plots missing array points as zero, while Studio 10.4 can display missing slots separately. Both native versions were inspected with explicitly synthetic arrays. Older-target creation now offers a separate time trend or explicit acceptance of labelled native zero fill before inference; existing imported queries are not rewritten. Supported simple newer-target SPL searches compile matching per-bucket valid counts and null slots, preserving genuine observed zero. Count sparkline zero semantics remain separate. Complex/SPL2 variants are not covered by this transformation.
+
+**Exact final archive.** The unreleased **0.32.0 build 48** archive is SHA-256 `fa972229b19d44316155e0c4add2cc89fa72fc181956d14668df54c52a7761d2` (467 regular files; 5,457,306 bytes). Both recorded Enterprise versions installed these exact bytes through verified management TLS without restart. Archive inspection found one app root, no macOS sidecars/resource forks, no private runtime configuration and no extended tar metadata. AppInspect 4.3.1 precert returned zero errors, failures or future failures, seven warnings and one skip. All 452 backend tests passed on Python 3.9 and 3.13, 107 frontend tests passed, and the production build passed with its existing bundle-size warning. This archive is not a published release or Cloud certification.
+
+**Final-package ordinary-user cohort.** Three separate ordinary authors on Enterprise 10.2.8 used real freezer data through OpenAI, Ollama and managed AITK 6.2. Each original gap-preservation request paused with no edits and zero inference calls. The authors then explicitly accepted labelled native table zero fill. All three completed two-page creation with Overview/detail navigation, a summary containing scalar temperature and sparkline calculations, an independent Wi-Fi summary, and a raw detail table. A selected-table chat edit applied area styling and a 180-pixel column width across rows while leaving queries, layout and unrelated work exact. Exact draft/conversation reopen and owner-private native save/readback passed.
+
+| Provider | Creation seconds | Selected style seconds | Final inference behavior |
+| --- | --- | --- | --- |
+| OpenAI | 26.22 | 4.52 | One call per turn; no repair |
+| Ollama | 24.46 | 6.19 | One call per turn; no repair |
+| AITK 6.2 | 27.83 | 16.45 | One call per turn; no repair |
+
+These are three bounded two-turn flows, not a repeated soak or controlled model benchmark. Independent native synthetic analytical probes checked the generated calculations: values above 150°F excluded, exactly 150°F retained, the known temperature mean preserved, and Wi-Fi calculations retaining their independent population. These oracle fixtures were not ingested or sent to providers. A terminal pure self-rounding presentation step was removed only in the oracle's derived query to compare unrounded arithmetic; the generated dashboard query stayed unchanged.
+
+**Newer-target qualification.** A separate non-admin Ollama flow on Enterprise 10.4.4 created and styled one table from an explicitly synthetic qualification search. Creation took 17.19 seconds and styling 8.55 seconds, one model call each. Actual native output retained missing slots and genuine zero, with the expected scalar mean; private native readback was exact. The exact final generated definition was then rendered in a disposable administrator-owned native view: native Studio showed the area sparkline, 180-pixel width, N/A missing points and a real zero. This render check used the administrator; the creation/search/save checks used the ordinary user. Separate three-row native fixtures verified styling beyond the first row. It is not another real-data three-provider cohort on the newer version.
+
+**Retained failures and limits.** Superseded candidates exposed an invalid double-underscore helper alias in native `stats`, missing-value policy dropped during recovery metadata refresh, a creation action offered without a verified existing array, and unnecessarily large native plans for explicit zero-fill acceptance. Those paths were corrected without increasing recovery/search limits or bypassing validation. One final-package OpenAI attempt completed authoring but stopped in the analytical test harness because a correct rounded mean was compared to an unrounded expectation; the corrected oracle and complete rerun are recorded above. An earlier final-package OpenAI creation used a repair; the one-call result above is the last complete run, not a universal success claim. Failed and superseded attempts remain separate local evidence.
+
+**Cleanup.** Five temporary users, 23 private configuration records, 18 owned native views, two disposable administrator synthetic views and the one copied owner-only OpenAI record were removed. Both temporary password files were deleted. The original administrator's 36 drafts/list/preferences/settings and all 78 original configuration contents stayed exact. AITK inference policy and protected backing writers stayed unchanged; upstream connection parameters were not read or written. Only the two test browser tabs were closed.
+
+**Remaining gates.** Full native support still requires saved-report preview execution, installed custom extension discovery/rendering, specialized chart data shapes and interactions, complex input/grid/imported/SPL2 lifecycles, theme/accessibility testing and broader model/version qualification. Second-target AITK maintainer permissions remain unresolved. Earlier delivery/security/deployment/latency/bundle and unaided-user gates remain open. No new configuration surface or external runtime was introduced. Development remains unreleased, with the repository private and 0.31.1 still Latest.
 
 ## 0.31.1 Unavailable links and concurrent authors — October 28, 2026
 

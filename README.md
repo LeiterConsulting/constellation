@@ -4,7 +4,7 @@ A conversational canvas for creating and editing **Splunk Dashboard Studio** das
 
 Describe an operational question, choose data available to your Splunk user, and watch a dashboard take shape. Select a chart, input or page to refine it through chat. Start from a blank canvas, an existing Studio definition, or an image/PDF reference when the selected provider supports it.
 
-**Status: 0.31.1 development preview.** This is a new codebase, separate from Splunk Dashboard Generator. It is not a production release or Splunk Cloud certified app. The repository is currently private and is being prepared for a future public release.
+**Status: 0.32.0 development preview (unreleased).** This is a new codebase, separate from Splunk Dashboard Generator. It is not a production release or Splunk Cloud certified app. The repository is currently private and is being prepared for a future public release.
 
 ## Download and start
 
@@ -26,6 +26,7 @@ Start with the [user guide](docs/user-guide.md). AITK administrators should foll
 ## What works today
 
 - A live dashboard canvas beside one conversation panel that docks, floats and collapses.
+- Native feature guidance from a versioned 29-type/822-option-entry renderer inventory; verified table sparkline styling and preserved imported properties. Full native parity remains a release gate.
 - Real-data creation from accessible indexes/sourcetypes or an existing SPL/SPL2 search; instance-based starter suggestions.
 - Native Studio pages, page purposes, table drilldowns, device/entity tokens and return navigation.
 - Element selection for directed chat edits and contextual suggestions.
@@ -39,13 +40,14 @@ Start with the [user guide](docs/user-guide.md). AITK administrators should foll
 
 This app remains self-contained inside Splunk: React/TypeScript, the Splunk Dashboard Framework, Splunk UI Toolkit and bundled Python REST handlers. It requires no separate agent platform, worker service or vector database. Retrieval currently uses bundled, attributed guidance filtered by version and intent; semantic RAG and verified cross-dataset relationships remain future work.
 
-## What changed in this release
+## Current development
 
-- Smaller verified calculation plans improve ordinary Ollama/AITK creation while retaining actual search, output, measurement, scope and native validation.
-- Source-scoped unit declarations prevent redundant confirmation suggestions; unknown or conflicting units remain explicit.
-- Wide-event inspection prioritizes useful fields, excludes raw event text and labels reduced samples partial. Catalog metadata is reused only within one authenticated request.
-- Exact selected-table sorting and return-button label edits can avoid inference while preserving unrelated native work. Broader requests retain model authoring.
-- Unavailable draft links stay closed until the user chooses New dashboard or opens their own work. They no longer autosave an unwanted blank draft.
+- Versioned structural contracts and attributed native recipes reach the agent using the request, selected element and durable Draft requirements. Smaller creation/editing paths retain relevant guidance.
+- Native table sparklines can be created alongside scalar aggregates and styled across every row through verified selected-column edits. Actual array output is checked before styling.
+- Missing-value behavior follows the native target: older Studio asks for a trend chart or explicitly accepted, labelled zero fill; supported newer-target queries preserve missing buckets and genuine observed zero separately.
+- Advanced source bindings, table cell options and known missing native object containers receive targeted validation without dropping unknown imported properties.
+
+The [native coverage ledger](docs/native-coverage.md) separates the authoring inventory from features exercised end to end. Complete Studio parity remains open.
 
 See the [changelog](CHANGELOG.md) for version history and [validation](docs/validation.md) for exact package hashes, tested journeys and retained failures.
 
@@ -57,7 +59,7 @@ Search previews use the current user's permissions and a read-only command subse
 
 Multi-page actual-data creation and focused edits have been exercised through OpenAI, Ollama and AITK. Earlier AITK qualification verified a 16,000-token budget; a 2,000-token setting could return no completion. The app does not query or infer its current upstream model/token limits. Settings distinguishes a small connection test from full authoring and exposes reported or unknown limits. Compact creation reduces avoidable output while retaining all validation gates. These are bounded provider/model/environment checks, not a general success-rate or 1.0 acceptance claim.
 
-The [latest qualification](docs/validation.md#0311-unavailable-links-and-concurrent-authors--october-28-2026) records 18 overlapping non-admin flows / 72 turns on the unchanged backend, followed by three final-package flows / twelve turns across OpenAI, Ollama and managed AITK. All passed without model repairs. Browser checks on the final package verified unavailable links, reopening, selection, a conversational sort, refresh and preview navigation. These operated samples are separate from unaided-user or general reliability acceptance.
+The [latest qualification](docs/validation.md#0320-native-contracts-and-table-sparklines--october-28-2026) covers final-package non-admin two-page creation, focused sparkline editing, exact draft reopen and private native saves through all three providers. Each final turn used one model call. Separate newer-target synthetic checks verified missing buckets, observed zero and native rendering. Earlier broader cohorts retain their own package identity and scope. These operated samples are separate from unaided-user or general reliability acceptance.
 
 **Before 1.0:** historical latency tails, broader model/native/imported/SPL2 and complex measurement semantics, independent delivery/storage security review, fresh-install/upgrade/rollback/cluster testing, unaided UX/accessibility and bundle reduction remain open. AITK on the second tested target remains blocked by maintainer permissions. See the [release gates](docs/roadmap.md), [support contract](docs/studio-support.md) and [qualification protocol](docs/provider-qualification.md).
 
@@ -74,7 +76,7 @@ python3.13 scripts/package_app.py
 npm run dev -- --port 5178
 ```
 
-The local preview demonstrates the canvas with illustrative data. Provider settings, live searches, server-backed drafts and native saves require the installed Splunk app. Packaging creates `artifacts/constellation-0.31.1.tgz`; release `.tar.gz` assets contain those exact bytes. Build artifacts and dependencies stay outside Git. See [development and release checks](docs/development.md).
+The local preview demonstrates the canvas with illustrative data. Provider settings, live searches, server-backed drafts and native saves require the installed Splunk app. Packaging creates `artifacts/constellation-0.32.0.tgz`; release `.tar.gz` assets contain those exact bytes. Build artifacts and dependencies stay outside Git. See [development and release checks](docs/development.md).
 
 ## Data and credentials
 
@@ -91,6 +93,7 @@ The selected provider receives the prompt, recent conversation, dashboard defini
 | [AITK setup](docs/aitk-setup.md) | Administrator setup, author permissions and native connection tests. |
 | [Security review](docs/security-review.md) | Independent agent review, fixes and limits. |
 | [Architecture](docs/architecture.md) | App modules, request flow, persistence and security boundaries. |
+| [Native coverage](docs/native-coverage.md) | Native authoring inventory and explicit parity gates. |
 | [Studio support](docs/studio-support.md) | Implemented behavior and remaining parity gates. |
 | [Development](docs/development.md) | Local commands, synthetic fixtures, CI and repository checks. |
 | [Validation](docs/validation.md) | Verified test scope and explicit limitations. |

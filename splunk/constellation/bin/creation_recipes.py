@@ -4,6 +4,7 @@ Only verified literal fields and ordinary aggregates are compiled here. Complex
 queries keep the existing pipeline/native path. There is no execution authority.
 """
 import re
+import copy
 from provider_service import ProviderError
 
 FUNCTIONS = ('avg', 'min', 'max', 'sum', 'median', 'stdev', 'count', 'latest', 'earliest')
@@ -23,6 +24,14 @@ RECIPE_PANEL = {'type': 'object', 'properties': {
     'type': {'type': 'string', 'enum': ['splunk.line', 'splunk.area', 'splunk.column', 'splunk.bar', 'splunk.singlevalue', 'splunk.table']},
     'title': {'type': 'string'}, 'recipe': RECIPE},
     'required': ['id', 'type', 'title', 'recipe'], 'additionalProperties': False}
+SCALAR_METRIC = copy.deepcopy(RECIPE['properties']['metrics']['items'])
+SPARKLINE_METRIC = {'type': 'object', 'properties': {
+    'function': {'type': 'string', 'enum': ['sparkline']},
+    'aggregation': {'type': 'string', 'enum': ['avg', 'min', 'max', 'sum', 'count']},
+    'field': {'type': 'string'}, 'alias': {'type': 'string'},
+    'span': {'type': 'string', 'description': 'Positive literal time bucket such as 1h; at most 200 buckets in the selected window.'}},
+    'required': ['function', 'aggregation', 'field', 'alias', 'span'], 'additionalProperties': False}
+RECIPE['properties']['metrics']['items'] = {'anyOf': [SCALAR_METRIC, SPARKLINE_METRIC]}
 # Models choose a calculation, not empty fields belonging to another kind.
 # Runtime still accepts the older complete form, but never drops populated
 # fields or unknown properties to make a rejected proposal pass.
@@ -69,9 +78,20 @@ def compile_recipe(recipe, chart_type, profile):
     if group: field(group)
     aliases, expressions, formatting = [], [], []
     for metric in metrics:
-        if not isinstance(metric, dict) or set(metric) != {'function', 'field', 'alias'}:
+        sparkline = isinstance(metric, dict) and metric.get('function') == 'sparkline'
+        required_metric = set(SPARKLINE_METRIC['required']) if sparkline else {'function', 'field', 'alias'}
+        if not isinstance(metric, dict) or set(metric) != required_metric:
             raise ProviderError('Each recipe metric needs function, field and alias.')
         function, value, alias = (metric[k] for k in ('function', 'field', 'alias'))
+        if sparkline:
+            if chart_type != 'splunk.table' or kind != 'stats':
+                raise ProviderError('Sparkline recipe metrics belong in a stats table, not an axis chart or timechart.')
+            function = metric['aggregation']
+            span = re.fullmatch(r'([1-9][0-9]*)(s|m|h|d)', metric['span']) if isinstance(metric['span'], str) else None
+            window = {'-15m': 900, '-1h': 3600, '-24h': 86400, '-7d': 604800}.get(profile.get('scope', {}).get('earliest'))
+            if (function not in SPARKLINE_METRIC['properties']['aggregation']['enum'] or not span or not window
+                    or window / (int(span[1]) * {'s': 1, 'm': 60, 'h': 3600, 'd': 86400}[span[2]]) + 2 > 200):
+                raise ProviderError('Use a supported sparkline aggregate and literal time span covering the selected window within 200 buckets.')
         if function not in FUNCTIONS or not isinstance(alias, str) or not re.fullmatch(FIELD, alias) or alias in aliases or alias == group or kind == 'timechart' and alias == '_time':
             raise ProviderError('Use supported aggregates and distinct output aliases without grouping/time collisions.')
         if value == '' and function == 'count': expression = 'count'
@@ -84,8 +104,9 @@ def compile_recipe(recipe, chart_type, profile):
             if function not in ('count', 'latest', 'earliest') and known[value].get('numeric') is not True and not native_time:
                 raise ProviderError('Recipe metric ' + alias + ': ' + function + '(' + value + ') requires an inspected numeric input field. Preserve the metric; use a native timestamp aggregate for _time.')
             expression = function + '(' + value + ')'
+        if sparkline: expression = 'sparkline(' + expression + ',' + metric['span'] + ')'
         expressions.append(expression + ' AS ' + alias);aliases.append(alias)
-        if chart_type == 'splunk.table' and value:
+        if chart_type == 'splunk.table' and value and not sparkline:
             timestamp = value == '_time' and function in ('min', 'max', 'latest', 'earliest') and (known[value].get('numeric') is True or profile.get('scope', {}).get('index') and not profile.get('scope', {}).get('query'))
             if timestamp: formatting.append(alias + '=strftime(' + alias + ',"%Y-%m-%d %H:%M:%S")')
             elif function != 'count' and known[value].get('numeric') is True: formatting.append(alias + '=round(' + alias + ',2)')

@@ -20,6 +20,7 @@ COMMON_VIZ = ['splunk.singlevalue', 'splunk.singlevalueicon', 'splunk.singlevalu
               'splunk.sankey', 'splunk.linkgraph', 'splunk.map', 'splunk.markdown',
               'splunk.rectangle', 'splunk.ellipse', 'splunk.fillergauge', 'splunk.markergauge',
               'splunk.timeline', 'splunk.richtext', 'splunk.image', 'splunk.parallelcoordinates', 'splunk.events', 'splunk.choropleth.svg']
+COMMON_VIZ.append('abslayout.line')
 
 
 def read_only_query(query, language='spl'):

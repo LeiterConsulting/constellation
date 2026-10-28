@@ -4,6 +4,7 @@ No native searches, permissions or validation run here. Explicit geometry and
 advanced native features retain the existing authoring actions.
 """
 import copy
+import json
 import re
 from provider_service import ProviderError
 from search_chart_actions import chart_variant_schema
@@ -110,14 +111,27 @@ already masks excluded measurements; use original inputs, without conditional
 eval or casts. Only calculations outside these recipes need the alternative
 {id,type,title,pipeline,x,y} panel with exact output bindings. Keep metrics requested
 in one summary together in that panel, never add a separate chart for each metric.
+TABLE SPARKLINES: a stats table metric can be
+{function:"sparkline",aggregation:"avg",field:"verified_numeric",alias:"trend",span:"1h"}.
+Keep it alongside the other requested scalar metrics in that same stats recipe.
+This is an array metric; never substitute count/latest or omit its requested alias.
+The alternative pipeline panel also supports this calculation, e.g.
+{id:"summary",type:"splunk.table",title:"Measurements",pipeline:"| stats
+avg(verified_numeric) AS mean sparkline(avg(verified_numeric),1h) AS trend BY verified_entity",
+x:"",y:["verified_entity","mean","trend"]}. Use the requested suitable time span
+and verified input fields; preserve other requested aggregates in that same stats.
+The native sparkline output is an array automatically recognized by Studio.
+Do not round/stringify the trend array, use list/latest as a substitute, or add a
+separate chart instead of the requested table column. Keep every requested page's
+charts separate, with globally unique panel IDs and one page membership each.
 '''
 
 
 def compact_goal(context):
     """Ordinary small boards use composition; advanced/explicit layouts stay native."""
-    prompt = context['request']
-    if explicit_page_count(prompt) is None: return False
-    advanced = r'\b(?:grid|trellis|map|maps|choropleth|scatter|pie|gauge|funnel|sankey|network\s+graph|custom\s+visualization|dropdown|multiselect|cascad\w*|auto[- ]?refresh|conditional|visibility|markdown|image|sketch|PDF|SPL2|chain|pixels?|coordinates?|width|height|tokens?)\b|\bsplunk\.(?!line\b|area\b|column\b|bar\b|singlevalue\b|table\b)|\$'
+    prompt = context['request'] + ' ' + json.dumps(context.get('dashboardBrief', {}))
+    if explicit_page_count(context['request']) is None: return False
+    advanced = r'\b(?:columnformat|celltypes?|grid|trellis|map|maps|choropleth|scatter|pie|gauge|funnel|sankey|network\s+graph|custom\s+visualization|dropdown|multiselect|cascad\w*|auto[- ]?refresh|conditional|visibility|markdown|image|sketch|PDF|SPL2|chain|pixels?|coordinates?|width|height|tokens?)\b|\bsplunk\.(?!line\b|area\b|column\b|bar\b|singlevalue\b|table\b)|\$|\b(?:area|colored|styled)\s+sparklines?\b|\bsparklines?\b[^.!?]{0,30}\b(?:styling|colors?|area|connect)\b'
     selective = r'\b(?:no|without)\s+(?:(?:return|back)\s+)?buttons?\b|\b(?:do not|don.t|never)\s+(?:add|create|include)[^.!?]{0,60}\bbutton\b|\bbutton[^.!?]{0,40}\b(?:named|labelled|labeled|called)\b|\b(?:only|just)\s+(?:one|this|the selected)\s+(?:detail|destination)'
     placement = r'\b(?:place|put|position)\b[^.!?]{0,60}\b(?:left|right|above|below|beside)\b|\bspan\s+(?:both|two|2)\s+columns\b'
     return not split_series_goal(prompt) and not any(re.search(pattern, prompt, re.I) for pattern in (advanced, selective, placement))

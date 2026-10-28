@@ -52,6 +52,7 @@ def verified_format_action(receipt, document):
 def formatting_only(prompt, selected, document):
     """A narrow presentation-only request; broader edits retain the full schema."""
     if document.get('visualizations', {}).get(selected, {}).get('type') != 'splunk.table': return False
+    if re.search(r'\b(?:sparklines?|celltypes?|columnformat|tableformat|renderer|background|alignment|width|heatmap|colors?)\b', prompt, re.I): return False
     if not re.search(r'\b(?:round|format|formatting|decimal|precision)\b', prompt, re.I): return False
     # Require an explicit selected/this-table-only scope, not a classifier guess.
     if not re.search(r'\bonly\b[^.!?:]{0,70}\b(?:this|selected)\b[^.!?:]{0,70}\btable\b', prompt, re.I): return False

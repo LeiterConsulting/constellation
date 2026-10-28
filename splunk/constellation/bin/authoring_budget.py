@@ -113,6 +113,15 @@ class AuthoringBudget:
         if context.get('calculationOnly'):
             context={key:context[key]for key in ('request','focus','dataProfile','dashboardBrief','history','modelLimits','calculationOnly')if key in context}
             request['max_output_tokens']=min(request['max_output_tokens'],3500)
+        if context.get('tableSparklineOnly'):
+            context = {key: context[key] for key in ('request', 'focus', 'focusedSourceReceipt', 'dashboardBrief', 'history', 'modelLimits', 'tableSparklineOnly') if key in context}
+            request['max_output_tokens'] = min(request['max_output_tokens'], 1500)
+        # Keep retrieved evidence through every small request path. Native option
+        # contracts are needed only by paths that can actually emit native edits;
+        # specialized query/navigation compilers hold those properties unchanged.
+        context['retrievedGuidance'] = self.context.get('retrievedGuidance', [])
+        if not (self.compact or any(context.get(flag) for flag in ('formattingOnly', 'rowNavigationOnly', 'routeOnly', 'buttonRouteOnly', 'pageMetadataOnly', 'calculationOnly', 'tableSparklineOnly'))):
+            if 'nativeAuthoring' in self.context: context['nativeAuthoring'] = self.context['nativeAuthoring']
         # A conservative estimate, not a tokenizer or a verified upstream limit.
         # Drop only rolling history; the durable brief and exact document remain.
         if self.provider == 'ollama':
