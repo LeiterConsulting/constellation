@@ -9,18 +9,18 @@ A conversational canvas for creating and editing **Splunk Dashboard Studio** das
 
 Describe an operational question, choose data available to your Splunk user, and watch a dashboard take shape. Select a chart, input or page to refine it through chat. Start from a blank canvas, an existing Studio definition, or an image/PDF reference when the selected provider supports it.
 
-**Status: 1.0.0 release candidate (unreleased).** The [supported profile](docs/support-policy.md) is a single Linux Splunk Enterprise search head with native Studio output and OpenAI, Ollama or administrator-approved AITK. Complete Studio parity, Cloud certification and search-head-cluster coordination remain outside this release profile. The repository remains private; no first-party open-source license has been selected. This is a new codebase, separate from Splunk Dashboard Generator.
+**Status: 1.0.0 — released October 29, 2026.** The [supported profile](docs/support-policy.md) is a single Linux Splunk Enterprise search head with native Studio output and OpenAI, Ollama or administrator-approved AITK. Complete Studio parity, Cloud certification and search-head-cluster coordination remain outside this release profile. The repository remains private; no first-party open-source license has been selected. This is a new codebase, separate from Splunk Dashboard Generator.
 
 ## Download and start
 
-Get [Constellation 0.34.0](https://github.com/LeiterConsulting/constellation/releases/tag/v0.34.0), the latest published development preview. Repository access is required.
+Get [Constellation 1.0.0](https://github.com/LeiterConsulting/constellation/releases/tag/v1.0.0), the latest release. Repository access is required.
 
 | Download | Use |
 | --- | --- |
-| [Splunk app · tar.gz](https://github.com/LeiterConsulting/constellation/releases/download/v0.34.0/constellation-0.34.0.tar.gz) | Install or update Constellation through Splunk app management. |
-| [App and documentation bundle](https://github.com/LeiterConsulting/constellation/releases/download/v0.34.0/constellation-0.34.0-handoff.zip) | The same app, user guide, setup instructions and reviewed support/validation documents. |
-| [Standalone user guide](https://github.com/LeiterConsulting/constellation/releases/download/v0.34.0/constellation-0.34.0-user-guide.md) | A walkthrough of creation, focused editing, drafts and native saves. |
-| [SHA256SUMS](https://github.com/LeiterConsulting/constellation/releases/download/v0.34.0/SHA256SUMS) | Verify the downloaded files. |
+| [Splunk app · tar.gz](https://github.com/LeiterConsulting/constellation/releases/download/v1.0.0/constellation-1.0.0.tar.gz) | Install or update Constellation through Splunk app management. |
+| [App and documentation bundle](https://github.com/LeiterConsulting/constellation/releases/download/v1.0.0/constellation-1.0.0-handoff.zip) | The same app, user guide, setup instructions and reviewed support/validation documents. |
+| [Standalone user guide](https://github.com/LeiterConsulting/constellation/releases/download/v1.0.0/constellation-1.0.0-user-guide.md) | A walkthrough of creation, focused editing, drafts and native saves. |
+| [SHA256SUMS](https://github.com/LeiterConsulting/constellation/releases/download/v1.0.0/SHA256SUMS) | Verify the downloaded files. |
 
 1. Have an administrator install the app from file using the [installation guide](docs/installation.md). Refresh workspace tabs after an update; follow Splunk's reported restart requirements.
 2. Open **Constellation → Settings**, configure OpenAI, Ollama or an administrator-approved AITK connection, and test the selected model. Keys stay in Splunk; no credentials are included in the release.
@@ -45,7 +45,7 @@ Start with the [user guide](docs/user-guide.md). AITK administrators should foll
 
 This app remains self-contained inside Splunk: React/TypeScript, the Splunk Dashboard Framework, Splunk UI Toolkit and bundled Python REST handlers. It requires no separate agent platform, worker service or vector database. Retrieval currently uses bundled, attributed guidance filtered by version and intent; semantic RAG and verified cross-dataset relationships remain future work.
 
-## Current development
+## Dashboard capabilities
 
 - **More → Images and icons** uploads/reuses native raster images and passive SVG icons without sending file bytes to models. **Export with assets** and **Dashboards → Import dashboard file** move supported shared and packaged media between instances, including SVG choropleth maps, with sharing review and verified reference remapping. Missing destination dependencies block import before uploads. Compatible report searches can be included explicitly, with supported CSV dependencies read in each report’s original app and given distinct portable names. One opt-in includes complete CSV lookups (up to 5,000 rows/1 MB each) with supported case-insensitive, CIDR, wildcard, fallback, filtered and time-based matching, and inlines ordinary macros; import verifies fresh private lookup files/definitions without replacing native objects. Complete backing CSVs include rows hidden by lookup filters. Sharing or another app still needs native lookup access. Advanced lookups/macros, extensions, modules and external media need destination setup. Native upload permissions apply.
 

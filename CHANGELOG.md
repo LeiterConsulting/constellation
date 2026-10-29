@@ -1,11 +1,13 @@
 # Changelog
 
-## 1.0.0 — unreleased
+## 1.0.0 — October 29, 2026
 
 - Carry current/default input values and exact selected-source context into field inspection without storing those values in data scopes or sending results to models.
 - Preserve compound requests by retaining general authoring when a narrow report-suffix plan cannot express the whole change.
 - Load the Studio renderer on demand, with a recoverable loading/error boundary, preserve emitted module/CSS links and enforce an initial browser bundle budget.
 - Establish the bounded Enterprise 1.0 support profile and immediate feedback/patch policy; independent reviews are post-release work under the product owner’s decision.
+- Include the previously unpublished 0.35–0.43 increments below: native media/SVG assets, version-gated cascading inputs, compatible cross-instance dependencies, bounded complete CSV lookup transfer, ordinary macro inlining and report-context previews/edits.
+- Qualify ordinary-author provider flows, native output/sharing, cancellation/delivery recovery and 0.43 upgrade/rollback on the recorded Enterprise targets.
 
 ## 0.43.0 — unreleased
 

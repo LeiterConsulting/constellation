@@ -1,12 +1,12 @@
 # Validation status
 
-Snapshot: **1.0.0 release candidate, unreleased, October 29, 2026**. This file is a sanitized summary. Private lab addresses, credentials, screenshots, transcripts, raw search data and detailed runtime receipts are excluded from the repository.
+Snapshot: **1.0.0 release, October 29, 2026**. This file is a sanitized summary. Private lab addresses, credentials, screenshots, transcripts, raw search data and detailed runtime receipts are excluded from the repository.
 
-See the [1.0 technical candidate](#100-technical-release-candidate--october-29-2026) for current evidence and the [support policy](support-policy.md) for its release scope. Earlier sections retain their exact dates, failures and verification limits. The latest published release remains 0.34.0 until an explicit release is made.
+See the [1.0 technical candidate](#100-technical-release-candidate--october-29-2026) for current evidence and the [support policy](support-policy.md) for its release scope. Earlier sections retain their exact dates, failures and verification limits. The qualified 1.0 candidate below is published unchanged as [release v1.0.0](https://github.com/LeiterConsulting/constellation/releases/tag/v1.0.0).
 
 ## 1.0.0 technical release candidate — October 29, 2026
 
-Tested unreleased package: **1.0.0, build 60**, SHA-256 `d53d62e3ce929a5a912cd1d6dccddaecbdee96d65a35d7b4a4a7f44cb0ddebc7`. Its **497 regular files / 5,548,484 bytes** share one app root, without macOS sidecars/resource forks, PAX metadata, runtime-local configuration or the build manifest. The final archive, installed provider/native checks and upgrade cycle refer to these exact bytes. Runtime-source, module/CSS references and browser loading were checked separately from archive hygiene. The preceding candidate `a60994361bf174332d0f1dcc0ed80481ba410668cfe68e3a3ab5831394535330` retains its local evidence and is superseded by the stricter compound-request guard.
+Qualified release package: **1.0.0, build 60**, SHA-256 `d53d62e3ce929a5a912cd1d6dccddaecbdee96d65a35d7b4a4a7f44cb0ddebc7`. Its **497 regular files / 5,548,484 bytes** share one app root, without macOS sidecars/resource forks, PAX metadata, runtime-local configuration or the build manifest. The final archive, installed provider/native checks and upgrade cycle refer to these exact bytes. Runtime-source, module/CSS references and browser loading were checked separately from archive hygiene. The preceding candidate `a60994361bf174332d0f1dcc0ed80481ba410668cfe68e3a3ab5831394535330` retains its local evidence and is superseded by the stricter compound-request guard.
 
 The release profile is a **single Linux Enterprise search head**, qualified on Enterprise **10.2.8 / Studio 1.23.12** and Enterprise **10.4.4 / Studio 1.26.6**. Human/independent reviews are non-blocking follow-up work under the product owner's decision; this does not qualify Cloud, SHC, arbitrary models or complete native parity. See the [technical checklist](v1-readiness.md).
 

@@ -1,6 +1,6 @@
 # Roadmap and release scope
 
-The 1.0 candidate targets the bounded [Enterprise support profile](support-policy.md). The [technical checklist](v1-readiness.md) and [current evidence](validation.md#100-technical-release-candidate--october-29-2026) define release readiness. Complete Studio parity remains a continuing feature target. Human/independent reviews are non-blocking follow-up work under the product owner's October 29, 2026 decision; they are not recorded as completed tests.
+The 1.0 release targets the bounded [Enterprise support profile](support-policy.md). The [technical checklist](v1-readiness.md) and [current evidence](validation.md#100-technical-release-candidate--october-29-2026) define release readiness. Complete Studio parity remains a continuing feature target. Human/independent reviews are non-blocking follow-up work under the product owner's October 29, 2026 decision; they are not recorded as completed tests.
 
 ## 1.0 technical baseline
 

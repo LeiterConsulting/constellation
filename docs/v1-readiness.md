@@ -1,6 +1,6 @@
 # Version 1.0 technical release checklist
 
-The product owner explicitly made human/independent reviews non-blocking on October 29, 2026. The technical checks below passed for the [supported Enterprise profile](support-policy.md). This is an **unreleased 1.0.0 candidate**; merge and publication remain separate actions. Exact-head CI is required before release.
+The product owner explicitly made human/independent reviews non-blocking on October 29, 2026. The technical checks below passed for the [supported Enterprise profile](support-policy.md). The qualified app bytes are published as **1.0.0**. Exact-head CI is required for every release.
 
 Qualified package: **1.0.0 / build 60**, SHA-256 `d53d62e3ce929a5a912cd1d6dccddaecbdee96d65a35d7b4a4a7f44cb0ddebc7`. [Full evidence and retained failures](validation.md#100-technical-release-candidate--october-29-2026) explain each bounded check.
 

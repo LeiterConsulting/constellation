@@ -1,18 +1,18 @@
 # Installation and first dashboard
 
-Constellation 1.0 targets the bounded [Enterprise support profile](support-policy.md). The 1.0 candidate is not yet published; the latest published preview below remains 0.34.0 until an explicit release. Review the [support matrix](studio-support.md), [validation scope](validation.md) and [security guide](../SECURITY.md). Test representative data and retain backups when updating.
+Constellation 1.0 targets the bounded [Enterprise support profile](support-policy.md). Version 1.0.0 is available from the release below. Review the [support matrix](studio-support.md), [validation scope](validation.md) and [security guide](../SECURITY.md). Test representative data and retain backups when updating.
 
 ## Download the release
 
-Download the installable `constellation-0.34.0.tar.gz` and `SHA256SUMS` from [release v0.34.0](https://github.com/LeiterConsulting/constellation/releases/tag/v0.34.0). Repository access is required. The `.tar.gz` is byte-identical to the qualified `.tgz` package; both are compressed tar archives accepted by app installation. The handoff ZIP contains the same app plus the user guide and related setup/support documents. A standalone user guide is also attached to the release.
+Download the installable `constellation-1.0.0.tar.gz` and `SHA256SUMS` from [release v1.0.0](https://github.com/LeiterConsulting/constellation/releases/tag/v1.0.0). Repository access is required. The `.tar.gz` is byte-identical to the qualified `.tgz` package; both are compressed tar archives accepted by app installation. The handoff ZIP contains the same app plus the user guide and related setup/support documents. A standalone user guide is also attached to the release.
 
 Calculate the downloaded file's SHA-256 and compare it with its matching line in `SHA256SUMS` before installation:
 
 ```sh
-shasum -a 256 constellation-0.34.0.tar.gz
+shasum -a 256 constellation-1.0.0.tar.gz
 ```
 
-The app digest is `bdd07caff21e3050b2f7c04903963af33575023425863f7645c3b19a4f78c8c3`. Release archives exclude macOS sidecars, private configuration, credentials and live evidence. Download users can continue with Install in Splunk Enterprise below.
+The app digest is `d53d62e3ce929a5a912cd1d6dccddaecbdee96d65a35d7b4a4a7f44cb0ddebc7`. Release archives exclude macOS sidecars, private configuration, credentials and live evidence. Download users can continue with Install in Splunk Enterprise below.
 
 ## Build from source (developers)
 
