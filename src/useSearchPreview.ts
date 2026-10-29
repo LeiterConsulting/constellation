@@ -92,7 +92,7 @@ export function useSearchPreview(definition: StudioDefinition, tokens?: TokenSta
       if (results[id]) continue;
       if (index >= 8) { items[id] = 'This canvas previews the first eight search sources. Open the saved dashboard in Studio to run all sources.'; continue; }
       try { searchRequest(definition, id, tokens); } catch (error) { items[id] = error instanceof Error ? error.message : 'Choose the required input values to preview this chart.'; continue; }
-      items[id] = waiting[id] ? `Waiting for input. ${waiting[id]}` : failures[id] ? `Search preview failed. ${failures[id]}\n\nRefresh searches to retry; the saved query is preserved.`
+      items[id] = waiting[id] ? `Waiting for input. ${waiting[id]}` : failures[id] ? `Search preview failed. ${failures[id]}\n\nThe saved query is preserved.`
         : enabled ? 'Search results pending.' : 'Choose Run searches to preview this chart.';
     }
     return items;

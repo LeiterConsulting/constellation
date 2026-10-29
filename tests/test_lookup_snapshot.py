@@ -50,6 +50,19 @@ class SnapshotTests(unittest.TestCase):
         self.assertEqual(created[0]['search'], '| inputlookup strict=true max=5001 fixture.csv')
         self.assertEqual(created[0]['max_time'], '5');self.assertEqual(created[0]['max_count'], '5001')
         self.assertEqual(runtime.metadata_reads, 2);self.assert_cancelled(runtime)
+    def test_explicit_report_app_uses_same_caller_and_checks_job_context(self):
+        runtime = Runtime();runtime.acl['app'] = 'search'
+        result = self.run_read(runtime, app='search')
+        self.assertEqual(result['results'], runtime.rows)
+        self.assertTrue(all(path.startswith('/servicesNS/fixture_author/search/') for path, _, _ in runtime.calls))
+        self.assert_cancelled(runtime)
+        runtime = Runtime()
+        with self.assertRaises(ProviderError): self.run_read(runtime, app='search')
+        self.assert_cancelled(runtime)
+        for app in ('../search', '-','nobody/search', '', None, 'a'*101):
+            runtime = Runtime()
+            with self.assertRaises(ProviderError): self.run_read(runtime, app=app)
+            self.assertEqual(runtime.calls, [])
     def test_exact_limit_empty_header_and_pending_results(self):
         runtime = Runtime(ROWS);self.assertEqual(len(self.run_read(runtime)['results']), ROWS)
         runtime = Runtime(0);runtime.pending = True

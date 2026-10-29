@@ -6,8 +6,14 @@ They deliberately do not impersonate a scheduled job or change a report.
 import re
 from urllib.parse import quote
 from provider_service import ProviderError
+from search_references import lookup_calls, macro_calls
 
 REPORT_WARNING = 'Report preview reruns permitted SPL as your user in the selected time range. Native Studio can use report permissions, app context and scheduled cached results instead.'
+
+
+def guard_report_context(query, app):
+    if app != 'constellation' and (lookup_calls(query) or macro_calls(query)):
+        raise ProviderError('This report uses app-specific lookup or macro dependencies. Preview it in native Studio, or export a copy with its report search and compatible dependencies.', 422, 'report_app_context')
 
 
 def expand_macros(runtime, query, app='constellation'):
@@ -22,6 +28,7 @@ class SourceResolver:
         self.runtime = runtime
         self.reports = {}
         self.used_report = False
+        self.report_app = 'constellation'
 
     def report(self, options):
         ref, app = options.get('ref'), options.get('app', 'constellation')
@@ -39,8 +46,13 @@ class SourceResolver:
             query = content.get('search')
             if content.get('disabled') in (True, 1, '1', 'true') or not isinstance(query, str) or not query.strip():
                 raise ProviderError('This report is disabled or has no usable search.', 422, 'report_unavailable')
-            self.reports[key] = expand_macros(self.runtime, query, app)
+            expanded = expand_macros(self.runtime, query, app)
+            # Bounded preview jobs run in Constellation. A warning cannot make
+            # a foreign same-name lookup safe to resolve in this namespace.
+            guard_report_context(expanded, app)
+            self.reports[key] = expanded
         self.used_report = True
+        self.report_app = app
         return self.reports[key], 'spl'
 
     def resolve(self, sources, identifier, seen=None):
@@ -60,9 +72,11 @@ class SourceResolver:
             raise ProviderError('Provide a query for this native search source.', 422, 'source_reference')
         if source.get('type') == 'ds.chain':
             parent, language = self.resolve(sources, options.get('extend', source.get('extend')), seen)
+            guard_report_context(query, self.report_app)
             return parent.rstrip() + ' | ' + query.lstrip('| ').strip(), language
         if source.get('type') not in ('ds.search', 'ds.spl2'):
             raise ProviderError('This source requires native Studio execution.', 422, 'source_reference')
+        self.report_app = 'constellation'
         return expand_macros(self.runtime, query), 'spl2' if source['type'] == 'ds.spl2' else 'spl'
 
 

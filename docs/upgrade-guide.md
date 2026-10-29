@@ -1,5 +1,11 @@
 # Updating Constellation
 
+## 0.42 report-app lookup copies
+
+No draft, credential or native-dashboard migration runs. Refresh workspace tabs. Portable writers/readers remain version 5 (readers also retain versions 1–4). The existing report and knowledge export choices can include supported CSV dependencies from a report’s original app. Reads retain the caller and validate the native job’s exact app; foreign lookup names are flattened into distinct portable aliases before import. Same-named dependencies remain separate. Imported objects remain fresh private Constellation copies. No original report, macro, lookup or ACL changes. Foreign reports with unresolved lookup dependencies now refuse bounded preview instead of resolving a same-name lookup in the wrong app; use native Studio or an explicit compatible portable copy.
+
+Keep context flattening separate from CSV reads, matching rules and native import. Requalify same-name cross-app collisions, alias collisions, repeated-source deduplication, complete `_time` cells, both target versions/directions, peer denial and unchanged source objects. Copying a foreign report with unresolved lookup/macro dependencies requires both existing inclusion choices. App-dependent transforms chained to foreign reports still require native review; plain chain transforms remain intact. App-specific field extraction, sharing and opaque dependencies are not migrated.
+
 ## 0.41 filtered and time-based CSV definitions
 
 No draft, credential or native-dashboard migration runs. Refresh workspace tabs. Portable writers use version 5 and readers retain versions 1–4. Older apps cannot read version-5 files; older formats cannot claim filtered/temporal matching support. Existing static receipts and checksums retain their comparison. Compatible filters, timestamp fields/formats, offset windows and temporal match defaults remain native definition options on fresh private copies. Complete backing CSV exports include filtered-out rows; the existing export choice explains this. Unsupported predicates still require native configuration.
