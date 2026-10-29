@@ -25,16 +25,29 @@ export function svgDataUri(text: string): string {
   validateSvg(text);
   return 'data:image/svg+xml;base64,' + btoa(Array.from(new TextEncoder().encode(text), byte => String.fromCharCode(byte)).join(''));
 }
+export function svgText(dataURI: string): string {
+  if (!dataURI.startsWith('data:image/svg+xml;base64,')) throw new Error('Choose an SVG for a choropleth map.');
+  const text = new TextDecoder('utf-8',{fatal:true}).decode(Uint8Array.from(atob(dataURI.split(',')[1]),c=>c.charCodeAt(0)));
+  validateSvg(text);return text;
+}
+export function svgAreaIds(dataURI: string): string[] {
+  const text=svgText(dataURI);if(new TextEncoder().encode(text).length>256_000)throw new Error('Use a choropleth SVG under 250 KB.');
+  const doc = new DOMParser().parseFromString(text,'image/svg+xml');
+  const paths=Array.from(doc.getElementsByTagName('path')).filter(path=>path.getAttribute('d'));
+  const ids=paths.map(path=>path.getAttribute('id') || '');
+  if (!ids.length || ids.some(id=>!id || id.length>200) || new Set(ids).size!==ids.length) throw new Error('A choropleth SVG needs a unique ID on every path with a d outline.');
+  return ids;
+}
 export function validateAssetData(dataURI: string, kind: 'image' | 'icon'): string {
   const match = /^data:image\/(png|jpeg|gif|webp|svg\+xml);base64,([A-Za-z0-9+/]+={0,2})$/.exec(dataURI);
   if (!match || dataURI.length > 5_400_000 || match[2].length % 4 !== 0) throw new Error('Unsupported or oversized Studio asset.');
   let raw: string;
   try { raw = atob(match[2]); } catch { throw new Error('Invalid asset encoding.'); }
   if (btoa(raw) !== match[2] || raw.length > 4_000_000) throw new Error('Invalid or oversized asset encoding.');
-  if (kind === 'icon') {
-    if (match[1] !== 'svg+xml') throw new Error('Studio icons must be SVG files.');
+  if (match[1] === 'svg+xml') {
     validateSvg(new TextDecoder('utf-8', { fatal: true }).decode(Uint8Array.from(raw, c => c.charCodeAt(0))));
   } else {
+    if (kind === 'icon') throw new Error('Studio icons must be SVG files.');
     const bytes = Array.from(raw.slice(0,16), c => c.charCodeAt(0));
     const valid = match[1] === 'png' ? [137,80,78,71,13,10,26,10].every((n,i) => bytes[i] === n)
       : match[1] === 'jpeg' ? bytes[0] === 255 && bytes[1] === 216 && bytes[2] === 255

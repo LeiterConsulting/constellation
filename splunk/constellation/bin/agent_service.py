@@ -406,6 +406,7 @@ class AgentService:
                    'environment': environment, 'nativeFeatures': feature_contract(), 'catalog': catalog, 'history': safe_history,
                    'selected': str(body.get('selected', ''))[:200], 'activeTab': str(body.get('activeTab', ''))[:200],
                    'focus': focus, 'pagePurposes': purposes, 'dashboardBrief': brief}
+        context['svgAssets'] = data.media.context(document)
         context['modelLimits'] = {'contextTokens': capabilities.get('contextTokens'),
                                   'outputTokens': CREATE_OUTPUT_TOKENS if context['canvasState'] == 'blank' else EDIT_OUTPUT_TOKENS,
                                   'providerManaged': saved.get('provider') == 'aitk',
@@ -553,7 +554,7 @@ class AgentService:
                             or set(changes[0]) != set(sparkline['required'])
                             or any(changes[0].get(key) not in rule.get('enum', []) for key, rule in sparkline['properties'].items())):
                         raise ProviderError('Return exactly one tableSparkline action using the selected table, verified field and exact allowed style/width. Do not change native properties or searches separately.', 422, 'table_sparkline')
-                if row_only or route_schema or button_schema or page_schema or calculation or sparkline:
+                if row_only or route_schema or button_schema or page_schema or calculation or sparkline or getattr(budget,'svg_plan',False):
                     # A rejected new detail page is transient, not user work.
                     # Recompile its corrected plan against the exact original;
                     # query checks remain cached within the same recovery budget.

@@ -14,6 +14,7 @@ from search_evidence import sample_completion, empty_columns, verified_null_colu
 from search_hints import preview_repair_hint
 from field_context import sample_fields, enrich_profile, validate_missing_measurements, validate_definitions
 from measurement_constraints import pipeline_commands
+from native_media import NativeMedia
 
 
 def spl_literal(value):
@@ -25,6 +26,7 @@ class DataService:
         self.runtime, self.recovery = runtime, recovery
         self.document, self.tokens = document or {}, tokens
         self.receipts = []
+        self.media = NativeMedia(runtime)
         self.independent_populations = independent_populations
 
     def discovery(self):
@@ -250,7 +252,8 @@ class DataService:
                     if missing:
                         problems.append('Native ' + root + ' ' + identifier[:100] + ', ' + path[:160] + ': missing actual source fields ' + ', '.join(sorted(missing))[:180] + '. Use verified output aliases and preserve existing calculations.')
                 if root == 'visualizations':
-                    try: validate_shape(item, outputs)
+                    changed = item != previous.get('visualizations', {}).get(identifier) or any(source in needed or document.get('dataSources', {}).get(source) != previous.get('dataSources', {}).get(source) for source in item.get('dataSources', {}).values())
+                    try: validate_shape(self.media.validation_item(item) if changed else item, outputs)
                     except ProviderError as error: problems.append(str(error))
         if problems:
             raise ProviderError('\n'.join(problems[:16])[:10000])

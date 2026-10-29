@@ -111,6 +111,20 @@ class MeasurementConstraintTests(unittest.TestCase):
             with self.subTest(pipe=pipe), self.assertRaisesRegex(ProviderError, 'Do not overwrite'):
                 normalize_measurements(doc, {}, self.profile())
 
+    def test_derived_classification_uses_masked_measurement_without_overwriting_source_fields(self):
+        for expression in ('area=if(temperature_f<0,"cold","warm")',
+                           'area=case(temperature_f<0,"cold",temperature_f<=150,"warm"), label=coalesce(area,"unknown")'):
+            query=PROFILE['baseQuery']+' | eval '+expression+' | stats count(temperature_f) AS readings BY area'
+            doc={'dataSources':{'summary':{'type':'ds.search','options':{'query':query}}}}
+            normalized=json.loads(normalize_measurements(doc, {}, self.profile())[0]['value'])
+            self.assertIn('| '+mask_command(self.profile()['measurementConstraints'][0])+' | eval '+expression, normalized)
+        for expression in ('area=if(temperature_f<0,"cold","warm"), temperature_f=0',
+                           'area=if(temperature_f<0,"cold","warm"), signal=temperature_f',
+                           "'temperature_f'=0", '{target}=temperature_f'):
+            doc['dataSources']['summary']['options']['query']=PROFILE['baseQuery']+' | eval '+expression+' | stats avg(temperature_f)'
+            with self.subTest(expression=expression), self.assertRaisesRegex(ProviderError,'Do not overwrite'):
+                normalize_measurements(doc, {}, self.profile())
+
     def test_compiler_keeps_query_parameters_unknown_properties_and_native_formatting(self):
         doc = {'visualizations': {}, 'dataSources': {'summary': {'type': 'ds.search', 'future': {'retained': True}, 'options': {'query': PROFILE['baseQuery'] + ' | stats avg(temperature_f) AS mean', 'future': 17}}}, 'layout': {'type': 'grid'}}
         before = copy.deepcopy(doc)

@@ -15,6 +15,8 @@ import { usePreviewHeight } from './usePreviewHeight';
 import { previewTokenSnapshot, resetDefaults } from './previewDefaults';
 import { dashboardImageRegistry, dashboardIconRegistry } from './dashboardAssets';
 import { nativeSupportMessage } from './previewCompatibility';
+import { useSvgPreview } from './useSvgPreview';
+import { isPackagedImage } from './mediaReferences';
 
 // Metadata lookup only. This utility never constructs or runs a data source.
 const inputPreset = new Preset({ presetDefinition: EnterprisePreset, SnapshotDataSource: undefined });
@@ -58,6 +60,7 @@ interface Props {
 export default memo(function Preview({ definition, revision, documentId, tokens, activeTab, onTokens, onTab, onSelect, searchResults, searchMessages, selected, selecting, nativeTypes, cascadingInputs }: Props) {
   const imageRegistry = useMemo(dashboardImageRegistry, []);
   const iconRegistry = useMemo(dashboardIconRegistry, []);
+  const svgMaps = useSvgPreview(definition);
   const frame=useRef<HTMLDivElement>(null);
   const height=usePreviewHeight(frame);
   const inputDefaults = useMemo(() => getInputDefaultTokens({ definition: definition as unknown as DashboardJSON, preset: inputPreset }), [definition]);
@@ -71,6 +74,11 @@ export default memo(function Preview({ definition, revision, documentId, tokens,
   const preview = useMemo(() => {
     const result = previewDefinition(definition, searchResults, tokens, searchMessages, inputDefaults);
     for (const [id, visualization] of Object.entries(result.visualizations)) {
+      const svg=visualization.options?.svg;
+      if(visualization.type==='splunk.choropleth.svg'&&typeof svg==='string'&&isPackagedImage(svg)){
+        if(svgMaps[id]?.svg)visualization.options={...visualization.options,svg:svgMaps[id].svg};
+        else{result.visualizations[id]={type:'splunk.markdown',title:visualization.title,options:{markdown:svgMaps[id]?.error||'Loading SVG map…'}};continue;}
+      }
       const unsupported = nativeSupportMessage(visualization.type, nativeTypes);
       if (!Object.hasOwn(EnterprisePreset.visualizations || {}, visualization.type)) {
         result.visualizations[id] = { type: 'splunk.markdown', title: visualization.title,
@@ -88,7 +96,7 @@ export default memo(function Preview({ definition, revision, documentId, tokens,
       if (Array.isArray(result.layout.globalInputs)) result.layout.globalInputs = result.layout.globalInputs.filter(id => !removed.has(String(id)));
     }
     return result as unknown as DashboardJSON;
-  }, [definition, searchResults, tokens, searchMessages, inputDefaults, nativeTypes, cascadingInputs]);
+  }, [definition, searchResults, tokens, searchMessages, inputDefaults, nativeTypes, cascadingInputs, svgMaps]);
   const plugin = useMemo(() => ({ onEventTrigger: (event: { [key: string]: unknown }) => {
     if (selecting) return;
     if (typeof event.type === 'string' && /click$/.test(event.type) && typeof event.targetId === 'string') {

@@ -19,6 +19,7 @@ from native_text_encoding import normalize_reference_text
 from compact_creation import COMPOSE_ACTION, expand_compose
 from input_actions import MENU_ACTION, compile_menu
 from route_actions import ROUTE_ACTION, BUTTON_ROUTE_ACTION, compile_route, compile_button_route
+from svg_actions import compile_binding as compile_svg_binding
 
 LEGACY_CHANGE = {'type': 'object', 'properties': {
     'op': {'type': 'string', 'enum': ['set', 'remove']},
@@ -103,6 +104,7 @@ def compile_actions(document, actions, profile=None, table_receipt=None):
     menus, menu_tokens = [], set()
     for action in actions:
         if not isinstance(action, dict): raise ProviderError('Each authoring action must be an object.')
+        if action.get('op') == 'bindSvg': result.append(compile_svg_binding(action, document));continue
         if action.get('op') == 'menu':
             key, item = compile_menu(action, document)
             if key in menus or action['token'] in menu_tokens: raise ProviderError('Use distinct new menu IDs and tokens.')
