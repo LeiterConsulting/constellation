@@ -15,7 +15,7 @@ import Modal from '@splunk/react-ui/Modal';
 import MessageBar from '@splunk/react-ui/Message';
 import SplunkThemeProvider from '@splunk/themes/SplunkThemeProvider';
 import type { DashboardContextProviderProps } from '@splunk/dashboard-context';
-import Preview from './Preview';
+import Preview from './PreviewLoader';
 import Brand from './Brand';
 import DashboardImages from './DashboardImages';
 import PortableDashboard from './PortableDashboard';
@@ -96,7 +96,7 @@ export default function App({ initialColorScheme }: { initialColorScheme: 'light
   const lastDataScope = useRef<DataScope | null>(null);
   const [dataProfile, setDataProfile] = useState<DataProfile | null>(null);
   const [discovery, setDiscovery] = useState<DataDiscovery | null>(null);
-  const [dataChooser, setDataChooser] = useState<{ scope?: DataScope | null; goal?: string } | null>(null);
+  const [dataChooser, setDataChooser] = useState<{ scope?: DataScope | null; goal?: string; sourceId?: string } | null>(null);
   const composerInput = useRef<HTMLTextAreaElement>(null);
   const selectionToggle = useRef<HTMLButtonElement>(null);
   const conversationLauncher = useRef<HTMLButtonElement>(null);
@@ -339,7 +339,11 @@ export default function App({ initialColorScheme }: { initialColorScheme: 'light
         {future.length ? <Button disabled={thinking} onClick={() => { const next = future[future.length - 1]; setHistory(items => [...items, revision]); setFuture(items => items.slice(0, -1)); setRevision({ ...next, number: revision.number + 1 }); setSaved(null); setStatus('Document change restored.'); }}>Redo</Button> : null}
       </Actions></CanvasHeading>
       {!empty || hasConversation || dataContext ? <CanvasTools aria-label="Dashboard controls"><Dropdown focusToggleReasons={['escapeKey', 'tabKey', 'toggleClick']} toggle={<Button isMenu>{dataContext?.index || (dataContext ? 'Existing search' : 'Searches')} · {previewRanges.find(range => range.value === previewEarliest)?.label}</Button>}><ControlPopover aria-label="Data and preview controls">
-        {!empty || hasConversation ? <Button disabled={thinking || !storageReady || !isSplunk()} onClick={event => { modalReturnFocus.current = event.currentTarget; setDataChooser({ scope: dataContext }); }}>{dataContext ? `Data: ${dataContext.index || 'existing search'}` : 'Choose Splunk data'}</Button> : null}
+        {!empty || hasConversation ? <Button disabled={thinking || !storageReady || !isSplunk()} onClick={event => {
+          modalReturnFocus.current = event.currentTarget;
+          const sourceId = revision.definition.visualizations[selected]?.dataSources?.primary || (revision.definition.inputs as Record<string, {dataSources?: Record<string,string>}> | undefined)?.[selected]?.dataSources?.primary;
+          setDataChooser(sourceId ? {sourceId,scope:{query:'',earliest:dataContext?.earliest || nativePreviewRange(revision.definition),language:'spl'}} : {scope:dataContext});
+        }}>{dataContext ? `Data: ${dataContext.index || 'existing search'}` : 'Choose Splunk data'}</Button> : null}
       {dataContext ? <><Muted>{dataContext.sourcetype ? `Sourcetype: ${dataContext.sourcetype}` : dataContext.query ? 'Using your existing search' : 'All sourcetypes in the selected index'}</Muted>
         <ControlGroup label="Preview range"><Select value={dataContext.earliest} disabled={thinking} onChange={(_event, { value }) => setDataContext({ ...dataContext, earliest: value as DataScope['earliest'] })}>
           {previewRanges.map(range => <Select.Option key={range.value} {...range}/>)}</Select></ControlGroup></> : null}
@@ -417,6 +421,7 @@ export default function App({ initialColorScheme }: { initialColorScheme: 'light
       catch (failure) { setImportError(failure instanceof SyntaxError ? 'This file is not valid Studio JSON. Check the file and try again.' : failure instanceof Error ? failure.message : 'The file could not be opened.'); }
     }}/>
     {dataChooser ? <DataChooser discovery={discovery} initial={dataChooser.scope} initialGoal={dataChooser.goal ?? prompt} returnFocus={modalReturnFocus}
+      definition={revision.definition} tokens={tokens} sourceId={dataChooser.sourceId}
       onClose={() => closeDialog(() => setDataChooser(null))} onBuild={async (scope, request) => { setDataContext(scope); void submit(request, scope); }}/> : null}
     {pagesOpen?<PageManager definition={revision.definition} purposes={pagePurposes} activeTab={activeTab} returnFocus={modalReturnFocus} onClose={()=>closeDialog(()=>setPagesOpen(false))} onSave={(id,name,purpose)=>{
       const before=revisionRef.current,next={number:before.number+1,definition:changePage(before.definition,id,name)};

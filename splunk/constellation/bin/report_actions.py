@@ -25,11 +25,18 @@ selected output. Describe the visible result, without claiming a save.'''
 
 def eligible(prompt, selected, document, profile, attachments):
     table = document.get('visualizations', {}).get(selected, {})
+    # Preservation clauses name unrelated pages/inputs; they are not new goals.
+    # Compound active requests retain general authoring instead of losing work
+    # when a narrow suffix plan cannot express the complete requested change.
+    clauses = re.split(r'[.;]\s*(?:preserve|keep|retain)\b', prompt, maxsplit=1, flags=re.I)
+    active = clauses[0]
+    if len(clauses) > 1 and re.search(r'\b(?:add|append|create|move|resize|rename|remove|delete|change|set|switch|sort|format|style|make|show|hide|filter)\b', clauses[1], re.I):
+        return False
     return bool(not attachments and profile and profile.get('scope', {}).get('report')
                 and table.get('type') == 'splunk.table' and set(table.get('dataSources', {})) == {'primary'}
                 and re.search(r'\bfor each (?:existing )?row\b', prompt, re.I)
                 and re.search(r'\b(?:add|append)\b', prompt, re.I)
-                and not re.search(r'\b(?:move|resize|rename|remove|delete|navigation|drilldown)\b', prompt, re.I))
+                and not re.search(r'\b(?:move|resize|rename|remove|delete|navigation|drilldown|create|pages?|tabs?|charts?|inputs?|dropdowns?|menus?|layout|title|width|colou?r|style|format|sort)\b', active, re.I))
 
 
 def compile_plan(actions, document, context):

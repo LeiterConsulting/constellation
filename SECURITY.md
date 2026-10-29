@@ -10,7 +10,7 @@ Explicit Environment checks can read accessible visualization configuration meta
 
 Use GitHub's private vulnerability reporting feature on this repository when available. If it is not enabled, contact the repository maintainers privately; if necessary, open a minimal issue requesting a private reporting channel without vulnerability details or sensitive attachments. Do not include credentials, indexed data, user documents or exploit details in public issues.
 
-The project is a development preview with no production support or response-time commitment. The current development line is the focus of fixes; older packages are not separately maintained as supported production branches.
+The current 1.x line receives compatible bug and security fixes under the [support policy](docs/support-policy.md). No response-time or production SLA is promised. Older preview branches are not separately maintained. Independent review is follow-up work; automated and native permission checks remain release requirements.
 
 ## Trust and authority
 

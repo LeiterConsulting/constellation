@@ -101,3 +101,7 @@ If it succeeds, return to Constellation, save the named connection and run **Tes
 | Empty response or capacity/quota error | Review actual model settings, reasoning/output allowance, context capacity and provider quota; repeat the native and Constellation tests after correction. |
 
 Constellation returns fixed guidance for recognized failures, using only the caller's failed AITK job. It does not return native log text, copy provider keys, widen roles or blindly retry permission failures. See [current verification limits](validation.md#0150-shared-aitk-inference--october-25-2026).
+
+## 1.0 qualification note
+
+The final candidate passed ordinary-author actual-data creation/editing with AITK 6.2 and, separately, AITK 6.1 on the second Enterprise target. The 6.1 setup needed the trusted maintainer's missing discovery capability, protected backing collection writes, a modern native connection with a 16,000-token budget and a dedicated author role carrying only inference authority. Ordinary authors remained unable to read stored credentials or manage AITK connections. The temporary second-target connection and key are qualification fixtures, not shipped configuration. Keep invocation-only access distinct from the direct native command's credential requirements. See [current evidence](validation.md#100-technical-release-candidate--october-29-2026).

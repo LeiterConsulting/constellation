@@ -2,6 +2,8 @@
 
 The target is reliable creation and editing of features available on the connected Splunk instance, with a simple conversation and canvas. Constellation does **not** yet have complete native parity. A generic JSON edit, an inventory entry, a preserved property and a successful rendered interaction are different evidence.
 
+Complete parity is an ongoing feature target beyond the bounded [1.0 release profile](support-policy.md). Human/independent reviews remain follow-up work; unsupported/native-only capabilities stay labelled rather than being implied by the version number.
+
 ## Authoring foundation
 
 `contracts/studio_inventory.json` records **29 embedded visualization types and 822 option entries**, structural option shapes, required sources and events from the pinned Dashboard Framework 29.9.0 dependencies. It inventories six inputs, six event handlers, two layout types and the known source families. Metadata excludes vendor prose and implementation. Runtime retrieval needs no documentation download or external service.
