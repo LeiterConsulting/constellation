@@ -48,7 +48,7 @@ class Runtime(SearchService):
         return {'entry': [] if content is None else [{'name': unquote(name), 'content': copy.deepcopy(content), 'acl': self.metadata_acl}]}
     def execute(self, query, earliest='-15m'):
         self.calls.append(('bounded-current-user', query, earliest)); return copy.deepcopy(self.rows)
-    def lookup_snapshot(self, filename):
+    def lookup_snapshot(self, filename, app='constellation'):
         self.calls.append(('complete-csv-snapshot', filename, None));return copy.deepcopy(self.rows)
 
 

@@ -10,6 +10,7 @@ from search_service import read_only_query
 from studio_inventory import INVENTORY
 from portable_knowledge import PortableKnowledge, fingerprint, validate_bundle, import_lookups
 from search_references import lookup_calls, macro_calls
+from portable_context import flatten_lookup_contexts
 
 
 class DashboardDependencies:
@@ -69,6 +70,8 @@ class DashboardDependencies:
                     # macro, lookup, token or advanced report into a claimed copy.
                     if set(options) - {'ref', 'app', 'queryParameters'}:
                         raise ProviderError('This report has advanced source options. Keep its reference and configure it in native Studio.')
+                    if app != 'constellation' and not body.get('includeKnowledge') and (macro_calls(query) or lookup_calls(query)):
+                        raise ProviderError('Also include compatible lookups and macros to copy this report search from another app.')
                     if body.get('includeKnowledge'):
                         query = PortableKnowledge(self.runtime, self.entry).expand(query, app)
                     read_only_query(query)
@@ -86,7 +89,22 @@ class DashboardDependencies:
 
         catalog = {x['name'] for x in self.runtime.datasets().get('indexes', [])}
         knowledge = PortableKnowledge(self.runtime, self.entry)
-        exported = []
+        exported, lookup_uses, lookup_keys = [], {}, set()
+        # A chain's own app-dependent transforms need separate native context
+        # qualification. Plain transforms retain their base source unchanged.
+        if body['action'] == 'export' and (body.get('includeReports') is True or body.get('includeKnowledge') is True):
+            for source in document.get('dataSources', {}).values():
+                if source.get('type') != 'ds.chain': continue
+                query = source.get('options', {}).get('query', '')
+                if not (macro_calls(query) or lookup_calls(query)): continue
+                parent = source.get('options', {}).get('extend', source.get('extend'));seen = set()
+                while isinstance(parent, str) and parent not in seen:
+                    seen.add(parent)
+                    original = body['definition'].get('dataSources', {}).get(parent, {})
+                    if original.get('type') == 'ds.savedSearch' and original.get('options', {}).get('app', 'constellation') != 'constellation':
+                        raise ProviderError('This report chain has app-specific lookup or macro transforms. Keep the report reference and review the chain in native Studio.')
+                    if original.get('type') != 'ds.chain': break
+                    parent = original.get('options', {}).get('extend', original.get('extend'))
         for source, query, app in queries:
             expanded = query
             try: calls = macro_calls(query)
@@ -140,11 +158,15 @@ class DashboardDependencies:
                     add('lookup', name, 'missing', 'Include this compatible CSV at export, or configure its native lookup on the destination.', app); continue
                 try:
                     include = body['action'] == 'export' and body.get('includeKnowledge') is True
+                    if include and source.get('type') == 'ds.savedSearch':
+                        raise ProviderError('Include the report search to copy its lookup dependencies.')
                     if include and command == 'geom': raise ProviderError('Geospatial lookup files need native configuration; CSV bundling does not convert geometry.')
+                    if include and len(lookup_keys | {(app, name)}) > 8:
+                        raise ProviderError('Include at most eight portable CSV lookups.')
                     receipt = knowledge.lookup(name, app, include)
                     if include:
-                        if len(exported) >= 8 and not any(x['name'] == name for x in exported): raise ProviderError('Include at most eight portable CSV lookups.')
-                        if not any(x['name'] == name for x in exported): exported.append(receipt)
+                        lookup_keys.add((app, name))
+                        lookup_uses[(id(source), app, name)] = (source, receipt)
                         add('lookup', name, 'available', 'Complete bounded CSV included. Import creates a fresh private copy; sharing remains a native Splunk action.', app)
                     else:
                         compared = receipt['legacyFingerprint'] if fingerprint_versions.get(('lookup', app, name), 2) == 1 else receipt['fingerprint']
@@ -153,6 +175,14 @@ class DashboardDependencies:
                 except ProviderError as error:
                     if body['action'] == 'export' and body.get('includeKnowledge') is True or error.status >= 500: raise
                     add('lookup', name, 'review', str(error), app)
+        if lookup_uses:
+            exported = flatten_lookup_contexts(document, lookup_uses.values())
+            for _, receipt in lookup_uses.values():
+                found.pop(('lookup', receipt['app'], receipt['name']), None)
+            for receipt in exported:
+                add('lookup', receipt['name'], 'available', 'Complete bounded CSV included. Import creates a fresh private copy; sharing remains a native Splunk action.', 'constellation')
+            if any(item['app'] != 'constellation' for _, item in lookup_uses.values()):
+                notes.append('Included report CSVs were read as your user in their original app and given distinct portable names. App permissions and field extractions are not copied.')
         for item in document.get('visualizations', {}).values():
             if item.get('type') not in INVENTORY['visualizations']:
                 add('visualization', item.get('type', 'unknown'), 'review', 'Install and qualify this native visualization on the destination; no extension code is copied.')

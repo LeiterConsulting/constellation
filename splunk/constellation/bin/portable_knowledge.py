@@ -101,10 +101,9 @@ class PortableKnowledge:
         result = {'kind': 'lookup', 'name': name, 'app': app, 'fingerprint': fingerprint({'filename': filename, 'matching': matching}),
                   'legacyFingerprint': fingerprint(dict(semantic, filename=filename)), 'matching': matching}
         if include:
-            if app != 'constellation': raise ProviderError('CSV bundling currently supports the Constellation app context. Move other app dependencies with native Splunk tools.')
             # Read the complete backing CSV, not a filtered/matched alias. The
             # dedicated transfer job does not widen ordinary preview limits.
-            data = self.runtime.lookup_snapshot(filename)
+            data = self.runtime.lookup_snapshot(filename, app=app)
             if data.get('state') != 'complete' or data.get('warning'):
                 raise ProviderError('The lookup read was partial. No sampled lookup data can be exported.')
             fields = [x.get('name') for x in data.get('fields', [])]

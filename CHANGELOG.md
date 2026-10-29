@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.42.0 — unreleased
+
+- Include compatible CSV dependencies from explicitly copied report searches in their original app context, using current-user reads and unchanged native permissions.
+- Give foreign report lookups distinct portable names, preserving same-named dependencies from different apps and unrelated native properties. Keep the version-5 file format and existing export choices.
+- Refuse report copies that would lose unresolved app-specific dependencies; require native review for app-dependent transforms chained to foreign reports.
+- Stop foreign-report lookup previews before dispatch in the wrong app, with a native-Studio or portable-copy instruction instead of misleading same-name results. Remove blanket retry advice from failed previews so permanent context/permission issues retain their specific guidance.
+
 ## 0.41.0 — unreleased
 
 - Transfer supported filtered and time-based CSV definitions through fresh private native copies, retaining timestamp formats, offset windows and temporal match-count defaults.

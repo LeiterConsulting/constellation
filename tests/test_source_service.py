@@ -58,6 +58,24 @@ class SourceTests(unittest.TestCase):
             self.assertEqual(result['sourceWarning'], REPORT_WARNING)
             self.assertEqual(start.call_args.args[1], '-24h')
             self.assertIn('index="fixture"', start.call_args.args[0])
+    def test_foreign_report_lookup_preview_and_chain_do_not_dispatch_in_wrong_app(self):
+        for query in ('| inputlookup rooms.csv', 'search index=fixture | lookup rooms room OUTPUT label', '| geom rooms'):
+            self.runtime.query = query
+            with self.subTest(query=query), self.assertRaises(ProviderError) as denied:
+                self.runtime.preview({'sourceRequest': {'sources': self.sources, 'id': 'report'}})
+            self.assertEqual(denied.exception.code, 'report_app_context')
+            self.assertFalse(any(call[0] == 'bounded-current-user' for call in self.runtime.calls))
+        self.runtime.query = 'search index=fixture | stats count'
+        for transform in ('| lookup rooms room OUTPUT label', '| `foreign_filter`'):
+            self.sources['chain']['options']['query'] = transform
+            with self.assertRaises(ProviderError) as denied: SourceResolver(self.runtime).resolve(self.sources, 'chain')
+            self.assertEqual(denied.exception.code, 'report_app_context')
+        with patch('source_service.expand_macros', return_value='| inputlookup rooms.csv'):
+            with self.assertRaises(ProviderError): SourceResolver(self.runtime).resolve(self.sources, 'report')
+        with patch('preview_jobs.PreviewJobs.start') as start:
+            self.runtime.query = '| inputlookup rooms.csv'
+            with self.assertRaises(ProviderError): self.runtime.job({'action': 'start', 'sourceRequest': {'sources': self.sources, 'id': 'report'}})
+            start.assert_not_called()
 
     def test_denied_mismatched_disabled_and_invalid_references_fail_closed(self):
         for mutation in ({'name': 'wrong'}, {'acl': {'app': 'other'}}, {'content': {'disabled': '1'}}):

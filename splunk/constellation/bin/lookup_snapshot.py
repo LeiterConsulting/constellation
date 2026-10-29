@@ -6,6 +6,7 @@ The native job and paginated responses must prove completion before data is used
 import json
 import re
 import time
+from urllib.parse import quote
 from provider_service import ProviderError
 from preview_jobs import flag, benign_lookup_notice
 from search_references import NAME
@@ -13,11 +14,11 @@ from search_references import NAME
 ROWS, FIELDS, CSV_BYTES, JSON_BYTES, PAGE = 5000, 64, 1_000_000, 2_000_000, 500
 
 
-def complete_metadata(runtime, response):
+def complete_metadata(runtime, response, app='constellation'):
     entries = response.get('entry', [])
     if len(entries) != 1: raise ProviderError('Splunk did not verify the lookup job.')
     entry = entries[0];acl = entry.get('acl', {});meta = entry.get('content', {})
-    if acl.get('owner') != runtime.user or acl.get('app') != 'constellation':
+    if acl.get('owner') != runtime.user or acl.get('app') != app:
         raise ProviderError('This lookup job is not owned by your user and app.', 403)
     if flag(meta.get('isFailed')) or flag(meta.get('isZombie')) or meta.get('dispatchState') in ('FAILED', 'BAD_INPUT_CANCEL'):
         raise ProviderError('The native CSV read failed. Check lookup access in Splunk.', 422, 'lookup_read_failed')
@@ -32,19 +33,21 @@ def complete_metadata(runtime, response):
     return int(count)
 
 
-def read_static_csv(runtime, filename, clock=time.monotonic, sleep=time.sleep):
+def read_static_csv(runtime, filename, clock=time.monotonic, sleep=time.sleep, app='constellation'):
     if not isinstance(filename, str) or not re.fullmatch(NAME + r'\.csv', filename):
         raise ProviderError('Use an exact static CSV filename for transfer.')
+    if not isinstance(app, str) or not re.fullmatch(r'[A-Za-z0-9_][A-Za-z0-9_.-]{0,99}', app):
+        raise ProviderError('Use an exact app context for the CSV transfer.')
     from dashboard_dependencies import DashboardDependencies
     entry = DashboardDependencies(runtime).entry
-    if entry('data/lookup-table-files', filename) is None or entry('data/transforms/lookups', filename) is not None:
+    if entry('data/lookup-table-files', filename, app) is None or entry('data/transforms/lookups', filename, app) is not None:
         raise ProviderError('The backing CSV is missing or shadowed by a same-name native definition. Move this dependency with native tools.')
     deadline = clock() + 20
     def check():
         callback = getattr(runtime, 'check_cancel', None)
         if callback: callback()
         if clock() >= deadline: raise ProviderError('The complete lookup read timed out. No sampled data was exported.', 422, 'lookup_read_timeout')
-    result = _read_job(runtime, filename, check, sleep)
+    result = _read_job(runtime, filename, app, check, sleep)
     if 'timeHeader' not in result: return result
     fields = result['timeHeader']
     # The results API formats _time for display. Pick a literal projection name
@@ -52,11 +55,12 @@ def read_static_csv(runtime, filename, clock=time.monotonic, sleep=time.sleep):
     # page against that header. Only this second, complete job supplies cells.
     alias = next('constellation_csv_time_' + str(i) for i in range(FIELDS + 1)
                  if 'constellation_csv_time_' + str(i) not in fields)
-    return _read_job(runtime, filename, check, sleep, (alias, fields))
+    return _read_job(runtime, filename, app, check, sleep, (alias, fields))
 
 
-def _read_job(runtime, filename, check, sleep, projection=None):
-    base = runtime.namespace + '/search/v2/jobs';path = None
+def _read_job(runtime, filename, app, check, sleep, projection=None):
+    # An explicit report app changes only the namespace, never the caller.
+    base = '/servicesNS/' + quote(runtime.user, safe='') + '/' + quote(app, safe='') + '/search/v2/jobs';path = None
     try:
         check()
         query = '| inputlookup strict=true max=' + str(ROWS + 1) + ' ' + filename
@@ -69,7 +73,7 @@ def _read_job(runtime, filename, check, sleep, projection=None):
             raise ProviderError('Splunk did not return a valid lookup job.', 503)
         path = base + '/' + sid
         while True:
-            check();count = complete_metadata(runtime, runtime.request(path))
+            check();count = complete_metadata(runtime, runtime.request(path), app)
             if count is not None: break
             sleep(.15)
         fields, rows, size, offset = None, [], 0, 0
@@ -110,7 +114,7 @@ def _read_job(runtime, filename, check, sleep, projection=None):
             rows.extend(page);offset += len(page)
             if not count: break
         check()
-        if complete_metadata(runtime, runtime.request(path)) != count:
+        if complete_metadata(runtime, runtime.request(path), app) != count:
             raise ProviderError('The lookup job changed while reading its CSV results.')
         return {'state': 'complete', 'warning': '', 'fields': [{'name': name} for name in fields], 'results': rows}
     finally:
