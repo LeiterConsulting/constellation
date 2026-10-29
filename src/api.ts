@@ -25,7 +25,7 @@ export async function providerRequest<T>(action: 'settings' | 'models' | 'test' 
   const url = createRESTURL(`constellation/${action === 'run' ? 'control' : 'v1'}/${action}`, { app: 'constellation', owner: '-' });
   const init = createFetchInit({ method: body ? 'POST' : 'GET',
     body: body ? JSON.stringify(body) : undefined, headers: body ? { 'Content-Type': 'application/json' } : {}, signal });
-  return recoverRead(retryableRead(action, body), ['author', 'test'].includes(action) ? 240_000 : action === 'dependencies' ? 120_000 : 30_000, signal, async remaining => {
+  return recoverRead(retryableRead(action, body), ['author', 'test', 'dependencies'].includes(action) ? 240_000 : 30_000, signal, async remaining => {
     const { response, result } = await fetchWithDeadline(url, init, remaining, async response => {
       let result: T & { error?: string; validationError?: string; code?: string; recovery?: Record<string, unknown> };
       try { result = await response.json(); } catch (failure) {

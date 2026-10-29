@@ -9,7 +9,7 @@ A conversational canvas for creating and editing **Splunk Dashboard Studio** das
 
 Describe an operational question, choose data available to your Splunk user, and watch a dashboard take shape. Select a chart, input or page to refine it through chat. Start from a blank canvas, an existing Studio definition, or an image/PDF reference when the selected provider supports it.
 
-**Status: 0.39.0 development preview (unreleased).** This is a new codebase, separate from Splunk Dashboard Generator. It is not a production release or Splunk Cloud certified app. The repository is currently private and is being prepared for a future public release.
+**Status: 0.40.0 development preview (unreleased).** This is a new codebase, separate from Splunk Dashboard Generator. It is not a production release or Splunk Cloud certified app. The repository is currently private and is being prepared for a future public release.
 
 ## Download and start
 
@@ -47,7 +47,7 @@ This app remains self-contained inside Splunk: React/TypeScript, the Splunk Dash
 
 ## Current development
 
-- **More → Images and icons** uploads/reuses native raster images and passive SVG icons without sending file bytes to models. **Export with assets** and **Dashboards → Import dashboard file** move supported shared and packaged media between instances, including SVG choropleth maps, with sharing review and verified reference remapping. Missing destination dependencies block import before uploads. Compatible report searches can be included explicitly. One opt-in includes complete small CSV lookups and inlines ordinary macros; import verifies fresh private lookup copies without replacing native objects. Sharing or another app still needs native lookup access. Advanced lookups/macros, extensions, modules and external media need destination setup. Native upload permissions apply.
+- **More → Images and icons** uploads/reuses native raster images and passive SVG icons without sending file bytes to models. **Export with assets** and **Dashboards → Import dashboard file** move supported shared and packaged media between instances, including SVG choropleth maps, with sharing review and verified reference remapping. Missing destination dependencies block import before uploads. Compatible report searches can be included explicitly. One opt-in includes complete CSV lookups (up to 5,000 rows/1 MB each) with supported case-insensitive, CIDR, wildcard and fallback matching, and inlines ordinary macros; import verifies fresh private lookup files/definitions without replacing native objects. Sharing or another app still needs native lookup access. Advanced lookups/macros, extensions, modules and external media need destination setup. Native upload permissions apply.
 
 - Geographic layers and SVG source roles receive bounded checks. Small explicit new map/SVG boards use compiled source bindings and layout; the verified base search stays on the server. Native geographic read transforms retain the existing guards.
 
@@ -89,7 +89,7 @@ python3.13 scripts/package_app.py
 npm run dev -- --port 5178
 ```
 
-The local preview demonstrates the canvas with illustrative data. Provider settings, live searches, server-backed drafts and native saves require the installed Splunk app. Packaging creates `artifacts/constellation-0.39.0.tgz`; release `.tar.gz` assets contain those exact bytes. Build artifacts and dependencies stay outside Git. See [development and release checks](docs/development.md).
+The local preview demonstrates the canvas with illustrative data. Provider settings, live searches, server-backed drafts and native saves require the installed Splunk app. Packaging creates `artifacts/constellation-0.40.0.tgz`; release `.tar.gz` assets contain those exact bytes. Build artifacts and dependencies stay outside Git. See [development and release checks](docs/development.md).
 
 ## Data and credentials
 

@@ -51,7 +51,7 @@ describe('portable native assets',()=>{
   await expect(importPortable(file,()=>{})).rejects.toThrow('1 shared assets verified');expect(uploadAssetData).toHaveBeenCalledTimes(2);expect(d.visualizations.a.options!.icon).toBe('splunk-enterprise-kvstore://same');
  });
  it('bundles packaged choropleth SVGs and preserves version-1 files',async()=>{
-  const d=board();d.visualizations.map={type:'splunk.choropleth.svg',options:{svg:'/static/app/fixture/floor.svg'}};vi.mocked(readAssetData).mockResolvedValue({name:'icon.svg',dataURI:svgDataUri(svg)});vi.mocked(readPackagedAsset).mockResolvedValue({name:'floor.svg',dataURI:svgDataUri(svg)});const file=await exportPortable(d,()=>{});expect(file.version).toBe(3);expect(file.assets).toHaveLength(2);expect(file.definition.visualizations.map.options!.svg).toMatch(/^splunk-enterprise-kvstore:\/\/packaged_/);expect(await readPortable(file)).toEqual(file);const old=await exportPortable(board(),()=>{});old.version=1;delete old.lookups;expect((await readPortable(old)).version).toBe(1);
+  const d=board();d.visualizations.map={type:'splunk.choropleth.svg',options:{svg:'/static/app/fixture/floor.svg'}};vi.mocked(readAssetData).mockResolvedValue({name:'icon.svg',dataURI:svgDataUri(svg)});vi.mocked(readPackagedAsset).mockResolvedValue({name:'floor.svg',dataURI:svgDataUri(svg)});const file=await exportPortable(d,()=>{});expect(file.version).toBe(4);expect(file.assets).toHaveLength(2);expect(file.definition.visualizations.map.options!.svg).toMatch(/^splunk-enterprise-kvstore:\/\/packaged_/);expect(await readPortable(file)).toEqual(file);const old=await exportPortable(board(),()=>{});old.version=1;delete old.lookups;expect((await readPortable(old)).version).toBe(1);
  });
  it('imports validated lookup copies before media and preserves the returned query remapping',async()=>{
   const definition=board();definition.dataSources={s:{type:'ds.search',options:{query:'| inputlookup fixture.csv'}}};
@@ -71,6 +71,20 @@ describe('portable native assets',()=>{
  });
  it('checks missing destination dependencies before any upload',async()=>{
   vi.mocked(readAssetData).mockResolvedValue({name:'Fixture.svg',dataURI:svgDataUri(svg)});const file=await exportPortable(board(),()=>{});vi.mocked(checkDependencies).mockResolvedValueOnce({definition:file.definition,dependencies:[{kind:'index',name:'missing_fixture',app:'',status:'missing',detail:'Not listed'}],notes:[],blocked:true});await expect(importPortable(file,()=>{})).rejects.toThrow('before uploading');expect(uploadAssetData).not.toHaveBeenCalled();
+ });
+ it('preserves v4 matching and reads old v3 records without silently adding semantics',async()=>{
+  const file=await exportPortable(createBlank(),()=>{});file.lookups=[{kind:'lookup',name:'fixture',app:'constellation',fields:['host'],rows:[['*.example.test']],matching:{case_sensitive_match:'false',match_type:'WILDCARD(host)'},fingerprint:'a'.repeat(64)}];
+  expect((await readPortable(file)).lookups?.[0].matching).toEqual(file.lookups[0].matching);
+  await expect(readPortable({...file,version:3})).rejects.toThrow('portable lookups');
+  delete file.lookups[0].matching;expect((await readPortable({...file,version:3})).lookups).toEqual(file.lookups);
+ });
+ it('measures Unicode lookup and whole-file limits in UTF-8 bytes',async()=>{
+  const file=await exportPortable(createBlank(),()=>{});
+  file.lookups=[{kind:'lookup',name:'fixture.csv',app:'constellation',fields:['text'],rows:[['☃'.repeat(1_000_000)]],fingerprint:'a'.repeat(64)}];
+  await expect(readPortable(file)).rejects.toThrow('portable lookups');
+  file.lookups=[];await expect(readPortable({...file,future:'☃'.repeat(6_000_000)})).rejects.toThrow('oversized portable dashboard');
+  vi.mocked(prepareDependencies).mockResolvedValueOnce({definition:createBlank(),dependencies:[],notes:['☃'.repeat(6_000_000)],blocked:false});
+  await expect(exportPortable(createBlank(),()=>{})).rejects.toThrow('18 MB');
  });
  it('supports a plain HTTP host without WebCrypto and uses standard SHA-256',async()=>{
   const nativeCrypto=globalThis.crypto;vi.stubGlobal('crypto',{getRandomValues:nativeCrypto.getRandomValues.bind(nativeCrypto)});

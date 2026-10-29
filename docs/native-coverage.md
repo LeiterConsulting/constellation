@@ -82,6 +82,10 @@ The existing media dialog now distinguishes choropleth maps from decorative icon
 Portable version 2 includes supported shared maps and conservative same-origin packaged artwork, preserves exact asset bytes and reads version 1. Recognized missing destination dependencies block import before any shared upload. Compatible report searches may be included explicitly with effective time parameters; they run as the viewer and do not carry schedules, caches, owner permissions or app-specific extraction configuration. Lookup contents, macro definitions/arity, custom extension installation, SPL2 modules, arbitrary external resources and a complete dependency graph remain open. See [current qualification](validation.md#0380-svg-maps-and-destination-dependencies--october-28-2026) for exact evidence, retained failures and native/browser limits.
 
 
+## Complete CSV transfer and matching (0.40)
+
+Portable version 4 separates complete CSV transfer from bounded preview searches and retains supported static matching through fresh private native definitions. The limit is 5,000 complete rows/64 plain fields/1 MB per table, eight tables/3 MB combined JSON. Ordinary previews remain 200 rows/five seconds. Canonical matching fingerprints retain legacy receipt comparison; readers accept versions 1–3. Temporal/filtered/unknown non-default rules, KV/scripted/geospatial dependencies and destination sharing still require native configuration. See current [qualification](validation.md).
+
 ## Lookup and macro dependencies (0.39)
 
 Portable version 3 adds an explicit compatible-dependency option: bounded complete static CSV data from Constellation and ordinary nested/parameterized macro inlining. Macro definition mismatches and missing recognized dependencies block reference-based import. CSV copies receive fresh private native names, caller-authorized upload, privacy/content readback and literal query remapping without replacing objects or widening ACLs. Versions 1 and 2 remain readable. See [qualification](validation.md#0390-lookup-and-macro-dependencies--october-28-2026).

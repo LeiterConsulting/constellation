@@ -7,10 +7,11 @@ import { readPackagedAsset } from './packagedAssets';
 import { svgAreaIds, validateAssetData } from './svgAssets';
 
 export interface PortableAsset { id: string; kind: AssetKind; name: string; dataURI: string; sha256: string; }
-export interface PortableDashboard { format: 'constellation-dashboard'; version: 1|2|3; definition: StudioDefinition; assets: PortableAsset[]; dependencies?: DashboardDependency[]; notes?: string[]; lookups?: PortableLookup[]; }
+export interface PortableDashboard { format: 'constellation-dashboard'; version: 1|2|3|4; definition: StudioDefinition; assets: PortableAsset[]; dependencies?: DashboardDependency[]; notes?: string[]; lookups?: PortableLookup[]; }
 type Reference = { path: string[]; id: string; kind: AssetKind; packaged?: string };
 const key = (kind: AssetKind, id: string) => `${kind}:${id}`;
 const digest = async (value: string) => sha256(value).toString();
+const jsonBytes = (value: unknown) => new TextEncoder().encode(JSON.stringify(value)).length;
 
 /** Only literal media slots may be remapped. Queries, text, DOS and unknown properties stay exact. */
 export function assetReferences(definition: StudioDefinition): Reference[] {
@@ -45,13 +46,15 @@ export async function exportPortable(definition: StudioDefinition, progress: (te
   }
   if (cancelled()) throw new Error('Export cancelled.');
   for (const ref of assetReferences(snapshot)) if(ref.packaged){let node:Record<string,unknown>=snapshot;for(const part of ref.path.slice(0,-1))node=node[part] as Record<string,unknown>;node[ref.path.at(-1)!]=`${assetType}://${ref.id}`;}
-  return {format:'constellation-dashboard',version:3,definition:validateDefinition(snapshot),assets,dependencies:prepared.dependencies,notes:prepared.notes,lookups:prepared.lookups||[]};
+  const file: PortableDashboard = {format:'constellation-dashboard',version:4,definition:validateDefinition(snapshot),assets,dependencies:prepared.dependencies,notes:prepared.notes,lookups:prepared.lookups||[]};
+  if(jsonBytes(file)>18_000_000)throw new Error('The dashboard and its dependencies exceed the 18 MB portable-file limit. Export fewer assets or lookups.');
+  return file;
 }
 export async function readPortable(value: unknown): Promise<PortableDashboard> {
   if (!value || typeof value !== 'object') throw new Error('Choose a portable Constellation dashboard.');
   const file = value as PortableDashboard;
-  if (file.format !== 'constellation-dashboard' || ![1,2,3].includes(file.version) || !Array.isArray(file.assets) || file.assets.length > 16 || JSON.stringify(value).length > 18_000_000) throw new Error('Unsupported or oversized portable dashboard.');
-  if(file.lookups!==undefined && (file.version!==3 || !Array.isArray(file.lookups)||file.lookups.length>8||JSON.stringify(file.lookups).length>3_000_000))throw new Error('Invalid or oversized portable lookups.');
+  if (file.format !== 'constellation-dashboard' || ![1,2,3,4].includes(file.version) || !Array.isArray(file.assets) || file.assets.length > 16 || jsonBytes(value) > 18_000_000) throw new Error('Unsupported or oversized portable dashboard.');
+  if(file.lookups!==undefined && (file.version<3 || !Array.isArray(file.lookups)||file.lookups.length>8||jsonBytes(file.lookups)>3_000_000||file.version===3&&file.lookups.some(item=>item?.matching!==undefined)))throw new Error('Invalid or oversized portable lookups.');
   if(file.dependencies!==undefined && (!Array.isArray(file.dependencies)||file.dependencies.length>100))throw new Error('Invalid dependency receipts.');
   if(file.notes!==undefined && (!Array.isArray(file.notes)||file.notes.length>100||file.notes.some(note=>typeof note!=='string'||note.length>2000)))throw new Error('Invalid transfer notes.');
   const definition = validateDefinition(file.definition), refs = assetReferences(definition).filter(ref=>file.version>=2||!ref.packaged), expected = new Set(refs.map(ref=>key(ref.kind,ref.id)));
