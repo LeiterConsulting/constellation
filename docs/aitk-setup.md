@@ -2,6 +2,8 @@
 
 Open **Constellation → Settings → Splunk AITK → AITK setup guide** for the in-app instructions. The guide is collapsed by default and does not change permissions, credentials or AITK configuration.
 
+For ordinary authors, the setup order is: prepare the native connection, [protect metadata](#protect-connection-metadata), configure the [shared inference policy and role](#shared-inference-without-credential-read-access), then [verify the author path](#verify-the-intended-users-complete-path). The native/direct route is a separate reference below.
+
 ## Prepare a connection
 
 Install a compatible Python for Scientific Computing (PSC) add-on alongside AITK and complete any required Splunk restart before testing. If a startup warning mentions an old KV Store version, verify the running KV Store version and readiness before planning a database upgrade. Follow [Splunk’s KV Store upgrade prerequisites](https://help.splunk.com/en/splunk-enterprise/administer/admin-manual/10.2/administer-the-app-key-value-store/upgrade-the-kv-store-server-version), including backup and platform checks, when an upgrade is actually needed. [Splunk's installation matrix](https://help.splunk.com/en/splunk-cloud-platform/apply-machine-learning/use-ai-toolkit/6.2.0/install-and-upgrade-the-ai-toolkit/install-the-ai-toolkit) lists PSC **4.3.5** for AITK **6.2.0**, and PSC **4.3.4** for AITK **6.1.0**. Do not infer compatibility or active worker versions from the uploaded app version alone.
@@ -12,7 +14,7 @@ The trusted maintainer needs both `list_ai_commander_config` and `edit_ai_comman
 
 If Splunk rejects a role assignment as **not grantable**, have an authorized security administrator review the assigning account's effective capabilities and role delegation. Splunk limits which roles an account can grant; `edit_roles` alone does not override those limits. Follow the installed version's [role-delegation settings](https://help.splunk.com/en/splunk-enterprise/administer/admin-manual/10.4/configuration-file-reference/10.4.4-configuration-file-reference/authorize.conf). Do not grant credential-store capabilities to authors or broaden general administrator delegation just to complete a connection test.
 
-Check the model context window and **Max Tokens**. Some models spend part of that output allowance on reasoning. The tested GPT-5 mini connection used 16,000 tokens for selected multi-page journeys; this is a tested configuration, not a universal requirement or performance guarantee. Constellation cannot verify AITK's configured limits through this route. See [model capacity](providers.md#model-capacity-and-batching).
+Check the model context window and **Max Tokens**. Some models spend part of that output allowance on reasoning. The tested GPT-5 mini connection used 16,000 tokens for selected multi-page journeys; this is a tested configuration, not a universal requirement or performance guarantee. Constellation cannot verify AITK's configured limits through this route. See [model capacity](providers.md#model-limits).
 
 AITK 6.2 also exposes **Reasoning Effort** in the native connection editor. The tested GPT-5 mini connection used `LOW` during the 0.17 follow-up while retaining 16,000 Max Tokens. Review the model’s supported settings and qualify the complete task after a change; a small connection test is insufficient. Lower effort can trade reasoning depth for speed, as explained in [OpenAI’s model-dependent reasoning guidance](https://developers.openai.com/api/docs/guides/reasoning). The AITK UI label `NONE` is recorded as a native configuration value here; do not assume it has the same meaning as an upstream provider’s `none` parameter. Constellation does not silently change this administrator-owned setting.
 
@@ -100,7 +102,7 @@ If it succeeds, return to Constellation, save the named connection and run **Tes
 | Stored credential access denied | Review the native AITK secret-access error for the intended author. Keep the key in AITK and resolve the installed version's supported access configuration; changing connection sharing alone may not solve this. |
 | Empty response or capacity/quota error | Review actual model settings, reasoning/output allowance, context capacity and provider quota; repeat the native and Constellation tests after correction. |
 
-Constellation returns fixed guidance for recognized failures, using only the caller's failed AITK job. It does not return native log text, copy provider keys, widen roles or blindly retry permission failures. See [current verification limits](validation.md#0150-shared-aitk-inference--october-25-2026).
+Constellation returns fixed guidance for recognized failures, using only the caller's failed AITK job. It does not return native log text, copy provider keys, widen roles or blindly retry permission failures. See [shared-inference qualification history](history/validation.md#0150-shared-aitk-inference--october-25-2026).
 
 ## 1.0 qualification note
 

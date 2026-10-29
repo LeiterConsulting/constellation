@@ -1,125 +1,114 @@
-# Your first dashboard
+# Constellation user guide
 
-Constellation is a development preview. Begin with a small operational question and data your Splunk account can search. Use a test environment before relying on a generated dashboard for decisions.
+Create a dashboard from a question and Splunk data, refine it through chat, and save a native Dashboard Studio copy. This guide describes version **1.0.0**.
 
-Imported report-backed dashboards can run bounded previews from their saved-report references. Selecting a report-backed element supplies field context to chat without pasting SPL. New references need an exact report name and app. Preview replay and supported chain transforms run as you in the report’s original app within the selected window; native Studio can use report schedules, cached results and different report execution permissions. Field inspection and selected-element edits retain the report context. If its base search changes, reselect the report-backed element to refresh that context. The report itself is never edited. Unsupported report SPL remains native-only.
+**Before you begin:** Constellation must be installed in Splunk, your account must be able to search the chosen data, and a provider must be configured. If **Settings** or **Test model** needs attention, follow [provider setup](providers.md) or ask your administrator.
 
-Reset controls return to original defaults after reopening a draft. Clearing an input pauses dependent previews with **Waiting for input**, while other sources can finish normally. Native unset actions require the qualified 10.4 target; reset and an explicit set-token value remain separate operations. Environment checks report accessible custom visualization metadata; rendering those extensions still requires native Studio.
+**In this guide:** [Build](#build-your-first-dashboard) · [Refine](#refine-a-chart-input-or-page) · [Keep context](#keep-context-with-the-dashboard) · [Pages](#create-pages-and-navigation) · [Resume](#save-reopen-and-restore) · [Native output](#use-the-result-in-splunk) · [Files](#use-an-image-or-pdf-reference) · [Help](#when-a-step-does-not-complete)
 
-For a table trend, ask for a native sparkline column alongside the summary metrics. Select that table to change the sparkline style or column width. A sparkline needs time-ordered numeric array output; a single average is insufficient. Older native Studio tables show missing buckets at zero, so Constellation asks whether to use a separate trend chart or accept labelled native zero fill. Newer targets can preserve gaps and genuine zero separately. Durable instructions in **Draft details → Requirements** also inform later native feature guidance when switching models. See [native coverage](native-coverage.md) for supported surfaces and remaining qualification.
+![Dashboard canvas and docked conversation in the light theme.](images/workspace-docked-light.jpg)
 
-1. Open **Settings** in the workspace. Choose an authorized provider, load or enter a model, and run **Test model**. This checks connection and JSON edits; it does not prove every dashboard-building task. OpenAI keys need HTTPS and are stored privately for your Splunk user; no credential-store capability is required. Ollama must be reachable from the Splunk server. AITK uses an existing named connection. An administrator-managed shared connection lets authorized authors build without access to stored credentials.
-2. Choose **New dashboard**. Starting questions come from inspected fields in up to three recent datasets, with the last selected dataset preferred within this workspace session. Selecting one prepares an editable chat request and selects its data; review it and **Send**. For another source, use **Choose Splunk data** or **Use an existing search**, select a time range and inspect fields. Inspection offers questions suited to that schema.
-3. Describe the question, audience, units and exclusions. For example: “Show freezer temperature over time in Fahrenheit. Exclude readings above 150°F, while keeping Wi-Fi measurements.” A known field is stronger grounding than an assumed business meaning.
-4. Review the live canvas and conversation. **Activity** explains checks and recovery. **Stop** discards late edits. Search details distinguish complete, partial, failed and stale snapshots; refresh for current data.
-5. Use **Select element**, or **Conversation focus**, to direct a change. **Keep exploring** offers concrete next requests using the conversation and current dashboard. Selecting a suggestion fills the composer; edit before sending. Ask for no suggestions to hide them. **Pages** sets page names and purposes. Ask explicitly for row drilldowns, destination filters and return navigation.
-6. Let the draft save before leaving. Reopen it from **Dashboards**. **More → Draft details and history** keeps the brief and previous document versions. Restoring a version retains the current conversation. Undo/redo covers the current session.
-7. Choose **Save to Splunk**, select the destination app, then **Save private copy**. Open the result in native Studio and check its queries, ranges, layout and interactions.
+*Screenshots use the actual local UI and authored sample data. They do not show a live provider connection, saved private draft or production data. Installed-only actions are disabled in the local preview. [Image details](screenshots.md).*
 
-For a summary-table cleanup, select the table and ask: “Polish only this selected table: round temperatures to one decimal, Wi-Fi RSSI to whole dBm, and format last seen as a readable date if it is present.” Existing columns and row navigation are retained. Broader changes, such as adding a new aggregate or column, remain ordinary conversational edits.
+## Build your first dashboard
 
-When you know a field's stored units, you can say “temperature_f is stored in Fahrenheit; wifi_rssi is in dBm.” Constellation keeps these declarations with the selected data source, including after reopening the draft. Asking for a different display unit is a separate conversion request. Field names and temperature cutoffs alone do not confirm how the source stores its values.
+1. Choose **New dashboard**. This opens an empty canvas; it does not modify the example board or another draft.
+2. Under **Start with your Splunk data**, choose a starting question, **Choose Splunk data**, or **Use an existing search**. Starter questions come from a bounded inspection of recent accessible datasets. Choosing a question fills an editable request; review it before **Send**.
+3. Choose the dataset or existing SPL/SPL2 search and a time range. Use **Inspect fields** to check names, meanings, units and sample coverage. A field absent from a bounded sample is not necessarily absent from the dataset.
+4. Describe the outcome, audience and rules. Use the inspected field names. For example:
 
-The conversation can float, dock or hide. **More** holds source, JSON export, private draft links, environment details and theme. Import an existing Studio JSON file through the workspace's **Dashboards** dialog. The optional example uses illustrative data.
+   > Use the selected data to show latency over time and a service summary. Latency is recorded in milliseconds. Keep missing measurements unknown and show how many observations support each average.
 
-The preview follows the available window width and height. Tall dashboard pages scroll inside it, preserving their saved proportions. Very short windows keep a minimum usable preview and allow the workspace to scroll.
+5. Choose **Build dashboard** from data inspection, or **Send** from the conversation. Watch the stage and elapsed time. Changes apply together after validation; rejected changes leave the accepted dashboard intact.
 
-## Model limits
+Review the result before relying on it: titles, units, time ranges, empty values, calculations and drilldowns. The preview is bounded. **Partial** is not a complete count, and **snapshot** does not mean continuously live.
 
-Settings shows potential context and output-budget issues, with **Model limits and test details** for the numbers and reported test usage. A successful test means the connection returned a small valid structured response. It does not establish dashboard-creation reliability or maximum context capacity. Changing the provider, model, endpoint, connection or key clears the previous test display.
+## Refine a chart, input or page
 
-Ollama reports model context metadata when available; the app requests up to 32,768 tokens, capped by reported capacity. Instructions, the dashboard, conversation and output share that space. Models need sufficient memory and time as well as context capacity. For AITK, check the actual model and **Max Tokens** under **AI Toolkit → Connections**. Constellation cannot verify those limits through this route. Reasoning can exhaust a small output budget before any visible answer appears. Batching cannot fix a connection that cannot return even a small usable completion.
+Turn on **Select element** and choose an element on the canvas. Alternatively, expand **Focus** in the conversation and choose an item from **Conversation focus**. Check the displayed target before sending a focused request.
 
-Test an AITK connection in Constellation as the Splunk user who will build dashboards; administrator success does not prove ordinary-user access. For ordinary authors, use the approved shared-inference path rather than granting credential-read permissions. The tested GPT-5 mini AITK connection used 16,000 tokens for multi-page creation; its earlier 2,000-token setting could return no completion. This is a tested configuration, not a universal model recommendation. A larger budget does not guarantee fast or correct authoring. Review the [provider qualification results](provider-qualification.md) when choosing a connection.
+> Change only this table: round latency to one decimal and keep its existing columns and row links.
 
-For shared AITK setup, expand **AITK setup guide** in Settings. It links to native Connections and Search, separates author and maintainer permissions, and explains a stored-credential denial separately from connection visibility. Give your administrator the [AITK setup instructions](aitk-setup.md) if you cannot complete the intended-user test.
+**Keep exploring** offers follow-on requests. Selecting one fills the composer; you can edit it before sending. A suggestion is a proposed next step, not proof of a relationship in the data.
 
-Smaller two-page goals through AITK can attempt one compact complete proposal. Larger/ambiguous AITK goals and Ollama models with unknown or smaller context windows use an internal foundation and completion stage. Verified Ollama windows of 32,768 tokens or more attempt the full typed proposal first, reserving both repairs. The stages share the existing recovery budget, reuse verified searches and apply together only after validation. The agent receives reported limits and retains the durable brief while trimming older rolling history when the conservative Ollama input estimate requires it. These safeguards reduce avoidable failures; they do not guarantee that every model can author every dashboard.
+Choose **Float** to move the conversation over the canvas, **Dock** to return it beside the canvas, or **Hide** to collapse it. **Show conversation** opens it again.
 
-## Sketches and PDFs
+![A selected trend and floating conversation containing an unsent refinement request.](images/focused-conversation.jpg)
 
-Attach up to two PNG/JPEG/WebP images or PDFs, at most 4 MB each, when the selected model's verified capabilities permit them. Explain whether the file specifies layout, data, or both. Files are sent with the message and can remain in the private draft. Unsupported models/routes block transmission; AITK is text-only and this Ollama route blocks PDFs. Layout interpretation does not establish actual field meanings or data quality.
+*The selected chart and prompt are illustrative. The prompt shown has not been sent to a model.*
 
-## Use and share the native result
+## Keep context with the dashboard
 
-The output is an ordinary Dashboard Studio definition with native sources, inputs, tokens and pages. It runs in the selected app without Constellation's preview service or an active inference connection. Native Studio supplies editing, dashboard actions, JSON export and platform permissions. Availability of other actions, including scheduled export, depends on your Splunk version and permissions.
+Use **More → Draft details and history → Brief** for instructions that should remain with this draft: purpose, audience, recorded units, exclusions and conventions. Choose **Save brief**. The brief remains part of the draft when you switch providers or reopen it.
 
-The new dashboard starts private. In native Studio use **Actions → Edit permissions** to choose the intended audience under your normal Splunk authority. Viewers need their own search access and access to referenced lookups, saved searches, modules and other knowledge objects. Changing the destination app can change those dependencies. Splunk documents its [dashboard creation and permissions](https://help.splunk.com/en/splunk-enterprise/create-dashboards-and-reports/dashboard-studio/10.4/create-a-dashboard-in-dashboard-studio) and [permission scopes](https://help.splunk.com/splunk-enterprise/create-dashboards-and-reports/simple-xml-dashboards/9.0/manage-and-share-dashboards/configure-dashboard-permissions).
+> Latency is recorded in milliseconds. Missing values stay unknown. Keep Overview independent of the selected service. Include a detail page with a return button.
 
-A private draft link reopens your own conversation; it does not share a dashboard. A saved native copy and its working draft are separate. Native edits do not automatically sync back into the conversation. To continue from an edited copy, open it from the Constellation library if it is in this app, or export its Studio JSON and import it as a fresh draft. The standard **Dashboards** navigation opens Splunk's dashboard list; the workspace's **Dashboards** button opens drafts and Studio copies in Constellation.
+![Draft details with an example purpose and requirements.](images/draft-brief.jpg)
 
-## When something fails
+*Example brief in the local UI. Durable storage requires the installed Splunk app.*
 
-**Reconnecting to Splunk** means the app is checking for the validated reply to your existing request. It does not send the prompt again. You can still use **Stop**. A brief interruption of a read can recover once; an uncertain write is checked by exact readback and model requests are never replayed. Small pending draft changes can recover across refresh in this tab; wait for **Draft saved** before closing it, and whenever the save line asks you to keep it open.
+To revisit fields while editing, select the chart or input, open the **Searches** or dataset button above the canvas, then choose **Choose Splunk data** or **Data: …**. Expand **Field context**. Inspection follows the selected primary source, current input values and the original report app when applicable.
 
-The agent can repair validation failures within a fixed budget. If recovery is exhausted, the accepted draft is preserved; read Activity and retry the original request when appropriate. A model test is not a dashboard-creation qualification. Authentication, quota and transport failures may need provider or administrator action.
+Explain recorded units explicitly. A name hint is not evidence of a physical unit. If the agent asks for a unit, answer for the named field; requesting a display conversion is a separate instruction. Changing the source establishes new context; changing only the time range keeps field definitions.
 
-Check **Draft saved** before closing. On a save conflict, keep both versions using **Save as new draft**. Draft and managed private native-view deletion uses recoverable Trash. Backups, retention and removal of the app remain administrator responsibilities. See the [handoff audit](share-readiness.md) and [support limits](studio-support.md).
+## Create pages and navigation
 
+Use **Pages** to add or rename a page and give it a purpose. Page purposes help organize the conversation; they do not create an access boundary.
 
-### Progress and compact controls
+For linked pages, name the source, destination and filter:
 
-While the agent works, the conversation shows its actual stage and elapsed time. Open Activity for the completed steps. Stop immediately prevents late edits and asks the server to stop at its next checkpoint. A direct provider request may still finish upstream and incur charges. Your last accepted dashboard and conversation remain available; refreshing does not repeat the request.
+> Create Overview and Service detail. Keep Overview unfiltered. Clicking a service in the summary should open Service detail filtered to that service. Add a return button to Overview.
 
-Stop inspection in the data chooser retains your goal and data selection; a late inspection cannot start a build. The bounded server inspection may still finish.
+Check the default view, at least two selections where data permits, and the return action. Ask explicitly which detail charts should filter. Use native Studio to verify the saved interactions.
 
-The source/time button above the canvas opens preview range, change-data, refresh/pause and Search details. Complete/partial/stale evidence still describes bounded preview results. Expand Focus in the conversation for the keyboard-accessible element list, or use Select element on the canvas. Float, Dock and Hide retain their existing behavior.
+For dependent inputs, describe the parent and child choices. Native cascading reset is version-gated; earlier targets can use dependent searches with separately configured resets. An unset required input waits for a choice rather than inventing results.
 
-If the model finishes but the original response stalls, the app can receive the same validated change through its short-lived delivery channel. It does not repeat the model request. Stop still discards late changes. Delivery recovery is available only in the original session on the same search head; private drafts remain the way to resume work across sessions.
+For a table trend, ask for a **native sparkline column** alongside scalar metrics. Older Studio targets render missing sparkline buckets as zero; Constellation asks whether to accept labelled zero fill or use a separate trend chart. Review [native coverage](native-coverage.md#tables-and-sparklines) before interpreting gaps.
 
+## Save, reopen and restore
 
-A field inspection marked **partial** is a bounded sample, not a complete count or proof that a field is absent. Existing searches retain their exact scope. A requested temperature column can legitimately remain empty when every selected temperature is excluded; independent Wi-Fi values and event counts can still be present. Empty measurements are not replaced with zero. Inspect Search details and the selected time range before interpreting a snapshot.
+Drafts save privately in Splunk with their conversation, brief, selected data, page/input state and pending attachments. Wait for **Draft saved** before leaving.
 
-Each workspace keeps its own draft link. Refresh returns to that draft even if you open another draft in a different tab. Draft links still require the owning Splunk user; they do not grant access to another user.
+| Task | Action |
+| --- | --- |
+| Reopen a draft | **Dashboards → My dashboards**, then choose its title. |
+| Rename or keep a separate copy | Use **Rename** or **Duplicate** beside the draft. |
+| Recover a deleted draft | **Dashboards → Trash → Restore**. The conversation is retained. |
+| Restore a document version | **More → Draft details and history → Version history**. The current conversation remains. |
+| Undo the current session's edit | **Undo**; use **Redo** when available. |
+| Reopen the same page and focus | **More → Copy draft link**. The link still requires the owning user. |
 
-If a link is unavailable, nothing is saved or replaced. Use **Dashboards** to reopen your own work or **New dashboard** to start. Deleted drafts remain in **Trash** until you restore them.
+During **Saving draft…**, small pending changes can recover within the same tab's storage limits. **Keep this tab open until saved** means you should wait before refresh or closure. The tab copy expires after six hours and is not a backup across closed tabs. A conflict preserves local work and offers a separate copy.
 
+Opening a missing, deleted or another user's draft does not create a replacement. Use **Dashboards** or deliberately choose **New dashboard**.
 
-### Explain field meanings once
+## Use the result in Splunk
 
-Describe recorded units and event meaning in your question, for example: `temperature_f is measured in Fahrenheit. wifi_rssi is recorded in dBm. Each row represents one device observation. Missing readings are unknown, never zero.` For a short field meaning, use `latency means elapsed response time for one observation.` Definitions apply to fields inspected in the selected data; they stay with that data source when you reopen the draft. Changing the source/search asks the app to establish fresh context. Changing only the time window keeps definitions.
+1. Choose **Save to Splunk**.
+2. Select a destination app your account can use.
+3. Choose **Save private copy**.
+4. Open the result in native Studio and check the searches, ranges, layout and interactions.
 
-You can reopen fields while editing: select the chart or input, open **Searches → Choose Splunk data** (or the **Data** button in that menu), then expand **Field context**. Inspection follows the selected primary source, current dashboard input values and the report’s original app when applicable. Change an input and reopen inspection to see the matching bounded sample; an unset required token asks for a value. This does not send event values to the model.
+This creates a **new private native dashboard** and verifies its definition by readback. Saving the working draft does not update a previously saved Studio copy. The native result can be edited or shared through normal Splunk controls; sharing authority and data/dependency access still apply.
 
-**Field context** inside Choose Splunk data shows meanings, units and sample coverage. It labels your definitions separately from hints based on names. Inspect again after changing the question to review updated declarations. A name hint is not proof of the physical unit, and metadata cannot define what status codes mean. The agent should ask when a conversion or threshold needs an unresolved unit.
+Constellation lists Studio dashboards saved in its own app. Copies saved in another app appear in that app's dashboard list. Import Studio JSON or open an accessible Constellation view to begin editing an existing dashboard as a draft.
 
-When the agent asks which units are recorded in one field, a short answer such as “Fahrenheit” confirms that field and continues the original goal. This defines the stored unit; it does not convert values. If several fields or display preferences are involved, name the field explicitly.
+Private native views managed in Constellation have recoverable delete/restore. Shared native views can be opened or duplicated; Constellation does not rename/delete them. Restore refuses to overwrite an existing view ID.
 
-Coverage describes only the returned sample. A real zero is present data; an absent or nonnumeric reading is separate. Missing values do not establish an outage or expected cadence. Ask for independent valid-reading counts alongside source-row counts to see which measurements support a metric. Constellation preserves unknown measurements as null rather than silently turning them into zero. Broader derived-expression and SPL2 interpretations still need review.
+## Use an image or PDF reference
 
+Use **Attach sketch or PDF** when available, describe whether it supplies layout or content, and choose **Send**. A reference helps describe the layout; it does not verify the real data or field meanings.
 
-The initial shortlist favors questions supported by recognizable inspected measurements over generic state/unknown-value questions. It covers at most three recent sources; use **Choose Splunk data** when your source is absent. Inspecting a selected index or existing search offers questions for that source. Starter questions build one focused page by default; edit the prepared request or ask for another page later.
+At most **two files, 4 MB each** are accepted. OpenAI image/PDF support depends on an exact recognized model ID. Ollama images require advertised vision support; its PDF route is blocked. AITK is text-only. Unknown support blocks file transmission. See [provider and file support](providers.md#reference-files).
 
-A **Confirm recorded units** suggestion prepares a declaration for review. Send it only if it describes the stored values, or edit it. Confirming one observed field on an existing dashboard updates its saved draft context without a model request or query edit. Optional **Activity** shows model requests, search validation checks and elapsed time; profiling is separate from those query-check counts.
+Attachments can remain in the private draft. Review their content and provider policy before sending them. **More → Images and icons** is a separate native artwork workflow; see [assets and portability](assets-and-portability.md).
 
-The suggested **Open a detail page from a row** step chooses its table before you send it. For an eligible table, Constellation builds the filters and Back navigation together, preserving the existing table and searches. You can continue refining either page through the same conversation. Model qualification and batching checks are developer/admin work; the everyday canvas and connection test stay simple.
+## When a step does not complete
 
-To revise navigation, select its table and describe the destination and filter: “Retarget this table row to open Coverage, filter every chart there to the selected device and add a Back button.” Select an existing button to change its label or destination. Select a page to rename it and revise its purpose. Failed validation preserves your accepted draft.
+Open **Activity** for the completed checks and use **Stop** to discard late app edits. Upstream inference may still finish and incur charges. Refresh does not replay an interrupted request.
 
-## Refresh while a draft is saving
+If original response delivery is lost, Constellation can recover the same validated reply in the original session on the same search head. It does not repeat inference to recover it.
 
-The save line shows **Saving draft…** until Splunk confirms the private draft. Small pending changes also have a recovery copy in the current tab. After refresh, **Recovered unsaved changes from this tab** means the app restored and resumed saving those changes. An interrupted agent request returns to the composer and is not sent again automatically.
+For no rows, unsupported files, permission failures, partial results or save conflicts, use [troubleshooting](troubleshooting.md). Keep the original request and accepted draft; do not share credentials, indexed rows or private files in a bug report.
 
-If the save line says **Keep this tab open until saved**, wait for **Draft saved** before refreshing or closing. This can happen with large attachments or blocked/full browser storage. The tab copy lasts at most six hours and is not a backup across tab closure. If another session changed the draft, use the existing save-as-copy action to keep both versions. See [data and retention](../SECURITY.md#drafts-and-retention).
-
-## Request a native chart
-
-Name the chart and the question it should answer. For example, after inspecting suitable fields: “Create Relationships and Timing pages. Show a Sankey of source to target weighted by volume, parallel coordinates for the numeric comparison, and a timeline of each operation.” State units when they are known. Select the resulting chart to refine just its appearance or interaction.
-
-Constellation checks available native features and actual output fields before applying a change. It preserves the previous draft if it cannot finish a valid result. A chart imported from a newer Studio version can remain in the definition while the preview explains that the connected instance cannot display it. See the [coverage ledger](native-coverage.md) for tested cases and remaining limits; availability and definition readback alone do not prove every native behavior.
-
-## Dependent choices
-
-Ask for a parent input and a child input whose choices come from a filtered search, such as “Choose a source type, then show devices from that source type.” The agent uses inspected fields and native dropdown or multiselect inputs. Ask for All, the first search result or no initial choice as needed. Existing buttons and filters remain part of the draft.
-
-On Splunk 10.4 and later, native cascading reset can return the child to its default when the parent's query token changes. Earlier versions support dependent searches, with reset behavior configured separately. Unset inputs wait for a choice; missing data is not filled with invented choices. Run or refresh searches to load current choices.
-
-## Images, SVG icons and another Splunk instance
-
-Use **More → Images and icons** to choose a shared asset or upload a file. PNG/JPEG/GIF/WebP files can be up to 4 MB; SVG icons can be up to 500 KB. For a choropleth, choose **SVG choropleth maps** in Library before uploading: maps can be up to 250 KB and need a unique ID on every outlined path. SVGs must contain passive shapes/paths and local gradients, without scripts, external resources or CSS styles. Export those styles as presentation attributes if needed. Decorative SVGs go into the native icon library; raster images and SVG choropleths use the native image library. Select an existing image, single-value icon or SVG map before **Use asset** to replace only its asset reference. Otherwise an asset is added below existing work on the active absolute-layout page. Select it and ask for a size, placement or color change.
-
-These files are shared with other Splunk users even when the dashboard is private. Upload requires native Studio permissions, usually admin, power or sc_admin. Ordinary authors can reuse accessible media. File bytes are not sent to your model. Bounded map path IDs help the agent bind real data to your areas; those IDs are artwork metadata, not verified locations or readings. **Attach sketch or PDF** remains a separate conversational-reference feature.
-
-To move supported artwork with a dashboard, choose **More → Export with assets**. On the destination, use **Dashboards → Import dashboard file** and select the portable JSON. Review its artwork and sharing notice, then choose **Upload shared assets and import**. The app verifies the file, uploads fresh shared records and opens a new private draft with remapped references. Check the preview and use **Save to Splunk** for a normal native dashboard. Supported same-origin packaged artwork is included too. Destination dependency checks run before uploads; expand the result for details and use **Check again** after an administrator supplies missing dependencies. A missing report reference blocks import. When exporting a report-backed dashboard, **Include compatible report searches** can copy supported read-only search text and time settings instead. The copy reruns as the viewer; schedules, cached results, report-owner permissions and app-specific field extractions are not copied. Verify the destination results. **Include compatible lookups and macros** optionally includes complete CSV data used here and by included report searches (up to 5,000 rows/1 MB per table) and inlines ordinary macros into the exported searches. For reports from another app, select both inclusion choices; Constellation reads supported CSVs in the report’s original app and keeps same-named lookups separate. Compatible lookup/macro transforms in chains based on an included report use the same original app context and inclusion choices. Keep the file private: it now contains lookup data. Supported case-insensitive, CIDR, wildcard, match-count and fallback rules, compatible lookup filters and time-based matching are retained in private native definitions. The file contains the complete backing CSV, including rows hidden by lookup filters. For cross-instance historical matching, use epoch timestamps or a native format with an explicit timezone; local-time formats keep Splunk’s destination timezone behavior. Constellation preserves the native format rather than guessing a conversion. Eval-based/argument-validating macros and unsupported or oversized lookups explain why they require native configuration instead. Import copies included CSVs privately under fresh names, preserving existing destination objects. To share a resulting dashboard or save it in another app, configure lookup access there through **Settings → Lookups**. Future changes to source macros do not change an inlined copy. Indexed events, custom visualizations, modules and external URLs still need destination access/configuration. Conversation and provider settings are excluded. Keep portable files private when their artwork or search definitions are sensitive.
-
-If an upload is interrupted, the app does not repeat it or delete shared records. Your draft is retained. Review Studio's libraries before importing again; some uploads may already exist. Export can be cancelled while reading assets. Import does not offer cancellation during shared writes, so its outcome can be verified.
+**Next:** [Assets and portability](assets-and-portability.md) · [Supported features](studio-support.md) · [Documentation index](README.md)

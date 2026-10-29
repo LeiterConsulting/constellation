@@ -54,7 +54,7 @@ Do not force-add ignored operational material, broadly disable a detector or use
 
 AppInspect precert, unit tests and selected live flows are separate evidence from a security audit, production qualification or Splunk Cloud certification. See [validation](docs/validation.md).
 
-Validated authoring replies can temporarily remain in private search-head-local delivery files for recovery of a lost REST response. They may include dashboard definitions/SPL, the user-authored brief/goal and normal metadata. The original session-signed handle is required; another user/session cannot retrieve them. Access expires after five minutes. Acknowledgement/Stop deletes replies, and later control activity cleans expired files; there is no idle background deletion timer. Storage is bounded and mode 0700/0600. This adds no system authentication or credential access. See [architecture](docs/architecture.md#delivery-recovery-018).
+Validated authoring replies can temporarily remain in private search-head-local delivery files for recovery of a lost REST response. They may include dashboard definitions/SPL, the user-authored brief/goal and normal metadata. The original session-signed handle is required; another user/session cannot retrieve them. Access expires after five minutes. Acknowledgement/Stop deletes replies, and later control activity cleans expired files; there is no idle background deletion timer. Storage is bounded and mode 0700/0600. This adds no system authentication or credential access. See [architecture](docs/reference/design-notes.md#delivery-recovery-018).
 
 ## Shared artwork and portable files
 

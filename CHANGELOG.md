@@ -1,5 +1,12 @@
 # Changelog
 
+## Documentation refresh — October 29, 2026
+
+- Reorganize current author/admin guidance and preserve dated engineering/validation history separately.
+- Correct stale preview/AITK status and identify the unpublished rollback baseline.
+- Add actual synthetic local UI screenshots, a linked documentation hub, troubleshooting and an illustrated PDF guide.
+- Check local navigation/image provenance and include complete offline documentation in the handoff. The qualified 1.0 app bytes are unchanged.
+
 ## 1.0.0 — October 29, 2026
 
 - Carry current/default input values and exact selected-source context into field inspection without storing those values in data scopes or sending results to models.
@@ -9,7 +16,7 @@
 - Include the previously unpublished 0.35–0.43 increments below: native media/SVG assets, version-gated cascading inputs, compatible cross-instance dependencies, bounded complete CSV lookup transfer, ordinary macro inlining and report-context previews/edits.
 - Qualify ordinary-author provider flows, native output/sharing, cancellation/delivery recovery and 0.43 upgrade/rollback on the recorded Enterprise targets.
 
-## 0.43.0 — unreleased
+## 0.43.0 — included in 1.0.0
 
 - Run supported saved-report previews and chain transforms as the current user in the report’s original app, retaining its native reference and same-named lookup/macro distinctions.
 - Compile explicit per-row report calculations from a small suffix plan into a fresh native chain and selected-table binding, preserving every existing source.
@@ -18,21 +25,21 @@
 - Bind app-qualified preview handles to the user/session and verify exact native job ownership before polling or cancellation. Keep bounded search limits and narrow read-only delivery recovery.
 - Include compatible lookup/macro dependencies used by report chains through the existing two export choices, preserving unknown properties and fresh private destination objects.
 
-## 0.42.0 — unreleased
+## 0.42.0 — included in 1.0.0
 
 - Include compatible CSV dependencies from explicitly copied report searches in their original app context, using current-user reads and unchanged native permissions.
 - Give foreign report lookups distinct portable names, preserving same-named dependencies from different apps and unrelated native properties. Keep the version-5 file format and existing export choices.
 - Refuse report copies that would lose unresolved app-specific dependencies; require native review for app-dependent transforms chained to foreign reports.
 - Stop foreign-report lookup previews before dispatch in the wrong app, with a native-Studio or portable-copy instruction instead of misleading same-name results. Remove blanket retry advice from failed previews so permanent context/permission issues retain their specific guidance.
 
-## 0.41.0 — unreleased
+## 0.41.0 — included in 1.0.0
 
 - Transfer supported filtered and time-based CSV definitions through fresh private native copies, retaining timestamp formats, offset windows and temporal match-count defaults.
 - Validate bounded field/literal filter predicates and required CSV columns; reject pipelines, dynamic expressions and unsupported rules before writes. Filters remain native configuration and are never appended to dashboard searches.
 - Preserve exact `_time` CSV text with a collision-aware internal read projection, avoiding native results formatting without changing source files or dashboard queries.
 - Write portable version 5 and retain readers 1–4. Explain that complete backing CSV exports include rows hidden by lookup filters, using the existing single export option.
 
-## 0.40.0 — unreleased
+## 0.40.0 — included in 1.0.0
 
 - Transfer complete static CSV tables up to 5,000 rows and 1 MB each using dedicated paginated current-user reads. Ordinary dashboard previews retain their 200-row/five-second limits.
 - Preserve supported case-insensitive, CIDR, wildcard, match-count and fallback settings through fresh private native lookup definitions, with exact metadata/content/privacy readback.
@@ -40,7 +47,7 @@
 - Align portable export/read limits with UTF-8 upload bytes so Unicode files cannot pass export then exceed import limits.
 - Write portable version 4 with integrity-bound matching options; retain version-1/2/3 readers and legacy lookup-receipt comparison. Keep the existing single dependency-export option.
 
-## 0.39.0 — unreleased
+## 0.39.0 — included in 1.0.0
 
 - Add one portable-export option for complete small static CSV lookup data and compatible ordinary macro inlining; preserve existing native objects and unrelated dashboard properties.
 - Resolve nested/parameterized macros with bounded arity, cycle and read-only checks. Fingerprint native definitions and detect destination mismatches instead of accepting a same-name dependency blindly.
@@ -50,7 +57,7 @@
 - Write portable version 3, retain version-1/2 readers, and explain native sharing/app-context requirements in the existing dialog.
 - Record final-package creation/editing checks across all three providers, including a retained OpenAI creation rejection and successful independent rerun. This remains a development preview.
 
-## 0.38.0 — unreleased
+## 0.38.0 — included in 1.0.0
 
 - Add upload/reuse and portable transfer of passive SVG choropleth maps through Studio’s native image collection, preserving bindings, handlers and geometry on selected replacement.
 - Compile existing-map field/selection bindings from a typed action to avoid nested JSON encoding while preserving unknown native work.
@@ -61,7 +68,7 @@
 - Allow new derived category aliases to read a masked measurement while retaining protection against source-field overwrite, refill and extraction. Clarify SVG token/control authoring and fix map-library switching.
 - Record bounded provider, transfer, native rendering and permission evidence separately in [validation](docs/validation.md); complete parity remains open.
 
-## 0.37.0 — unreleased
+## 0.37.0 — included in 1.0.0
 
 - Added native SVG icon upload/reuse and an icon registry beside shared raster images, with passive SVG and byte validation.
 - Added reviewed portable dashboard export/import with collection-aware assets, SHA-256 checksums and fresh destination reference mapping; no new privileges or external service.

@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Setup and troubleshooting
+    url: https://github.com/LeiterConsulting/constellation/blob/main/docs/troubleshooting.md
+    about: Start with controlled app messages, common symptoms and safe recovery.
+  - name: Security reports
+    url: https://github.com/LeiterConsulting/constellation/blob/main/SECURITY.md#reporting-a-vulnerability
+    about: Use private reporting guidance; do not publish exploit details.

@@ -1,0 +1,30 @@
+name: Workflow feedback or feature request
+description: Describe the outcome you need and where the current experience gets in the way.
+body:
+  - type: markdown
+    attributes:
+      value: Use synthetic examples only. Do not include private data, live screenshots, credentials or internal hosts. Use Bug report for a reproducible failure.
+  - type: textarea
+    id: outcome
+    attributes:
+      label: What are you trying to accomplish?
+      description: Describe the dashboard question or workflow outcome.
+    validations:
+      required: true
+  - type: textarea
+    id: friction
+    attributes:
+      label: Where does the current experience get in the way?
+      description: Include the relevant screen/control or guide, and what you expected next.
+    validations:
+      required: true
+  - type: textarea
+    id: improvement
+    attributes:
+      label: What would help?
+      description: A suggestion is welcome, but you do not need to design the solution.
+  - type: input
+    id: context
+    attributes:
+      label: Version and context
+      description: Constellation/Splunk/Studio versions and provider/model names when relevant. No connection details or exports.

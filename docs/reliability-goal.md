@@ -1,5 +1,7 @@
 # Reliability milestone: 0.8
 
+Historical goal brief. Use the [current support policy](support-policy.md) and [release evidence](validation.md) for 1.0 status.
+
 Build a reliable, useful conversational Dashboard Studio authoring app within the Splunk app boundary. Keep the canvas, conversation and element selection as the primary experience. Reveal supporting detail when requested.
 
 Deliver verifiable search completion with cancellable, resource-bounded jobs; a durable, user-editable dashboard brief for purpose, audience, units and exclusions; and previous dashboard versions that survive refresh and reopen. Use server-verified data scope and page purposes alongside the brief during authoring and automatic recovery. Preserve current work on any failure.

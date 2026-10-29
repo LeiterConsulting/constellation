@@ -1,66 +1,70 @@
-# Installation and first dashboard
+# Install Constellation
 
-Constellation 1.0 targets the bounded [Enterprise support profile](support-policy.md). Version 1.0.0 is available from the release below. Review the [support matrix](studio-support.md), [validation scope](validation.md) and [security guide](../SECURITY.md). Test representative data and retain backups when updating.
+This guide is for Splunk administrators installing **1.0.0**. Authors can start with the [user guide](user-guide.md) once installation and provider access are ready.
 
-## Download the release
+## Check the deployment
 
-Download the installable `constellation-1.0.0.tar.gz` and `SHA256SUMS` from [release v1.0.0](https://github.com/LeiterConsulting/constellation/releases/tag/v1.0.0). Repository access is required. The `.tar.gz` is byte-identical to the qualified `.tgz` package; both are compressed tar archives accepted by app installation. The handoff ZIP contains the same app plus the user guide and related setup/support documents. A standalone user guide is also attached to the release.
+| Requirement | 1.0 scope |
+| --- | --- |
+| Deployment | One Linux Splunk Enterprise search head. SHC and Splunk Cloud certification are not qualified. |
+| Recorded targets | Enterprise 10.2.8 / Studio 1.23.12; Enterprise 10.4.4 / Studio 1.26.6. Other combinations need their own qualification. |
+| Author access | An authenticated Splunk user with search access to the intended data and ordinary rights to private app configuration/native dashboard creation. |
+| Provider | OpenAI, a Splunk-reachable Ollama server, or an approved AITK connection. |
+| Network | Splunk server outbound access to the configured provider. API-key entry/replacement requires trusted HTTPS, with a loopback development exception. |
+| Client | A browser able to run the Splunk workspace. Complete cross-browser/mobile/accessibility certification is not claimed. |
 
-Calculate the downloaded file's SHA-256 and compare it with its matching line in `SHA256SUMS` before installation:
+Node/npm and a separate Python installation are **not required to install the release archive**. They are source-development tools. Constellation runs inside Splunk and does not create roles or a separate agent service.
 
-```sh
+## Download and verify
+
+Get the app and **SHA256SUMS** from [release v1.0.0](https://github.com/LeiterConsulting/constellation/releases/tag/v1.0.0). Repository access is required. Install the app archive inside the documentation ZIP, or download the standalone tar.gz.
+
+~~~sh
 shasum -a 256 constellation-1.0.0.tar.gz
-```
+~~~
 
-The app digest is `d53d62e3ce929a5a912cd1d6dccddaecbdee96d65a35d7b4a4a7f44cb0ddebc7`. Release archives exclude macOS sidecars, private configuration, credentials and live evidence. Download users can continue with Install in Splunk Enterprise below.
+Compare the digest with its line in SHA256SUMS. The qualified app digest is:
 
-## Build from source (developers)
+~~~text
+d53d62e3ce929a5a912cd1d6dccddaecbdee96d65a35d7b4a4a7f44cb0ddebc7
+~~~
 
-Use Node.js 22/npm and Python 3.13. From the repository root:
+The tar.gz is byte-identical to the qualified tgz. GitHub's automatically generated source ZIP is not the built installable app.
 
-```sh
-npm ci
-npm test
-python3 -m unittest discover -s tests
-npm run build
-npm run package
-```
+## Install through Splunk
 
-The archive and SHA-256 receipt appear in `artifacts/`. The source app is `splunk/constellation`; the packager combines it with compiled browser assets and dependency license notices. Do not install the unbuilt source directory as a complete app.
+1. Sign in as an account authorized to install apps.
+2. Open Splunk app management and choose **Install app from file**.
+3. Upload the app tar.gz. Select the update option only when intentionally updating an existing installation.
+4. Follow Splunk's reported restart requirements, then open **Constellation** from Apps.
+5. Open **More → Environment**. Check the reported Splunk/Studio versions, capabilities and ad hoc SPL2 result.
 
-Run Splunk AppInspect against the exact archive before distributing it. Local precert results do not establish Splunk Cloud certification. Current known warnings and unqualified deployment modes are listed in [validation](validation.md).
+For an existing installation, read [upgrade and recovery](upgrade-guide.md) first. Do not package private configuration, credentials or drafts into an installer.
 
-## Install in Splunk Enterprise
+## Establish ordinary-author access
 
-1. Sign in with an account authorized to install an app in your test instance.
-2. In Splunk's app management interface, choose **Install app from file** and upload the generated archive. Select the update option only when intentionally updating an existing Constellation installation.
-3. Follow Splunk's reported restart requirements. Open **Constellation** from the Apps menu.
-4. Use a browser origin with valid HTTPS for API-key entry/replacement. Loopback development origins are the only HTTP exception. Configure trusted certificates and server outbound access through your normal administration process.
-5. Open **More → Environment** to inspect the current Splunk/Studio versions, capabilities and ad hoc SPL2 availability. A missing SPL2 module-list endpoint is distinct from unavailable ad hoc SPL2.
+Keep the user's ordinary data-search and object permissions. Do not grant administrator or credential-store capabilities merely to make an authoring test pass.
 
-The app uses the `constellation` namespace. It does not install an external agent service or alter user roles. Do not assume that a successful administrator test proves access isolation for every role or search-head-cluster topology.
+- **Direct OpenAI:** the app's owner-only encrypted-storage handler stores and uses that user's own key. Authors do not need native password-store access.
+- **Ollama:** the origin must be reachable from the Splunk server. A successful connection from the browser's computer is insufficient.
+- **Shared AITK:** follow the [administrator setup](aitk-setup.md) to protect metadata, configure the approved connection policy and assign an inference-only author role.
 
-## Configure a provider
+Saving native dashboards, sharing them, uploading artwork and reading reports/lookups retain native Splunk permissions. Those operations can require different rights; do not solve a missing optional permission by broadening every author's role.
 
-Open **Settings**, choose a provider, save its connection and run **Test model**. Provider tests and authoring send inference requests and can incur provider charges. Model inventory availability alone does not establish structured-output or attachment support.
+## Verify the first author's path
 
-- **OpenAI:** enter the key in the app, load or enter a model ID, save and test. The endpoint is fixed to the official OpenAI API.
-- **Ollama:** enter an origin reachable from the Splunk server, choose an installed model and test. `localhost` refers to the Splunk host, not the browser's computer.
-- **AITK:** expand **AITK setup guide** in Settings or follow the [administrator instructions](aitk-setup.md). For ordinary authors, have an administrator enable the approved shared-inference path and assign its author role, then test in Constellation. The direct/native route retains separate command, connection and credential permissions.
+1. Sign in as an intended ordinary author.
+2. Open **Settings**, save the chosen connection and run **Test model**.
+3. Choose **New dashboard**, inspect accessible data and build a focused first page.
+4. Select a chart for a small edit. Verify the preview updates.
+5. Wait for **Draft saved**, refresh and reopen it through **Dashboards**.
+6. Choose **Save to Splunk → Save private copy**. Open the native result and inspect its searches and interactions.
+7. Confirm the author cannot open another user's private draft or read stored credentials directly.
 
-See [providers](providers.md) for route-specific requirements. No provider key or local environment file is needed to run the offline unit suites. There is no supported `.env` credential setup for the installed app.
+A small connection test is separate from this authoring path. Keep data and screenshots from the check private; publish only reviewed summaries. [Release evidence](validation.md) records the existing bounded qualification.
 
-## Create and refine
+## Build from source
 
-1. Choose **New dashboard**. Select accessible Splunk data, bring an existing search or describe the question and dataset.
-2. Choose a bounded time range and inspect fields. Explain the units and filtering rules that matter to your analysis.
-3. Ask for a first dashboard. The agent validates proposed changes and tests new real-data searches before applying them. Expand **Activity** for validation details.
-4. Use **Select element**, or the **Conversation focus** list, to direct a change to a chart, input or page. Ask for page names, purposes and native drilldowns explicitly when needed.
-5. Refresh or reopen the draft from **Dashboards** to continue. Drafts and conversations save privately in Splunk; check the visible save state before leaving.
-6. Choose **Save to Splunk**, select the destination app, then **Save private copy**. This creates a new private native view and verifies its definition by readback. Open it in Studio to inspect rendering, edit normally and manage sharing. Your working draft remains separate.
+Development requirements and commands are in [development](development.md). Do not install the unbuilt source directory as a complete app.
 
-## Upgrading and recovery
-
-Back up the installed app's private configuration and drafts through your approved Splunk backup process before an upgrade. Preserve encrypted credentials and their ACLs; do not copy them into the repository or an app package. Newer draft formats are rejected by older app code rather than silently rewritten. See [upgrade guide](upgrade-guide.md).
-
-Draft and managed native-view deletion uses recoverable Trash. Native restoration refuses to overwrite an existing view ID. This application-level recovery is not a substitute for infrastructure backups. Removing the app or its private configuration can remove retained drafts, attachments and recovery records.
+**Next:** [Provider setup](providers.md) · [User guide](user-guide.md) · [Troubleshooting](troubleshooting.md)

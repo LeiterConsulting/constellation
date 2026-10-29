@@ -1,9 +1,11 @@
 name: Bug report
-description: Report a reproducible problem using sanitized or synthetic examples.
+description: Report a reproducible problem with a synthetic example.
 body:
   - type: markdown
     attributes:
-      value: Do not include credentials, internal hosts, real event rows, private documents or raw provider error bodies. Report vulnerabilities privately using SECURITY.md.
+      value: |
+        Do not include keys, passwords, internal hosts, indexed rows, private files, live lab screenshots or raw provider errors.
+        Use a synthetic example. Report security issues through the [private reporting guidance](https://github.com/LeiterConsulting/constellation/blob/main/SECURITY.md#reporting-a-vulnerability).
   - type: input
     id: versions
     attributes:
@@ -15,16 +17,42 @@ body:
     id: provider
     attributes:
       label: Provider and model
-      description: Provider/model name only; no endpoint, connection export or key.
-  - type: textarea
-    id: reproduce
+      description: Names only. Do not include an endpoint, key or connection export.
+  - type: dropdown
+    id: surface
     attributes:
-      label: Steps and expected result
-      description: Use a minimal synthetic example. Describe the actual result and any controlled app error message.
+      label: Where does it happen?
+      options:
+        - Starting or editing a dashboard
+        - Preview or native Studio output
+        - Draft saving or reopening
+        - Provider setup
+        - Assets or portability
+        - Documentation
     validations:
       required: true
   - type: textarea
-    id: scope
+    id: steps
     attributes:
-      label: Scope
-      description: Does this occur in the preview, native Studio, persistence, or provider setup? Explain what you already verified.
+      label: Steps to reproduce
+      description: Use the smallest synthetic example that shows the problem.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected result
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual result
+      description: Include a controlled app error code/message and relevant Activity summary, without raw logs or private data.
+    validations:
+      required: true
+  - type: textarea
+    id: checks
+    attributes:
+      label: Checks already made
+      description: For example, whether it also occurs in native Studio or with another time range. Do not repeatedly replay uncertain writes.

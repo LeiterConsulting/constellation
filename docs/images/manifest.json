@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "appVersion": "1.0.0",
+  "runtimeCommit": "f46530ab59f6ed03db2d36076b66c450b593059e",
+  "capturedOn": "2026-10-29",
+  "mode": "standalone local preview",
+  "data": "authored synthetic built-in example",
+  "fixture": "src/starter.json",
+  "fixtureSha256": "98a4da887846e107f458129cb72403ea7845777cb5dce040721682590e66663f",
+  "providerCalls": false,
+  "labOrUserContent": false,
+  "retouched": false,
+  "images": [
+    {
+      "file": "draft-brief.jpg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "d9752df08363a668ae0e3c54fa1490601f825307222bf0c643eaf4c221789c0c",
+      "alt": "Draft brief dialog with authored purpose and requirements."
+    },
+    {
+      "file": "focused-conversation.jpg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "990a415768d29423a0974f5e73af79a531503ee433bb6d6efc0ab488d66b3599",
+      "alt": "Selected trend with a floating panel and an unsent authored request."
+    },
+    {
+      "file": "workspace-docked-dark.jpg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "0212ac7222d364bd4ec6e5290feb3950ac3e66896f3359ea44536778bdc27ded",
+      "alt": "Docked workspace in the dark theme with the same authored example."
+    },
+    {
+      "file": "workspace-docked-light.jpg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "97919f2827dab470e22e6c66870ad8ace8bdef43c1de27e3644feeadd8c9bac8",
+      "alt": "Docked workspace in the light theme with authored checkout example data."
+    }
+  ]
+}

@@ -8,6 +8,7 @@ Use Node.js 22/npm and Python 3.13. Backend compatibility is also tested on Pyth
 npm ci
 npm test
 python3 -m unittest discover -s tests
+python3 scripts/check_documentation.py
 npm run build
 npm run package
 ```
@@ -44,9 +45,11 @@ Use a GitHub noreply address for new commits if you want to avoid publishing a p
 
 1. Align the app version/build, README, changelog, installation/upgrade instructions and current validation summary. Use the current candidate/release status and preserve the exact scope of historical versus final-package tests.
 2. Use the exact qualified app archive and its recorded hash. A documentation-only release preparation may rebuild the handoff ZIP, but must not replace accepted app bytes with a different archive. Review the new handoff documents and verify its embedded app and user guide exactly.
-3. Publish the `.tgz` bytes under the versioned `.tar.gz` download name, alongside the documentation ZIP, versioned standalone user guide and a `SHA256SUMS` covering all three assets. Inspect every archive member: one app root, regular files only, no macOS sidecars/resource forks, extended tar metadata, private runtime configuration or live evidence. Create aliases using byte copies rather than retarring a Finder directory.
+3. Publish the `.tgz` bytes under the versioned `.tar.gz` download name, alongside the documentation ZIP, versioned Markdown and PDF guides, and a `SHA256SUMS` covering all four downloads. Inspect every archive member: one app root, regular files only, no macOS sidecars/resource forks, extended tar metadata, private runtime configuration or live evidence. Create aliases using byte copies rather than retarring a Finder directory.
 4. Run staged publication checks and Gitleaks, commit/push, and wait for CI on that exact commit. Tag that reviewed commit and publish the release as Latest only when requested. GitHub's Latest designation is a download pointer; release notes must retain the documented support profile and verification limits. Preserve repository visibility and license status.
 5. Download every published asset again, compare its digest with the local receipt, inspect the downloaded archives, and verify GitHub's latest-release tag and asset list. Keep detailed local receipts outside Git.
+
+For a documentation refresh of an existing release, retain its runtime tag and accepted app archive. Identify the later documentation source revision in the release notes, replace only the affected documentation downloads and checksums, and verify them again. The tagged source snapshot remains unchanged.
 
 ## CI
 
@@ -71,3 +74,16 @@ Follow [architecture](architecture.md) and [upgrade guide](upgrade-guide.md). Pr
 ## Model workload benchmark
 
 Use the opt-in [synthetic task benchmark](model-benchmark.md) to compare configured providers and batch sizes through the installed app. Offline suites test its grader without credentials. Live runs use the intended ordinary author and existing session; they do not configure credentials, save dashboards or bypass runtime validation. Keep numerical reports in ignored `.local`, record fixture/grader/app identity, and publish only reviewed summaries.
+
+
+## Documentation and guide exports
+
+The [documentation standards](../documentation-standards.md) define current guides, evidence and screenshot provenance. Run the documentation checker before committing; it checks local paths, heading fragments, published images and current status markers. CI repeats it without credentials or network lookups.
+
+The Markdown [user guide](user-guide.md) is the PDF source. The optional development exporter needs ReportLab; the installed Splunk app does not.
+
+~~~sh
+python3 scripts/create_user_guide.py
+~~~
+
+The exporter writes to ignored output/pdf. Render the PDF with Poppler and inspect every page before distribution. Do not commit generated PDFs or live screenshots. Refresh the handoff with scripts/create_handoff.py only after the documentation checks pass; the helper verifies its local link/image closure and preserves the accepted app bytes.

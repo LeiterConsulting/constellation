@@ -1,62 +1,77 @@
-# Providers and multimodal references
+# Connect a provider
 
-Provider adapters share the validated Studio edit contract but retain their own endpoint, authentication and message formats. Connection success does not establish full dashboard feature parity or correctness for every selected model.
+Open **Settings** in the installed Constellation workspace. Your saved provider choices remain available when you switch providers. A successful **Test model** proves a small structured response; it does not qualify every dashboard task.
 
-| Provider | Implemented route | Configuration | Reference files |
-| --- | --- | --- | --- |
-| OpenAI | Official Responses API, model inventory, structured-output requests, verified TLS and `store: false`. | API key and selected model in Settings. | Images/PDFs only for exact model IDs whose capabilities are recognized by the app. Unknown support is blocked. |
-| Ollama | Native `/api/tags`, `/api/show`, `/api/chat`, JSON schema output. | A server-reachable origin and installed model. | Images only when the exact model's live metadata advertises vision. PDFs are blocked. |
-| Splunk AITK | `ai` over a synthetic row, through either the current-user path or an approved shared inference handler. | Shared: administrator policy, allowed author role and `constellation_use_aitk`. Direct: native connection/credential access and `apply_ai_commander_command`. | Text only; image/PDF transmission is blocked. |
+## Choose a route
 
-OpenAI authoring, image/sketch and PDF exercises have passed on one tested Enterprise target. Ollama `qwen3-coder:latest` actual-data creation and focused edits have been exercised. AITK 6.1.0 completed selected multi-page sensor journeys through an existing GPT-5 mini connection. The earlier 0.14.2 AITK 6.2.0 / PSC 4.3.5 process-observation run required a temporary credential-reading author. In 0.15, the separate managed path passed a process API journey and a freezer browser/native journey with an author who had no credential or native AITK configuration/command permissions. The repeated qualification now retains a 16,000-token budget on that connection; larger creation at its previous 2,000-token setting did not pass. Sufficient output space still leaves query-validation and latency risks. A second target lacks a usable AITK completion. See [validation](validation.md) and the [qualification protocol](provider-qualification.md); selected examples do not establish a general live-model success rate.
+| Route | What you configure | Reference files |
+| --- | --- | --- |
+| OpenAI | Your API key and exact model ID; the official Responses endpoint is fixed. | Recognized exact models can accept images/PDFs. Unknown support is blocked. |
+| Ollama | A server-reachable origin and installed model ID; native tags/show/chat APIs are used. | Images require advertised vision support. PDFs are blocked. |
+| Splunk AITK | An existing named LLM connection; AITK chooses the model and keeps its credentials. | Text only. |
 
-The 0.16 final sensor journey passed creation, selected calculation/formatting edits, persistence and private native output through all three providers under the same non-admin author. Native rendering and two-way navigation passed for each. OpenAI setup/model discovery/test worked without credential-store capabilities; shared AITK now also verifies protected backing metadata, trusted ownership and unambiguous modern resolution. A fresh [independent agent review](security-review.md) covers these privileged boundaries. Broader deployments and provider/model combinations remain unqualified.
+The [1.0 evidence](validation.md) covers direct OpenAI gpt-6-luna, Ollama qwen3-coder:latest and AITK 6.1/6.2 with OpenAI gpt-5-mini on the recorded targets. These are tested configurations, not model recommendations or a general provider success-rate claim.
 
-The 0.17 [operational-data follow-up](validation.md#0170-latency-and-non-admin-operational-data--october-25-2026) records faster successful turns alongside failed native requests and response-delivery stalls. Its final planned backend sweep completed five of six journeys; a separate ordinary-user browser network flow passed. This remains a private preview, not a general reliability qualification.
+## OpenAI
 
-## Model capacity and batching
+1. Choose **OpenAI** under **Provider**.
+2. Open Splunk through trusted HTTPS and enter your key in **API key**. After saving, this becomes **Replace API key (optional)**; a saved key is not returned to the form.
+3. Use **Load models** or enter an exact **Model** ID.
+4. Choose **Save connection**, then **Test model**.
 
-Settings shows potential limitations when a connection is saved and reports the scope/usage of **Test model**. The test permits enough output budget for a reasoning response, while requesting only a small structured answer. It does not exercise full creation. Changing connection fields clears its display.
+The key is stored encrypted with owner-restricted permissions. Ordinary authors need no credential-store capability. The adapter uses the fixed official API origin, rejects redirects and requests store:false. That request setting is not a promise of zero retention across every system.
 
-Ollama's reported model context capacity caps the app's requested window of up to 32,768 tokens. Authoring allocates a smaller output budget when that context requires it. The agent receives available limits, trims older rolling history under a conservative input estimate and keeps the durable brief/document. Unknown model limits stay unknown. Direct OpenAI model discovery does not expose capacity; AITK controls its own model/output settings and does not expose them through this route.
+A model appearing in inventory does not prove structured authoring or file support. If a test reports authentication, rate/quota or model-access trouble, correct the connection in Settings before retrying the dashboard request. Do not paste keys into chat, search text, an environment file or an issue.
 
-In 0.22, bounded explicit one/two-page text-only Ollama/AITK requests on an empty verified SPL canvas use a short composition schema for standard charts and row navigation. The server expands it into the ordinary guarded native actions, supplying initial geometry and safe entity filters/defaults/return buttons. Explicit geometry, advanced features, SPL2 and existing work keep the full action path. Compact Ollama first replies use up to 3,500 output tokens; a full repair restores the existing context-capped creation allowance. Table-only formatting uses dedicated verified output metadata and an exact eligible-field schema, while calculation edits can locally expose an explicitly requested returned alias in a simple projection. The exact document, permissions and all normal validators remain authoritative.
+## Ollama
 
-Other bounded two-page real-data AITK requests with inspected fields and at most 36 KB of serialized context attempt a concise complete proposal first. This is a workload heuristic, not a verified connection capacity. Larger/ambiguous AITK goals and Ollama connections with unknown or sub-32K context use a smaller foundation schema and a completion stage. Verified 32K-or-larger Ollama windows attempt the full proposal first, reserving both repairs. These share the existing turn budget, reuse verified searches, retain stable page IDs and apply together only after the final original-goal checks. Batching reduces reply size; it does not overcome insufficient memory, an inaccessible model or a reasoning budget that yields no visible completion. In AITK review **Max Tokens** in the named connection before larger authoring tests. OpenAI documents how [reasoning shares the output budget](https://developers.openai.com/api/docs/guides/reasoning#allocating-space-for-reasoning).
+1. Make the intended server/model available to the Splunk host through your normal administration process.
+2. Choose **Ollama** and enter **Ollama server** as an origin, such as http://model-server:11434. Do not append an API path.
+3. Use **Load models**, choose an installed ID, then **Save connection → Test model**.
 
-## User permissions
+Localhost means the Splunk host, not the browser's computer. Private-network HTTP is permitted; public origins require HTTPS. Embedded credentials, URL paths/queries/fragments, redirects and unsafe address categories are rejected. Constellation does not change the listener, firewall or installed models.
 
-A normal user can save secretless Ollama or AITK preferences privately. Direct OpenAI setup uses an owner-only encrypted-storage handler. A normal author can enter their own key over HTTPS without credential-store capabilities; saved keys are never returned. The app does not grant ordinary-user roles.
+This route uses a configured local/server Ollama endpoint. Ollama's separate hosted API or other compatibility routes are not implied by that integration. See [Ollama's API documentation](https://docs.ollama.com/api/introduction) for the upstream interfaces.
 
-For shared AITK, an administrator can enable one approved connection and role audience in the app-owned `constellation_aitk.conf` policy. Authors need their normal data-search authority plus `constellation_use_aitk`; they do not need `list_storage_passwords`, `edit_storage_passwords`, AITK discovery/configuration edit or `mltk_admin`. The dedicated handler receives the platform system token, verifies the actual caller/capability/role and accepts bounded text only. It runs a fixed synthetic inference pipeline in the pinned namespace, returns only a completion and attempts to cancel/delete its job on exit. Current-user discovery, query validation, drafts and native saves are unchanged. The system token's authority is not reduced by selecting a namespace: the endpoint's code and administrator-only policy are the privilege boundary. This opt-in route needs security/manual AppInspect review; it is not Cloud certification.
+## Splunk AITK
 
-The direct AITK 6.1/6.2 route still enforces native command, named-connection and stored-credential access. Invocation/list permission alone failed the tested token-backed connection. Do not grant credential-reading authority to ordinary authors as a workaround; use shared inference inside Constellation instead. Native Search and Constellation's managed Test model exercise different identities. Follow **AITK setup guide** in Settings or the [administrator instructions](aitk-setup.md).
+For ordinary authors, ask an administrator for an **approved shared connection** and the intended author role. Follow [AITK setup](aitk-setup.md) to configure that boundary; app sharing alone is insufficient.
 
-## Endpoint and credential boundaries
+1. Choose **Splunk AITK**.
+2. Enter the exact **AITK connection name** supplied by the administrator.
+3. Confirm the **Shared AITK is available** message when using the managed route.
+4. Choose **Save connection → Test model**, then build and refine a small real-data dashboard.
 
-Direct OpenAI uses the fixed official origin; arbitrary OpenAI-compatible endpoints are not currently supported. The adapter rejects redirects and reports controlled errors instead of returning raw provider bodies. Splunk stores the key; it is never copied to Ollama or AITK.
+The shared route gives authorized authors inference access without credential-store or AITK connection-management permissions. Actual data searches and draft/native storage still run as the author.
 
-Ollama origins cannot include embedded credentials, paths, queries or fragments. Private-LAN HTTP is permitted; public origins require HTTPS. Redirects and unsafe address categories such as link-local/metadata targets are rejected. The configured origin must be reachable from the Splunk host. A local browser reaching Ollama does not prove server connectivity. Constellation does not modify the Ollama listener, host firewall or model inventory.
+The direct/native route uses a different authority path. The tested token-backed AITK 6.1/6.2 command required credential access; invocation/list capabilities alone did not suffice. Do not grant credential-reading authority to ordinary authors as a workaround.
 
-AITK owns its provider credentials and uses its configured model. Constellation does not create AITK connections, widen roles or copy keys between providers. It sends a constant field-reference template with one synthetic prompt row, bounds polling and cancels its app-owned job when finished or timed out. Normal Splunk prompt-bearing job/history behavior still applies; consult your retention and access policies.
+## Model limits
 
-## What leaves the app
+Settings reports the scope, usage and known/unknown limits of a test. Changing connection fields clears its displayed test result.
 
-The model receives the request, recent conversation, relevant document/SPL, selected chart/input/page context, curated guidance and field metadata. Attachments are sent when submitted with a message through a supported route. Search-result rows are excluded from model context; queries, definitions, user-provided text and metadata can still be sensitive. Split-series column names can contain data-derived entity labels, so provider review must include metadata as well.
+Ollama metadata can report a context capacity; the app requests at most 32,768 tokens and caps work to the available window. Direct OpenAI discovery does not provide capacity, and Constellation does not expose AITK's current upstream token/model configuration through the author route. Unknown limits remain unknown.
 
-OpenAI's `store: false` is a request setting, not a general promise about every provider's retention or your organization's data controls. Review the actual provider agreement and account settings before sending confidential material. See [security](../SECURITY.md).
+Compact plans and bounded staging reduce model workload while preserving final validation. They cannot overcome an insufficient output budget or inaccessible model. The qualified AITK connection used **16,000 Max Tokens / LOW reasoning effort**; an earlier 2,000-token configuration failed larger creation. Treat that as recorded evidence, not a universal minimum. AITK administrators control those settings.
 
-## File guards
+If larger creation fails despite a passing test, inspect the controlled error and Activity, review capacity with the administrator, and keep the original goal. Authentication/permission failures are not repaired by rewriting the prompt.
 
-The app accepts at most two supported reference files, up to 4 MB each. Client and server checks cover the supported content type, signature/encoding, count/size and selected provider/model capabilities. Unknown or unsupported capabilities reject files before discovery/inference. Pending attachments can persist in a private draft and must be considered part of its sensitive content.
+## Reference files
 
-The repository's [napkin fixture](../tests/fixtures/README.md) is an AI-generated synthetic layout exercise, not user telemetry. The PDF generator similarly creates an authored synthetic brief. These demonstrate layout interpretation; they do not establish source-data truth or universal multimodal reliability.
+| Rule | Behavior |
+| --- | --- |
+| Count/size | At most two files, 4 MB each. |
+| Image formats | PNG, JPEG and WebP on supported routes/models. |
+| PDFs | Supported recognized OpenAI models only in this integration. |
+| Unknown capability | Client/server guards block transmission. |
+| When sent | With the message when you choose Send. Pending files can also remain in the private draft. |
 
-## Troubleshooting
+An upstream model's general capabilities are not enough: the route and exact capability evidence used by this app must permit the file. [OpenAI image input documentation](https://developers.openai.com/api/docs/guides/images-vision) describes the upstream feature; Constellation's own guard can be narrower.
 
-- Test the same named AITK connection as the same Splunk user in AI Toolkit before testing Constellation. Check capabilities, connection access and upstream provider availability; do not grant broad roles as a shortcut.
-- For Ollama, check connectivity from the Splunk server, exact installed model ID and model metadata. A model that appears in the list may still fail the structured edit test.
-- For direct OpenAI, inspect the app's controlled authentication, quota/rate, model/access or request-format error. Replace keys only through Settings over an eligible secure origin.
-- A validation failure preserves the last valid dashboard. The bounded repair loop handles supported output/search errors; authentication and transport failures are not blindly retried.
+## Data sent and stored
 
-Provider-specific changes belong in `provider_service.py`, `provider_adapters.py`, `provider_messages.py`, `model_readiness.py` and `model_capabilities.py`. `authoring_budget.py` owns provider-aware staging without introducing a separate runtime. Capability updates require tests and source verification; see [upgrade guide](upgrade-guide.md).
+The provider can receive your prompt, recent conversation, relevant dashboard definition/SPL, selected-element context, curated guidance, field metadata and supported submitted attachments. Search-result rows are excluded from model context, but definitions, SPL literals and metadata can themselves contain sensitive information.
+
+AITK prompt-bearing synthetic jobs follow normal Splunk history/retention behavior. Stop prevents late app edits; it cannot guarantee upstream cancellation or avoid charges. Read [security and data handling](../SECURITY.md) before using confidential material.
+
+**Next:** [Build a dashboard](user-guide.md) · [Troubleshooting](troubleshooting.md) · [AITK administration](aitk-setup.md)
