@@ -267,3 +267,7 @@ class SearchService:
             if command in ('lookup', 'inputlookup'):
                 knowledge.lookup(name)  # No scripted/KV lookup execution.
         return query
+
+    def lookup_snapshot(self, filename):
+        from lookup_snapshot import read_static_csv
+        return read_static_csv(self, filename)

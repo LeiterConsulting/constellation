@@ -15,6 +15,8 @@ import uuid
 from urllib.parse import quote
 from provider_service import ProviderError
 from search_references import macro_calls, lookup_calls, replace_lookups, NAME
+from lookup_matching import matching_options, validate_matching_fields
+from lookup_snapshot import ROWS, FIELDS, CSV_BYTES
 
 
 def fingerprint(value):
@@ -22,16 +24,16 @@ def fingerprint(value):
 
 
 def csv_payload(fields, rows):
-    if (not isinstance(fields, list) or not 1 <= len(fields) <= 64
+    if (not isinstance(fields, list) or not 1 <= len(fields) <= FIELDS
             or any(not isinstance(x, str) or not re.fullmatch(r'[A-Za-z_][A-Za-z0-9_.-]{0,99}', x) for x in fields) or len(set(fields)) != len(fields)
-            or not isinstance(rows, list) or len(rows) > 200):
-        raise ProviderError('Portable CSV lookups support up to 64 plain fields and 200 complete rows.')
+            or not isinstance(rows, list) or len(rows) > ROWS):
+        raise ProviderError('Portable CSV lookups support up to 64 plain fields and 5,000 complete rows.')
     for row in rows:
         if not isinstance(row, list) or len(row) != len(fields) or any(not isinstance(x, str) or len(x) > 4000 or '\x00' in x for x in row):
             raise ProviderError('Invalid or oversized portable CSV lookup cell.')
     out = io.StringIO(newline=''); writer = csv.writer(out, lineterminator='\n'); writer.writerow(fields); writer.writerows(rows)
     data = out.getvalue()
-    if len(data.encode('utf-8')) > 256_000: raise ProviderError('This lookup exceeds the 256 KB portable limit.')
+    if len(data.encode('utf-8')) > CSV_BYTES: raise ProviderError('This lookup exceeds the 1 MB portable limit.')
     return data
 
 
@@ -39,6 +41,12 @@ def table_fingerprint(fields, rows):
     """Splunk returns field metadata alphabetically; CSV header order is immaterial."""
     order = sorted(range(len(fields)), key=lambda i: fields[i])
     return fingerprint({'fields': [fields[i] for i in order], 'rows': [[row[i] for i in order] for row in rows]})
+
+
+def bundle_fingerprint(item):
+    data = {'fields': item['fields'], 'rows': item['rows']}
+    if 'matching' in item: data['matching'] = item['matching']
+    return fingerprint(data)
 
 
 class PortableKnowledge:
@@ -88,31 +96,24 @@ class PortableKnowledge:
         filename = name if direct else content.get('filename', '')
         if not re.fullmatch(NAME + r'\.csv', filename) or not direct and (content.get('type') not in (None, '', 'file') or content.get('external_type') or content.get('collection') or content.get('external_cmd')):
             raise ProviderError('Only static CSV lookup dependencies can be bundled; KV Store and scripted lookups need native configuration.')
-        # A direct CSV reference has default native matching. Do not silently
-        # discard temporal/CIDR/filter/default/matching semantics when remapping.
-        defaults = {'case_sensitive_match': ('', '1', 'true', True, 1), 'max_matches': ('', '100', 100),
-                    'min_matches': ('', '0', 0), 'batch_index_query': ('', '1', 'true', True, 1)}
-        # fields_list/fields_array are derived CSV header metadata on native
-        # file definitions; fields_list configures scripted lookup inputs only.
-        advanced = ('match_type', 'time_field', 'time_format', 'filter', 'default_match', 'max_offset_secs', 'min_offset_secs')
-        if not direct and (any(content.get(k) not in (None, '') for k in advanced)
-                           or any(content.get(k, '') not in v for k, v in defaults.items())
-                           or content.get('disabled') in (True, 1, '1', 'true')):
-            raise ProviderError('This CSV lookup uses advanced matching. Keep its native definition on the destination.')
+        matching = {} if direct else matching_options(content)
         semantic = {'filename': filename} if direct else {k: v for k, v in content.items() if not k.startswith('eai:') and k not in ('filename', 'type')}
-        result = {'kind': 'lookup', 'name': name, 'app': app, 'fingerprint': fingerprint(dict(semantic, filename=filename))}
+        result = {'kind': 'lookup', 'name': name, 'app': app, 'fingerprint': fingerprint({'filename': filename, 'matching': matching}),
+                  'legacyFingerprint': fingerprint(dict(semantic, filename=filename)), 'matching': matching}
         if include:
             if app != 'constellation': raise ProviderError('CSV bundling currently supports the Constellation app context. Move other app dependencies with native Splunk tools.')
-            # Fixed literal read, caller credentials, ordinary bounded completion.
-            # max=201 detects oversize rather than silently transferring a sample.
-            data = self.runtime.execute('| inputlookup strict=true max=201 ' + name, '-15m')
+            # Read the complete backing CSV, not a filtered/matched alias. The
+            # dedicated transfer job does not widen ordinary preview limits.
+            data = self.runtime.lookup_snapshot(filename)
             if data.get('state') != 'complete' or data.get('warning'):
                 raise ProviderError('The lookup read was partial. No sampled lookup data can be exported.')
             fields = [x.get('name') for x in data.get('fields', [])]
             rows = [[row.get(field, '') for field in fields] for row in data.get('results', [])]
             csv_payload(fields, rows)
+            validate_matching_fields(matching, fields)
             result.update(fields=fields, rows=rows)
-            result['fingerprint'] = fingerprint({'fields': fields, 'rows': rows})
+            result.pop('legacyFingerprint')
+            result['fingerprint'] = bundle_fingerprint(result)
         self.lookups[key] = result
         return result
 
@@ -126,13 +127,15 @@ def validate_bundle(value, document):
     geometry = {name for _, _, name, command in calls if command == 'geom'}
     found = set()
     for item in value:
-        if not isinstance(item, dict) or set(item) != {'kind', 'name', 'app', 'fields', 'rows', 'fingerprint'}:
+        if not isinstance(item, dict) or set(item) not in ({'kind', 'name', 'app', 'fields', 'rows', 'fingerprint'}, {'kind', 'name', 'app', 'fields', 'rows', 'fingerprint', 'matching'}):
             raise ProviderError('Invalid portable lookup record.')
         name = item['name']
         if item['kind'] != 'lookup' or item['app'] != 'constellation' or not isinstance(name, str) or not re.fullmatch(NAME, name) or name in found or name not in referenced or name in geometry:
             raise ProviderError('Portable lookup records must be unique, literal and used by this dashboard.')
         csv_payload(item['fields'], item['rows'])
-        if item['fingerprint'] != fingerprint({'fields': item['fields'], 'rows': item['rows']}):
+        matching = matching_options(item.get('matching', {}), strict=True)
+        validate_matching_fields(matching, item['fields'])
+        if item['fingerprint'] != bundle_fingerprint(item):
             raise ProviderError('A lookup checksum does not match. Export the dashboard again.')
         found.add(name)
     return value
@@ -168,7 +171,19 @@ def import_lookups(runtime, document, bundle, entry):
                 raise ProviderError('The copied lookup was not verified as private to this user.')
             readback = PortableKnowledge(runtime, entry).lookup(name, include=True)
             if table_fingerprint(readback['fields'], readback['rows']) != table_fingerprint(item['fields'], item['rows']): raise ProviderError('The copied lookup content could not be verified.')
-            names[item['name']] = name; completed.append(name)
+            reference = name
+            if item.get('matching'):
+                reference = 'constellation_' + uuid.uuid4().hex
+                if entry('data/transforms/lookups', reference) is not None:
+                    raise ProviderError('The new lookup definition name is already in use.')
+                definitions = '/servicesNS/' + quote(runtime.user, safe='') + '/constellation/data/transforms/lookups'
+                runtime.request(definitions, 'POST', dict(item['matching'], name=reference, filename=name))
+                response = runtime.request(definitions + '/' + reference)
+                record = response.get('entry', [{}])[0];acl = record.get('acl', {});content = record.get('content', {})
+                if (record.get('name') != reference or acl.get('owner') != runtime.user or acl.get('sharing') != 'user' or acl.get('app') != 'constellation'
+                        or content.get('filename') != name or content.get('type') != 'file' or matching_options(content) != item['matching']):
+                    raise ProviderError('The private native lookup definition could not be verified.')
+            names[item['name']] = reference; completed.append(reference)
     except Exception:
         # Never echo native errors, contents, paths or credentials. No automatic
         # rollback deletes: an uncertain create may have completed.

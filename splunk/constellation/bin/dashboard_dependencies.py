@@ -32,12 +32,15 @@ class DashboardDependencies:
         bundled = {item['name'] for item in bundle}
         expected = body.get('dependencies', [])
         if not isinstance(expected, list) or len(expected) > 100: raise ProviderError('Use at most 100 dependency receipts.')
-        fingerprints = {}
+        fingerprints, fingerprint_versions = {}, {}
         for item in expected:
             if not isinstance(item, dict): raise ProviderError('Invalid dependency receipt.')
             if item.get('kind') in ('report', 'macro', 'lookup') and isinstance(item.get('fingerprint'), str):
                 if not re.fullmatch(r'[a-f0-9]{64}', item['fingerprint']): raise ProviderError('Invalid report fingerprint.')
                 fingerprints[(item['kind'], str(item.get('app', '')), str(item.get('name', '')))] = item['fingerprint']
+                version = item.get('fingerprintVersion', 1)
+                if type(version) is not int or version not in (1, 2): raise ProviderError('Unsupported dependency fingerprint version.')
+                fingerprint_versions[(item['kind'], str(item.get('app', '')), str(item.get('name', '')))] = version
         found, notes = {}, []
         def add(kind, name, status, detail, app='', **extra):
             found[(kind, app, name)] = dict(kind=kind, name=name, app=app, status=status, detail=detail, **extra)
@@ -129,7 +132,7 @@ class DashboardDependencies:
                 add('lookup', 'Dynamic lookup references', 'review', str(error), app); lookups = []
             for _, _, name, command in lookups:
                 if name in bundled:
-                    add('lookup', name, 'available', 'Bundled CSV will be copied under a fresh private name. Existing lookups are preserved.', app)
+                    add('lookup', name, 'available', 'Bundled CSV and supported matching will be copied under fresh private names. Existing lookups are preserved.', app)
                     continue
                 endpoint = 'data/lookup-table-files' if name.endswith('.csv') else 'data/transforms/lookups'
                 content = self.entry(endpoint, name, app)
@@ -144,8 +147,9 @@ class DashboardDependencies:
                         if not any(x['name'] == name for x in exported): exported.append(receipt)
                         add('lookup', name, 'available', 'Complete bounded CSV included. Import creates a fresh private copy; sharing remains a native Splunk action.', app)
                     else:
-                        differs = fingerprints.get(('lookup', app, name)) not in (None, receipt['fingerprint'])
-                        add('lookup', name, 'missing' if differs else 'review', 'Lookup definition differs from the exported reference.' if differs else 'Static CSV definition checked; contents were not bundled or compared. Include compatible dependencies to transfer complete small CSV data.', app, fingerprint=receipt['fingerprint'])
+                        compared = receipt['legacyFingerprint'] if fingerprint_versions.get(('lookup', app, name), 2) == 1 else receipt['fingerprint']
+                        differs = fingerprints.get(('lookup', app, name)) not in (None, compared)
+                        add('lookup', name, 'missing' if differs else 'review', 'Lookup definition differs from the exported reference.' if differs else 'Static CSV definition checked; contents were not bundled or compared. Include compatible dependencies to transfer complete bounded CSV data.', app, fingerprint=receipt['fingerprint'], fingerprintVersion=2)
                 except ProviderError as error:
                     if body['action'] == 'export' and body.get('includeKnowledge') is True or error.status >= 500: raise
                     add('lookup', name, 'review', str(error), app)

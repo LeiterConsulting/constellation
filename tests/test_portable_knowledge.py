@@ -7,7 +7,8 @@ import tempfile
 import unittest
 from unittest.mock import patch
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'splunk/constellation/bin'))
-from portable_knowledge import PortableKnowledge, csv_payload, fingerprint, import_lookups, validate_bundle, table_fingerprint
+from portable_knowledge import PortableKnowledge, csv_payload, fingerprint, import_lookups, validate_bundle, table_fingerprint, bundle_fingerprint
+from lookup_matching import matching_options, validate_matching_fields
 from search_references import macro_calls, lookup_calls, replace_lookups
 from search_service import SearchService, read_only_query
 from dashboard_dependencies import DashboardDependencies
@@ -34,6 +35,10 @@ class Runtime(SearchService):
         if path == '/services/authentication/current-context': return {'entry': [{'content': {'capabilities': ['upload_lookup_files'] if self.can_upload else []}}]}
         base = self.namespace + '/'
         if method == 'POST':
+            if path.endswith('/data/transforms/lookups'):
+                self.objects[('data/transforms/lookups', fields['name'])] = dict(fields, type='file')
+                self.objects[('data/transforms/lookups', fields['name'])].pop('name')
+                return {'entry': []}
             self.uploads.append((fields['name'], Path(fields['eai:data']).read_text()))
             if self.fail_write: raise ProviderError('synthetic delivery interruption', 503)
             self.objects[('data/lookup-table-files', fields['name'])] = {}
@@ -43,6 +48,8 @@ class Runtime(SearchService):
         return {'entry': [] if content is None else [{'name': unquote(name), 'content': copy.deepcopy(content), 'acl': self.metadata_acl}]}
     def execute(self, query, earliest='-15m'):
         self.calls.append(('bounded-current-user', query, earliest)); return copy.deepcopy(self.rows)
+    def lookup_snapshot(self, filename):
+        self.calls.append(('complete-csv-snapshot', filename, None));return copy.deepcopy(self.rows)
 
 
 def document(query='search index=fixture | lookup rooms.csv room OUTPUT label | stats count by label'):
@@ -102,7 +109,9 @@ class KnowledgeTests(unittest.TestCase):
     def test_explicit_bundle_inlines_macro_and_reads_complete_csv_without_mutating_original(self):
         doc = document('`nested` | lookup rooms.csv room OUTPUT label | stats count by label');before = copy.deepcopy(doc)
         result = DashboardDependencies(self.runtime).operation({'action': 'export', 'definition': doc, 'includeKnowledge': True})
-        self.assertNotIn('`', result['definition']['dataSources']['s']['options']['query']);self.assertEqual(result['lookups'], [bundled()])
+        self.assertNotIn('`', result['definition']['dataSources']['s']['options']['query'])
+        item = dict(bundled(), matching={});item['fingerprint'] = bundle_fingerprint(item)
+        self.assertEqual(result['lookups'], [item]);self.assertIn(('complete-csv-snapshot', 'rooms.csv', None), self.runtime.calls)
         self.assertEqual(doc, before);self.assertEqual(result['definition']['future'], doc['future'])
         self.assertFalse(any(item['kind'] == 'macro' for item in result['dependencies']))
     def test_metadata_export_does_not_read_contents_and_macro_mismatch_blocks(self):
@@ -121,12 +130,36 @@ class KnowledgeTests(unittest.TestCase):
         self.assertTrue(DashboardDependencies(self.runtime).operation({'action': 'check', 'definition': document('`absent`')})['blocked'])
         self.runtime.objects[('configs/conf-macros', 'base')]['definition'] = 'search index=absent'
         self.assertTrue(DashboardDependencies(self.runtime).operation({'action': 'check', 'definition': document('`nested`')})['blocked'])
-    def test_csv_partial_oversized_multivalue_and_advanced_matching_refused(self):
-        for change in ({'state': 'partial'}, {'warning': 'partial'}, {'results': [{'room': ['a', 'b']}]}, {'results': [{'room': 'a'}] * 201}):
+    def test_csv_partial_oversized_multivalue_and_filtered_matching_refused(self):
+        original = copy.deepcopy(self.runtime.rows)
+        for change in ({'state': 'partial'}, {'warning': 'partial'}, {'results': [{'room': ['a', 'b']}]}, {'results': [{'room': 'a'}] * 5001}):
+            self.runtime.rows = copy.deepcopy(original)
             self.runtime.rows.update(change)
             with self.assertRaises(ProviderError): PortableKnowledge(self.runtime, self.entry).lookup('rooms.csv', include=True)
-        self.runtime.objects[('data/transforms/lookups', 'rooms')]['match_type'] = 'CIDR(room)'
+        self.runtime.rows = original
+        self.runtime.objects[('data/transforms/lookups', 'rooms')]['filter'] = 'room=cold'
         with self.assertRaises(ProviderError): PortableKnowledge(self.runtime, self.entry).lookup('rooms', include=True)
+    def test_complete_larger_table_and_supported_matching_are_integrity_bound(self):
+        self.runtime.rows['results'] = [{'room': str(i), 'label': 'Value'} for i in range(5000)]
+        options = {'case_sensitive_match': 'false', 'match_type': 'CIDR(room), WILDCARD(label)', 'max_matches': '2', 'min_matches': '1', 'default_match': 'unknown'}
+        self.runtime.objects[('data/transforms/lookups', 'rooms')].update(options)
+        item = PortableKnowledge(self.runtime, self.entry).lookup('rooms', include=True)
+        self.assertEqual(item['matching'], options);self.assertEqual(len(item['rows']), 5000)
+        self.assertEqual(validate_bundle([item], document('| inputlookup rooms')), [item])
+        item['matching']['max_matches'] = '3'
+        with self.assertRaisesRegex(ProviderError, 'checksum'): validate_bundle([item], document('| inputlookup rooms'))
+    def test_metadata_receipts_keep_legacy_and_canonical_comparisons(self):
+        doc = document('search index=fixture | lookup rooms room OUTPUT label')
+        item = PortableKnowledge(self.runtime, self.entry).lookup('rooms')
+        old = [{'kind': 'lookup', 'app': 'constellation', 'name': 'rooms', 'fingerprint': item['legacyFingerprint']}]
+        self.assertFalse(DashboardDependencies(self.runtime).operation({'action': 'check', 'definition': doc, 'dependencies': old})['blocked'])
+        exported = DashboardDependencies(self.runtime).operation({'action': 'export', 'definition': doc})
+        receipt = next(x for x in exported['dependencies'] if x['kind'] == 'lookup')
+        self.assertEqual(receipt['fingerprintVersion'], 2)
+        self.runtime.objects[('data/transforms/lookups', 'rooms')].update(case_sensitive_match='1', max_matches='100')
+        self.assertFalse(DashboardDependencies(self.runtime).operation({'action': 'check', 'definition': doc, 'dependencies': exported['dependencies']})['blocked'])
+        self.runtime.objects[('data/transforms/lookups', 'rooms')]['case_sensitive_match'] = '0'
+        self.assertTrue(DashboardDependencies(self.runtime).operation({'action': 'check', 'definition': doc, 'dependencies': exported['dependencies']})['blocked'])
     def test_plain_named_csv_can_be_copied_but_foreign_app_and_geo_cannot(self):
         self.assertEqual(PortableKnowledge(self.runtime, self.entry).lookup('rooms', include=True)['rows'], bundled()['rows'])
         with self.assertRaises(ProviderError): DashboardDependencies(self.runtime).operation({'action': 'export', 'definition': document('| geom rooms'), 'includeKnowledge': True})
@@ -158,6 +191,46 @@ class KnowledgeTests(unittest.TestCase):
         self.assertTrue(result['blocked']);self.assertTrue(any(x['kind'] == 'permission' for x in result['dependencies']))
         with self.assertRaises(ProviderError): DashboardDependencies(self.runtime).operation({'action': 'import', 'definition': document(), 'lookups': [bundled()]})
         self.assertEqual(self.runtime.uploads, [])
+    def test_matching_import_uses_verified_fresh_private_definition(self):
+        item = bundled();item['matching'] = {'case_sensitive_match': 'false', 'match_type': 'WILDCARD(room)', 'max_matches': '1'};item['fingerprint'] = bundle_fingerprint(item)
+        with tempfile.TemporaryDirectory() as root, patch.dict(os.environ, SPLUNK_HOME=root):
+            result = DashboardDependencies(self.runtime).operation({'action': 'import', 'definition': document(), 'lookups': [item]})
+        created = [x for x in self.runtime.calls if x[0].endswith('/data/transforms/lookups') and x[1] == 'POST']
+        self.assertEqual(len(created), 1);fields = created[0][2]
+        self.assertRegex(fields['name'], r'^constellation_[a-f0-9]{32}$')
+        self.assertIn(fields['name'], result['definition']['dataSources']['s']['options']['query'])
+        self.assertEqual(fields['filename'], self.runtime.uploads[0][0])
+        self.assertEqual({k: fields[k] for k in item['matching']}, item['matching'])
+        self.assertFalse(any(x[0].endswith('/acl') or x[1] == 'DELETE' for x in self.runtime.calls))
+    def test_unverified_matching_definition_never_replays_or_accepts_document(self):
+        item = bundled();item['matching'] = {'case_sensitive_match': 'false'};item['fingerprint'] = bundle_fingerprint(item)
+        original = self.runtime.request
+        def interrupted(path, method='GET', fields=None, optional=False):
+            result = original(path, method, fields, optional)
+            if path.endswith('/data/transforms/lookups') and method == 'POST': raise ProviderError('private upstream error', 503)
+            return result
+        self.runtime.request = interrupted
+        doc = document();before = copy.deepcopy(doc)
+        with tempfile.TemporaryDirectory() as root, patch.dict(os.environ, SPLUNK_HOME=root), self.assertRaisesRegex(ProviderError, 'Other uploads may have completed'):
+            import_lookups(self.runtime, doc, [item], self.entry)
+        self.assertEqual(doc, before)
+        self.assertEqual(sum(x[0].endswith('/data/transforms/lookups') and x[1] == 'POST' for x in self.runtime.calls), 1)
+    def test_native_definition_readback_requires_exact_matching_and_private_owner(self):
+        item = bundled();item['matching'] = {'case_sensitive_match': 'false'};item['fingerprint'] = bundle_fingerprint(item)
+        for defect in ('owner', 'sharing', 'filename', 'case_sensitive_match'):
+            runtime = Runtime();original = runtime.request
+            def incorrect(path, method='GET', fields=None, optional=False):
+                response = original(path, method, fields, optional)
+                if method == 'GET' and '/data/transforms/lookups/constellation_' in path and response.get('entry'):
+                    record = copy.deepcopy(response['entry'][0])
+                    record['acl' if defect in ('owner', 'sharing') else 'content'][defect] = 'other'
+                    return {'entry': [record]}
+                return response
+            runtime.request = incorrect;doc = document();before = copy.deepcopy(doc)
+            with self.subTest(defect=defect), tempfile.TemporaryDirectory() as root, patch.dict(os.environ, SPLUNK_HOME=root), self.assertRaisesRegex(ProviderError, 'Your draft is unchanged'):
+                import_lookups(runtime, doc, [item], DashboardDependencies(runtime).entry)
+            self.assertEqual(doc, before)
+            self.assertEqual(sum(x[0].endswith('/data/transforms/lookups') and x[1] == 'POST' for x in runtime.calls), 1)
     def test_even_a_generated_name_collision_never_updates_an_existing_lookup(self):
         from types import SimpleNamespace
         name = 'constellation_' + 'a' * 32 + '.csv'
@@ -178,6 +251,22 @@ class KnowledgeTests(unittest.TestCase):
             count = len(self.runtime.uploads)
             with self.assertRaises(ProviderError): import_lookups(self.runtime, document(), [bundled()], self.entry)
             self.assertEqual(len(self.runtime.uploads), count)
+
+
+class MatchingTests(unittest.TestCase):
+    def test_native_booleans_defaults_and_explicit_match_fields(self):
+        self.assertEqual(matching_options({'case_sensitive_match': '1', 'batch_index_query': True, 'max_matches': '100', 'min_matches': '0', 'match_type': 'EXACT', 'CLEAN_KEYS': '1'}), {})
+        self.assertEqual(matching_options({'case_sensitive_match': 0, 'reverse_lookup_honor_case_sensitive_match': False, 'match_type': 'CIDR(ip),WILDCARD(host)'}), {'case_sensitive_match': 'false', 'reverse_lookup_honor_case_sensitive_match': 'false', 'match_type': 'CIDR(ip), WILDCARD(host)'})
+    def test_unsupported_noncanonical_or_invalid_options_and_missing_headers_refuse(self):
+        for value in ({'time_field': '_time'}, {'filter': 'a=b'}, {'future': 'nonempty'}, {'CLEAN_KEYS': 'false'}, {'case_sensitive_match': 'no'}, {'max_matches': '1001'}, {'max_matches': '0'}, {'min_matches': '2', 'max_matches': '1'}, {'default_match': '\x00'}, {'match_type': 'CIDR(ip), WILDCARD(ip)'}, {'match_type': 'CIDR($ip$)'}, {'disabled': '1'}):
+            with self.subTest(value=value), self.assertRaises(ProviderError): matching_options(value)
+        for value in ({'filename': 'a.csv'}, {'case_sensitive_match': '0'}, {'max_matches': '100'}, {'max_matches': 1}, {'match_type': 'CIDR(ip),WILDCARD(host)'}):
+            with self.subTest(value=value), self.assertRaises(ProviderError): matching_options(value, strict=True)
+        with self.assertRaises(ProviderError): validate_matching_fields({'match_type': 'CIDR(ip)'}, ['host'])
+    def test_csv_byte_limit_and_scalar_integrity(self):
+        csv_payload(['a'], [['x'] for _ in range(5000)])
+        for fields, rows in ((['a'], [['x']]*5001), (['a'], [['x'*4000]]*251), (['a']*2, [['1', '2']]), (['a'], [[None]])):
+            with self.assertRaises(ProviderError): csv_payload(fields, rows)
 
 
 if __name__ == '__main__': unittest.main()

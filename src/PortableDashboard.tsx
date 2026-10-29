@@ -47,7 +47,7 @@ export default function PortableDashboard({ definition, file, onImport, onClose,
     <Modal.Header title={file?'Import dashboard with assets':'Export dashboard with assets'}/><Modal.Body>
       {file?<><p><strong>{file.definition.title || 'Untitled dashboard'}</strong> · {file.assets.length} shared assets</p>
         {file.assets.length?<Message type="warning">Import uploads these images and icons to this instance’s shared Studio libraries. Other Splunk users can read them, even if your dashboard is private. Your native upload permissions apply.</Message>:null}
-        {file.lookups?.length?<><p>{file.lookups.length} CSV {file.lookups.length===1?'lookup':'lookups'} will be copied privately under new names. Existing destination lookups stay intact.</p><Muted>To share the resulting dashboard or save it in another app, configure lookup access there through Splunk’s Settings &gt; Lookups.</Muted></>:null}
+        {file.lookups?.length?<><p>{file.lookups.length} CSV {file.lookups.length===1?'lookup':'lookups'} will be copied privately under new names with supported matching rules. Existing destination lookups stay intact.</p><Muted>To share the resulting dashboard or save it in another app, configure lookup access there through Splunk’s Settings &gt; Lookups.</Muted></>:null}
         <Muted>{file.assets.map(asset=>`${asset.name} (${asset.kind})`).join(', ') || 'No shared media uploads needed.'}</Muted>
         {checking?<Muted role="status">Checking destination dependencies…</Muted>:null}
         {check?<details open={check.blocked}><summary>{check.blocked?'Dependencies need attention':`${check.dependencies.length} destination dependencies checked`}</summary>
@@ -58,8 +58,8 @@ export default function PortableDashboard({ definition, file, onImport, onClose,
         {hasReports?<><Switch appearance="checkbox" selected={includeReports} disabled={busy} onClick={()=>setIncludeReports(value=>!value)}>Include compatible report searches</Switch>
           <Muted>Rerun these reports as the dashboard viewer. Schedules, cached results and report-owner permissions are not copied. Check app-specific field extraction on the destination.</Muted></>:null}
         <Switch appearance="checkbox" selected={includeKnowledge} disabled={busy} onClick={()=>setIncludeKnowledge(value=>!value)}>Include compatible lookups and macros</Switch>
-        <Muted>Includes complete small CSV data from this app and inlines compatible macro definitions into copied searches. Lookup data can be sensitive: keep this file private. Original objects stay intact.</Muted></>}
-      <Muted>Indexes, advanced lookups, eval-based macros, custom visualizations and modules still need native destination configuration. External media, conversations and provider settings are excluded.</Muted>
+        <Muted>Includes complete CSV tables from this app (up to 5,000 rows and 1 MB each), supported matching rules and inlined ordinary macros. Lookup data can be sensitive: keep this file private. Original objects stay intact.</Muted></>}
+      <Muted>Indexes, temporal/filtered or external lookups, eval-based macros, custom visualizations and modules still need native destination configuration. External media, conversations and provider settings are excluded.</Muted>
       {progress?<Muted role="status">{progress}</Muted>:null}{error?<Message type="error">{error}</Message>:null}
     </Modal.Body><Modal.Footer><Button disabled={busy&&!!file} onClick={()=>{if(busy)cancelled.current=true;else onClose();}}>{busy&&!file?'Cancel export':'Close'}</Button>
       <Button appearance="primary" disabled={busy || !!file&&(checking||!check||check.blocked||attempted&&!result)} onClick={()=>void run()}>{file?(result?'Open imported draft':file.assets.length?'Upload shared assets and import':'Import dashboard'):'Download with assets'}</Button>

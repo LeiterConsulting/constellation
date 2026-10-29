@@ -1,5 +1,11 @@
 # Updating Constellation
 
+## 0.40 complete CSV transfer and matching
+
+No draft, credential or native-dashboard migration runs. Refresh workspace tabs. Portable writers use version 4; readers retain versions 1–3. Older apps cannot read version-4 files. Legacy lookup receipts keep their original comparison; new receipts use canonical matching fingerprints. Static CSV transfer has a separate complete-read path up to 5,000 rows/64 fields/1 MB per table; ordinary previews stay at 200 rows/five seconds. Supported non-default matching is copied as a fresh private native definition referencing its fresh private CSV. Native upload permissions still apply; no credential-store or additional role capability is granted. Existing objects and ACLs are unchanged. Temporal, filtered, scripted, KV and unsupported definitions still require native configuration.
+
+Requalify exact multi-page CSV reads, native completion/owner/app metadata, changed headers/counts, deadlines, cancellation, matching defaults/field validation, checksums, fresh private definition readback, uncertainty without replay and legacy receipt comparison when changing these modules. Do not turn export delivery recovery into import replay.
+
 ## 0.39 lookup and macro transfer
 
 No draft, credential or native-dashboard migration runs. Refresh workspace tabs. Portable writers use version 3; readers retain versions 1 and 2. Older releases cannot read version-3 bundles. Knowledge-object transfer is explicit; existing lookups/macros, their permissions and accepted user work are never replaced.

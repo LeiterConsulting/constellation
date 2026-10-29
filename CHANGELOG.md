@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.40.0 — unreleased
+
+- Transfer complete static CSV tables up to 5,000 rows and 1 MB each using dedicated paginated current-user reads. Ordinary dashboard previews retain their 200-row/five-second limits.
+- Preserve supported case-insensitive, CIDR, wildcard, match-count and fallback settings through fresh private native lookup definitions, with exact metadata/content/privacy readback.
+- Reject partial, changed, shadowed or unsupported lookup reads rather than exporting a sample. Preserve unrelated native properties and never overwrite, widen permissions or replay uncertain imports.
+- Align portable export/read limits with UTF-8 upload bytes so Unicode files cannot pass export then exceed import limits.
+- Write portable version 4 with integrity-bound matching options; retain version-1/2/3 readers and legacy lookup-receipt comparison. Keep the existing single dependency-export option.
+
 ## 0.39.0 — unreleased
 
 - Add one portable-export option for complete small static CSV lookup data and compatible ordinary macro inlining; preserve existing native objects and unrelated dashboard properties.
