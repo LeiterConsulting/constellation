@@ -1,6 +1,9 @@
 # Sharing readiness: 0.9.0
 
-This is the historical sharing audit. See [current validation](validation.md) and [provider qualification](provider-qualification.md) for the subsequent repeated-provider tests, model budgets and remaining 1.0 gates.
+Current distribution follows the [1.0 support policy](support-policy.md) and [technical checklist](v1-readiness.md). The audit below is historical; its preview/provider status must not override the dated 1.0 evidence. Repository visibility and first-party licensing are unchanged.
+
+
+This is the historical sharing audit. See [current validation](validation.md) and [provider qualification](provider-qualification.md) for the subsequent repeated-provider tests, model budgets and current release scope.
 
 The 0.16 follow-up completes a bounded non-admin sensor journey across all three providers and an independent agent source review of the privileged boundaries. Owner-only OpenAI setup no longer requires ordinary authors to hold credential-store permissions. The older permission restrictions and provider failures below describe the 0.9 review, not the current implementation. Deployment/security, broader usability and production qualification remain open.
 

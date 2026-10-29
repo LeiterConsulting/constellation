@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.0 — unreleased
+
+- Carry current/default input values and exact selected-source context into field inspection without storing those values in data scopes or sending results to models.
+- Preserve compound requests by retaining general authoring when a narrow report-suffix plan cannot express the whole change.
+- Load the Studio renderer on demand, with a recoverable loading/error boundary, preserve emitted module/CSS links and enforce an initial browser bundle budget.
+- Establish the bounded Enterprise 1.0 support profile and immediate feedback/patch policy; independent reviews are post-release work under the product owner’s decision.
+
 ## 0.43.0 — unreleased
 
 - Run supported saved-report previews and chain transforms as the current user in the report’s original app, retaining its native reference and same-named lookup/macro distinctions.

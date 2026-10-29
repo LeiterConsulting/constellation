@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Bundle the built app and reviewed user documentation for a private pilot."""
+"""Bundle the built app and reviewed user documentation for the documented Enterprise support profile."""
 import hashlib
 import json
 from pathlib import Path
@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 VERSION = json.loads((ROOT / 'package.json').read_text())['version']
 DOCS = ('SECURITY.md', 'CHANGELOG.md', 'docs/user-guide.md', 'docs/installation.md',
         'docs/providers.md', 'docs/security-review.md', 'docs/aitk-setup.md', 'docs/studio-support.md', 'docs/native-coverage.md', 'docs/validation.md', 'docs/provider-qualification.md', 'docs/model-benchmark.md',
-        'docs/share-readiness.md', 'docs/architecture.md', 'docs/upgrade-guide.md',
+        'docs/share-readiness.md', 'docs/support-policy.md', 'docs/v1-readiness.md', 'docs/architecture.md', 'docs/upgrade-guide.md',
         'docs/roadmap.md', 'docs/development.md', 'docs/product-direction.md',
         'docs/reliability-goal.md', 'tests/fixtures/README.md',
         'tests/fixtures/service-health-napkin-prompt.txt')
@@ -22,12 +22,13 @@ def main():
     app = package.read_bytes()
     digest = hashlib.sha256(app).hexdigest()
     files = {package.name: app, 'SHA256SUMS': (digest + '  ' + package.name + '\n').encode(),
-             'README.md': ('# Constellation ' + VERSION + ' private pilot\n\n'
+             'README.md': ('# Constellation ' + VERSION + ' Enterprise distribution\n\n'
                            'Start with docs/user-guide.md, then review docs/provider-qualification.md '
                            'and docs/validation.md. docs/share-readiness.md retains the historical sharing audit. '
                            'Install the enclosed app archive using docs/installation.md. '
                            'Verify it against SHA256SUMS before installation.\n\n'
-                           'This is a development preview, not a production or Splunk Cloud certified release. '
+                           'Use the support scope and technical checklist in docs/support-policy.md and docs/v1-readiness.md. '
+                           'Splunk Cloud certification and full native parity are not claimed. '
                            'No first-party open-source license has been selected. '
                            'Configure credentials in Splunk; none are supplied in this bundle.\n').encode()}
     for name in DOCS:

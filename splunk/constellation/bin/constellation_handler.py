@@ -68,7 +68,7 @@ class ConstellationHandler(PersistentServerConnectionApplication):
                       ('GET','datasets'): runtime.datasets,
                       ('GET','discovery'): lambda: DataService(runtime).discovery(),
                       ('POST','dependencies'): lambda: DashboardDependencies(runtime).operation(body),
-                      ('POST','profile'): lambda: DataService(runtime).profile(body),
+                      ('POST','profile'): lambda: DataService.inspect_request(runtime, body),
                       ('GET','drafts'): lambda: DraftService(session['user'], session['authtoken']).listing(),
                       ('POST','drafts'): lambda: DraftService(session['user'], session['authtoken']).operation(body),
                       ('POST','library'): lambda: DashboardLibrary(DraftService(session['user'], session['authtoken'])).operation(body),

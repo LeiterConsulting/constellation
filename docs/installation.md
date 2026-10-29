@@ -1,6 +1,6 @@
 # Installation and first dashboard
 
-Constellation 0.34.0 is a development preview. Start in an isolated Splunk Enterprise environment with representative data. Review the [support matrix](studio-support.md), [validation scope](validation.md) and [security guide](../SECURITY.md).
+Constellation 1.0 targets the bounded [Enterprise support profile](support-policy.md). The 1.0 candidate is not yet published; the latest published preview below remains 0.34.0 until an explicit release. Review the [support matrix](studio-support.md), [validation scope](validation.md) and [security guide](../SECURITY.md). Test representative data and retain backups when updating.
 
 ## Download the release
 

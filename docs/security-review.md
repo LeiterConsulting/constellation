@@ -25,7 +25,7 @@ No credential permissions were granted to ordinary authors. Existing owner-priva
 
 Synthetic tests cover caller substitution, unsafe policy/record/collection ACLs, ordinary execution namespaces, legacy shadowing (including custom provider keys), ambiguous/malformed metadata, prompt encoding, key presence projection, invalid replacement, unsupported operations/models/files, token separation and native timeout forwarding. The reviewer separately reran targeted tests; the full offline and installed results are recorded in [validation](validation.md).
 
-Live evidence stays local. Only reviewed summaries are published. Production roles, network/egress controls, retention, distributed search-head behavior, broader model/vendor versions, external audit and Cloud approval remain deployment/1.0 gates. Privileged handlers must be reviewed again when their authority, schemas or vendor resolution changes.
+Live evidence stays local. Only reviewed summaries are published. Production roles, network/egress controls and retention remain administrator responsibilities. Distributed search-head behavior, broader vendor/model combinations and Cloud approval need separate deployment qualification. External/independent review is follow-up work under the product owner’s 1.0 decision; it is not recorded as completed or required to release the bounded [supported profile](support-policy.md). Privileged handlers must be reviewed again when their authority, schemas or vendor resolution changes.
 
 ## 0.18 delivery boundary
 

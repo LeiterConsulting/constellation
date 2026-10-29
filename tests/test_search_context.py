@@ -98,6 +98,26 @@ class ContextTests(unittest.TestCase):
         created = next(iter(runtime.jobs.values()));self.assertEqual(created['app'], 'search')
         self.assertTrue(created['query'].endswith('| head 201'))
         self.assertEqual(next(x for x in profile['fields']if x['name']=='value')['coverage']['numeric'], 1)
+    def test_inspection_route_derives_selected_report_scope_and_keeps_current_token_values_local(self):
+        runtime = ContextRuntime();doc = document()
+        runtime.objects[('search', 'saved/searches', 'Fixture report')]['search'] = '| makeresults | eval device=$device|s$'
+        doc['defaults'] = {'tokens': {'default': {'device': {'value': 'default-device'}}}}
+        request = {'sourceId': 'report', 'definition': doc, 'tokens': {'default': {'device': 'current-device'}},
+                   'earliest': '-1h', 'query': 'wrong-global-query', 'report': {'ref': 'wrong', 'app': 'constellation'}}
+        before = copy.deepcopy(request);profile = DataService.inspect_request(runtime, request)
+        self.assertEqual(request, before);self.assertEqual(profile['scope']['report'], {'ref': 'Fixture report', 'app': 'search'})
+        self.assertIn('$device|s$', profile['baseQuery']);self.assertNotIn('current-device', json.dumps(profile))
+        self.assertNotIn('definition', profile['scope']);self.assertNotIn('tokens', profile['scope'])
+        self.assertTrue(all(job['app'] == 'search' and 'current-device' in job['query'] for job in runtime.jobs.values()))
+        runtime.jobs.clear();DataService.inspect_request(runtime, dict(request, tokens=None))
+        self.assertTrue(all('default-device' in job['query'] for job in runtime.jobs.values()))
+    def test_inspection_rejects_missing_source_document_or_tokens_before_dispatch(self):
+        runtime = ContextRuntime();doc = document()
+        runtime.objects[('search', 'saved/searches', 'Fixture report')]['search'] = '| makeresults | eval device=$missing|s$'
+        for body in ({'sourceId': 'report'}, {'sourceId': 'absent', 'definition': doc}, {'sourceId': 'report', 'definition': doc}, {'definition': [], 'query': '| makeresults'}, {'query': '| makeresults', 'tokens': 'bad'}):
+            with self.assertRaises(ProviderError): DataService.inspect_request(runtime, body)
+        self.assertEqual(runtime.jobs, {})
+
     def test_report_backed_table_receipt_uses_resolved_query_and_actual_metadata(self):
         runtime = ContextRuntime();doc = document();data = DataService(runtime, document=doc)
         query, _ = data.resolve_query(doc, 'chain')

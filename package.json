@@ -1,11 +1,11 @@
 {
   "name": "constellation",
-  "version": "0.43.0",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
-    "build": "tsc --noEmit && vite build",
+    "build": "tsc --noEmit && vite build && python3 scripts/check_browser_budget.py",
     "test": "vitest run",
     "package": "python3 scripts/package_app.py"
   },

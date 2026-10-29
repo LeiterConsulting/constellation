@@ -1,61 +1,30 @@
-# Roadmap and release gates
+# Roadmap and release scope
 
-Constellation is a working development preview. Checked-in code and selected live exercises establish concrete behavior; they do not establish a production-ready app or full Dashboard Studio parity.
+The 1.0 candidate targets the bounded [Enterprise support profile](support-policy.md). The [technical checklist](v1-readiness.md) and [current evidence](validation.md#100-technical-release-candidate--october-29-2026) define release readiness. Complete Studio parity remains a continuing feature target. Human/independent reviews are non-blocking follow-up work under the product owner's October 29, 2026 decision; they are not recorded as completed tests.
 
-## Current 1.0 qualification priorities
+## 1.0 technical baseline
 
-Version 0.43 extends current-user report-app context to supported previews, field inspection, selected edits and compatible chain dependencies. [Current evidence](validation.md#0430-report-app-previews-and-edits--october-29-2026) records the bounded checks. Scheduled cache/owner semantics, complete extraction combinations, custom rendering, opaque dependencies, sharing and unaided-user acceptance remain open.
+- Keep one conversational panel and canvas, with selected-element refinement and existing controls for field inspection. Current/default/unset input values and original report namespaces must reach native inspection without putting event values in model context.
+- Retain server-side schema, search, scope, measurement, placement and preservation validation, bounded repairs and no-replay delivery recovery across all three provider adapters.
+- Retain private drafts/conversations/history, recoverable native management, ordinary Splunk sharing and native dashboard definitions usable outside Constellation.
+- Qualify supported upgrades and rollback, current-user data/credential isolation, cancellation and partial-result labels on the exact archive.
+- Keep startup JavaScript under a measured budget; defer the large native renderer and preserve content-hashed entry/chunk/CSS references through packaging.
+- Ship guides, checksums, safe feedback instructions and compatible patch updates. Automated checks and local AppInspect precert remain required; Cloud certification is separate.
 
-Version 0.42 adds guarded CSV copies from included report searches in other apps, distinct names for same-named dependencies, and refusal of wrong-context report previews. [Current evidence](validation.md#0420-report-app-csv-contexts--october-29-2026) separates synthetic cross-app fixtures, actual-data provider regression and native rendering. At that stage report-app preview/chain execution remained open; 0.43 extends the bounded subset. Complete extraction combinations, KV/scripted dependencies, sharing and unaided acceptance remain open.
+## Product and native feature follow-up
 
-Version 0.41 extends bounded CSV portability to compatible literal filters and native historical matching, and fixes exact `_time` preservation. Both-direction native cases and the nine-turn provider cohort passed; the simple export option remains. [Current evidence](validation.md#0410-filtered-and-time-based-csv--october-29-2026) distinguishes actual indexed-data flows, synthetic rule probes, corrected harness expectations and browser/native API scope. Broader predicates, foreign-app/KV/scripted dependencies, cross-app sharing and unaided acceptance remain open.
+- Extend versioned native contracts and rendered fixtures for advanced inputs, namespaces/defaults, layouts, expressions, geographic layers, source bindings and option combinations. Preserve unknown imported properties and label native-only execution.
+- Investigate supported custom visualization registration, report cache/owner semantics, SPL2 modules/views and advanced knowledge-object dependencies. These are outside the 1.0 execution/transfer profile.
+- Improve starting questions and follow-ons using verified field meaning, units, grain and coverage. Verify relationship keys and populations before suggesting cross-dataset comparisons.
+- Expand attributed retrieval within the Splunk app boundary; assess semantic retrieval against real tasks before adding storage or runtime complexity.
+- Expand model/configuration benchmarks, larger documents, wording variations, business-rule probes, latency tails and production-duration soak. Retain failed candidates and harness corrections separately; a passing regression sample is not a population reliability estimate.
+- Continue unaided-user, accessibility, contrast/reflow and independent security reviews. Track their findings and ship fixes without waiting for another major version.
+- Add provider adapters or progress streaming through supported Splunk transports when qualified. Preserve existing modality/token guards and keep setup simple.
 
-Version 0.40 adds complete bounded CSV transfer and supported static matching under ordinary-user permissions, while preserving normal preview limits and one export option. Native checks on both supported versions and repeated three-provider creation/editing cohorts are recorded in [validation](validation.md#0400-complete-csv-and-matching--october-29-2026). This does not close temporal/filtered/KV/scripted dependencies, general macro semantics, cross-app sharing, broader native parity or model reliability. Keep the retained OpenAI creation failures/repairs visible; representative unaided-user acceptance and second-target AITK qualification remain open.
+## Additional deployment and public distribution
 
-The 0.31.1 qualification fixes unwanted blank drafts from unavailable links and renews concurrent non-admin checks: 18 flows / 72 turns on the unchanged backend, then three freezer flows / twelve turns on the final UI patch. Creation/edits, native readback, peer denial, controlled original-response loss and cooperative Stop passed. Earlier candidates still hit native timeouts and Ollama output/recovery failures. These samples do not establish a global success rate or explain every older failure. The second-target 0.31 cohort, larger 0.30 cohort, 0.27 soak and 0.24 benchmark retain their own scope. Keep exploratory failures, harness defects and controlled faults separate in [validation](validation.md).
+Search-head-cluster coordination, distributed quotas/cancellation, broader platform versions and Cloud acceptance need explicit qualification. Configuration replication alone does not provide atomic cross-member writes. Do not describe these deployment profiles as supported by a passing single-head test.
 
-- Extend the qualified navigation/calculation operations beyond their current evidence and grammar boundaries without weakening preservation or source validation. Version 0.24 passed selected existing-navigation and broader multi-page trials across three providers; ambiguous destinations, compound changes, shared analytical sources and advanced layouts still need their own trials.
-- Grow the synthetic benchmark with held-out operational cases, model/configuration fingerprints and repetitions. Use first-response success and per-task failures to trial batching; never let a weighted total waive a critical failure or automatically authorize an unqualified model.
-- Correlate any remaining natural failures across DNS/connection, native handler and delivery phases. Version 0.25 reproduced a client DNS error and verified controlled post-send disconnect recovery across all three providers; older uncorrelated stalls are not proven to share that cause. Version 0.26 adds bounded three-author load and injected disconnects. Version 0.27 adds a 30-minute-per-provider single-head soak. Extend to longer production-duration soak, failed upstream transports, browser eviction/large-file limits and deployment faults without replaying inference or weakening limits.
-- Qualify business rules on representative operational, sparse and partial datasets, including derived fields, complex predicates and SPL2/chain semantics beyond the narrow Fahrenheit compiler.
-- Complete unaided-user, native feature/version, role/setup, accessibility/reflow, upgrade/rollback and deployment qualification. AITK on the second target remains unqualified.
+Public visibility requires an explicit owner decision. First-party license selection, dependency redistribution review and certification/distribution requirements remain separate from the private 1.0 release. Before any publication, inspect the exact Git history and artifacts, run repository/Gitleaks checks, retain private vulnerability reporting and verify downloaded checksums. No first-party open-source grant is made today.
 
-## Product improvements
-
-- Starting questions now rank a bounded inspected shortlist using usable field evidence, with unit provenance and sample coverage. Qualify their usefulness with unaided users and extend verified field meaning, units, population and time coverage beyond the current templates. Rank next requests by the unresolved question they answer, avoiding repetitive or already-completed work.
-- Improve first-draft analytical quality using verified field meaning, units, population and time coverage.
-- Verify related-dataset keys, grain, units and joins before suggesting comparisons.
-- Expand modular, versioned guidance and evaluate semantic retrieval within the Splunk app boundary.
-- Expand native visualization/option, input, token, drilldown, refresh and search-source coverage through versioned fixtures.
-- Improve canvas manipulation, responsive layouts, keyboard interaction and contrast/reflow qualification.
-- Extend the selected OpenAI/Ollama/AITK real-data journeys into a representative provider/model benchmark. Measure first-draft success, automatic recovery, latency, token use and low-budget failure behavior; retain tested connection budgets and permissions.
-- Add additional provider adapters and genuine progress/token streaming through supported Splunk transport paths.
-- Reduce the renderer bundle and test performance at realistic document/data sizes.
-
-The current reliability milestone is recorded in [the goal brief](reliability-goal.md). Before calling the authoring experience reliable for a broader audience, run unaided user trials against representative datasets, measure task completion, recovery rate, latency, rewording and undo/restore use. A target such as 90 percent completion needs measured evidence from those trials.
-
-The [provider qualification protocol and 1.0 decision](provider-qualification.md) define the repeated core journey, independent analytical probes and outstanding acceptance work. Passing one authored example is insufficient.
-
-## Before public release
-
-- Select and document the first-party source license; complete third-party attribution and redistribution review. Public visibility is separate from an open-source license grant.
-- Review the exact Git history, source, fixtures, binary metadata and documentation for credentials, personal details and environment-specific material.
-- Run publication checks and Gitleaks over the complete release history. Establish a private vulnerability-reporting path.
-- Review CI permissions, dependency pins, supply-chain updates, issue templates and release artifacts. Keep deployment/provider credentials out of offline CI.
-- Decide the release floor and support policy using tested Splunk/Studio/Python combinations.
-- Review current AppInspect warnings and complete required certification separately from local precert checks.
-
-## Before production qualification
-
-- Extend the completed selected two-user owner-isolation/ACL checks to broader roles, administrator boundaries and deployment profiles.
-- Qualify upgrade/rollback, retention and backup behavior for drafts, Trash, pending attachments and native restores.
-- Qualify cross-member search-head-cluster concurrency; configuration replication is not atomic distributed coordination.
-- Complete native rendering/interaction fixtures, accessibility and reflow, resource budgets and failure/timeout tests.
-- Establish release artifact hashes, repeatable acceptance records and operational documentation for each supported deployment profile.
-
-Modules and migration contracts are described in [architecture](architecture.md) and [upgrade guide](upgrade-guide.md). Future compatibility is intentionally verified at these boundaries rather than promised from a version number alone.
-
-
-## Latest qualification priorities
-
-Version 0.31.1 adds short overlapping three-author cohorts without a new native timeout, plus unavailable-link checks on both supported versions. Longer latency-tail qualification remains open; earlier service failures are not explained by successful reruns. Prioritize fresh-install/upgrade/rollback and independent delivery/storage security review alongside unaided usability/accessibility/reflow. Broader Ollama creation/label encoding, different models/wording, shared/advanced native sources and full SPL2 semantics need additional trials. Second-target AITK remains blocked by maintainer discovery/delegation permissions; ordinary authors must not receive stored-credential access to bypass this. Cluster qualification and bundle reduction remain separate gates. See [current evidence](validation.md) and [security review](security-review.md).
+Historical milestones, failures and their bounded reruns remain in [validation](validation.md). Module and migration boundaries are documented in [architecture](architecture.md) and [upgrade guide](upgrade-guide.md).

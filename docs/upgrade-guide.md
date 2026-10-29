@@ -1,5 +1,17 @@
 # Updating Constellation
 
+## 1.0 supported upgrade and rollback
+
+Version 1.0 keeps draft schema 3 and portable format 5; no credential, draft, media or native-view migration runs. Back up owned drafts/conversations, native dashboards and administrator configuration. Install through ordinary Splunk app management, refresh workspace tabs and follow Splunk's restart indication. The tested rollback baseline is 0.43.0; older schema-2 writers are not compatible with schema-3 drafts. Retain the exact accepted archives rather than repackaging directories.
+
+The installed 0.43 → 1.0 → 0.43 → 1.0 cycle passed on both qualified targets, preserving exact owned draft/conversation/history/pending-file/token state, native XML and provider preferences. This is app-update evidence on existing Enterprise instances, not a fresh untouched server or SHC qualification. See [current validation](validation.md#100-technical-release-candidate--october-29-2026) and [support policy](support-policy.md).
+
+Field inspection now resolves a selected source against the validated document and current/default tokens before bounded caller-native profiling. Unset tokens wait; minimal persisted scopes retain unresolved query syntax and the report app, not transient token values. Keep this resolution separate from source ancestry, query guards and provider context. Requalify stale supplied scopes, chains, source/app tampering and selected input/table inspection when changing it.
+
+The native renderer loads on demand. Entry, shared chunks and renderer CSS keep Vite's content-hashed names; packaging must not rename one module without updating its import graph. The boot script references the emitted entry, and only entry CSS is loaded eagerly. A manifest-based startup budget covers transitive static imports. Refresh old tabs after an upgrade; a renderer-load error preserves the draft and conversation with explicit recovery guidance.
+
+Narrow report plans decline compound requests for new pages, charts, inputs, layout or navigation; those requests retain general authoring. Preservation clauses may mention unrelated objects without widening a focused edit. Keep request eligibility separate from compilation and all final validators.
+
 ## 0.43 report-app previews and focused edits
 
 No draft, credential or native-view migration runs. Refresh workspace tabs. Minimal report references can now persist in a draft’s selected data scope; older scopes remain valid. Report-backed previews, field inspection and selected edits rerun supported SPL as the current user in the original report app, including compatible chains. Schedules, owner execution and cached results are not copied or impersonated. Changed report bases require reselection; new calculations retain the native reference and use chains.

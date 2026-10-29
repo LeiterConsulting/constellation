@@ -10,9 +10,12 @@ import { dataScopeKey, previewRanges, type DataDiscovery, type DataProfile, type
 import { Actions, Muted } from './styles';
 import { datasetQuestions } from './datasetQuestions';
 import FieldContext from './FieldContextDetails';
+import type { StudioDefinition } from './document';
+import type { TokenState } from '@splunk/dashboard-types';
 
-export default function DataChooser({ discovery, initial, initialGoal = '', onBuild, onClose, returnFocus }: {
+export default function DataChooser({ discovery, initial, initialGoal = '', definition, tokens, sourceId, onBuild, onClose, returnFocus }: {
   discovery: DataDiscovery | null; initial?: DataScope | null; initialGoal?: string;
+  definition?: StudioDefinition; tokens?: TokenState; sourceId?: string;
   onBuild: (scope: DataScope, prompt: string) => Promise<void>; onClose: () => void; returnFocus: React.RefObject<HTMLElement>;
 }) {
   const [mode, setMode] = useState(initial && 'query' in initial ? 'query' : 'index');
@@ -25,6 +28,16 @@ export default function DataChooser({ discovery, initial, initialGoal = '', onBu
   const generation = useRef(0);
   const pending = useRef<AbortController | null>(null);
   useEffect(() => () => { generation.current++; pending.current?.abort(); }, []);
+  useEffect(() => {
+    if (!sourceId || !definition) return;
+    const controller = new AbortController(); pending.current = controller;
+    const turn = ++generation.current; setBusy(true); setStage('inspect'); setError('');
+    void providerRequest<DataProfile>('profile', {sourceId,definition,tokens,earliest:initial?.earliest || '-15m'}, controller.signal)
+      .then(result => { if (turn === generation.current) { setScope(result.scope); setProfile(result); } })
+      .catch(failure => { if (turn === generation.current) setError(failure instanceof Error ? failure.message : 'This source could not be inspected.'); })
+      .finally(() => { if (turn === generation.current) { pending.current = null; setBusy(false); } });
+    return () => { generation.current++; controller.abort(); };
+  }, [sourceId,definition,tokens,initial?.earliest]);
   const stopInspection = () => { generation.current++; pending.current?.abort(); pending.current = null; setBusy(false); };
   const close = () => { stopInspection(); onClose(); };
   const change = (next: DataScope) => { generation.current++; if (dataScopeKey({...next,earliest:'-24h'}) !== dataScopeKey({...scope,earliest:'-24h'})) delete next.fieldDefinitions; setScope(next); setProfile(null); setError(''); };
@@ -36,7 +49,7 @@ export default function DataChooser({ discovery, initial, initialGoal = '', onBu
     try {
       // Scope changes invalidate profile. Authoring still profiles server-side;
       // avoid repeating the same UI inspection when Build follows Inspect.
-      const result = build && profile ? profile : await providerRequest<DataProfile>('profile', { ...chosen(), question: goal }, controller.signal);
+      const result = build && profile ? profile : await providerRequest<DataProfile>('profile', { ...chosen(), definition, tokens, question: goal }, controller.signal);
       if (turn !== generation.current) return;
       setProfile(result);
       if (!result.sampledRows) { setError('No rows found in this time range. Choose another dataset or range.'); return; }
@@ -64,7 +77,7 @@ export default function DataChooser({ discovery, initial, initialGoal = '', onBu
           <Select.Option value="" label="All sourcetypes"/>{sourcetypes.map(name => <Select.Option key={name} value={name} label={name}/>)}</Select></ControlGroup>
       </> : <>
         {scope.report ? <Muted>Using the report’s search context in {scope.report.app}. Keep its base search, or choose another starting point.</Muted> : null}
-        <ControlGroup label="Search language"><Select value={scope.language || 'spl'} disabled={busy} onChange={(_event, { value }) => change({ ...scope, language: value as 'spl' | 'spl2' })}>
+        <ControlGroup label="Search language"><Select value={scope.language || 'spl'} disabled={busy || !!scope.report} onChange={(_event, { value }) => change({ ...scope, language: value as 'spl' | 'spl2' })}>
           <Select.Option value="spl" label="SPL"/><Select.Option value="spl2" label="SPL2"/></Select></ControlGroup>
         <ControlGroup label="Existing search"><TextArea value={scope.query || ''} disabled={busy} rowsMin={3} onChange={(_event, { value }) => change({ ...scope, query: value })}/></ControlGroup>
       </>}

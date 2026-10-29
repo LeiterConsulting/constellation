@@ -9,7 +9,7 @@ A conversational canvas for creating and editing **Splunk Dashboard Studio** das
 
 Describe an operational question, choose data available to your Splunk user, and watch a dashboard take shape. Select a chart, input or page to refine it through chat. Start from a blank canvas, an existing Studio definition, or an image/PDF reference when the selected provider supports it.
 
-**Status: 0.43.0 development preview (unreleased).** This is a new codebase, separate from Splunk Dashboard Generator. It is not a production release or Splunk Cloud certified app. The repository is currently private and is being prepared for a future public release.
+**Status: 1.0.0 release candidate (unreleased).** The [supported profile](docs/support-policy.md) is a single Linux Splunk Enterprise search head with native Studio output and OpenAI, Ollama or administrator-approved AITK. Complete Studio parity, Cloud certification and search-head-cluster coordination remain outside this release profile. The repository remains private; no first-party open-source license has been selected. This is a new codebase, separate from Splunk Dashboard Generator.
 
 ## Download and start
 
@@ -31,7 +31,7 @@ Start with the [user guide](docs/user-guide.md). AITK administrators should foll
 ## What works today
 
 - A live dashboard canvas beside one conversation panel that docks, floats and collapses.
-- Native feature guidance from a versioned 29-type/822-option-entry renderer inventory; verified table sparkline styling and preserved imported properties. Full native parity remains a release gate.
+- Native feature guidance from a versioned 29-type/822-option-entry renderer inventory; verified table sparkline styling and preserved imported properties. Complete native parity remains an ongoing feature target.
 - Real-data creation from accessible indexes/sourcetypes or an existing SPL/SPL2 search; instance-based starter suggestions.
 - Native Studio pages, page purposes, table drilldowns, device/entity tokens and return navigation.
 - Element selection for directed chat edits and contextual suggestions.
@@ -57,7 +57,7 @@ This app remains self-contained inside Splunk: React/TypeScript, the Splunk Dash
 - Native table sparklines can be created alongside scalar aggregates and styled across every row through verified selected-column edits. Actual array output is checked before styling.
 - Missing-value behavior follows the native target: older Studio asks for a trend chart or explicitly accepted, labelled zero fill; supported newer-target queries preserve missing buckets and genuine observed zero separately.
 - Advanced source bindings, table cell options and known missing native object containers receive targeted validation without dropping unknown imported properties.
-- Saved-report references and chains can be inspected and previewed through bounded current-user searches. Selected report-backed panels supply their own profiling context, retaining the report app across previews, field inspection and chat edits. Native scheduled-cache and execution-permission differences remain explicit.
+- Saved-report references and chains can be inspected and previewed through bounded current-user searches. Choose Splunk data follows the selected panel or input, using current/default tokens and retaining the report app across previews, field inspection and chat edits. Native scheduled-cache and execution-permission differences remain explicit.
 - Reset defaults, restored selections and unset input state stay distinct across preview refreshes. New unset actions are gated to qualified 10.4+ targets; installed extension discovery reads metadata only.
 
 The [native coverage ledger](docs/native-coverage.md) separates the authoring inventory from features exercised end to end. Complete Studio parity remains open.
@@ -70,11 +70,11 @@ Selected flows have been exercised on Splunk Enterprise **10.2.8** with Studio *
 
 Search previews use the current user's permissions and a read-only command subset. They are bounded to a selected 15-minute, 1-hour, 24-hour or 7-day window, at most **200 rows / 5 seconds per query**, and eight sources in the preview. Tracked jobs label completed queries, partial output, failures and stale snapshots. Counts and aggregates can still be partial; a completed query is not proof of analytical correctness. Preserve the distinction between native Studio rendering, bounded preview results and a validated dashboard definition.
 
-Multi-page actual-data creation and focused edits have been exercised through OpenAI, Ollama and AITK. Earlier AITK qualification verified a 16,000-token budget; a 2,000-token setting could return no completion. The app does not query or infer its current upstream model/token limits. Settings distinguishes a small connection test from full authoring and exposes reported or unknown limits. Compact creation reduces avoidable output while retaining all validation gates. These are bounded provider/model/environment checks, not a general success-rate or 1.0 acceptance claim.
+Multi-page actual-data creation and focused edits have been exercised through OpenAI, Ollama and AITK. Earlier AITK qualification verified a 16,000-token budget; a 2,000-token setting could return no completion. The app does not query or infer its current upstream model/token limits. Settings distinguishes a small connection test from full authoring and exposes reported or unknown limits. Compact creation reduces avoidable output while retaining all validation gates. These are bounded provider/model/environment checks, not a general success-rate estimate or a guarantee for every model.
 
-The [latest qualification](docs/validation.md#0420-report-app-csv-contexts--october-29-2026) records report-app CSV copies, lookup/macro transfer, native rendering, ordinary-user provider journeys and the exact development package. Readback, browser rendering and offline validation are reported separately. These operated samples remain separate from unaided-user or general reliability acceptance.
+The [1.0 technical checklist](docs/v1-readiness.md) and [current qualification](docs/validation.md#100-technical-release-candidate--october-29-2026) record the exact package, ordinary-author provider journeys, selected-source fields, real-data/partial-output checks, controlled cancellation/delivery recovery, native management/sharing and upgrade/rollback. AITK 6.1 and 6.2 passed on their respective test targets after secure administrator setup. Private drafts and saved native dashboards remain separate; authorized sharing uses normal Splunk permissions.
 
-**Before 1.0:** historical latency tails, broader model/native/imported/SPL2 and complex measurement semantics, independent delivery/storage security review, fresh-install/upgrade/rollback/cluster testing, unaided UX/accessibility and bundle reduction remain open. AITK on the second tested target remains blocked by maintainer permissions. See the [release gates](docs/roadmap.md), [support contract](docs/studio-support.md) and [qualification protocol](docs/provider-qualification.md).
+Human/independent reviews are follow-up work under the product owner's release decision. Their absence does not broaden the advertised feature or deployment scope. The [support policy](docs/support-policy.md) defines compatible fixes, safe feedback and updates; the [roadmap](docs/roadmap.md) keeps broader parity, models, usability and deployment work visible.
 
 ## Development
 
@@ -89,7 +89,7 @@ python3.13 scripts/package_app.py
 npm run dev -- --port 5178
 ```
 
-The local preview demonstrates the canvas with illustrative data. Provider settings, live searches, server-backed drafts and native saves require the installed Splunk app. Packaging creates `artifacts/constellation-0.42.0.tgz`; release `.tar.gz` assets contain those exact bytes. Build artifacts and dependencies stay outside Git. See [development and release checks](docs/development.md).
+The local preview demonstrates the canvas with illustrative data. Provider settings, live searches, server-backed drafts and native saves require the installed Splunk app. Packaging creates `artifacts/constellation-1.0.0.tgz`; release `.tar.gz` assets contain those exact bytes. Build artifacts and dependencies stay outside Git. See [development and release checks](docs/development.md).
 
 ## Data and credentials
 
@@ -114,7 +114,9 @@ The selected provider receives the prompt, recent conversation, dashboard defini
 | [Provider qualification](docs/provider-qualification.md) | Repeated core journey, analytical probes and the 1.0 decision. |
 | [Upgrade guide](docs/upgrade-guide.md) | Compatibility profiles, provider adapters and draft migrations. |
 | [Product direction](docs/product-direction.md) | Interaction principles and product goals. |
-| [Roadmap and release gates](docs/roadmap.md) | Work required before broader/public release. |
+| [Support and updates](docs/support-policy.md) | Supported 1.0 profile, feedback and compatible fixes. |
+| [1.0 checklist](docs/v1-readiness.md) | Technical release evidence and explicit limits. |
+| [Roadmap](docs/roadmap.md) | Follow-up features, qualification and public distribution. |
 | [Contributing](CONTRIBUTING.md) | Changes, tests and safe reports. |
 
 Private lab screenshots, raw diagnostic receipts, environment-specific automation and the separate exploratory prototype remain outside Git. The repository contains the app source, tests and explicitly synthetic fixtures. See [repository publication rules](docs/development.md#repository-publication-checks).

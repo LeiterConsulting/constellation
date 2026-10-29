@@ -34,3 +34,8 @@ class ReportActionTests(unittest.TestCase):
         self.assertTrue(eligible(prompt, 'metric', self.doc, self.context['dataProfile'], []))
         for request, selected, profile, files in [('Rename the table', 'metric', self.context['dataProfile'], []), (prompt, '', self.context['dataProfile'], []), (prompt, 'metric', {'scope': {}}, []), (prompt, 'metric', self.context['dataProfile'], [{}])]:
             self.assertFalse(eligible(request, selected, self.doc, profile, files))
+        for extra in (' Create a new page.', ' Add a dropdown.', ' Change the title.', ' Format the cells.', ' Add a trend chart.'):
+            self.assertFalse(eligible(prompt+extra, 'metric', self.doc, self.context['dataProfile'], []))
+        self.assertTrue(eligible(prompt+' Preserve every other page, input and chart.', 'metric', self.doc, self.context['dataProfile'], []))
+        for clause in (' Keep existing charts and add a page.', '; preserve every source; change the title.', ' Retain all inputs. Create another chart.'):
+            self.assertFalse(eligible(prompt+clause, 'metric', self.doc, self.context['dataProfile'], []))

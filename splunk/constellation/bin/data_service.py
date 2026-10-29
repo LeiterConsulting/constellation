@@ -29,6 +29,26 @@ class DataService:
         self.media = NativeMedia(runtime)
         self.independent_populations = independent_populations
 
+    @classmethod
+    def inspect_request(cls, runtime, body):
+        """Inspect current inputs/source without persisting their values in scope."""
+        document = body.get('definition')
+        if document is not None:
+            from studio_contract import validate_document
+            validate_document(document)
+        tokens = body.get('tokens')
+        resolve_query_tokens('', document or {}, tokens)
+        service = cls(runtime, document=document, tokens=tokens)
+        if 'sourceId' in body:
+            if document is None:
+                raise ProviderError('Supply the dashboard for selected-source inspection.', 422, 'source_reference')
+            query, language = service.resolve_query(document, body['sourceId'])
+            body = dict(body, query=query, language=language)
+            body.pop('index', None);body.pop('sourcetype', None);body.pop('report', None)
+            reference = service._source_resolver.report_reference
+            if reference: body['report'] = reference
+        return service.profile(body)
+
     def discovery(self):
         catalog = self.runtime.datasets()
         visible = {item['name'] for item in catalog['indexes']}

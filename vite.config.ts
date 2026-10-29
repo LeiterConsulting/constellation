@@ -4,6 +4,7 @@ export default defineConfig({
   base: './',
   build: {
     outDir: 'dist',
-    rollupOptions: { output: { entryFileNames: 'constellation.js', assetFileNames: '[name][extname]' } },
+    manifest: true,
+    rollupOptions: { output: { entryFileNames: 'constellation-[hash].js', assetFileNames: '[name]-[hash][extname]' } },
   },
 });
