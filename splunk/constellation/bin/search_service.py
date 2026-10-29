@@ -15,7 +15,7 @@ READ_COMMANDS = {'search', 'from', 'makeresults', 'stats', 'timechart', 'chart',
                  'rex', 'fillnull', 'streamstats', 'eventstats', 'mvexpand', 'mvcombine',
                  'convert', 'spath', 'top', 'rare', 'untable', 'xyseries', 'transpose',
                  'addtotals', 'addcoltotals', 'tstats', 'metadata',
-                 'geostats', 'geom', 'iplocation'}
+                 'geostats', 'geom', 'iplocation', 'lookup', 'inputlookup'}
 
 
 def read_only_query(query, language='spl'):
@@ -57,7 +57,7 @@ def read_only_query(query, language='spl'):
         segments.append(current.strip())
     if not segments or len(segments) > 30:
         raise ProviderError('Use a pipeline with 1 to 30 commands.')
-    if not query.startswith('|') and not re.match(r'^(search|from|makeresults|tstats|metadata)\b', segments[0], re.I):
+    if not query.startswith('|') and not re.match(r'^(search|from|makeresults|tstats|metadata|inputlookup)\b', segments[0], re.I):
         segments[0] = 'search ' + segments[0]
     for segment in segments:
         match = re.match(r'^([a-zA-Z][a-zA-Z0-9_]*)\b', segment)
@@ -73,6 +73,8 @@ def read_only_query(query, language='spl'):
             if count and int(count.group(1)) > 1000:
                 raise ProviderError('Synthetic previews allow at most 1000 generated rows.')
     pipeline = ' | '.join(segments)
+    from search_references import lookup_calls
+    lookup_calls('| ' + pipeline)  # Literal slots only, including command options.
     syntax = re.sub(r'"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'', '""', pipeline)
     if re.search(r'\b(?:earliest|latest|starttime|endtime)\s*=', syntax, re.I):
         raise ProviderError('Remove inline time overrides for the bounded last-15-minute preview. The saved Studio query is preserved.')
@@ -216,7 +218,7 @@ class SearchService:
     def preview(self, body):
         from source_service import preview_query
         raw_query, language, source_warning = preview_query(self, body)
-        query = read_only_query(raw_query, language)
+        query = self.guarded_query(raw_query, language)
         earliest = body.get('earliest', '-15m')
         if earliest not in TIME_RANGES:
             raise ProviderError('Choose a supported bounded preview time range.')
@@ -240,7 +242,7 @@ class SearchService:
         if action != 'start': raise ProviderError('Choose a valid preview job action.')
         from source_service import preview_query
         raw_query, language, source_warning = preview_query(self, body)
-        query = read_only_query(raw_query, language)
+        query = self.guarded_query(raw_query, language)
         earliest = body.get('earliest', '-15m')
         if earliest not in TIME_RANGES: raise ProviderError('Choose a supported preview time range.')
         result = jobs.start(query, earliest)
@@ -253,3 +255,15 @@ class SearchService:
         from preview_jobs import PreviewJobs
         if earliest not in TIME_RANGES: raise ProviderError('Choose a supported time range.')
         return PreviewJobs(self).execute(query, earliest)
+
+    def guarded_query(self, query, language='spl'):
+        from dashboard_dependencies import DashboardDependencies
+        from portable_knowledge import PortableKnowledge
+        from search_references import lookup_calls
+        from source_service import expand_macros
+        query = read_only_query(expand_macros(self, query), language)
+        knowledge = PortableKnowledge(self, DashboardDependencies(self).entry)
+        for _, _, name, command in lookup_calls(query):
+            if command in ('lookup', 'inputlookup'):
+                knowledge.lookup(name)  # No scripted/KV lookup execution.
+        return query

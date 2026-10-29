@@ -1,5 +1,11 @@
 # Updating Constellation
 
+## 0.39 lookup and macro transfer
+
+No draft, credential or native-dashboard migration runs. Refresh workspace tabs. Portable writers use version 3; readers retain versions 1 and 2. Older releases cannot read version-3 bundles. Knowledge-object transfer is explicit; existing lookups/macros, their permissions and accepted user work are never replaced.
+
+Keep reference parsing, recursive macro resolution, CSV serialization/import, provider adapters and preview completion classification separate. Requalify nested/parameterized macros, definition mismatch, cycles, unsafe/eval/validation refusal, private lookup permissions, full versus partial/oversized reads, hash tampering, literal-slot remapping, same-name transform shadowing, staging symlinks, uncertainty without retry, selected edits and both native target versions. Report inclusion must run its read-only guard even when compatible-dependency inclusion is selected. Do not turn read-only dependency delivery recovery into import replay. Only the two exact successful CSV INFO notices are exempt from partial diagnostics; warnings and unknown notices remain partial. A private lookup copy does not grant another dashboard viewer or app access.
+
 ## 0.38 SVG maps and dependency review
 
 Draft schema remains 3; no credential, draft, asset or native-view migration runs. Refresh workspace tabs. SVG choropleths belong in Studio’s image collection, while decorative icons retain their icon collection. Do not broaden native upload ACLs. Portable writers now emit version 2; readers retain version 1. New files require this version to interpret dependency receipts and bundled packaged media. Older packaged references remain destination-specific.

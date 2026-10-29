@@ -30,6 +30,17 @@ class JobRuntime(SearchService):
 
 
 class PreviewJobTests(unittest.TestCase):
+    def test_exact_successful_csv_read_notice_is_not_partial_but_warnings_still_are(self):
+        runtime = JobRuntime();notice = {'type': 'INFO', 'text': "Successfully read lookup file '/synthetic/fixture.csv'."}
+        runtime.meta['messages'] = [notice];runtime.messages = [notice]
+        result = PreviewJobs(runtime).execute('| inputlookup fixture.csv', '-15m')
+        self.assertEqual(result['state'], 'complete');self.assertNotIn('/synthetic/', json.dumps(result))
+        runtime.meta['messages'] = [{'type': 'INFO', 'text': "Assuming implicit lookup table with filename 'fixture.csv'."}]
+        self.assertEqual(PreviewJobs(runtime).execute('| inputlookup fixture.csv', '-15m')['state'], 'complete')
+        for message in ({'type': 'WARN', 'text': notice['text']}, {'type': 'INFO', 'text': 'Different diagnostic'}, {'type': 'INFO', 'text': notice['text'] + '\nPartial read'}):
+            runtime.messages = [message]
+            self.assertEqual(PreviewJobs(runtime).execute('| inputlookup fixture.csv', '-15m')['state'], 'partial')
+
     def wide_runtime(self, rows):
         runtime = JobRuntime(rows=len(rows)); original = runtime.request
         names = sorted({name for row in rows for name in row})

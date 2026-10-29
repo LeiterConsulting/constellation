@@ -32,14 +32,15 @@ class DependencyTests(unittest.TestCase):
         doc=blank()['definition'];doc['dataSources']={'s':{'type':'ds.search','options':{'query':'search index="absent" | lookup unavailable.csv key'}}};result=service.operation({'action':'check','definition':doc});self.assertEqual({x['kind']for x in result['dependencies']if x['status']=='missing'},{'index','lookup'})
     def test_quoted_search_text_is_not_an_index_dependency(self):
         doc=blank()['definition'];doc['dataSources']={'s':{'type':'ds.search','options':{'query':'search index="fixture" message="note index=absent" | stats count'}}};result=DashboardDependencies(Runtime()).operation({'action':'check','definition':doc});self.assertEqual([x['name']for x in result['dependencies']],['fixture']);self.assertFalse(result['blocked'])
-    def test_parameterized_macro_is_reviewed_instead_of_looking_up_wrong_arity(self):
+    def test_parameterized_macro_resolves_exact_arity_and_missing_definition_blocks(self):
         runtime=Runtime();doc=blank()['definition'];doc['dataSources']={'s':{'type':'ds.search','options':{'query':'search index="fixture" | `custom(a,if(b,c,d))`'}}}
         result=DashboardDependencies(runtime).operation({'action':'check','definition':doc})
-        self.assertFalse(result['blocked']);self.assertEqual(next(x for x in result['dependencies'] if x['kind']=='macro')['status'],'review')
-        self.assertFalse(any('conf-macros' in path for path in runtime.paths))
+        self.assertTrue(result['blocked']);self.assertEqual(next(x for x in result['dependencies'] if x['kind']=='macro')['status'],'missing')
+        self.assertTrue(any(path.endswith('/conf-macros/custom%282%29') for path in runtime.paths))
     def test_does_not_embed_unsafe_or_advanced_report_searches(self):
         runtime=Runtime();runtime.query='| sendemail to="example@example.com"'
         with self.assertRaises(ProviderError):DashboardDependencies(runtime).operation({'action':'export','definition':self.report_doc(),'includeReports':True})
+        with self.assertRaises(ProviderError):DashboardDependencies(runtime).operation({'action':'export','definition':self.report_doc(),'includeReports':True,'includeKnowledge':True})
         runtime.query='search index=fixture | stats count';doc=self.report_doc();doc['dataSources']['r']['options']['future']='keep'
         with self.assertRaises(ProviderError):DashboardDependencies(runtime).operation({'action':'export','definition':doc,'includeReports':True})
 class NativeMediaTests(unittest.TestCase):

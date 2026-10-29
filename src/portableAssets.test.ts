@@ -3,10 +3,10 @@ import { DOMParser as XmlParser } from '@xmldom/xmldom';
 import { createBlank } from './document';
 import { svgDataUri, validateSvg, validateAssetData } from './svgAssets';
 import { assetReferences, exportPortable, importPortable, readPortable } from './portableAssets';
-import { prepareDependencies, checkDependencies } from './dashboardDependencies';
+import { prepareDependencies, checkDependencies, importDependencies } from './dashboardDependencies';
 import { readPackagedAsset } from './packagedAssets';
 import { readAssetData, uploadAssetData } from './dashboardAssets';
-vi.mock('./dashboardDependencies',()=>({prepareDependencies:vi.fn(async definition=>({definition:structuredClone(definition),dependencies:[],notes:[],blocked:false})),checkDependencies:vi.fn(async definition=>({definition,dependencies:[],notes:[],blocked:false}))}));
+vi.mock('./dashboardDependencies',()=>({prepareDependencies:vi.fn(async definition=>({definition:structuredClone(definition),dependencies:[],notes:[],blocked:false})),checkDependencies:vi.fn(async definition=>({definition,dependencies:[],notes:[],blocked:false})),importDependencies:vi.fn(async definition=>({definition:structuredClone(definition),dependencies:[],notes:[],blocked:false}))}));
 vi.mock('./packagedAssets',()=>({readPackagedAsset:vi.fn()}));
 vi.mock('./dashboardAssets',()=>({readAssetData:vi.fn(),uploadAssetData:vi.fn()}));
 const svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path id="area" fill="currentColor" d="M2 2h20v20H2z"/></svg>';
@@ -48,10 +48,26 @@ describe('portable native assets',()=>{
  it('reports verified partial uploads without replay or partial document acceptance',async()=>{
   const d=board();d.visualizations.b.options!.icon='splunk-enterprise-kvstore://second';vi.mocked(readAssetData).mockResolvedValue({name:'Fixture.svg',dataURI:svgDataUri(svg)});const file=await exportPortable(d,()=>{});
   vi.mocked(uploadAssetData).mockResolvedValueOnce({id:'new_first',name:'Fixture.svg',kind:'icon'}).mockRejectedValueOnce(Error('connection interrupted'));
-  await expect(importPortable(file,()=>{})).rejects.toThrow('1 assets verified');expect(uploadAssetData).toHaveBeenCalledTimes(2);expect(d.visualizations.a.options!.icon).toBe('splunk-enterprise-kvstore://same');
+  await expect(importPortable(file,()=>{})).rejects.toThrow('1 shared assets verified');expect(uploadAssetData).toHaveBeenCalledTimes(2);expect(d.visualizations.a.options!.icon).toBe('splunk-enterprise-kvstore://same');
  });
  it('bundles packaged choropleth SVGs and preserves version-1 files',async()=>{
-  const d=board();d.visualizations.map={type:'splunk.choropleth.svg',options:{svg:'/static/app/fixture/floor.svg'}};vi.mocked(readAssetData).mockResolvedValue({name:'icon.svg',dataURI:svgDataUri(svg)});vi.mocked(readPackagedAsset).mockResolvedValue({name:'floor.svg',dataURI:svgDataUri(svg)});const file=await exportPortable(d,()=>{});expect(file.version).toBe(2);expect(file.assets).toHaveLength(2);expect(file.definition.visualizations.map.options!.svg).toMatch(/^splunk-enterprise-kvstore:\/\/packaged_/);expect(await readPortable(file)).toEqual(file);const old=await exportPortable(board(),()=>{});old.version=1;expect((await readPortable(old)).version).toBe(1);
+  const d=board();d.visualizations.map={type:'splunk.choropleth.svg',options:{svg:'/static/app/fixture/floor.svg'}};vi.mocked(readAssetData).mockResolvedValue({name:'icon.svg',dataURI:svgDataUri(svg)});vi.mocked(readPackagedAsset).mockResolvedValue({name:'floor.svg',dataURI:svgDataUri(svg)});const file=await exportPortable(d,()=>{});expect(file.version).toBe(3);expect(file.assets).toHaveLength(2);expect(file.definition.visualizations.map.options!.svg).toMatch(/^splunk-enterprise-kvstore:\/\/packaged_/);expect(await readPortable(file)).toEqual(file);const old=await exportPortable(board(),()=>{});old.version=1;delete old.lookups;expect((await readPortable(old)).version).toBe(1);
+ });
+ it('imports validated lookup copies before media and preserves the returned query remapping',async()=>{
+  const definition=board();definition.dataSources={s:{type:'ds.search',options:{query:'| inputlookup fixture.csv'}}};
+  const lookups=[{kind:'lookup' as const,name:'fixture.csv',app:'constellation' as const,fields:['name'],rows:[['Fixture']],fingerprint:'a'.repeat(64)}];
+  const remapped=structuredClone(definition);remapped.dataSources!.s.options!.query='| inputlookup fresh.csv';
+  vi.mocked(prepareDependencies).mockResolvedValueOnce({definition,dependencies:[],notes:[],blocked:false,lookups});vi.mocked(readAssetData).mockResolvedValue({name:'icon.svg',dataURI:svgDataUri(svg)});vi.mocked(uploadAssetData).mockResolvedValue({id:'destination',name:'icon.svg',kind:'icon'});
+  const file=await exportPortable(definition,()=>{},()=>false,false,true);expect(prepareDependencies).toHaveBeenLastCalledWith(definition,false,true);
+  vi.mocked(importDependencies).mockResolvedValueOnce({definition:remapped,dependencies:[],notes:[],blocked:false});
+  const result=await importPortable(file,()=>{});expect(importDependencies).toHaveBeenCalledWith(definition,[],lookups);expect(importDependencies).toHaveBeenCalledTimes(1);expect(result.dataSources!.s.options!.query).toContain('fresh.csv');
+  expect(vi.mocked(importDependencies).mock.invocationCallOrder[0]).toBeLessThan(vi.mocked(uploadAssetData).mock.invocationCallOrder[0]);expect(file.definition.dataSources!.s.options!.query).toContain('fixture.csv');
+ });
+ it('stops before media after uncertain lookup creation and refuses lookups in old file versions',async()=>{
+  vi.mocked(readAssetData).mockResolvedValue({name:'icon.svg',dataURI:svgDataUri(svg)});const file=await exportPortable(board(),()=>{});file.lookups=[{kind:'lookup',name:'fixture.csv',app:'constellation',fields:['name'],rows:[],fingerprint:'b'.repeat(64)}];
+  vi.mocked(importDependencies).mockRejectedValueOnce(Error('unverified lookup'));
+  await expect(importPortable(file,()=>{})).rejects.toThrow('private lookup copies may have completed');expect(importDependencies).toHaveBeenCalledTimes(1);expect(uploadAssetData).not.toHaveBeenCalled();
+  await expect(readPortable({...file,version:2})).rejects.toThrow('portable lookups');
  });
  it('checks missing destination dependencies before any upload',async()=>{
   vi.mocked(readAssetData).mockResolvedValue({name:'Fixture.svg',dataURI:svgDataUri(svg)});const file=await exportPortable(board(),()=>{});vi.mocked(checkDependencies).mockResolvedValueOnce({definition:file.definition,dependencies:[{kind:'index',name:'missing_fixture',app:'',status:'missing',detail:'Not listed'}],notes:[],blocked:true});await expect(importPortable(file,()=>{})).rejects.toThrow('before uploading');expect(uploadAssetData).not.toHaveBeenCalled();
