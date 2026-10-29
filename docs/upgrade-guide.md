@@ -1,5 +1,11 @@
 # Updating Constellation
 
+## 0.41 filtered and time-based CSV definitions
+
+No draft, credential or native-dashboard migration runs. Refresh workspace tabs. Portable writers use version 5 and readers retain versions 1–4. Older apps cannot read version-5 files; older formats cannot claim filtered/temporal matching support. Existing static receipts and checksums retain their comparison. Compatible filters, timestamp fields/formats, offset windows and temporal match defaults remain native definition options on fresh private copies. Complete backing CSV exports include filtered-out rows; the existing export choice explains this. Unsupported predicates still require native configuration.
+
+Keep predicate recognition separate from matching metadata, complete reads and native import. Requalify Boolean syntax/depth/budget refusal, complete-header membership, time-format/offset preservation, implicit temporal match counts, exact `_time` cells and projection-name collisions, both directions/target versions, private readback, checksums and no replay. Ordinary previews remain 200 rows/five seconds. No lookup ACL or role capability is widened.
+
 ## 0.40 complete CSV transfer and matching
 
 No draft, credential or native-dashboard migration runs. Refresh workspace tabs. Portable writers use version 4; readers retain versions 1–3. Older apps cannot read version-4 files. Legacy lookup receipts keep their original comparison; new receipts use canonical matching fingerprints. Static CSV transfer has a separate complete-read path up to 5,000 rows/64 fields/1 MB per table; ordinary previews stay at 200 rows/five seconds. Supported non-default matching is copied as a fresh private native definition referencing its fresh private CSV. Native upload permissions still apply; no credential-store or additional role capability is granted. Existing objects and ACLs are unchanged. Temporal, filtered, scripted, KV and unsupported definitions still require native configuration.

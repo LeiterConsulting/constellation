@@ -1,10 +1,11 @@
 """Portable static-CSV matching only; never generic transforms configuration."""
 import re
 from provider_service import ProviderError
+from lookup_filter import filter_fields, FIELD
 
 FLAGS = {'case_sensitive_match': 'true', 'reverse_lookup_honor_case_sensitive_match': 'true', 'batch_index_query': 'true'}
 COUNTS = {'max_matches': 100, 'min_matches': 0}
-KEYS = set(FLAGS) | set(COUNTS) | {'match_type', 'default_match'}
+KEYS = set(FLAGS) | set(COUNTS) | {'match_type', 'default_match', 'filter', 'time_field', 'time_format', 'max_offset_secs', 'min_offset_secs'}
 # Native file-lookup responses include extraction defaults and derived headers.
 # They do not configure lookup matching. Non-default/unknown options are refused.
 DEFAULTS = {'CAN_OPTIMIZE': 'true', 'CLEAN_KEYS': 'true', 'DEFAULT_VALUE': '', 'DEPTH_LIMIT': '1000',
@@ -36,12 +37,38 @@ def matching_options(content, strict=False):
         if content.get('disabled') not in (None, '') and boolean(content['disabled']) == 'true':
             raise ProviderError('A disabled lookup cannot be bundled.')
     result = {}
+    time_field = content.get('time_field', '') or ''
+    if not isinstance(time_field, str) or time_field and not FIELD.fullmatch(time_field):
+        raise ProviderError('Use a plain CSV timestamp field for time-based matching.')
+    if time_field: result['time_field'] = time_field
+    time_format = content.get('time_format', '%s.%Q')
+    if time_format in (None, ''): time_format = '%s.%Q'
+    if not isinstance(time_format, str) or len(time_format) > 256 or any(ord(c) < 32 for c in time_format):
+        raise ProviderError('Use a bounded literal native timestamp format.')
+    if time_format != '%s.%Q':
+        if not time_field: raise ProviderError('A timestamp format requires its CSV timestamp field.')
+        result['time_format'] = time_format
+    offsets = {}
+    for key, default in (('max_offset_secs', 2000000000), ('min_offset_secs', 0)):
+        value = content.get(key, default)
+        if value in (None, ''): value = default
+        if not re.fullmatch(r'\d{1,10}', str(value)) or int(value) > 2000000000:
+            raise ProviderError('Use non-negative native time offsets up to 2000000000 seconds.')
+        offsets[key] = int(value)
+        if int(value) != default:
+            if not time_field: raise ProviderError('Time offsets require a CSV timestamp field.')
+            result[key] = str(int(value))
+    if offsets['min_offset_secs'] > offsets['max_offset_secs']:
+        raise ProviderError('The minimum lookup time offset exceeds the maximum.')
+    predicate = content.get('filter', '') or ''
+    if predicate:
+        filter_fields(predicate);result['filter'] = predicate
     for key, default in FLAGS.items():
         if content.get(key) not in (None, ''):
             value = boolean(content[key])
             if value != default: result[key] = value
-    counts = dict(COUNTS)
-    for key, default in COUNTS.items():
+    counts = dict(COUNTS, max_matches=1 if time_field else 100)
+    for key, default in list(counts.items()):
         value = content.get(key, default)
         if value in (None, ''): value = default
         if not re.fullmatch(r'\d{1,4}', str(value)) or not (1 if key == 'max_matches' else 0) <= int(value) <= 1000:
@@ -69,5 +96,7 @@ def matching_options(content, strict=False):
 
 def validate_matching_fields(options, fields):
     referenced = re.findall(r'\(([A-Za-z_][A-Za-z0-9_.-]{0,99})\)', options.get('match_type', ''))
+    if options.get('time_field'): referenced.append(options['time_field'])
+    if options.get('filter'): referenced.extend(filter_fields(options['filter']))
     if any(name not in fields for name in referenced):
         raise ProviderError('A lookup matching field is missing from the complete CSV header.')

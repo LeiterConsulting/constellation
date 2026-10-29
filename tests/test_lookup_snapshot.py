@@ -116,6 +116,33 @@ class SnapshotTests(unittest.TestCase):
         runtime = Runtime();runtime.sid = '../other'
         with self.assertRaises(ProviderError): self.run_read(runtime)
         self.assertFalse(any(p.endswith('/control') for p, _, _ in runtime.calls))
+    def test_timestamp_projection_keeps_exact_cells_and_avoids_existing_header(self):
+        class TimeRuntime(Runtime):
+            def request(self, path, method='GET', fields=None, optional=False):
+                if path.endswith('/jobs'): self.projected = fields['search'].endswith('rename _time AS constellation_csv_time_1')
+                result = super().request(path, method, fields, optional)
+                if path.endswith('/results'):
+                    key = 'constellation_csv_time_1' if self.projected else '_time'
+                    result['fields'] = [{'name': name} for name in sorted([key, 'label', 'constellation_csv_time_0'])]
+                    result['results'] = [{key: '1704067200.000' if self.projected else '2023-12-31T19:00:00.000-05:00', 'label': 'Old', 'constellation_csv_time_0': 'preserved'}]
+                return result
+        runtime = TimeRuntime(1);result = self.run_read(runtime)
+        self.assertEqual(result['results'], [{'_time': '1704067200.000', 'label': 'Old', 'constellation_csv_time_0': 'preserved'}])
+        self.assertEqual(sum(p.endswith('/jobs') for p, _, _ in runtime.calls), 2)
+        self.assertEqual(sum(p.endswith('/control') for p, _, _ in runtime.calls), 2)
+    def test_changed_projected_header_is_not_accepted(self):
+        class TimeRuntime(Runtime):
+            def request(self, path, method='GET', fields=None, optional=False):
+                if path.endswith('/jobs'): self.projected = 'rename _time AS ' in fields['search']
+                result = super().request(path, method, fields, optional)
+                if path.endswith('/results'):
+                    result['fields'] = [{'name': 'unexpected' if self.projected else '_time'}]
+                    result['results'] = [{result['fields'][0]['name']: '1704067200'}]
+                return result
+        runtime = TimeRuntime(1)
+        with self.assertRaisesRegex(ProviderError, 'header changed'): self.run_read(runtime)
+        self.assertEqual(sum(p.endswith('/jobs') for p, _, _ in runtime.calls), 2)
+        self.assertEqual(sum(p.endswith('/control') for p, _, _ in runtime.calls), 2)
 
 
 if __name__ == '__main__': unittest.main()

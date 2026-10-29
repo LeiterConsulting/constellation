@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.41.0 — unreleased
+
+- Transfer supported filtered and time-based CSV definitions through fresh private native copies, retaining timestamp formats, offset windows and temporal match-count defaults.
+- Validate bounded field/literal filter predicates and required CSV columns; reject pipelines, dynamic expressions and unsupported rules before writes. Filters remain native configuration and are never appended to dashboard searches.
+- Preserve exact `_time` CSV text with a collision-aware internal read projection, avoiding native results formatting without changing source files or dashboard queries.
+- Write portable version 5 and retain readers 1–4. Explain that complete backing CSV exports include rows hidden by lookup filters, using the existing single export option.
+
 ## 0.40.0 — unreleased
 
 - Transfer complete static CSV tables up to 5,000 rows and 1 MB each using dedicated paginated current-user reads. Ordinary dashboard previews retain their 200-row/five-second limits.
