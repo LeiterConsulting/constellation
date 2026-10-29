@@ -1,5 +1,7 @@
 # Constellation documentation
 
+Before changing repository visibility, use the [publication review](publication-review.md). Upstream attribution sources are recorded in [dependency notices](../third_party/README.md).
+
 Choose a path by what you need to do. These guides describe **Constellation 1.0.0**; historical records are kept separately.
 
 ## Use Constellation

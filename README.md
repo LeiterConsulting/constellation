@@ -31,7 +31,7 @@ Constellation runs inside Splunk. It does not require a separate agent service o
 
 ## Downloads
 
-All release downloads require repository access while distribution remains private.
+Release downloads require GitHub access only while the repository is private.
 
 | File | Purpose |
 | --- | --- |
@@ -40,6 +40,7 @@ All release downloads require repository access while distribution remains priva
 | [User guide · Markdown](https://github.com/LeiterConsulting/constellation/releases/download/v1.0.0/constellation-1.0.0-user-guide.md) | Standalone guide text. The bundle includes its local images. |
 | [User guide · PDF](https://github.com/LeiterConsulting/constellation/releases/download/v1.0.0/constellation-1.0.0-user-guide.pdf) | Illustrated guide for reading or printing. |
 | [MIT license](https://github.com/LeiterConsulting/constellation/releases/download/v1.0.0/LICENSE) | First-party license accompanying the app and documentation. |
+| [Dependency notices](https://github.com/LeiterConsulting/constellation/releases/download/v1.0.0/constellation-1.0.0-third-party-notices.zip) | Upstream notices accompanying the original installer; also included in the handoff. |
 | [SHA256SUMS](https://github.com/LeiterConsulting/constellation/releases/download/v1.0.0/SHA256SUMS) | Verify every release download. |
 
 ## Supported scope
@@ -62,4 +63,4 @@ See [supported features and limits](docs/studio-support.md), [security and data 
 
 ## Licensing
 
-Constellation's first-party code and documentation are licensed under the [MIT License](LICENSE), copyright 2026 Leiter Consulting. Third-party components retain their own licenses; the app package includes runtime license notices. Splunk and provider names identify integrations and do not imply endorsement. Repository visibility remains private.
+Constellation's first-party code and documentation are licensed under the [MIT License](LICENSE), copyright 2026 Leiter Consulting. Third-party components retain their own licenses. Keep the MIT license and [dependency notices](third_party/README.md) with redistributed original installers; future builds embed both. Splunk and provider names identify integrations and do not imply endorsement.

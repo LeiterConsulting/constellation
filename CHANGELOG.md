@@ -1,5 +1,12 @@
 # Changelog
 
+## Public-repository preparation — October 29, 2026
+
+- Review reachable source/history, pull-request metadata, all release downloads and available Actions logs for publication hygiene.
+- Collect alternative license filenames, README-based license declarations and upstream attribution notices; pin omitted package notices to reviewed sources and hashes.
+- Add a dependency-notices supplement to accompany the unchanged 1.0 installer, and retain complete notices in future builds.
+- Make current distribution guidance independent of repository visibility and document the owner's GitHub security-setting handoff.
+
 ## MIT licensing — October 29, 2026
 
 - License first-party code and documentation under MIT, copyright 2026 Leiter Consulting.

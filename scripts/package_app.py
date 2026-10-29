@@ -10,6 +10,7 @@ import tarfile
 from xml.sax.saxutils import escape
 from check_repository import path_issues, text_issues
 from package_runtime import pin_driver_revision
+from package_licenses import collect_runtime_notices
 
 ROOT = Path(__file__).resolve().parents[1]
 source = ROOT / 'splunk' / 'constellation'
@@ -79,20 +80,7 @@ files['constellation/default/data/ui/views/renderer_baseline.xml'] = xml.encode(
 for package in ['dashboard-core','dashboard-presets','dashboard-context','dashboard-state','dashboard-layouts','dashboard-inputs','datasources','react-ui','themes','react-icons','splunk-utils']:
     license_file = ROOT / 'node_modules' / '@splunk' / package / 'LICENSE'
     if license_file.exists(): files[f'constellation/licenses/splunk-{package}.txt'] = license_file.read_bytes()
-notices = ['# Runtime dependency notices', '']
-lock = json.loads((ROOT / 'package-lock.json').read_text())
-for package_path, metadata in sorted(lock.get('packages', {}).items()):
-    if not package_path or metadata.get('dev'): continue
-    name = package_path.rsplit('node_modules/', 1)[-1]
-    package_root = ROOT / package_path
-    slug = re.sub(r'[^A-Za-z0-9._-]', '_', name) + '-' + str(metadata.get('version', ''))
-    notices.append(f'- {name} {metadata.get("version", "")} ({metadata.get("license", "license in package")})')
-    for filename in ['LICENSE', 'LICENSE.md', 'LICENSE.txt', 'license.txt', 'LICENCE', 'COPYING']:
-        license_file = package_root / filename
-        if license_file.is_file():
-            files[f'constellation/licenses/{slug}.txt'] = license_file.read_bytes()
-            break
-files['constellation/THIRD_PARTY_NOTICES.md'] = ('\n'.join(notices) + '\n').encode()
+files.update(collect_runtime_notices(ROOT))
 buffer = BytesIO()
 with tarfile.open(fileobj=buffer, mode='w') as archive:
     for name, data in sorted(files.items()):

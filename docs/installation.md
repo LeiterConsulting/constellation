@@ -17,7 +17,7 @@ Node/npm and a separate Python installation are **not required to install the re
 
 ## Download and verify
 
-Get the app, **LICENSE** and **SHA256SUMS** from [release v1.0.0](https://github.com/LeiterConsulting/constellation/releases/tag/v1.0.0). Repository access is required. Install the app archive inside the documentation ZIP, or download the standalone tar.gz.
+Get the app, **LICENSE**, **third-party-notices ZIP** and **SHA256SUMS** from [release v1.0.0](https://github.com/LeiterConsulting/constellation/releases/tag/v1.0.0). Repository access is required only while visibility is private. Install the app archive inside the documentation ZIP, or download the standalone tar.gz.
 
 ~~~sh
 shasum -a 256 constellation-1.0.0.tar.gz
@@ -29,7 +29,7 @@ Compare the digest with its line in SHA256SUMS. The qualified app digest is:
 d53d62e3ce929a5a912cd1d6dccddaecbdee96d65a35d7b4a4a7f44cb0ddebc7
 ~~~
 
-First-party code and documentation use the [MIT License](../LICENSE). The release supplies it beside the installer and inside the handoff bundle; keep it with redistributed copies. The original 1.0 installer bytes are retained for traceability. Future app builds embed the license. Third-party notices remain in the app archive.
+First-party code and documentation use the [MIT License](../LICENSE). The release supplies it and a [dependency-notices supplement](../third_party/README.md) beside the installer and inside the handoff bundle; keep both with redistributed copies. The supplement adds upstream notices omitted by the original collector. The original 1.0 installer bytes are retained for traceability. Future app builds embed the license and collected notices.
 
 The tar.gz is byte-identical to the qualified tgz. GitHub's automatically generated source ZIP is not the built installable app.
 

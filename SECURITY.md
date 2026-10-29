@@ -8,7 +8,7 @@ Explicit Environment checks can read accessible visualization configuration meta
 
 ## Reporting a vulnerability
 
-Use GitHub's private vulnerability reporting feature on this repository when available. If it is not enabled, contact the repository maintainers privately; if necessary, open a minimal issue requesting a private reporting channel without vulnerability details or sensitive attachments. Do not include credentials, indexed data, user documents or exploit details in public issues.
+Use GitHub's [Report a vulnerability](https://github.com/LeiterConsulting/constellation/security/advisories/new) form when private vulnerability reporting is enabled. Maintainers must enable and check it when making the repository public; see the [publication handoff](docs/publication-review.md#owner-steps-at-the-visibility-change). If it is unavailable, contact the repository maintainers privately; if necessary, open a minimal issue requesting a private reporting channel without vulnerability details or sensitive attachments. Do not include credentials, indexed data, user documents or exploit details in public issues.
 
 The current 1.x line receives compatible bug and security fixes under the [support policy](docs/support-policy.md). No response-time or production SLA is promised. Older preview branches are not separately maintained. Independent review is follow-up work; automated and native permission checks remain release requirements.
 

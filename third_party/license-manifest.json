@@ -1,0 +1,452 @@
+{
+  "version": 1,
+  "purpose": "Version-pinned notices for npm packages that omit a standalone license file.",
+  "packages": [
+    {
+      "name": "inline-style-parser",
+      "version": "0.1.1",
+      "license": "MIT",
+      "files": [
+        {
+          "file": "inline-style-parser-0.1.1.txt",
+          "sha256": "395c95f20598da653ff1eb1cb9d74947c7fac689697147f1d192fd0242a0e635"
+        }
+      ],
+      "sources": [
+        "https://raw.githubusercontent.com/reworkcss/css/v2.2.4/LICENSE"
+      ]
+    },
+    {
+      "name": "micromark",
+      "version": "3.2.0",
+      "license": "MIT",
+      "files": [
+        {
+          "file": "micromark-2020-mit.txt",
+          "sha256": "536804b3adbff17dbbb9ed0d2bf9655b78f07640278581e37e3d7475282d5e61"
+        }
+      ],
+      "sources": [
+        "https://raw.githubusercontent.com/micromark/micromark/94b7679646bc0221899bba034f52f4abb3700f81/license"
+      ]
+    },
+    {
+      "name": "micromark-core-commonmark",
+      "version": "1.1.0",
+      "license": "MIT",
+      "files": [
+        {
+          "file": "micromark-2020-mit.txt",
+          "sha256": "536804b3adbff17dbbb9ed0d2bf9655b78f07640278581e37e3d7475282d5e61"
+        }
+      ],
+      "sources": [
+        "https://raw.githubusercontent.com/micromark/micromark/94b7679646bc0221899bba034f52f4abb3700f81/license"
+      ]
+    },
+    {
+      "name": "micromark-factory-destination",
+      "version": "1.1.0",
+      "license": "MIT",
+      "files": [
+        {
+          "file": "micromark-2020-mit.txt",
+          "sha256": "536804b3adbff17dbbb9ed0d2bf9655b78f07640278581e37e3d7475282d5e61"
+        }
+      ],
+      "sources": [
+        "https://raw.githubusercontent.com/micromark/micromark/94b7679646bc0221899bba034f52f4abb3700f81/license"
+      ]
+    },
+    {
+      "name": "micromark-factory-label",
+      "version": "1.1.0",
+      "license": "MIT",
+      "files": [
+        {
+          "file": "micromark-2020-mit.txt",
+          "sha256": "536804b3adbff17dbbb9ed0d2bf9655b78f07640278581e37e3d7475282d5e61"
+        }
+      ],
+      "sources": [
+        "https://raw.githubusercontent.com/micromark/micromark/94b7679646bc0221899bba034f52f4abb3700f81/license"
+      ]
+    },
+    {
+      "name": "micromark-factory-space",
+      "version": "1.1.0",
+      "license": "MIT",
+      "files": [
+        {
+          "file": "micromark-2020-mit.txt",
+          "sha256": "536804b3adbff17dbbb9ed0d2bf9655b78f07640278581e37e3d7475282d5e61"
+        }
+      ],
+      "sources": [
+        "https://raw.githubusercontent.com/micromark/micromark/94b7679646bc0221899bba034f52f4abb3700f81/license"
+      ]
+    },
+    {
+      "name": "micromark-factory-title",
+      "version": "1.1.0",
+      "license": "MIT",
+      "files": [
+        {
+          "file": "micromark-2020-mit.txt",
+          "sha256": "536804b3adbff17dbbb9ed0d2bf9655b78f07640278581e37e3d7475282d5e61"
+        }
+      ],
+      "sources": [
+        "https://raw.githubusercontent.com/micromark/micromark/94b7679646bc0221899bba034f52f4abb3700f81/license"
+      ]
+    },
+    {
+      "name": "micromark-factory-whitespace",
+      "version": "1.1.0",
+      "license": "MIT",
+      "files": [
+        {
+          "file": "micromark-2020-mit.txt",
+          "sha256": "536804b3adbff17dbbb9ed0d2bf9655b78f07640278581e37e3d7475282d5e61"
+        }
+      ],
+      "sources": [
+        "https://raw.githubusercontent.com/micromark/micromark/94b7679646bc0221899bba034f52f4abb3700f81/license"
+      ]
+    },
+    {
+      "name": "micromark-util-character",
+      "version": "1.2.0",
+      "license": "MIT",
+      "files": [
+        {
+          "file": "micromark-2020-mit.txt",
+          "sha256": "536804b3adbff17dbbb9ed0d2bf9655b78f07640278581e37e3d7475282d5e61"
+        }
+      ],
+      "sources": [
+        "https://raw.githubusercontent.com/micromark/micromark/94b7679646bc0221899bba034f52f4abb3700f81/license"
+      ]
+    },
+    {
+      "name": "micromark-util-chunked",
+      "version": "1.1.0",
+      "license": "MIT",
+      "files": [
+        {
+          "file": "micromark-2020-mit.txt",
+          "sha256": "536804b3adbff17dbbb9ed0d2bf9655b78f07640278581e37e3d7475282d5e61"
+        }
+      ],
+      "sources": [
+        "https://raw.githubusercontent.com/micromark/micromark/94b7679646bc0221899bba034f52f4abb3700f81/license"
+      ]
+    },
+    {
+      "name": "micromark-util-classify-character",
+      "version": "1.1.0",
+      "license": "MIT",
+      "files": [
+        {
+          "file": "micromark-2020-mit.txt",
+          "sha256": "536804b3adbff17dbbb9ed0d2bf9655b78f07640278581e37e3d7475282d5e61"
+        }
+      ],
+      "sources": [
+        "https://raw.githubusercontent.com/micromark/micromark/94b7679646bc0221899bba034f52f4abb3700f81/license"
+      ]
+    },
+    {
+      "name": "micromark-util-combine-extensions",
+      "version": "1.1.0",
+      "license": "MIT",
+      "files": [
+        {
+          "file": "micromark-2020-mit.txt",
+          "sha256": "536804b3adbff17dbbb9ed0d2bf9655b78f07640278581e37e3d7475282d5e61"
+        }
+      ],
+      "sources": [
+        "https://raw.githubusercontent.com/micromark/micromark/94b7679646bc0221899bba034f52f4abb3700f81/license"
+      ]
+    },
+    {
+      "name": "micromark-util-decode-numeric-character-reference",
+      "version": "1.1.0",
+      "license": "MIT",
+      "files": [
+        {
+          "file": "micromark-2020-mit.txt",
+          "sha256": "536804b3adbff17dbbb9ed0d2bf9655b78f07640278581e37e3d7475282d5e61"
+        }
+      ],
+      "sources": [
+        "https://raw.githubusercontent.com/micromark/micromark/94b7679646bc0221899bba034f52f4abb3700f81/license"
+      ]
+    },
+    {
+      "name": "micromark-util-decode-string",
+      "version": "1.1.0",
+      "license": "MIT",
+      "files": [
+        {
+          "file": "micromark-2020-mit.txt",
+          "sha256": "536804b3adbff17dbbb9ed0d2bf9655b78f07640278581e37e3d7475282d5e61"
+        }
+      ],
+      "sources": [
+        "https://raw.githubusercontent.com/micromark/micromark/94b7679646bc0221899bba034f52f4abb3700f81/license"
+      ]
+    },
+    {
+      "name": "micromark-util-encode",
+      "version": "1.1.0",
+      "license": "MIT",
+      "files": [
+        {
+          "file": "micromark-2020-mit.txt",
+          "sha256": "536804b3adbff17dbbb9ed0d2bf9655b78f07640278581e37e3d7475282d5e61"
+        }
+      ],
+      "sources": [
+        "https://raw.githubusercontent.com/micromark/micromark/94b7679646bc0221899bba034f52f4abb3700f81/license"
+      ]
+    },
+    {
+      "name": "micromark-util-html-tag-name",
+      "version": "1.2.0",
+      "license": "MIT",
+      "files": [
+        {
+          "file": "micromark-2020-mit.txt",
+          "sha256": "536804b3adbff17dbbb9ed0d2bf9655b78f07640278581e37e3d7475282d5e61"
+        }
+      ],
+      "sources": [
+        "https://raw.githubusercontent.com/micromark/micromark/94b7679646bc0221899bba034f52f4abb3700f81/license"
+      ]
+    },
+    {
+      "name": "micromark-util-normalize-identifier",
+      "version": "1.1.0",
+      "license": "MIT",
+      "files": [
+        {
+          "file": "micromark-2020-mit.txt",
+          "sha256": "536804b3adbff17dbbb9ed0d2bf9655b78f07640278581e37e3d7475282d5e61"
+        }
+      ],
+      "sources": [
+        "https://raw.githubusercontent.com/micromark/micromark/94b7679646bc0221899bba034f52f4abb3700f81/license"
+      ]
+    },
+    {
+      "name": "micromark-util-resolve-all",
+      "version": "1.1.0",
+      "license": "MIT",
+      "files": [
+        {
+          "file": "micromark-2020-mit.txt",
+          "sha256": "536804b3adbff17dbbb9ed0d2bf9655b78f07640278581e37e3d7475282d5e61"
+        }
+      ],
+      "sources": [
+        "https://raw.githubusercontent.com/micromark/micromark/94b7679646bc0221899bba034f52f4abb3700f81/license"
+      ]
+    },
+    {
+      "name": "micromark-util-sanitize-uri",
+      "version": "1.2.0",
+      "license": "MIT",
+      "files": [
+        {
+          "file": "micromark-2020-mit.txt",
+          "sha256": "536804b3adbff17dbbb9ed0d2bf9655b78f07640278581e37e3d7475282d5e61"
+        }
+      ],
+      "sources": [
+        "https://raw.githubusercontent.com/micromark/micromark/94b7679646bc0221899bba034f52f4abb3700f81/license"
+      ]
+    },
+    {
+      "name": "micromark-util-subtokenize",
+      "version": "1.1.0",
+      "license": "MIT",
+      "files": [
+        {
+          "file": "micromark-2020-mit.txt",
+          "sha256": "536804b3adbff17dbbb9ed0d2bf9655b78f07640278581e37e3d7475282d5e61"
+        }
+      ],
+      "sources": [
+        "https://raw.githubusercontent.com/micromark/micromark/94b7679646bc0221899bba034f52f4abb3700f81/license"
+      ]
+    },
+    {
+      "name": "micromark-util-symbol",
+      "version": "1.1.0",
+      "license": "MIT",
+      "files": [
+        {
+          "file": "micromark-2020-mit.txt",
+          "sha256": "536804b3adbff17dbbb9ed0d2bf9655b78f07640278581e37e3d7475282d5e61"
+        }
+      ],
+      "sources": [
+        "https://raw.githubusercontent.com/micromark/micromark/94b7679646bc0221899bba034f52f4abb3700f81/license"
+      ]
+    },
+    {
+      "name": "micromark-util-types",
+      "version": "1.1.0",
+      "license": "MIT",
+      "files": [
+        {
+          "file": "micromark-2020-mit.txt",
+          "sha256": "536804b3adbff17dbbb9ed0d2bf9655b78f07640278581e37e3d7475282d5e61"
+        }
+      ],
+      "sources": [
+        "https://raw.githubusercontent.com/micromark/micromark/94b7679646bc0221899bba034f52f4abb3700f81/license"
+      ]
+    },
+    {
+      "name": "murmurhash-js",
+      "version": "1.0.0",
+      "license": "MIT",
+      "files": [
+        {
+          "file": "murmurhash-js-1.0.0.txt",
+          "sha256": "d2cd0c6e45cdc50f536563ffd83ca348a8449bf602aa817b34753dbe5083aee0"
+        }
+      ],
+      "sources": [
+        "https://registry.npmjs.org/murmurhash-js/1.0.0"
+      ],
+      "note": "Verbatim license section from the published npm README; original README SHA-256 e137ced8967fc334ec9b5fc5c8500992f9e49d2e9cc0f6e2439e46af2f2481a4."
+    },
+    {
+      "name": "railroad-diagrams",
+      "version": "1.0.0",
+      "license": "CC0-1.0",
+      "files": [
+        {
+          "file": "railroad-diagrams-1.0.0.txt",
+          "sha256": "2c36ca617013001df8690cc63e2392760edd23fef948274100f051f7168b995d"
+        }
+      ],
+      "sources": [
+        "https://registry.npmjs.org/railroad-diagrams/1.0.0"
+      ],
+      "note": "Verbatim license section from the published npm README; original README SHA-256 f5fe530d59993859c5b554de4ae43b42526ccd579c3738a3bc498239d6e142d5."
+    },
+    {
+      "name": "slate",
+      "version": "0.112.0",
+      "license": "MIT",
+      "files": [
+        {
+          "file": "slate-0.112.0.txt",
+          "sha256": "519c180a1c7b62ae33d2beb749abd57dda92eddada65eb81daca7686fa1fef40"
+        }
+      ],
+      "sources": [
+        "https://raw.githubusercontent.com/ianstormtaylor/slate/dbd0a3efec8ee6843b155cd3ccdece657ce12ca7/License.md"
+      ]
+    },
+    {
+      "name": "slate-dom",
+      "version": "0.112.2",
+      "license": "MIT",
+      "files": [
+        {
+          "file": "slate-dom-0.112.2.txt",
+          "sha256": "519c180a1c7b62ae33d2beb749abd57dda92eddada65eb81daca7686fa1fef40"
+        }
+      ],
+      "sources": [
+        "https://raw.githubusercontent.com/ianstormtaylor/slate/ccb9cc20b259effcadbae39ea1c39a0701abaac8/License.md"
+      ]
+    },
+    {
+      "name": "slate-react",
+      "version": "0.112.1",
+      "license": "MIT",
+      "files": [
+        {
+          "file": "slate-react-0.112.1.txt",
+          "sha256": "519c180a1c7b62ae33d2beb749abd57dda92eddada65eb81daca7686fa1fef40"
+        }
+      ],
+      "sources": [
+        "https://raw.githubusercontent.com/ianstormtaylor/slate/49da0dfc53c767256f00cbe6f1872096c3cdb1e0/License.md"
+      ]
+    },
+    {
+      "name": "styled-components",
+      "version": "5.3.11",
+      "license": "MIT",
+      "files": [
+        {
+          "file": "styled-components-5.3.11.txt",
+          "sha256": "5b893305a717230e5b0024ff5ca3eec1dc05ba600c9b140730488d97ce56f1e6"
+        }
+      ],
+      "sources": [
+        "https://raw.githubusercontent.com/styled-components/styled-components/4f54d97af2a05e571b357e2806697e479af065a0/LICENSE"
+      ]
+    },
+    {
+      "name": "temporal-polyfill",
+      "version": "0.1.1",
+      "license": "MIT",
+      "files": [
+        {
+          "file": "temporal-polyfill-0.1.1.txt",
+          "sha256": "26ec7e655bd59b9c6662c6c615c171e6e0ba69cb9779e38a9c883d839772d389"
+        },
+        {
+          "file": "temporal-spec-0.1.1.txt",
+          "sha256": "ffc4aee7f1279fc0494ff2b27f6829e6b4d16c20aa93aa008c3bd8d8af176387"
+        }
+      ],
+      "sources": [
+        "https://registry.npmjs.org/temporal-polyfill/0.1.1",
+        "https://opensource.org/license/mit",
+        "https://raw.githubusercontent.com/fullcalendar/temporal-polyfill/3a9cc0ccb2281712cd57dc7085e7550e46c8929b/packages/temporal-spec/LICENSE"
+      ],
+      "note": "The npm package.json explicitly declares MIT and copyright 2022 Adam Shaw. Its missing standalone MIT notice is assembled from those declarations and the standard MIT text. The unmodified ECMA specification notice from the version tag is included separately."
+    },
+    {
+      "name": "tr46",
+      "version": "0.0.3",
+      "license": "MIT",
+      "files": [
+        {
+          "file": "tr46-0.0.3.txt",
+          "sha256": "eeed1ca176eebad5c73870e233cfff03981fecd319c969475dfa3633036c336b"
+        }
+      ],
+      "sources": [
+        "https://raw.githubusercontent.com/Sebmaster/tr46.js/3a6f29721e7063b9ffd421e461a54beae6170001/LICENSE.md",
+        "https://registry.npmjs.org/tr46/0.0.3"
+      ],
+      "note": "The npm version declares MIT but omits a license file. This unmodified upstream notice is pinned to the first LICENSE.md commit in the same repository."
+    },
+    {
+      "name": "uuid-v4",
+      "version": "0.1.0",
+      "license": "MIT",
+      "files": [
+        {
+          "file": "uuid-v4-0.1.0.txt",
+          "sha256": "a3605630f688114b819a99fe77b9343c948b764984a85d58cf5d454769e43cf8"
+        }
+      ],
+      "sources": [
+        "https://registry.npmjs.org/uuid-v4/0.1.0"
+      ],
+      "note": "Verbatim license section from the published npm README; original README SHA-256 6a5d987aea885518b00dd5ed6af6a0a75ded13288750c9d1a8ebc21adfc41b8f."
+    }
+  ]
+}

@@ -2,7 +2,7 @@
 
 Use the [release downloads](https://github.com/LeiterConsulting/constellation/releases/tag/v1.0.0), verify SHA256SUMS and follow the [installation guide](installation.md). The documentation bundle includes the same qualified app plus the current guides and screenshots.
 
-First-party code and documentation use the [MIT License](../LICENSE). Keep the license with redistributed copies and preserve third-party notices. The repository remains private; access to its downloads and public repository visibility are separate owner decisions.
+First-party code and documentation use the [MIT License](../LICENSE). Keep the license and [upstream notices](../third_party/README.md) with redistributed copies. Repository access is needed only while visibility is private. See the [publication review](publication-review.md) for the visibility-change handoff.
 
 ## Before a recipient starts
 

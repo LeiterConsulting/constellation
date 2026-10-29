@@ -16,6 +16,6 @@ UI changes use Splunk UI components and styled-components with Splunk theme toke
 
 Do not paste API keys, session tokens, passwords, private certificates, real event rows, confidential dashboard definitions, internal hosts or raw provider/Splunk error bodies into issues or logs. Use placeholders and minimal synthetic fixtures. Check image/PDF content and metadata before attaching files.
 
-Report suspected vulnerabilities through the private path described in [SECURITY.md](SECURITY.md), not a public issue containing exploit details or sensitive data. Keep repository visibility private until the owner explicitly authorizes a change.
+Report suspected vulnerabilities through the private path described in [SECURITY.md](SECURITY.md), not a public issue containing exploit details or sensitive data. Preserve the configured repository visibility unless the owner explicitly authorizes a change.
 
 Documentation changes must follow the [documentation standards](documentation-standards.md), retain evidence limits and pass the documentation checker.

@@ -6,6 +6,7 @@ from pathlib import Path
 import zipfile
 from check_repository import text_issues, path_issues
 from check_documentation import link_findings
+from package_licenses import curated_files, notices_archive
 
 ROOT = Path(__file__).resolve().parents[1]
 VERSION = json.loads((ROOT / 'package.json').read_text())['version']
@@ -32,6 +33,7 @@ DOCS = (
     'docs/product-direction.md',
     'docs/provider-qualification.md',
     'docs/providers.md',
+    'docs/publication-review.md',
     'docs/reference/README.md',
     'docs/reference/design-notes.md',
     'docs/reference/native-coverage-notes.md',
@@ -50,6 +52,7 @@ DOCS = (
     'docs/v1-readiness.md',
     'docs/validation.md',
     'documentation-standards.md',
+    'third_party/README.md',
     'tests/fixtures/README.md',
     'tests/fixtures/service-health-napkin-prompt.txt',
 )
@@ -74,6 +77,8 @@ def main():
     if digest not in recorded:
         raise SystemExit('The app bytes are not identified by the current validation record.')
     files = {package.name: app}
+    files.update(curated_files(ROOT)[1])
+    files['constellation-' + VERSION + '-third-party-notices.zip'] = notices_archive(ROOT)
     for name in DOCS:
         path = ROOT / name
         if path.is_symlink() or path_issues(name):
