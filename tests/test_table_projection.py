@@ -14,6 +14,30 @@ class TableProjectionTests(unittest.TestCase):
         self.doc = {'visualizations': {'table': {'type': 'splunk.table', 'dataSources': {'primary': 'source'}, 'options': {'table': '> primary | frameBySeriesNames("device", "count")'}}}}
         self.receipts = [{'source': 'source', 'fields': ['device', 'count', 'host_count']}]
 
+    def test_literal_display_list_requires_actual_fields_after_appended_calculation(self):
+        prompt = 'Add a numeric field reading_count with value 1, and display device, label and reading_count.'
+        self.doc['visualizations']['table']['options'] = {}
+        incomplete = [{'source': 'source', 'fields': ['reading_count']}]
+        with self.assertRaises(ProviderError) as error:
+            validate_requested_columns(prompt, 'table', self.doc, incomplete)
+        self.assertEqual(error.exception.code, 'table_projection')
+        self.assertIn('device, label', str(error.exception))
+        for literal in ('device, label and reading_count', 'device, label, and reading_count', 'device, label AND reading_count'):
+            validate_requested_columns('Add a field and display '+literal+'.', 'table', self.doc, [{'source': 'source', 'fields': ['device', 'label', 'reading_count']}])
+        validate_requested_columns('Show device, label and reading_count.', 'table', self.doc, incomplete)
+        validate_requested_columns('Add formatting and show device, label in a readable form.', 'table', self.doc, incomplete)
+
+    def test_per_row_append_cannot_hide_previously_populated_columns_behind_null_headers(self):
+        self.doc['visualizations']['table']['options'] = {}
+        prompt = 'Add a count for each existing row and display device, label and reading_count.'
+        original = {'fields': [{'name': 'device', 'present': 1}, {'name': 'label', 'present': 1}]}
+        receipts = [{'source': 'source', 'fields': ['device', 'label', 'reading_count'], 'rows': 1, 'emptyFields': ['device', 'label']}]
+        with self.assertRaisesRegex(ProviderError, 'entirely empty'):
+            validate_requested_columns(prompt, 'table', self.doc, receipts, original)
+        original['fields'][0]['present'] = original['fields'][1]['present'] = 0
+        validate_requested_columns(prompt, 'table', self.doc, receipts, original)
+        validate_requested_columns(prompt, 'table', self.doc, receipts)
+
     def test_returned_but_hidden_requested_metric_is_rejected(self):
         with self.assertRaises(ProviderError) as error:
             validate_requested_columns('Add dc(host) AS host_count to this table.', 'table', self.doc, self.receipts)

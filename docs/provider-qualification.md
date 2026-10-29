@@ -2,6 +2,8 @@
 
 A connection test proves a small structured response. Qualification must exercise the installed app, the actual provider, current-user search validation, the canvas and native Studio. A model name or a large token allowance is not sufficient evidence.
 
+For report-backed imports, also select an uncopied report panel from another app. Inspect fields, edit its title, append a calculation through a native chain, refresh/reopen and compare the original report/app reference, unrelated work, actual output fields and native private save. Deliberately different same-named lookup/macro fixtures help detect context substitution. Keep synthetic context probes separate from indexed-data creation. See the [0.43 evidence](validation.md#0430-report-app-previews-and-edits--october-29-2026).
+
 ## Repeatable core journey
 
 Use a private test draft and the same authorized dataset, time range and requirements for each selected provider/model. Keep keys in the installed credential store or existing AITK connection. Record the exact app archive, Splunk/Studio/provider versions and relevant connection limits. Keep raw definitions, queries, screenshots and environment receipts outside Git.

@@ -11,6 +11,7 @@ from studio_inventory import INVENTORY
 from portable_knowledge import PortableKnowledge, fingerprint, validate_bundle, import_lookups
 from search_references import lookup_calls, macro_calls
 from portable_context import flatten_lookup_contexts
+from search_context import source_report
 
 
 class DashboardDependencies:
@@ -53,7 +54,7 @@ class DashboardDependencies:
                 add('permission', 'Upload CSV lookups', 'missing', 'Your native role cannot upload lookup files. Ask an administrator to configure the dependency, then import a reference-only dashboard file.')
 
         queries = []
-        for source in document.get('dataSources', {}).values():
+        for identifier, source in document.get('dataSources', {}).items():
             options = source.get('options', {})
             if source.get('type') == 'ds.savedSearch':
                 name, app = options.get('ref'), options.get('app', 'constellation')
@@ -83,28 +84,20 @@ class DashboardDependencies:
                     notes.append('Included report search: ' + name + '. It reruns as the dashboard viewer; report caches, schedules and owner permissions are not copied. Verify app-specific field extraction on the destination.')
                 queries.append((source, query, app))
             elif source.get('type') in ('ds.search', 'ds.chain', 'ds.spl2'):
-                if isinstance(options.get('query'), str): queries.append((source, options['query'], 'constellation'))
+                reference = source_report(body['definition'].get('dataSources', {}), identifier)
+                app = reference['app'] if reference else 'constellation'
+                if isinstance(options.get('query'), str):
+                    if (app != 'constellation' and body['action'] == 'export' and (macro_calls(options['query']) or lookup_calls(options['query']))
+                            and (body.get('includeReports') is not True or body.get('includeKnowledge') is not True)):
+                        if body.get('includeReports') or body.get('includeKnowledge'):
+                            raise ProviderError('Include both the report search and compatible lookups and macros to copy its app-dependent chain.')
+                    queries.append((source, options['query'], app))
             elif source.get('type') not in ('ds.test',):
                 add('source', source.get('type', 'unknown'), 'review', 'Native source/module configuration needs destination qualification.')
 
         catalog = {x['name'] for x in self.runtime.datasets().get('indexes', [])}
         knowledge = PortableKnowledge(self.runtime, self.entry)
         exported, lookup_uses, lookup_keys = [], {}, set()
-        # A chain's own app-dependent transforms need separate native context
-        # qualification. Plain transforms retain their base source unchanged.
-        if body['action'] == 'export' and (body.get('includeReports') is True or body.get('includeKnowledge') is True):
-            for source in document.get('dataSources', {}).values():
-                if source.get('type') != 'ds.chain': continue
-                query = source.get('options', {}).get('query', '')
-                if not (macro_calls(query) or lookup_calls(query)): continue
-                parent = source.get('options', {}).get('extend', source.get('extend'));seen = set()
-                while isinstance(parent, str) and parent not in seen:
-                    seen.add(parent)
-                    original = body['definition'].get('dataSources', {}).get(parent, {})
-                    if original.get('type') == 'ds.savedSearch' and original.get('options', {}).get('app', 'constellation') != 'constellation':
-                        raise ProviderError('This report chain has app-specific lookup or macro transforms. Keep the report reference and review the chain in native Studio.')
-                    if original.get('type') != 'ds.chain': break
-                    parent = original.get('options', {}).get('extend', original.get('extend'))
         for source, query, app in queries:
             expanded = query
             try: calls = macro_calls(query)

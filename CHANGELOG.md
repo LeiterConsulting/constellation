@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.43.0 — unreleased
+
+- Run supported saved-report previews and chain transforms as the current user in the report’s original app, retaining its native reference and same-named lookup/macro distinctions.
+- Compile explicit per-row report calculations from a small suffix plan into a fresh native chain and selected-table binding, preserving every existing source.
+- Exclude incompatible typed search actions from report scopes; give report-backed tables verified field receipts and validate explicit appended-calculation display lists against actual output.
+- Carry minimal report context through field inspection, draft data scopes and selected-element chat validation. Reject a changed report base or an edit that silently drops its app context.
+- Bind app-qualified preview handles to the user/session and verify exact native job ownership before polling or cancellation. Keep bounded search limits and narrow read-only delivery recovery.
+- Include compatible lookup/macro dependencies used by report chains through the existing two export choices, preserving unknown properties and fresh private destination objects.
+
 ## 0.42.0 — unreleased
 
 - Include compatible CSV dependencies from explicitly copied report searches in their original app context, using current-user reads and unchanged native permissions.

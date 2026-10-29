@@ -9,7 +9,7 @@ A conversational canvas for creating and editing **Splunk Dashboard Studio** das
 
 Describe an operational question, choose data available to your Splunk user, and watch a dashboard take shape. Select a chart, input or page to refine it through chat. Start from a blank canvas, an existing Studio definition, or an image/PDF reference when the selected provider supports it.
 
-**Status: 0.42.0 development preview (unreleased).** This is a new codebase, separate from Splunk Dashboard Generator. It is not a production release or Splunk Cloud certified app. The repository is currently private and is being prepared for a future public release.
+**Status: 0.43.0 development preview (unreleased).** This is a new codebase, separate from Splunk Dashboard Generator. It is not a production release or Splunk Cloud certified app. The repository is currently private and is being prepared for a future public release.
 
 ## Download and start
 
@@ -57,7 +57,7 @@ This app remains self-contained inside Splunk: React/TypeScript, the Splunk Dash
 - Native table sparklines can be created alongside scalar aggregates and styled across every row through verified selected-column edits. Actual array output is checked before styling.
 - Missing-value behavior follows the native target: older Studio asks for a trend chart or explicitly accepted, labelled zero fill; supported newer-target queries preserve missing buckets and genuine observed zero separately.
 - Advanced source bindings, table cell options and known missing native object containers receive targeted validation without dropping unknown imported properties.
-- Saved-report references and chains can be inspected and previewed through bounded current-user searches. Selected report-backed panels supply their own profiling context; native scheduled-cache, execution-permission and app-context differences remain explicit.
+- Saved-report references and chains can be inspected and previewed through bounded current-user searches. Selected report-backed panels supply their own profiling context, retaining the report app across previews, field inspection and chat edits. Native scheduled-cache and execution-permission differences remain explicit.
 - Reset defaults, restored selections and unset input state stay distinct across preview refreshes. New unset actions are gated to qualified 10.4+ targets; installed extension discovery reads metadata only.
 
 The [native coverage ledger](docs/native-coverage.md) separates the authoring inventory from features exercised end to end. Complete Studio parity remains open.

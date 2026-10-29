@@ -28,7 +28,7 @@ class AuthoringBudget:
         # reserving both repairs. Never infer capacity from a model's name.
         foundation = ((self.provider == 'aitk' and not bounded_aitk_creation(context)) or
                       (self.provider == 'ollama' and (type(reported) is not int or reported < OLLAMA_CONTEXT_TOKENS)))
-        self.phase = 'foundation' if self.creation and context.get('dataProfile') and foundation and complex_goal else 'complete'
+        self.phase = 'foundation' if self.creation and not context.get('dataProfile', {}).get('scope', {}).get('report') and context.get('dataProfile') and foundation and complex_goal else 'complete'
         self.stages = 0
         self.recipe_panels = 0
 
@@ -73,7 +73,8 @@ class AuthoringBudget:
                 if 'anyOf' in items:
                     items['anyOf'] = [item for item in items['anyOf'] if 'chart' not in item.get('properties', {}).get('op', {}).get('enum', [])]
                 request['instructions'] += '\nExplicit native chart types required: ' + ', '.join(sorted(native)) + '. Create them using targeted set actions with complete visualization JSON and source-based options. Do not use a table substitute. page creates pages; pageMeta only edits existing metadata and is unavailable here.'
-        compose = (self.provider in ('ollama', 'aitk') and self.phase == 'complete' and self.creation and context.get('dataProfile')
+        report_scope = bool(context.get('dataProfile', {}).get('scope', {}).get('report'))
+        compose = (not report_scope and self.provider in ('ollama', 'aitk') and self.phase == 'complete' and self.creation and context.get('dataProfile')
                    and context['dataProfile'].get('scope', {}).get('language', 'spl') == 'spl' and empty_canvas(document))
         self.compact = bool(compose and compact_goal(context) and bounded_aitk_creation(context)
                             and all(part.get('type') == 'input_text' for item in request['input'] for part in item['content']))
@@ -91,7 +92,7 @@ class AuthoringBudget:
                 request['text']['format']['schema']['properties']['changes']['items'] = outline_schema(RECIPE_COMPOSE_ACTION, count, panels)
             request['text']['format']['schema']['properties']['changes']['maxItems'] = 1
         from native_creation import eligible, schema_for, instructions as native_instructions
-        self.native_plan = bool(self.creation and self.phase == 'complete' and eligible(context, document)
+        self.native_plan = bool(not report_scope and self.creation and self.phase == 'complete' and eligible(context, document)
             and all(part.get('type') == 'input_text' for item in request['input'] for part in item['content']))
         if self.native_plan:
             self.compact = False
@@ -138,7 +139,7 @@ class AuthoringBudget:
                 'Keep the SVG, table and controls in separate absolute rectangles. New button inputs need at least 80 pixels height; place them below or beside chart bounds, never over a chart. '
                 'Use native area.click name payloads for selected-area tokens and retain the unfiltered SVG data source when only a detail table should filter.')
         from svg_creation import eligible as svg_eligible, ACTION as SVG_PLAN, INSTRUCTIONS as SVG_INSTRUCTIONS
-        self.svg_plan = bool(svg_eligible(context, document) and all(part.get('type')=='input_text' for item in request['input'] for part in item['content']))
+        self.svg_plan = bool(not report_scope and svg_eligible(context, document) and all(part.get('type')=='input_text' for item in request['input'] for part in item['content']))
         if self.svg_plan:
             request['instructions']=SVG_INSTRUCTIONS
             request['text']['format']['schema']['properties']['changes'].update(items=copy.deepcopy(SVG_PLAN),minItems=1,maxItems=1)
@@ -180,6 +181,17 @@ class AuthoringBudget:
             request['text']['format']['schema']['properties']['changes'].update(items={'anyOf':[copy.deepcopy(SEARCH_ACTION),menu_schema]},minItems=context['newMenusOnly']['count'],maxItems=context['newMenusOnly']['count']*2)
             request['instructions'] = MENU_INSTRUCTIONS
             request['max_output_tokens'] = min(request['max_output_tokens'], 3500)
+        if context.get('reportTransformOnly'):
+            request['max_output_tokens'] = min(request['max_output_tokens'], 2000)
+        if context.get('dataProfile', {}).get('scope', {}).get('report') and not context.get('reportTransformOnly'):
+            # These compilers create Constellation ds.search sources. Report
+            # transforms need native ds.chain edits retaining the original ref.
+            items = request['text']['format']['schema']['properties']['changes']['items']
+            if 'anyOf' in items:
+                incompatible = {'search', 'filter', 'compose', 'menu'}
+                items['anyOf'] = [item for item in items['anyOf'] if not incompatible.intersection(
+                    item.get('properties', {}).get('op', {}).get('enum', []))]
+            request['instructions'] += '\nREPORT EDIT ACTIONS: Use native set/remove changes for report search transforms. Create a NEW ds.chain ID with options.extend set to the existing report/source ID and options.query containing only appended transforms. Set only the selected visualization dataSources.primary to that new chain. Keep every original saved report/source and its options.app. Native values are JSON-encoded strings. Typed search/filter/menu/compose actions are unavailable for this scope.'
         # Keep retrieved evidence through every small request path. Native option
         # contracts are needed only by paths that can actually emit native edits;
         # specialized query/navigation compilers hold those properties unchanged.
@@ -212,6 +224,9 @@ class AuthoringBudget:
 
     def actions(self, actions, document):
         """Keep page identity stable when completing this turn's new foundation."""
+        if self.context.get('reportTransformOnly'):
+            from report_actions import compile_plan
+            return compile_plan(actions, document, self.context)
         if getattr(self, 'svg_plan', False):
             from svg_creation import expand
             return expand(actions,document,self.context.get('dataProfile',{}))
@@ -274,6 +289,10 @@ class AuthoringBudget:
             envelope = dict(envelope, rejectedOutput='', request='Return a complete corrected menu/search plan for the SAME original request. The server recompiles against the original; include every requested new menu and its searches. Preserve all existing work.')
             envelope['recoveryFeedback'] = {key:value for key,value in envelope.get('recoveryFeedback',{}).items() if key not in ('candidateDefinition','placementHint')}
             if 'dataProfile' in envelope['recoveryFeedback']: envelope['recoveryFeedback']['dataProfile'] = bound_profile(envelope['recoveryFeedback']['dataProfile'])
+            envelope['recoveryFeedback']['editsApplyTo'] = 'original'
+        if self.context.get('reportTransformOnly'):
+            envelope = dict(envelope, rejectedOutput='', request='Return ONE complete corrected reportTransform suffix against the original selected report output. Preserve every existing row/field and use the actual validation feedback. No native, search or chart actions.')
+            envelope['recoveryFeedback'] = {key: value for key, value in envelope.get('recoveryFeedback', {}).items() if key not in ('candidateDefinition', 'placementHint')}
             envelope['recoveryFeedback']['editsApplyTo'] = 'original'
         if self.context.get('rowNavigationOnly'):
             envelope = dict(envelope,recoveryFeedback={key:value for key,value in envelope.get('recoveryFeedback',{}).items() if key not in ('candidateDefinition','placementHint')},

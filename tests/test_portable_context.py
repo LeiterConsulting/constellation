@@ -89,13 +89,16 @@ class ContextTests(unittest.TestCase):
         unchanged = DashboardDependencies(runtime).operation(dict(action='export', definition=doc))
         self.assertEqual(unchanged['definition'], doc)
         self.assertEqual(unchanged['lookups'], [])
-    def test_plain_chain_is_preserved_but_foreign_app_dependent_chain_refuses(self):
+    def test_plain_chain_is_preserved_and_app_dependent_chain_requires_both_choices(self):
         runtime = ContextRuntime();doc = self.report_document()
         chain = {'type': 'ds.chain', 'options': {'extend': 'report', 'query': '| stats count'}}
         doc['dataSources']['chain'] = chain
         self.assertEqual(self.export(runtime, doc)['definition']['dataSources']['chain'], chain)
         doc['dataSources']['chain']['options']['query'] = '| lookup rooms room'
-        with self.assertRaisesRegex(ProviderError, 'chain'): self.export(runtime, doc)
+        copied = self.export(runtime, doc)
+        name = next(x['name'] for x in copied['lookups'] if x['name'].startswith('constellation_portable_'))
+        self.assertIn('lookup '+name+' room', copied['definition']['dataSources']['chain']['options']['query'])
+        self.assertEqual(len(copied['lookups']), 2)
         with self.assertRaisesRegex(ProviderError, 'chain'):
             DashboardDependencies(runtime).operation(dict(action='export', definition=doc, includeKnowledge=True))
     def test_missing_context_dependency_never_falls_back_to_local_names(self):

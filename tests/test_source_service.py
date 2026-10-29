@@ -22,8 +22,9 @@ class Reports(SearchService):
         result = copy.deepcopy(self.entry)
         result['content']['search'] = self.query
         return {'entry': [result]}
-    def execute(self, query, earliest='-15m'):
+    def execute(self, query, earliest='-15m', app='constellation'):
         self.calls.append(('bounded-current-user', query, earliest))
+        self.executed_app = app
         return {'warning': '', 'results': []}
 
 
@@ -47,6 +48,7 @@ class SourceTests(unittest.TestCase):
         self.assertEqual(result['warning'], REPORT_WARNING)
         self.assertEqual(self.runtime.calls[-1][0], 'bounded-current-user')
         self.assertEqual(self.runtime.calls[-1][2], '-1h')
+        self.assertEqual(self.runtime.executed_app, 'search')
         for unsafe in ('| collect index=fixture', '| savedsearch privileged', '| delete', '| inputlookup fixture'):
             self.runtime.query = unsafe
             with self.assertRaises(ProviderError): self.runtime.preview(body)
@@ -58,24 +60,12 @@ class SourceTests(unittest.TestCase):
             self.assertEqual(result['sourceWarning'], REPORT_WARNING)
             self.assertEqual(start.call_args.args[1], '-24h')
             self.assertIn('index="fixture"', start.call_args.args[0])
-    def test_foreign_report_lookup_preview_and_chain_do_not_dispatch_in_wrong_app(self):
-        for query in ('| inputlookup rooms.csv', 'search index=fixture | lookup rooms room OUTPUT label', '| geom rooms'):
-            self.runtime.query = query
-            with self.subTest(query=query), self.assertRaises(ProviderError) as denied:
-                self.runtime.preview({'sourceRequest': {'sources': self.sources, 'id': 'report'}})
-            self.assertEqual(denied.exception.code, 'report_app_context')
-            self.assertFalse(any(call[0] == 'bounded-current-user' for call in self.runtime.calls))
-        self.runtime.query = 'search index=fixture | stats count'
-        for transform in ('| lookup rooms room OUTPUT label', '| `foreign_filter`'):
-            self.sources['chain']['options']['query'] = transform
-            with self.assertRaises(ProviderError) as denied: SourceResolver(self.runtime).resolve(self.sources, 'chain')
-            self.assertEqual(denied.exception.code, 'report_app_context')
-        with patch('source_service.expand_macros', return_value='| inputlookup rooms.csv'):
-            with self.assertRaises(ProviderError): SourceResolver(self.runtime).resolve(self.sources, 'report')
-        with patch('preview_jobs.PreviewJobs.start') as start:
-            self.runtime.query = '| inputlookup rooms.csv'
-            with self.assertRaises(ProviderError): self.runtime.job({'action': 'start', 'sourceRequest': {'sources': self.sources, 'id': 'report'}})
-            start.assert_not_called()
+    def test_report_context_is_carried_through_chain_resolution_without_mutating_runtime(self):
+        self.runtime.query = 'search index=fixture | lookup rooms room OUTPUT label'
+        resolver = SourceResolver(self.runtime);query, _ = resolver.resolve(self.sources, 'chain')
+        self.assertIn('lookup rooms', query);self.assertEqual(resolver.report_app, 'search')
+        self.assertEqual(resolver.report_reference, {'ref': 'Fixture / report', 'app': 'search'})
+        self.assertEqual(self.runtime.namespace, '/servicesNS/ordinary_author/constellation')
 
     def test_denied_mismatched_disabled_and_invalid_references_fail_closed(self):
         for mutation in ({'name': 'wrong'}, {'acl': {'app': 'other'}}, {'content': {'disabled': '1'}}):
@@ -88,7 +78,8 @@ class SourceTests(unittest.TestCase):
 
     def test_tokens_resolved_after_report_read_and_injection_guarded(self):
         self.runtime.query = 'search index="fixture" entity=$entity|s$'
-        query, _, _ = preview_query(self.runtime, {'sourceRequest': {'sources': self.sources, 'id': 'report', 'tokens': {'default': {'entity': 'x" | collect index=bad'}}}})
+        query, _, _, app = preview_query(self.runtime, {'sourceRequest': {'sources': self.sources, 'id': 'report', 'tokens': {'default': {'entity': 'x" | collect index=bad'}}}})
+        self.assertEqual(app, 'search')
         self.assertIn('entity="x\\" | collect index=bad"', query)
         self.runtime.preview({'sourceRequest': {'sources': self.sources, 'id': 'report', 'tokens': {'default': {'entity': 'A'}}}})
         self.assertIn('entity="A"', self.runtime.calls[-1][1])
@@ -112,7 +103,7 @@ class SourceTests(unittest.TestCase):
         doc = {'layout': {'type': 'grid', 'structure': [{'item': 'table'}]}, 'dataSources': {'report': self.sources['report']},
                'visualizations': {'table': {'type': 'splunk.table', 'dataSources': {'primary': 'report'}, 'options': {'table': '> primary'}}}}
         old = copy.deepcopy(doc); old['dataSources']['report']['options']['ref'] = 'Previous fixture'
-        profile = {'baseQuery': 'search index="fixture"', 'scope': {'earliest': '-24h'}, 'fields': []}
+        profile = {'baseQuery': 'search index="fixture"', 'scope': {'earliest': '-24h', 'report': {'ref': 'Fixture / report', 'app': 'search'}}, 'fields': []}
         with patch('data_service.validate_populations') as populations, patch('data_service.validate_wildcard_filters') as wildcard:
             DataService(self.runtime, independent_populations=True).validate_searches(doc, old, profile)
             populations.assert_called_once_with(self.runtime.query, profile)
