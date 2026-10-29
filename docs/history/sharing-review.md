@@ -2,7 +2,7 @@
 
 Historical reference retained from the 1.0 release snapshot. Version-specific statements and unfinished work describe their recorded stage; use the [documentation index](../README.md) for current guidance.
 
-Current distribution follows the [1.0 support policy](../support-policy.md) and [technical checklist](../v1-readiness.md). The audit below is historical; its preview/provider status must not override the dated 1.0 evidence. Repository visibility and first-party licensing are unchanged.
+Current distribution follows the [1.0 support policy](../support-policy.md) and [technical checklist](../v1-readiness.md). The audit below is historical; its preview/provider/licensing status must not override current guidance. First-party licensing is now [MIT](../../LICENSE); repository visibility remains private.
 
 
 This is the historical sharing audit. See [current validation](../validation.md) and [provider qualification](../provider-qualification.md) for the subsequent repeated-provider tests, model budgets and current release scope.

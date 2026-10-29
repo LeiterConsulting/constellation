@@ -27,7 +27,7 @@ definition = json.loads((ROOT / 'src' / 'starter.json').read_text())
 version = json.loads((ROOT / 'package.json').read_text())['version']
 definition_json = json.dumps(definition, indent=2).replace(']]>', ']]]]><![CDATA[>')
 xml = '<dashboard version="2" theme="light"><label>' + escape(definition['title']) + '</label><description>' + escape(definition['description']) + '</description><definition><![CDATA[' + definition_json + ']]></definition></dashboard>'
-files = {}
+files = {'constellation/LICENSE': (ROOT / 'LICENSE').read_bytes()}
 for path in sorted(source.rglob('*')):
     if path.is_file() and '__pycache__' not in path.parts and path.suffix != '.pyc':
         data = path.read_bytes()

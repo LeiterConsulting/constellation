@@ -25,6 +25,6 @@ The 1.0 release targets the bounded [Enterprise support profile](support-policy.
 
 Search-head-cluster coordination, distributed quotas/cancellation, broader platform versions and Cloud acceptance need explicit qualification. Configuration replication alone does not provide atomic cross-member writes. Do not describe these deployment profiles as supported by a passing single-head test.
 
-Public visibility requires an explicit owner decision. First-party license selection, dependency redistribution review and certification/distribution requirements remain separate from the private 1.0 release. Before any publication, inspect the exact Git history and artifacts, run repository/Gitleaks checks, retain private vulnerability reporting and verify downloaded checksums. No first-party open-source grant is made today.
+First-party code and documentation use the [MIT License](../LICENSE). Public repository visibility still requires an explicit owner decision. Dependency redistribution review and certification/distribution requirements remain separate from that license. Before any publication, inspect the exact Git history and artifacts, run repository/Gitleaks checks, retain private vulnerability reporting and verify downloaded checksums.
 
 Historical milestones, failures and their bounded reruns remain in [validation](validation.md). Module and migration boundaries are documented in [architecture](architecture.md) and [upgrade guide](upgrade-guide.md).

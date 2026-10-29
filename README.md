@@ -39,6 +39,7 @@ All release downloads require repository access while distribution remains priva
 | [App and documentation bundle](https://github.com/LeiterConsulting/constellation/releases/download/v1.0.0/constellation-1.0.0-handoff.zip) | The same app, user guide, screenshots and administrator/reference material. |
 | [User guide · Markdown](https://github.com/LeiterConsulting/constellation/releases/download/v1.0.0/constellation-1.0.0-user-guide.md) | Standalone guide text. The bundle includes its local images. |
 | [User guide · PDF](https://github.com/LeiterConsulting/constellation/releases/download/v1.0.0/constellation-1.0.0-user-guide.pdf) | Illustrated guide for reading or printing. |
+| [MIT license](https://github.com/LeiterConsulting/constellation/releases/download/v1.0.0/LICENSE) | First-party license accompanying the app and documentation. |
 | [SHA256SUMS](https://github.com/LeiterConsulting/constellation/releases/download/v1.0.0/SHA256SUMS) | Verify every release download. |
 
 ## Supported scope
@@ -61,4 +62,4 @@ See [supported features and limits](docs/studio-support.md), [security and data 
 
 ## Licensing
 
-The repository remains private. No first-party open-source license has been selected or granted. Third-party components retain their own licenses; the app package includes runtime license notices. Splunk and provider names identify integrations and do not imply endorsement.
+Constellation's first-party code and documentation are licensed under the [MIT License](LICENSE), copyright 2026 Leiter Consulting. Third-party components retain their own licenses; the app package includes runtime license notices. Splunk and provider names identify integrations and do not imply endorsement. Repository visibility remains private.

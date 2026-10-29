@@ -1,6 +1,6 @@
 # Contributing
 
-Constellation 1.0 has a bounded Enterprise support profile. Start with the [README](README.md), [architecture](docs/architecture.md), [support contract](docs/studio-support.md) and [upgrade guide](docs/upgrade-guide.md). Source licensing is pending; this document does not grant an open-source license or impose a contributor agreement.
+Constellation 1.0 has a bounded Enterprise support profile. Start with the [README](README.md), [architecture](docs/architecture.md), [support contract](docs/studio-support.md) and [upgrade guide](docs/upgrade-guide.md). First-party code and documentation use the [MIT License](LICENSE); preserve third-party notices. This document does not impose a separate contributor agreement.
 
 ## Make a focused change
 

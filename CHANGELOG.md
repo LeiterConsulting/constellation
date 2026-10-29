@@ -1,5 +1,10 @@
 # Changelog
 
+## MIT licensing — October 29, 2026
+
+- License first-party code and documentation under MIT, copyright 2026 Leiter Consulting.
+- Align package metadata and current guidance, include the license in future app builds and the handoff, and accompany the existing 1.0 release with a standalone license. The qualified installer and runtime tag remain unchanged.
+
 ## Documentation refresh — October 29, 2026
 
 - Reorganize current author/admin guidance and preserve dated engineering/validation history separately.

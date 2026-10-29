@@ -19,7 +19,7 @@ Packaging creates a deterministic archive from app source, compiled assets, the 
 
 The production bundle currently triggers Vite's size warning. The Linux CI build needs a larger Node heap than its default; the build step sets a 4 GB old-space allowance. Use a build host with enough memory for that heap plus the process/OS overhead. This affects build tooling only. The renderer is deferred; a manifest-based build gate limits transitive eager JavaScript to 2.5 MB raw / 750 KB gzip and requires a dynamic renderer. The large renderer chunk still triggers the warning; do not conceal it or label deferred bytes as removed.
 
-After acceptance and documentation review, `python3 scripts/create_handoff.py` bundles the exact built app archive, checksum and an explicit allowlist of user documentation into `artifacts/constellation-<version>-handoff.zip`. It excludes local configuration, credentials and evidence. Inspect the archive and verify the embedded app checksum before sharing. The bundle follows the documented Enterprise support profile. Private distribution does not make a public release or license grant.
+After acceptance and documentation review, `python3 scripts/create_handoff.py` bundles the exact built app archive, checksum and an explicit allowlist of user documentation into `artifacts/constellation-<version>-handoff.zip`. It excludes local configuration, credentials and evidence. Inspect the archive and verify the embedded app checksum before sharing. The bundle follows the documented Enterprise support profile. First-party code and documentation use the [MIT License](../LICENSE); repository visibility remains a separate decision.
 
 ## Repository publication checks
 
@@ -45,11 +45,11 @@ Use a GitHub noreply address for new commits if you want to avoid publishing a p
 
 1. Align the app version/build, README, changelog, installation/upgrade instructions and current validation summary. Use the current candidate/release status and preserve the exact scope of historical versus final-package tests.
 2. Use the exact qualified app archive and its recorded hash. A documentation-only release preparation may rebuild the handoff ZIP, but must not replace accepted app bytes with a different archive. Review the new handoff documents and verify its embedded app and user guide exactly.
-3. Publish the `.tgz` bytes under the versioned `.tar.gz` download name, alongside the documentation ZIP, versioned Markdown and PDF guides, and a `SHA256SUMS` covering all four downloads. Inspect every archive member: one app root, regular files only, no macOS sidecars/resource forks, extended tar metadata, private runtime configuration or live evidence. Create aliases using byte copies rather than retarring a Finder directory.
+3. Publish the `.tgz` bytes under the versioned `.tar.gz` download name, alongside the documentation ZIP, versioned Markdown and PDF guides, the MIT `LICENSE`, and a `SHA256SUMS` covering all five downloads. Inspect every archive member: one app root, regular files only, no macOS sidecars/resource forks, extended tar metadata, private runtime configuration or live evidence. Create aliases using byte copies rather than retarring a Finder directory.
 4. Run staged publication checks and Gitleaks, commit/push, and wait for CI on that exact commit. Tag that reviewed commit and publish the release as Latest only when requested. GitHub's Latest designation is a download pointer; release notes must retain the documented support profile and verification limits. Preserve repository visibility and license status.
 5. Download every published asset again, compare its digest with the local receipt, inspect the downloaded archives, and verify GitHub's latest-release tag and asset list. Keep detailed local receipts outside Git.
 
-For a documentation refresh of an existing release, retain its runtime tag and accepted app archive. Identify the later documentation source revision in the release notes, replace only the affected documentation downloads and checksums, and verify them again. The tagged source snapshot remains unchanged.
+For a documentation refresh of an existing release, retain its runtime tag and accepted app archive. Identify the later documentation source revision in the release notes, replace only the affected documentation/license downloads and checksums, and verify them again. The tagged source snapshot remains unchanged.
 
 ## CI
 

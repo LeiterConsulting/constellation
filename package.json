@@ -49,7 +49,7 @@
   "bugs": {
     "url": "https://github.com/LeiterConsulting/constellation/issues"
   },
-  "license": "UNLICENSED",
+  "license": "MIT",
   "engines": {
     "node": "22.x"
   }
