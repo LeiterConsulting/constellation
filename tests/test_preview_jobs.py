@@ -20,13 +20,14 @@ class JobRuntime(SearchService):
         self.meta.update(meta or {})
         self.rows, self.calls, self.owner = rows, [], 'alice'
         self.messages = []
+        self.app = 'constellation'
     def request(self, path, method='GET', fields=None, optional=False):
         self.calls.append((path, method, fields))
         if path.endswith('/control'): return {}
         if path.endswith('/results'):
             return {'fields': [{'name': 'row'}], 'results': [{'row': str(i)} for i in range(self.rows)], 'messages': self.messages}
         if method == 'POST': return {'sid': '1234.56'}
-        return {'entry': [{'acl': {'owner': self.owner, 'app': 'constellation'}, 'content': copy.deepcopy(self.meta)}]}
+        return {'entry': [{'acl': {'owner': self.owner, 'app': self.app}, 'content': copy.deepcopy(self.meta)}]}
 
 
 class PreviewJobTests(unittest.TestCase):
@@ -153,6 +154,40 @@ class PreviewJobTests(unittest.TestCase):
         runtime.owner='bob'
         with self.assertRaises(ProviderError): jobs.poll(handle)
         self.assertFalse(any(call[0].endswith('/results') for call in runtime.calls))
+    def test_app_bound_handles_route_poll_and_cancel_without_mutating_runtime(self):
+        runtime = JobRuntime();runtime.app = 'search';jobs = PreviewJobs(runtime, 'search')
+        handle = jobs.start('| makeresults', '-1h')['handle']
+        self.assertTrue(handle.startswith('v2:search:'))
+        default = PreviewJobs(runtime)
+        self.assertEqual(default.poll(handle)['state'], 'complete')
+        default.cancel(handle)
+        self.assertTrue(all(path.startswith('/servicesNS/alice/search/search/v2/jobs') for path, _, _ in runtime.calls))
+        self.assertEqual(runtime.namespace, '/servicesNS/alice/constellation')
+        self.assertEqual(runtime.calls[-1][2], {'action': 'cancel'})
+    def test_modified_app_identity_or_metadata_cannot_read_or_cancel_a_job(self):
+        runtime = JobRuntime();runtime.app = 'search';jobs = PreviewJobs(runtime, 'search')
+        handle = jobs.start('| makeresults', '-1h')['handle']
+        for candidate in (handle.replace('v2:search:', 'v2:constellation:'), handle.replace('v2:search:', 'v2:../search:')):
+            before = len(runtime.calls)
+            for action in ('poll', 'cancel'):
+                with self.assertRaises(ProviderError): getattr(jobs, action)(candidate)
+                self.assertEqual(len(runtime.calls), before)
+        for field, value in (('app', 'constellation'), ('owner', 'another_author')):
+            runtime.app, runtime.owner = 'search', 'alice';setattr(runtime, field, value)
+            for action in ('poll', 'cancel'):
+                before = len(runtime.calls)
+                with self.assertRaises(ProviderError): getattr(jobs, action)(handle)
+                self.assertFalse(any(p.endswith(('/results', '/control')) for p, _, _ in runtime.calls[before:]))
+        other = JobRuntime();other.token = 'other-session'
+        with self.assertRaises(ProviderError): PreviewJobs(other).poll(handle)
+        self.assertEqual(other.calls, [])
+    def test_legacy_handle_keeps_its_original_app_and_invalid_range_never_dispatches(self):
+        runtime = JobRuntime();legacy = PreviewJobs(runtime).start('| makeresults', '-15m')['handle']
+        self.assertEqual(len(legacy.split(':')), 4)
+        self.assertEqual(PreviewJobs(runtime, 'search').poll(legacy)['state'], 'complete')
+        before = len(runtime.calls)
+        with self.assertRaises(ProviderError): PreviewJobs(runtime, 'search').start('| makeresults', '0')
+        self.assertEqual(len(runtime.calls), before)
     def test_aggregate_feedback_handles_native_diagnostic_shapes_without_raw_content(self):
         for messages in ('number of wildcards PRIVATE', {'message':'empty field specifiers PRIVATE'}, [{'msg':'number of wildcards PRIVATE'}]):
             runtime=JobRuntime({'isFailed':'1','messages':messages})

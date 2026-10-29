@@ -46,19 +46,35 @@ class DataService:
         definitions = validate_definitions(body.get('fieldDefinitions'))
         earliest = body.get('earliest', '-24h')
         if earliest not in TIME_RANGES: raise ProviderError('Choose one of the supported preview time ranges.')
+        reference = None
+        if 'report' in body:
+            from source_service import SourceResolver
+            from search_context import report_reference
+            reference = report_reference(body['report'])
+            self._source_resolver = SourceResolver(self.runtime)
+            base, _ = self._source_resolver.report(reference)
+            body = dict(body, query=body.get('query', base))
         if body.get('query'):
             query, language = body['query'], body.get('language', 'spl')
             if not isinstance(query, str): raise ProviderError('Supply an existing search.')
-            inspection = resolve_query_tokens(query, self.document, self.tokens)
+            if reference:
+                from source_service import expand_macros
+                query = expand_macros(self.runtime, query, reference['app'])
+                if scoped_suffix(query, {'baseQuery': base, 'scope': {}}) is None:
+                    raise ProviderError('Keep the current report search as the base, then append transforms. Reselect the report panel if its search changed.', 422, 'report_scope')
+            inspection = query if reference else resolve_query_tokens(query, self.document, self.tokens)
             if language == 'spl': inspection += ' | head 201'
-            result = self.runtime.preview({'query': inspection, 'language': language, 'earliest': earliest, 'fieldDiscovery': True})
+            request = {'query': inspection, 'language': language, 'earliest': earliest, 'fieldDiscovery': True}
+            if reference: request.update(report=reference, tokens=self.preview_tokens())
+            result = self.runtime.preview(request)
             if not result['results'] and result.get('state') == 'partial':
                 raise ProviderError('The sample stopped before completion. No absence of data was established; simplify the existing search or retry.', 422, 'profile_partial')
             fields, sampled = sample_fields(result)
-            return enrich_profile({'scope': {'query': query, 'language': language, 'earliest': earliest, **({'fieldDefinitions': definitions} if definitions else {})}, 'baseQuery': query,
+            from source_service import REPORT_WARNING
+            return enrich_profile({'scope': {'query': query, 'language': language, 'earliest': earliest, **({'report': reference} if reference else {}), **({'fieldDefinitions': definitions} if definitions else {})}, 'baseQuery': query,
                     'fields': fields, 'sampledRows': sampled, 'bounded': True,
                     'completion': sample_completion(result),
-                    'note': 'Field metadata from at most 200 returned rows, not complete source coverage. Missing counts refer only to this sample; event values are excluded.'}, body.get('question', ''))
+                    'note': 'Field metadata from at most 200 returned rows, not complete source coverage. Missing counts refer only to this sample; event values are excluded.' + (' ' + REPORT_WARNING if reference else '')}, body.get('question', ''))
         index, sourcetype = body.get('index'), body.get('sourcetype', '')
         catalog = self.runtime.datasets()
         if not isinstance(index, str) or index not in {item['name'] for item in catalog['indexes']}:
@@ -75,6 +91,15 @@ class DataService:
                 'bounded': True, 'completion': sample_completion(result),
                 'note': 'Field metadata from at most 200 recent returned events and 5 seconds, not complete source coverage. Missing counts refer only to the inspected sample. Event values are excluded.'}, body.get('question', ''))
 
+    def preview_tokens(self):
+        from token_service import default_token_values
+        # Validate supplied shape before combining defaults. Event-derived
+        # values stay only in the current-user native request, never inference.
+        resolve_query_tokens('', self.document, self.tokens)
+        values = default_token_values(self.document)
+        if self.tokens is not None: values.update(self.tokens.get('default', {}))
+        return {'default': values}
+
     def resolve_query(self, document, identifier, seen=None):
         from source_service import SourceResolver
         if not hasattr(self, '_source_resolver'): self._source_resolver = SourceResolver(self.runtime)
@@ -84,6 +109,11 @@ class DataService:
         if source.get('type') == 'ds.test':
             raise ProviderError('This dashboard uses real Splunk data. Do not introduce illustrative sample data.')
         query, language = self.resolve_query(document, identifier)
+        reference = self._source_resolver.report_reference
+        app = reference['app'] if reference else 'constellation'
+        scoped_report = profile['scope'].get('report')
+        if app != (scoped_report['app'] if scoped_report else 'constellation'):
+            raise ProviderError('Keep the selected report app context. Preserve its ds.savedSearch reference and use a ds.chain transform for new calculations.', 422, 'report_context')
         # Keep generated queries within the explicitly selected search scope.
         suffix = scoped_suffix(query, profile)
         if suffix is None or (suffix.strip() and not suffix.lstrip().startswith('|')):
@@ -105,16 +135,19 @@ class DataService:
             parameters = source.get('options', {}).get('queryParameters', {})
             if parameters.get('earliest') != profile['scope']['earliest'] or parameters.get('latest') != 'now':
                 raise ProviderError('Set each new search options.queryParameters to earliest=' + profile['scope']['earliest'] + ' and latest=now so native Studio uses the inspected time range.')
-        result = (self.recovery or self.runtime).preview({'query': resolved_query, 'language': language, 'earliest': profile['scope']['earliest']})
+        request = {'query': query if reference else resolved_query, 'language': language, 'earliest': profile['scope']['earliest']}
+        if reference: request.update(report=reference, tokens=self.preview_tokens())
+        result = (self.recovery or self.runtime).preview(request)
         return language, result
 
     def focused_table_receipt(self, document, selected, profile):
         table = document.get('visualizations', {}).get(selected, {})
         source_id = table.get('dataSources', {}).get('primary')
         source = document.get('dataSources', {}).get(source_id, {})
-        if table.get('type') != 'splunk.table' or source.get('type') != 'ds.search': return None
-        receipt = {'table': selected, 'source': source_id, 'query': source['options'].get('query', ''), 'fields': []}
+        if table.get('type') != 'splunk.table' or source.get('type') not in ('ds.search', 'ds.chain', 'ds.savedSearch'): return None
+        receipt = {'table': selected, 'source': source_id, 'query': '', 'fields': []}
         try:
+            receipt['query'], _ = self.resolve_query(document, source_id)
             _language, result = self.inspect_source(document, source_id, source, profile)
             for entry in result['fields'][:80]:
                 name = entry['name']
@@ -123,7 +156,7 @@ class DataService:
                 for value in values:
                     try: float(value)
                     except (ValueError, TypeError): numeric = False; break
-                field = {'name': name, 'numeric': numeric}
+                field = {'name': name, 'numeric': numeric, 'present': len(values)}
                 kind = array_kind(values)
                 if kind: field['cellKind'] = kind
                 receipt['fields'].append(field)

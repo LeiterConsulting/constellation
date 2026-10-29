@@ -10,6 +10,7 @@ import re
 import time
 from datetime import datetime, timezone
 from provider_service import ProviderError
+from search_context import namespace, app_name, RANGES, SID
 
 ROWS, SECONDS = 200, 5
 RESULT_BYTES = 1_000_000
@@ -51,9 +52,10 @@ def benign_lookup_notice(message):
 
 
 class PreviewJobs:
-    def __init__(self, runtime):
+    def __init__(self, runtime, app='constellation'):
         self.runtime = runtime
-        self.base = runtime.namespace + '/search/v2/jobs'
+        self.app = app_name(app)
+        self.base = namespace(runtime.user, self.app) + '/search/v2/jobs'
 
     def signature(self, payload):
         return hmac.new(self.runtime.token.encode('utf-8'),
@@ -63,18 +65,24 @@ class PreviewJobs:
         if not isinstance(handle, str) or len(handle) > 400:
             raise ProviderError('This preview job is unavailable to this session.', 403)
         parts = handle.split(':')
-        if len(parts) != 4:
+        if len(parts) == 4:
+            app = 'constellation'
+            sid, earliest, expires, signature = parts
+        elif len(parts) == 6 and parts[0] == 'v2':
+            _, app, sid, earliest, expires, signature = parts
+            app_name(app)
+        else:
             raise ProviderError('This preview job is unavailable to this session.', 403)
-        sid, earliest, expires, signature = parts
-        payload = ':'.join(parts[:3])
-        if (not re.fullmatch(r'[A-Za-z0-9_.-]{1,200}', sid) or not expires.isdigit()
+        payload = ':'.join(parts[:-1])
+        if (not re.fullmatch(SID, sid) or not expires.isdigit() or earliest not in RANGES
                 or not hmac.compare_digest(self.signature(payload), signature)):
             raise ProviderError('This preview job is unavailable to this session.', 403)
         if int(expires) < time.time():
             raise ProviderError('This preview expired. Refresh searches to run it again.', 410, 'preview_expired')
-        return self.base + '/' + sid, earliest
+        return namespace(self.runtime.user, app) + '/search/v2/jobs/' + sid, earliest, app
 
     def start(self, query, earliest, field_discovery=False):
+        if earliest not in RANGES: raise ProviderError('Choose a supported bounded preview time range.')
         result = self.runtime.request(self.base, 'POST', {
             'search': query, 'exec_mode': 'normal', 'earliest_time': earliest, 'latest_time': 'now',
             'max_time': str(SECONDS), 'max_count': str(ROWS + 1), 'auto_finalize_ec': '10000',
@@ -83,26 +91,25 @@ class PreviewJobs:
         if not isinstance(sid, str) or not re.fullmatch(r'[A-Za-z0-9_.-]{1,200}', sid):
             raise ProviderError('Splunk did not return a preview job.', 503)
         payload = ':'.join((sid, earliest, str(int(time.time()) + 60)))
+        if self.app != 'constellation': payload = 'v2:' + self.app + ':' + payload
         return {'handle': payload + ':' + self.signature(payload), 'state': 'running'}
 
     def cancel(self, handle):
-        path, _ = self.path(handle)
+        path, _, app = self.path(handle)
+        self.owned(self.runtime.request(path), app)
         self.runtime.request(path + '/control', 'POST', {'action': 'cancel'})
         return {'state': 'cancelled'}
 
     def poll(self, handle, field_discovery=False):
         from search_service import search_feedback
-        path, earliest = self.path(handle)
+        path, earliest, app = self.path(handle)
         try:
             response = self.runtime.request(path)
         except ProviderError as error:
             if str(error.code or '').endswith('_404'):
                 raise ProviderError('This preview expired. Refresh searches to run it again.', 410, 'preview_expired') from None
             raise
-        entry = response.get('entry', [{}])[0]
-        acl = entry.get('acl', {})
-        if acl.get('owner') != self.runtime.user or acl.get('app') != 'constellation':
-            raise ProviderError('This preview job is not owned by this user and app.', 403)
+        entry = self.owned(response, app)
         meta = entry.get('content', {})
         if flag(meta.get('isFailed')) or flag(meta.get('isZombie')) or meta.get('dispatchState') in ('FAILED', 'BAD_INPUT_CANCEL'):
             diagnostics = meta.get('messages', [])
@@ -110,6 +117,19 @@ class PreviewJobs:
             # lists. Only the allowlisted classifier output leaves this boundary.
             diagnostic_text = json.dumps(diagnostics)[:20000]
             raise ProviderError('The preview search failed. ' + search_feedback(diagnostic_text), 422, 'preview_failed')
+        return self.read(path, earliest, meta, field_discovery)
+
+    def owned(self, response, app):
+        entries = response.get('entry', [])
+        if len(entries) != 1: raise ProviderError('Splunk did not verify this preview job.', 403)
+        entry = entries[0]
+        acl = entry.get('acl', {})
+        if acl.get('owner') != self.runtime.user or acl.get('app') != app:
+            raise ProviderError('This preview job is not owned by this user and app.', 403)
+        return entry
+
+    def read(self, path, earliest, meta, field_discovery):
+        from search_service import search_feedback
         if not flag(meta.get('isDone')) and not flag(meta.get('isFinalized')):
             return {'state': 'running'}
         # Results are POSTed so count is applied by both supported v2 endpoints.

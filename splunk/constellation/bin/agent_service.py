@@ -3,6 +3,7 @@ from field_context import enrich_profile, recorded_unit_intent, recorded_unit_qu
 import row_navigation
 from route_actions import INSTRUCTIONS as ROUTE_INSTRUCTIONS, validate_route_intent, focused_route, focused_button_route, button_label_preflight
 import json
+import hashlib
 import copy
 import re
 from provider_service import ProviderError
@@ -344,6 +345,18 @@ class AgentService:
         purposes = validate_purposes(body.get('pagePurposes', {}), document)
         focus = focus_context(document, str(body.get('selected', ''))[:200], str(body.get('activeTab', ''))[:200], purposes)
         scope = body.get('dataContext')
+        if scope is not None and not isinstance(scope, dict): raise ProviderError('Select a valid data context.')
+        selected_source = document['visualizations'].get(str(body.get('selected', '')), {}).get('dataSources', {}).get('primary')
+        from search_context import source_report
+        selected_report = source_report(document.get('dataSources', {}), selected_source) if selected_source else None
+        if selected_report:
+            query, language = data.resolve_query(document, selected_source)
+            old_scope = scope or {}
+            source_range = document['dataSources'][selected_source].get('options', {}).get('queryParameters', {}).get('earliest')
+            scope = {'query': query, 'language': language, 'report': selected_report,
+                     'earliest': old_scope.get('earliest', source_range if source_range in ('-15m', '-1h', '-24h', '-7d') else '-24h')}
+            if old_scope.get('report') == selected_report and old_scope.get('query') == query and old_scope.get('fieldDefinitions'):
+                scope['fieldDefinitions'] = old_scope['fieldDefinitions']
         if not scope:
             requested = [item['name'] for item in catalog.get('indexes', [])
                          if re.search(r'\bindex\s*=\s*["\']?' + re.escape(item['name']) + r'(?![\w.-])', prompt)]
@@ -356,14 +369,16 @@ class AgentService:
                 query, language = data.resolve_query(document, chosen)
                 source_range = document['dataSources'][chosen].get('options', {}).get('queryParameters', {}).get('earliest')
                 scope = {'query': query, 'language': language, 'earliest': source_range if source_range in ('-15m', '-1h', '-24h', '-7d') else '-24h'}
+                reference = getattr(data._source_resolver, 'report_reference', None)
+                if reference: scope['report'] = reference
         if scope is not None and not isinstance(scope, dict): raise ProviderError('Select a valid data context.')
-        if scope and not body.get('dataContext'):
+        if scope and (selected_report or not body.get('dataContext')):
             scope = dict(scope, earliest=inferred_range(prompt) or scope.get('earliest', '-24h'))
         self.progress('profile')
         profile = data.profile(scope) if scope else None
         if profile and getattr(getattr(data, '_source_resolver', None), 'used_report', False):
             from source_service import REPORT_WARNING
-            profile['note'] += ' ' + REPORT_WARNING
+            if REPORT_WARNING not in profile['note']: profile['note'] += ' ' + REPORT_WARNING
         confirmed_intent = recorded_unit_intent(profile, prompt, safe_history) if profile else prompt
         if profile:
             profile = enrich_profile(profile, confirmed_intent)
@@ -412,7 +427,7 @@ class AgentService:
                                   'providerManaged': saved.get('provider') == 'aitk',
                                   'reason': 'AITK model/output limits are managed by its named connection and are unverified here.' if saved.get('provider') == 'aitk' else 'Unknown capacities must not be inferred from model IDs. Use concise typed changes.'}
         if profile: context['dataProfile'] = profile
-        menu_plan = additive_menu_plan(prompt, document, profile, attachments)
+        menu_plan = additive_menu_plan(prompt, document, profile, attachments) if not (profile and profile['scope'].get('report')) else None
         if menu_plan: context['newMenusOnly'] = menu_plan
         if table_receipt: context['focusedSourceReceipt'] = table_receipt
         format_only = table_receipt and not attachments and formatting_only(prompt, focus.get('id'), document)
@@ -455,6 +470,18 @@ class AgentService:
         elif page_schema: instructions = 'Update only the CURRENT selected page name/purpose. History contains completed previous turns. Return JSON message,changes,suggestions with exactly ONE pageMeta action {op:"pageMeta",layoutId,label,purpose}. Use focus.id, preserve the requested page label exactly, and record its stated purpose. Keep the old label/purpose when unmentioned. The server preserves the entire native page, all queries, geometry, interactions and unknown properties. Page purpose is draft metadata; NEVER emit a native /pagePurposes path, recreate a page or edit a previous button. On recovery replace the complete pageMeta plan.'
         elif calculation: instructions = CALCULATION_INSTRUCTIONS
         elif not format_only and context['canvasState'] != 'blank' and re.search(r'\b(?:navigation|drilldown|route|retarget|button|link|open|row)\b',prompt,re.I): instructions += '\n\n' + ROUTE_INSTRUCTIONS
+        if profile and profile['scope'].get('report'):
+            context['reportContext'] = 'Keep the native ds.savedSearch reference and options.app. Add ds.chain transforms extending that report for new calculations. A new ds.search would run in another app and is rejected. The selected report scope is re-read with caller permissions; schedules and owner dispatch are never used.'
+            instructions += '\nREPORT SCOPE: ' + context['reportContext']
+            if selected_report:
+                fresh = 'report_edit_' + hashlib.sha256(str(body.get('selected', '')).encode()).hexdigest()[:16]
+                base_id, suffix = fresh, 0
+                while fresh in document['dataSources']:
+                    suffix += 1
+                    fresh = base_id + '_' + str(suffix)
+                context['reportTransform'] = {'parentId': selected_source, 'freshId': fresh}
+                instructions += '\nFor an appended calculation, use reportTransform.freshId for a NEW ds.chain extending reportTransform.parentId, then set only the selected visualization dataSources.primary to that fresh ID. Every existing source ID is reserved; do not repurpose an unrelated chain or repeat its aggregations. Preserve existing result fields for per-row additions.'
+
         request = {'model': saved['model'], 'store': False, 'instructions': instructions,
                    'input': [{'role': 'user', 'content': [{'type': 'input_text', 'text': json.dumps(context)}] + attachments}],
                    'max_output_tokens': CREATE_OUTPUT_TOKENS if context['canvasState'] == 'blank' else EDIT_OUTPUT_TOKENS,
@@ -487,6 +514,12 @@ class AgentService:
                 request['text']['format']['schema']['properties']['changes'].update(items=calculation_schema,minItems=1,maxItems=1)
         if saved['model'] in ('gpt-6-luna', 'gpt-6-astra'):
             request['reasoning'] = {'effort': 'medium' if context['canvasState'] == 'blank' else 'low'}
+        from report_actions import eligible as report_transform_eligible, ACTION as REPORT_ACTION, INSTRUCTIONS as REPORT_INSTRUCTIONS
+        if report_transform_eligible(prompt, focus.get('id'), document, profile, attachments):
+            context['reportTransformOnly'] = True
+            request['instructions'] = REPORT_INSTRUCTIONS
+            request['text']['format']['schema'] = copy.deepcopy(SCHEMA)
+            request['text']['format']['schema']['properties']['changes'].update(items=copy.deepcopy(REPORT_ACTION), minItems=1, maxItems=1)
         budget = AuthoringBudget(saved, context)
         budget.prepare(request, document)
         repair, validation_notes = False, []
@@ -554,7 +587,7 @@ class AgentService:
                             or set(changes[0]) != set(sparkline['required'])
                             or any(changes[0].get(key) not in rule.get('enum', []) for key, rule in sparkline['properties'].items())):
                         raise ProviderError('Return exactly one tableSparkline action using the selected table, verified field and exact allowed style/width. Do not change native properties or searches separately.', 422, 'table_sparkline')
-                if row_only or route_schema or button_schema or page_schema or calculation or sparkline or getattr(budget,'svg_plan',False):
+                if row_only or route_schema or button_schema or page_schema or calculation or sparkline or context.get('reportTransformOnly') or getattr(budget,'svg_plan',False):
                     # A rejected new detail page is transient, not user work.
                     # Recompile its corrected plan against the exact original;
                     # query checks remain cached within the same recovery budget.
@@ -616,7 +649,7 @@ class AgentService:
                     result['changes'] = proposal.changes
                     validate_features(draft, document, environment)
                     receipts = data.validate_searches(draft, document, profile)
-                validate_requested_columns(prompt, body.get('selected', ''), draft, receipts)
+                validate_requested_columns(prompt, body.get('selected', ''), draft, receipts, table_receipt)
                 validate_creation_columns(prompt, draft, document, profile, receipts)
                 if budget.phase == 'complete': validate_sparkline_request(prompt, draft, receipts)
                 if calculation:

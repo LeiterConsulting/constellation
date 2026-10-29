@@ -50,6 +50,13 @@ def requested_columns(prompt, selected, document, receipts):
     if table.get('type') != 'splunk.table' or not re.search(r'\b(?:add|include)\b', prompt, re.I): return table, set(), None
     if re.search(r'\b(?:hidden|internal|helper)\b', prompt, re.I): return table, set(), None
     requested = set(re.findall(r'\b[A-Za-z_][A-Za-z0-9_]*\([^()]{1,200}\)\s+AS\s+([A-Za-z_][A-Za-z0-9_]*)\b', prompt, re.I))
+    # A literal comma-separated list is explicit output intent too. Restrict it
+    # to plain fields and a sentence boundary; prose/formatting stays unparsed.
+    field = r'[A-Za-z_][A-Za-z0-9_]*'
+    lists = re.findall(r'\b(?:display|show)\s+(?:columns\s+)?(' + field + r'(?:\s*,\s*' + field + r')+(?:\s*,?\s+and\s+' + field + r')?)\s*(?=[.;\n]|$)', prompt, re.I)
+    for literal in lists:
+        names = re.split(r'\s*,\s*(?:and\s+)?|\s+and\s+', literal, flags=re.I)
+        if 2 <= len(names) <= 80: requested.update(names)
     if not requested: return table, set(), None
     source = table.get('dataSources', {}).get('primary')
     fields = next((set(r['fields']) for r in receipts if r.get('source') == source and r.get('fields')), None)
@@ -78,12 +85,19 @@ def verified_requested_projection(prompt, selected, document, receipts):
     return [{'op': 'set', 'path': '/visualizations/' + selected.replace('~', '~0').replace('/', '~1') + '/options/table', 'value': json.dumps(value)}]
 
 
-def validate_requested_columns(prompt, selected, document, receipts):
+def validate_requested_columns(prompt, selected, document, receipts, original_receipt=None):
     table, requested, fields = requested_columns(prompt, selected, document, receipts)
     if not requested or fields is None: return  # Never infer output from SPL text.
     missing = requested - fields
     if missing:
         raise ProviderError('The selected table must return the explicitly requested output columns: ' + ', '.join(sorted(missing))[:300] + '. Preserve its existing columns and interactions.', 422, 'table_projection')
+    if original_receipt and re.search(r'\bfor each (?:existing )?row\b', prompt, re.I):
+        populated = {field['name'] for field in original_receipt.get('fields', []) if field.get('present', 0) > 0}
+        source = table.get('dataSources', {}).get('primary')
+        after = next((receipt for receipt in receipts if receipt.get('source') == source), {})
+        lost = requested & populated & set(after.get('emptyFields', []))
+        if after.get('rows', 0) and lost:
+            raise ProviderError('Keep the selected table rows: previously populated requested columns became entirely empty: ' + ', '.join(sorted(lost))[:300] + '. Append the per-row calculation to the selected source using a fresh chain; do not reuse an unrelated aggregated chain.', 422, 'table_projection')
     binding = table.get('options', {}).get('table', '')
     if not isinstance(binding, str): return  # Native feature validation handles invalid types.
     projections = re.findall(r'\bframeBySeriesNames\(([^)]*)\)', binding)

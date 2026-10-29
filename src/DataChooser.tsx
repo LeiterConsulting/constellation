@@ -28,7 +28,7 @@ export default function DataChooser({ discovery, initial, initialGoal = '', onBu
   const stopInspection = () => { generation.current++; pending.current?.abort(); pending.current = null; setBusy(false); };
   const close = () => { stopInspection(); onClose(); };
   const change = (next: DataScope) => { generation.current++; if (dataScopeKey({...next,earliest:'-24h'}) !== dataScopeKey({...scope,earliest:'-24h'})) delete next.fieldDefinitions; setScope(next); setProfile(null); setError(''); };
-  const chosen = (): DataScope => mode === 'query' ? { query: scope.query || '', language: scope.language || 'spl', earliest: scope.earliest, fieldDefinitions: scope.fieldDefinitions }
+  const chosen = (): DataScope => mode === 'query' ? { query: scope.query || '', ...(scope.report ? {report: scope.report} : {}), language: scope.language || 'spl', earliest: scope.earliest, fieldDefinitions: scope.fieldDefinitions }
     : { index: scope.index || '', sourcetype: scope.sourcetype || '', language: 'spl', earliest: scope.earliest, fieldDefinitions: scope.fieldDefinitions };
   const inspect = async (build = false) => {
     const controller = new AbortController(); pending.current?.abort(); pending.current = controller;
@@ -53,7 +53,7 @@ export default function DataChooser({ discovery, initial, initialGoal = '', onBu
     <Modal.Header title="Build with Splunk data"/>
     <Modal.Body>
       <Muted>Searches use your Splunk permissions. Only field metadata goes to the model; event values stay in Splunk and the preview.</Muted>
-      <ControlGroup label="Start from"><Select value={mode} disabled={busy} onChange={(_event, { value }) => { setMode(String(value)); setScope(previous=>({...previous,fieldDefinitions:undefined})); setProfile(null); }}>
+      <ControlGroup label="Start from"><Select value={mode} disabled={busy} onChange={(_event, { value }) => { setMode(String(value)); setScope(previous=>({...previous,report:undefined,fieldDefinitions:undefined})); setProfile(null); }}>
         <Select.Option label="An index in this instance" value="index"/><Select.Option label="My existing search" value="query"/>
       </Select></ControlGroup>
       {mode === 'index' ? <>
@@ -63,6 +63,7 @@ export default function DataChooser({ discovery, initial, initialGoal = '', onBu
         <ControlGroup label="Sourcetype"><Select value={scope.sourcetype || ''} disabled={busy} onChange={(_event, { value }) => change({ ...scope, sourcetype: String(value) })}>
           <Select.Option value="" label="All sourcetypes"/>{sourcetypes.map(name => <Select.Option key={name} value={name} label={name}/>)}</Select></ControlGroup>
       </> : <>
+        {scope.report ? <Muted>Using the report’s search context in {scope.report.app}. Keep its base search, or choose another starting point.</Muted> : null}
         <ControlGroup label="Search language"><Select value={scope.language || 'spl'} disabled={busy} onChange={(_event, { value }) => change({ ...scope, language: value as 'spl' | 'spl2' })}>
           <Select.Option value="spl" label="SPL"/><Select.Option value="spl2" label="SPL2"/></Select></ControlGroup>
         <ControlGroup label="Existing search"><TextArea value={scope.query || ''} disabled={busy} rowsMin={3} onChange={(_event, { value }) => change({ ...scope, query: value })}/></ControlGroup>

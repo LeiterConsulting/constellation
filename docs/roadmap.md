@@ -4,7 +4,9 @@ Constellation is a working development preview. Checked-in code and selected liv
 
 ## Current 1.0 qualification priorities
 
-Version 0.42 adds guarded CSV copies from included report searches in other apps, distinct names for same-named dependencies, and refusal of wrong-context report previews. [Current evidence](validation.md#0420-report-app-csv-contexts--october-29-2026) separates synthetic cross-app fixtures, actual-data provider regression and native rendering. Full report-app execution/extraction, app-dependent chain transforms, KV/scripted dependencies, sharing and unaided acceptance remain open.
+Version 0.43 extends current-user report-app context to supported previews, field inspection, selected edits and compatible chain dependencies. [Current evidence](validation.md#0430-report-app-previews-and-edits--october-29-2026) records the bounded checks. Scheduled cache/owner semantics, complete extraction combinations, custom rendering, opaque dependencies, sharing and unaided-user acceptance remain open.
+
+Version 0.42 adds guarded CSV copies from included report searches in other apps, distinct names for same-named dependencies, and refusal of wrong-context report previews. [Current evidence](validation.md#0420-report-app-csv-contexts--october-29-2026) separates synthetic cross-app fixtures, actual-data provider regression and native rendering. At that stage report-app preview/chain execution remained open; 0.43 extends the bounded subset. Complete extraction combinations, KV/scripted dependencies, sharing and unaided acceptance remain open.
 
 Version 0.41 extends bounded CSV portability to compatible literal filters and native historical matching, and fixes exact `_time` preservation. Both-direction native cases and the nine-turn provider cohort passed; the simple export option remains. [Current evidence](validation.md#0410-filtered-and-time-based-csv--october-29-2026) distinguishes actual indexed-data flows, synthetic rule probes, corrected harness expectations and browser/native API scope. Broader predicates, foreign-app/KV/scripted dependencies, cross-app sharing and unaided acceptance remain open.
 

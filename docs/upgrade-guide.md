@@ -1,5 +1,11 @@
 # Updating Constellation
 
+## 0.43 report-app previews and focused edits
+
+No draft, credential or native-view migration runs. Refresh workspace tabs. Minimal report references can now persist in a draft’s selected data scope; older scopes remain valid. Report-backed previews, field inspection and selected edits rerun supported SPL as the current user in the original report app, including compatible chains. Schedules, owner execution and cached results are not copied or impersonated. Changed report bases require reselection; new calculations retain the native reference and use chains.
+
+Keep namespace/ancestry validation, source resolution, preview handles, profiling and authoring separate. Requalify same-name lookup/macro distinctions, app/user/session tampering, cancellation, results-only delivery recovery, private-report denial, field-note cache identity, selected edits, tokens, reopening and both native versions. Raw query requests cannot choose a foreign namespace. App-qualified handles carry a signed app; legacy handles remain short-lived and Constellation-only. Both poll and cancellation verify native job ownership/app. Focused per-row report additions use a small compiled suffix plan; requalify source collisions, stale selection/context, preserved original work, explicit column lists and empty-header feedback. Both existing inclusion choices can copy compatible app-dependent chain dependencies into fresh private destination objects. App-specific extraction configuration, owner/cache parity and opaque graphs remain separate gates.
+
 ## 0.42 report-app lookup copies
 
 No draft, credential or native-dashboard migration runs. Refresh workspace tabs. Portable writers/readers remain version 5 (readers also retain versions 1–4). The existing report and knowledge export choices can include supported CSV dependencies from a report’s original app. Reads retain the caller and validate the native job’s exact app; foreign lookup names are flattened into distinct portable aliases before import. Same-named dependencies remain separate. Imported objects remain fresh private Constellation copies. No original report, macro, lookup or ACL changes. Foreign reports with unresolved lookup dependencies now refuse bounded preview instead of resolving a same-name lookup in the wrong app; use native Studio or an explicit compatible portable copy.

@@ -1,19 +1,13 @@
 """Resolve native source references under the caller; never dispatch as a report owner.
 
-Report previews replay guarded SPL in Constellation's bounded current-user jobs.
+Report previews replay guarded SPL in bounded current-user jobs in the report app.
 They deliberately do not impersonate a scheduled job or change a report.
 """
-import re
 from urllib.parse import quote
 from provider_service import ProviderError
-from search_references import lookup_calls, macro_calls
+from search_context import report_reference
 
-REPORT_WARNING = 'Report preview reruns permitted SPL as your user in the selected time range. Native Studio can use report permissions, app context and scheduled cached results instead.'
-
-
-def guard_report_context(query, app):
-    if app != 'constellation' and (lookup_calls(query) or macro_calls(query)):
-        raise ProviderError('This report uses app-specific lookup or macro dependencies. Preview it in native Studio, or export a copy with its report search and compatible dependencies.', 422, 'report_app_context')
+REPORT_WARNING = 'Report preview reruns permitted SPL as your user in the report app and selected time range. Native Studio may use different report execution permissions and scheduled cached results.'
 
 
 def expand_macros(runtime, query, app='constellation'):
@@ -29,12 +23,11 @@ class SourceResolver:
         self.reports = {}
         self.used_report = False
         self.report_app = 'constellation'
+        self.report_reference = None
 
     def report(self, options):
-        ref, app = options.get('ref'), options.get('app', 'constellation')
-        if (not isinstance(ref, str) or not 1 <= len(ref) <= 256 or any(ord(c) < 32 for c in ref)
-                or not isinstance(app, str) or not re.fullmatch(r'[A-Za-z0-9_][A-Za-z0-9_.-]{0,99}', app)):
-            raise ProviderError('A report source needs an exact report name and a valid app.', 422, 'report_reference')
+        reference = report_reference({'ref': options.get('ref'), 'app': options.get('app', 'constellation')})
+        ref, app = reference['ref'], reference['app']
         key = (app, ref)
         if key not in self.reports:
             path = '/servicesNS/' + quote(self.runtime.user, safe='') + '/' + quote(app, safe='') + '/saved/searches/' + quote(ref, safe='')
@@ -46,13 +39,10 @@ class SourceResolver:
             query = content.get('search')
             if content.get('disabled') in (True, 1, '1', 'true') or not isinstance(query, str) or not query.strip():
                 raise ProviderError('This report is disabled or has no usable search.', 422, 'report_unavailable')
-            expanded = expand_macros(self.runtime, query, app)
-            # Bounded preview jobs run in Constellation. A warning cannot make
-            # a foreign same-name lookup safe to resolve in this namespace.
-            guard_report_context(expanded, app)
-            self.reports[key] = expanded
+            self.reports[key] = expand_macros(self.runtime, query, app)
         self.used_report = True
         self.report_app = app
+        self.report_reference = reference
         return self.reports[key], 'spl'
 
     def resolve(self, sources, identifier, seen=None):
@@ -72,16 +62,33 @@ class SourceResolver:
             raise ProviderError('Provide a query for this native search source.', 422, 'source_reference')
         if source.get('type') == 'ds.chain':
             parent, language = self.resolve(sources, options.get('extend', source.get('extend')), seen)
-            guard_report_context(query, self.report_app)
-            return parent.rstrip() + ' | ' + query.lstrip('| ').strip(), language
+            transform = expand_macros(self.runtime, query, self.report_app)
+            return parent.rstrip() + ' | ' + transform.lstrip('| ').strip(), language
         if source.get('type') not in ('ds.search', 'ds.spl2'):
             raise ProviderError('This source requires native Studio execution.', 422, 'source_reference')
         self.report_app = 'constellation'
+        self.report_reference = None
         return expand_macros(self.runtime, query), 'spl2' if source['type'] == 'ds.spl2' else 'spl'
 
 
 def preview_query(runtime, body):
-    if 'sourceRequest' not in body: return body.get('query'), body.get('language', 'spl'), ''
+    if 'sourceRequest' not in body:
+        if 'report' not in body: return body.get('query'), body.get('language', 'spl'), '', 'constellation'
+        resolver = SourceResolver(runtime)
+        reference = report_reference(body['report'])
+        base, language = resolver.report(reference)
+        if body.get('language', 'spl') != language:
+            raise ProviderError('Keep this report search in its native SPL language.', 422, 'report_scope')
+        query = body.get('query', base)
+        if not isinstance(query, str) or not 1 <= len(query) <= 8000:
+            raise ProviderError('Provide a report-based query under 8000 characters.', 422, 'report_scope')
+        query = expand_macros(runtime, query, resolver.report_app)
+        from search_scope import scoped_suffix
+        if scoped_suffix(query, {'baseQuery': base, 'scope': {}}) is None:
+            raise ProviderError('Keep the current report search as the base, then append transforms. Reselect the report panel if its search changed.', 422, 'report_scope')
+        from token_service import resolve_query_tokens
+        return resolve_query_tokens(query, {}, body.get('tokens')), language, REPORT_WARNING, resolver.report_app
+    if 'report' in body: raise ProviderError('Choose one native source reference.', 422, 'report_reference')
     request = body['sourceRequest']
     if not isinstance(request, dict) or set(request) - {'sources', 'id', 'tokens'}:
         raise ProviderError('The native preview source request is invalid.')
@@ -89,4 +96,4 @@ def preview_query(runtime, body):
     query, language = resolver.resolve(request.get('sources'), request.get('id'))
     from token_service import resolve_query_tokens
     query = resolve_query_tokens(query, {}, request.get('tokens'))
-    return query, language, REPORT_WARNING if resolver.used_report else ''
+    return query, language, REPORT_WARNING if resolver.used_report else '', resolver.report_app

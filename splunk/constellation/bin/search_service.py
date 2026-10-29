@@ -7,8 +7,9 @@ from provider_service import ProviderError
 from compatibility import feature_profile
 from native_transport import native_read_retry, transport_failure
 from studio_inventory import native_types
+from search_context import results_namespace, RANGES
 
-TIME_RANGES = {'-15m', '-1h', '-24h', '-7d'}
+TIME_RANGES = RANGES
 
 READ_COMMANDS = {'search', 'from', 'makeresults', 'stats', 'timechart', 'chart', 'eval',
                  'where', 'fields', 'table', 'rename', 'sort', 'head', 'bin', 'dedup',
@@ -139,16 +140,15 @@ class SearchService:
             resource, _, query = path.partition('?')
             parameters = {'output_mode': 'json', 'count': '100'}
             parameters.update(parse_qsl(query, keep_blank_values=True))
-            response, raw = native_read_retry(splunk.rest.simpleRequest, resource, self.namespace, method, self.request_timeout,
+            result_namespace = results_namespace(self.user, resource)
+            response, raw = native_read_retry(splunk.rest.simpleRequest, resource, result_namespace or self.namespace, method, self.request_timeout,
                 check_cancel=getattr(self, 'check_cancel', None), sessionKey=self.token,
                 getargs=parameters, postargs=fields, raiseAllErrors=True)
             # A finalized job can briefly report readiness before its results
             # endpoint supplies a body. 204 is pending, never an empty result or
             # invalid SPL. Only the owned preview-results reader handles it.
-            results = self.namespace + '/search/v2/jobs/'
             if (str(response.get('status')) == '204' and method == 'POST'
-                    and resource.startswith(results)
-                    and re.fullmatch(r'[A-Za-z0-9_.-]{1,200}/results', resource[len(results):])):
+                    and result_namespace):
                 return {'resultsPending': True}
             return json.loads(raw)
         except ProviderError:
@@ -217,8 +217,8 @@ class SearchService:
 
     def preview(self, body):
         from source_service import preview_query
-        raw_query, language, source_warning = preview_query(self, body)
-        query = self.guarded_query(raw_query, language)
+        raw_query, language, source_warning, app = preview_query(self, body)
+        query = self.guarded_query(raw_query, language, app)
         earliest = body.get('earliest', '-15m')
         if earliest not in TIME_RANGES:
             raise ProviderError('Choose a supported bounded preview time range.')
@@ -226,9 +226,9 @@ class SearchService:
             # Raw searches in fast mode omit fields not referenced by the SPL.
             # Inspection needs extracted metadata, under the same job limits.
             from preview_jobs import PreviewJobs
-            result = PreviewJobs(self).execute(query, earliest, field_discovery=True)
+            result = PreviewJobs(self, app).execute(query, earliest, field_discovery=True)
         else:
-            result = self.execute(query, earliest)
+            result = self.execute(query, earliest, app=app) if app != 'constellation' else self.execute(query, earliest)
         result['language'] = language
         if source_warning: result['warning'] = (result.get('warning', '') + ' ' + source_warning).strip()
         return result
@@ -241,31 +241,31 @@ class SearchService:
             return getattr(jobs, action)(body.get('handle'))
         if action != 'start': raise ProviderError('Choose a valid preview job action.')
         from source_service import preview_query
-        raw_query, language, source_warning = preview_query(self, body)
-        query = self.guarded_query(raw_query, language)
+        raw_query, language, source_warning, app = preview_query(self, body)
+        query = self.guarded_query(raw_query, language, app)
         earliest = body.get('earliest', '-15m')
         if earliest not in TIME_RANGES: raise ProviderError('Choose a supported preview time range.')
-        result = jobs.start(query, earliest)
+        result = PreviewJobs(self, app).start(query, earliest)
         if source_warning: result['sourceWarning'] = source_warning
         result['language'] = language
         return result
 
-    def execute(self, query, earliest='-15m'):
+    def execute(self, query, earliest='-15m', app='constellation'):
         """Internal discovery and validation use the same completion contract."""
         from preview_jobs import PreviewJobs
         if earliest not in TIME_RANGES: raise ProviderError('Choose a supported time range.')
-        return PreviewJobs(self).execute(query, earliest)
+        return PreviewJobs(self, app).execute(query, earliest)
 
-    def guarded_query(self, query, language='spl'):
+    def guarded_query(self, query, language='spl', app='constellation'):
         from dashboard_dependencies import DashboardDependencies
         from portable_knowledge import PortableKnowledge
         from search_references import lookup_calls
         from source_service import expand_macros
-        query = read_only_query(expand_macros(self, query), language)
+        query = read_only_query(expand_macros(self, query, app), language)
         knowledge = PortableKnowledge(self, DashboardDependencies(self).entry)
         for _, _, name, command in lookup_calls(query):
             if command in ('lookup', 'inputlookup'):
-                knowledge.lookup(name)  # No scripted/KV lookup execution.
+                knowledge.lookup(name, app)  # No scripted/KV lookup execution.
         return query
 
     def lookup_snapshot(self, filename, app='constellation'):
