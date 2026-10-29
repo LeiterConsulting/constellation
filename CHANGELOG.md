@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.39.0 — unreleased
+
+- Add one portable-export option for complete small static CSV lookup data and compatible ordinary macro inlining; preserve existing native objects and unrelated dashboard properties.
+- Resolve nested/parameterized macros with bounded arity, cycle and read-only checks. Fingerprint native definitions and detect destination mismatches instead of accepting a same-name dependency blindly.
+- Import CSVs under fresh private names with caller-native permissions, fixed secure staging, exact content/privacy readback and literal query remapping. Never replace existing files, broaden ACLs or replay uncertain writes.
+- Support guarded static CSV reads and compatible macro expansion in bounded previews and selected-source validation. Keep scripted/KV/advanced lookup matching and eval/validation macros native-only.
+- Recognize only exact successful CSV INFO notices without relaxing warning, completion, resource or result limits. Compare lookup content independently of native field-metadata ordering.
+- Write portable version 3, retain version-1/2 readers, and explain native sharing/app-context requirements in the existing dialog.
+- Record final-package creation/editing checks across all three providers, including a retained OpenAI creation rejection and successful independent rerun. This remains a development preview.
+
 ## 0.38.0 — unreleased
 
 - Add upload/reuse and portable transfer of passive SVG choropleth maps through Studio’s native image collection, preserving bindings, handlers and geometry on selected replacement.

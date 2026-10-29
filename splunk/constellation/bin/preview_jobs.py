@@ -44,6 +44,12 @@ def number(value):
     except (ValueError, TypeError): return None
 
 
+def benign_lookup_notice(message):
+    return (isinstance(message, dict) and message.get('type') == 'INFO'
+            and isinstance(message.get('text'), str)
+            and re.fullmatch(r"(?:Successfully read lookup file '[^'\r\n]+\.csv'|Assuming implicit lookup table with filename '[A-Za-z_][A-Za-z0-9_.-]{0,199}\.csv')\.", message['text']) is not None)
+
+
 class PreviewJobs:
     def __init__(self, runtime):
         self.runtime = runtime
@@ -132,7 +138,7 @@ class PreviewJobs:
         if len(raw_rows) > ROWS or (count is not None and count > ROWS): reasons.append('Only the first 200 result rows are shown.')
         # Missing metadata and upstream warnings never become a completeness claim.
         if not flag(meta.get('isDone')) or 'isFinalized' not in meta or count is None: reasons.append('Splunk did not verify completion.')
-        if any(m.get('type') in ('WARN', 'WARNING') for m in result.get('messages', [])) or meta.get('messages'):
+        if any(not benign_lookup_notice(m) for m in list(meta.get('messages', [])) + result.get('messages', [])):
             reasons.append('Splunk reported search diagnostics; results may be incomplete.')
         state = 'partial' if reasons else 'complete'
         return {'state': state, 'results': rows, 'fields': [{'name': name} for name in names], 'bounded': True,

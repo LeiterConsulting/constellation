@@ -10,6 +10,13 @@ from provider_service import ProviderError
 REPORT_WARNING = 'Report preview reruns permitted SPL as your user in the selected time range. Native Studio can use report permissions, app context and scheduled cached results instead.'
 
 
+def expand_macros(runtime, query, app='constellation'):
+    if not isinstance(query, str) or '`' not in query: return query
+    from dashboard_dependencies import DashboardDependencies
+    from portable_knowledge import PortableKnowledge
+    return PortableKnowledge(runtime, DashboardDependencies(runtime).entry).expand(query, app)
+
+
 class SourceResolver:
     def __init__(self, runtime):
         self.runtime = runtime
@@ -32,7 +39,7 @@ class SourceResolver:
             query = content.get('search')
             if content.get('disabled') in (True, 1, '1', 'true') or not isinstance(query, str) or not query.strip():
                 raise ProviderError('This report is disabled or has no usable search.', 422, 'report_unavailable')
-            self.reports[key] = query
+            self.reports[key] = expand_macros(self.runtime, query, app)
         self.used_report = True
         return self.reports[key], 'spl'
 
@@ -56,7 +63,7 @@ class SourceResolver:
             return parent.rstrip() + ' | ' + query.lstrip('| ').strip(), language
         if source.get('type') not in ('ds.search', 'ds.spl2'):
             raise ProviderError('This source requires native Studio execution.', 422, 'source_reference')
-        return query, 'spl2' if source['type'] == 'ds.spl2' else 'spl'
+        return expand_macros(self.runtime, query), 'spl2' if source['type'] == 'ds.spl2' else 'spl'
 
 
 def preview_query(runtime, body):

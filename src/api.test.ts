@@ -27,6 +27,10 @@ describe('native dashboard handoff', () => {
     }
     expect(retryableRead('run',{action:'poll'})).toBe(true);
     expect(retryableRead('preview_job',{action:'poll'})).toBe(true);
+    expect(retryableRead('dependencies',{action:'export'})).toBe(true);
+    expect(retryableRead('dependencies',{action:'check'})).toBe(true);
+    expect(retryableRead('dependencies',{action:'import'})).toBe(false);
+    expect(retryableRead('dependencies',{})).toBe(false);
   });
   it('bounds read recovery and does not retry validation, login or Stop', async () => {
     install(() => json({}));const fetcher=vi.mocked(fetch).mockRejectedValue(new TypeError('fixture-private'));
