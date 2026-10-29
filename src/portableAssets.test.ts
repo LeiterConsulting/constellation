@@ -51,7 +51,7 @@ describe('portable native assets',()=>{
   await expect(importPortable(file,()=>{})).rejects.toThrow('1 shared assets verified');expect(uploadAssetData).toHaveBeenCalledTimes(2);expect(d.visualizations.a.options!.icon).toBe('splunk-enterprise-kvstore://same');
  });
  it('bundles packaged choropleth SVGs and preserves version-1 files',async()=>{
-  const d=board();d.visualizations.map={type:'splunk.choropleth.svg',options:{svg:'/static/app/fixture/floor.svg'}};vi.mocked(readAssetData).mockResolvedValue({name:'icon.svg',dataURI:svgDataUri(svg)});vi.mocked(readPackagedAsset).mockResolvedValue({name:'floor.svg',dataURI:svgDataUri(svg)});const file=await exportPortable(d,()=>{});expect(file.version).toBe(4);expect(file.assets).toHaveLength(2);expect(file.definition.visualizations.map.options!.svg).toMatch(/^splunk-enterprise-kvstore:\/\/packaged_/);expect(await readPortable(file)).toEqual(file);const old=await exportPortable(board(),()=>{});old.version=1;delete old.lookups;expect((await readPortable(old)).version).toBe(1);
+  const d=board();d.visualizations.map={type:'splunk.choropleth.svg',options:{svg:'/static/app/fixture/floor.svg'}};vi.mocked(readAssetData).mockResolvedValue({name:'icon.svg',dataURI:svgDataUri(svg)});vi.mocked(readPackagedAsset).mockResolvedValue({name:'floor.svg',dataURI:svgDataUri(svg)});const file=await exportPortable(d,()=>{});expect(file.version).toBe(5);expect(file.assets).toHaveLength(2);expect(file.definition.visualizations.map.options!.svg).toMatch(/^splunk-enterprise-kvstore:\/\/packaged_/);expect(await readPortable(file)).toEqual(file);const old=await exportPortable(board(),()=>{});old.version=1;delete old.lookups;expect((await readPortable(old)).version).toBe(1);
  });
  it('imports validated lookup copies before media and preserves the returned query remapping',async()=>{
   const definition=board();definition.dataSources={s:{type:'ds.search',options:{query:'| inputlookup fixture.csv'}}};
@@ -77,6 +77,12 @@ describe('portable native assets',()=>{
   expect((await readPortable(file)).lookups?.[0].matching).toEqual(file.lookups[0].matching);
   await expect(readPortable({...file,version:3})).rejects.toThrow('portable lookups');
   delete file.lookups[0].matching;expect((await readPortable({...file,version:3})).lookups).toEqual(file.lookups);
+ });
+ it('retains filtered temporal settings only in v5 files and still reads static v4',async()=>{
+  const file=await exportPortable(createBlank(),()=>{});file.lookups=[{kind:'lookup',name:'fixture',app:'constellation',fields:['device','stamp'],rows:[['A','1704067200']],matching:{filter:'device="A"',time_field:'stamp',time_format:'%s',max_offset_secs:'600'},fingerprint:'a'.repeat(64)}];
+  expect((await readPortable(file)).lookups?.[0].matching).toEqual(file.lookups[0].matching);
+  await expect(readPortable({...file,version:4})).rejects.toThrow('version 5');
+  file.lookups[0].matching={case_sensitive_match:'false'};expect((await readPortable({...file,version:4})).lookups).toEqual(file.lookups);
  });
  it('measures Unicode lookup and whole-file limits in UTF-8 bytes',async()=>{
   const file=await exportPortable(createBlank(),()=>{});

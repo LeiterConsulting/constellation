@@ -137,7 +137,7 @@ class KnowledgeTests(unittest.TestCase):
             self.runtime.rows.update(change)
             with self.assertRaises(ProviderError): PortableKnowledge(self.runtime, self.entry).lookup('rooms.csv', include=True)
         self.runtime.rows = original
-        self.runtime.objects[('data/transforms/lookups', 'rooms')]['filter'] = 'room=cold'
+        self.runtime.objects[('data/transforms/lookups', 'rooms')]['filter'] = 'room=cold | stats count'
         with self.assertRaises(ProviderError): PortableKnowledge(self.runtime, self.entry).lookup('rooms', include=True)
     def test_complete_larger_table_and_supported_matching_are_integrity_bound(self):
         self.runtime.rows['results'] = [{'room': str(i), 'label': 'Value'} for i in range(5000)]
@@ -258,7 +258,7 @@ class MatchingTests(unittest.TestCase):
         self.assertEqual(matching_options({'case_sensitive_match': '1', 'batch_index_query': True, 'max_matches': '100', 'min_matches': '0', 'match_type': 'EXACT', 'CLEAN_KEYS': '1'}), {})
         self.assertEqual(matching_options({'case_sensitive_match': 0, 'reverse_lookup_honor_case_sensitive_match': False, 'match_type': 'CIDR(ip),WILDCARD(host)'}), {'case_sensitive_match': 'false', 'reverse_lookup_honor_case_sensitive_match': 'false', 'match_type': 'CIDR(ip), WILDCARD(host)'})
     def test_unsupported_noncanonical_or_invalid_options_and_missing_headers_refuse(self):
-        for value in ({'time_field': '_time'}, {'filter': 'a=b'}, {'future': 'nonempty'}, {'CLEAN_KEYS': 'false'}, {'case_sensitive_match': 'no'}, {'max_matches': '1001'}, {'max_matches': '0'}, {'min_matches': '2', 'max_matches': '1'}, {'default_match': '\x00'}, {'match_type': 'CIDR(ip), WILDCARD(ip)'}, {'match_type': 'CIDR($ip$)'}, {'disabled': '1'}):
+        for value in ({'time_field': 'bad field'}, {'filter': 'a=b | stats count'}, {'future': 'nonempty'}, {'CLEAN_KEYS': 'false'}, {'case_sensitive_match': 'no'}, {'max_matches': '1001'}, {'max_matches': '0'}, {'min_matches': '2', 'max_matches': '1'}, {'default_match': '\x00'}, {'match_type': 'CIDR(ip), WILDCARD(ip)'}, {'match_type': 'CIDR($ip$)'}, {'disabled': '1'}):
             with self.subTest(value=value), self.assertRaises(ProviderError): matching_options(value)
         for value in ({'filename': 'a.csv'}, {'case_sensitive_match': '0'}, {'max_matches': '100'}, {'max_matches': 1}, {'match_type': 'CIDR(ip),WILDCARD(host)'}):
             with self.subTest(value=value), self.assertRaises(ProviderError): matching_options(value, strict=True)
