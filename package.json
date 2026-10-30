@@ -38,7 +38,7 @@
     "@xmldom/xmldom": "0.8.15",
     "typescript": "5.9.3",
     "vite": "7.3.7",
-    "vitest": "4.1.12"
+    "vitest": "5.0.5"
   },
   "description": "A conversational canvas for Splunk Dashboard Studio dashboards.",
   "repository": {
