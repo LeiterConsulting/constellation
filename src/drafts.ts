@@ -17,7 +17,10 @@ export interface DraftSnapshot {
   pagePurposes?: Record<string, string>;
 }
 export interface DraftSummary { id: string; title: string; version: number; updatedAt: string; deletedAt: string | null; kind: 'draft' | 'native_backup'; }
-export interface DraftRecord extends DraftSummary { state: DraftSnapshot; }
+export interface DraftRecord extends DraftSummary { state: DraftSnapshot;
+  writeReceipt?: { id: string; baseVersion: number; version: number; digest: string };
+  saveNotice?: 'recent_pointer_unavailable';
+}
 export interface DraftList { drafts: DraftSummary[]; trash: DraftSummary[]; activeId: string | null; owner?: string; }
 export const newDraftId = () => Array.from(crypto.getRandomValues(new Uint8Array(16)), byte => byte.toString(16).padStart(2, '0')).join('');
 export const openDraft = (id: string) => providerRequest<DraftRecord>('drafts', { action: 'open', id });
@@ -26,8 +29,19 @@ export const draftSignature = (state: DraftSnapshot) => JSON.stringify(state, (_
   value && typeof value === 'object' && !Array.isArray(value)
     ? Object.fromEntries(Object.keys(value).sort().map(key => [key, value[key]])) : value);
 
-type Writer = (id: string, version: number, state: DraftSnapshot) => Promise<DraftRecord>;
-export interface DraftWrite { version: number; state: DraftSnapshot; }
+type Writer = (id: string, version: number, state: DraftSnapshot, writeId: string) => Promise<DraftRecord>;
+export interface DraftWrite { version: number; state: DraftSnapshot; writeId?: string; }
+export interface DraftSaveDiagnostic { stage: string; expectedVersion: number; storedVersion?: number; writeId?: string; }
+export const draftSaveDetails = (error: unknown) => {
+  const detail = (error as { draftDiagnostics?: DraftSaveDiagnostic } | null)?.draftDiagnostics;
+  return detail ? `${detail.stage} · expected revision ${detail.expectedVersion}${detail.storedVersion !== undefined ? ` · stored revision ${detail.storedVersion}` : ''}${detail.writeId ? ` · save ${detail.writeId}` : ''}` : '';
+};
+function confirmsWrite(record: DraftRecord, id: string, issued: DraftWrite) {
+  return record.id === id && record.version === issued.version + 1
+    && draftSignature(record.state) === draftSignature(issued.state)
+    && (!record.writeReceipt || !issued.writeId || (record.writeReceipt.id === issued.writeId
+      && record.writeReceipt.baseVersion === issued.version && record.writeReceipt.version === record.version));
+}
 /** Serializes saves per document; concurrent tabs still use server revision checks. */
 export class DraftSync {
   private saved = new Map<string, { version: number; signature: string }>();
@@ -35,7 +49,7 @@ export class DraftSync {
   private writing = new Map<string, DraftWrite>();
   private previousWrite = new Map<string, DraftWrite>();
   onChange = () => {};
-  constructor(private writer: Writer = (id, version, state) => providerRequest<DraftRecord>('drafts', { action: 'save', id, version, schemaVersion: 3, state }), private reader = readDraft) {}
+  constructor(private writer: Writer = (id, version, state, writeId) => providerRequest<DraftRecord>('drafts', { action: 'save', id, version, writeId, schemaVersion: 3, state }), private reader = readDraft) {}
   adopt(record: DraftRecord) { this.saved.set(record.id, { version: record.version, signature: draftSignature(record.state) }); this.previousWrite.delete(record.id); }
   resume(id: string, version: number, issued?: DraftWrite) {
     this.saved.set(id, { version, signature: '' });
@@ -53,28 +67,41 @@ export class DraftSync {
       let saved = this.saved.get(id);
       if (saved?.signature === signature) return { id, version: saved.version, state: captured } as DraftRecord;
       for (let attempt = 0; attempt < 2; attempt++) {
-        this.writing.set(id, { version: saved?.version || 0, state: captured }); this.onChange();
+        const issuedNow = { version: saved?.version || 0, state: captured, writeId: newDraftId() };
+        this.writing.set(id, issuedNow); this.onChange();
         let record: DraftRecord;
-        try { record = await this.writer(id, saved?.version || 0, captured); }
+        try { record = await this.writer(id, issuedNow.version, captured, issuedNow.writeId); }
         catch (error) {
+          if (error instanceof Error && !(error as Error & { draftDiagnostics?: DraftSaveDiagnostic }).draftDiagnostics) {
+            (error as Error & { draftDiagnostics: DraftSaveDiagnostic }).draftDiagnostics = {
+              stage: 'response', expectedVersion: issuedNow.version, writeId: issuedNow.writeId,
+            };
+          }
           const issued = this.previousWrite.get(id);
           if (!attempt && (error as { code?: string })?.code === 'draft_conflict' && issued?.version === (saved?.version || 0)) {
             // The old tab's save can commit after our refresh read. Rebase only on its exact receipt.
             let confirmed: DraftRecord | undefined;
             try { confirmed = await this.reader(id); } catch { /* Keep the original conflict. */ }
-            if (confirmed && confirmed.version === issued.version + 1 && draftSignature(confirmed.state) === draftSignature(issued.state)) {
-              this.adopt(confirmed); saved = this.saved.get(id); continue;
+            if (confirmed && confirmsWrite(confirmed, id, issued)) {
+              this.adopt(confirmed); saved = this.saved.get(id);
+              if (saved?.signature === signature) return confirmed;
+              continue;
             }
           }
           // A lost write response is not permission to write again. Confirm by readback.
-          if (!(error instanceof AppDeliveryError)) throw error;
+          if (!(error instanceof AppDeliveryError) && (error as { code?: string })?.code !== 'draft_write_uncertain') throw error;
           uncertain = true;
+          this.previousWrite.set(id, structuredClone(issuedNow));
           try {
             const confirmed = await this.reader(id);
-            if (draftSignature(confirmed.state) !== signature) throw error;
+            if (!confirmsWrite(confirmed, id, issuedNow)) throw error;
             record = confirmed;
             uncertain = false;
           } catch { throw error; }
+        }
+        if (record.id !== id || record.version <= issuedNow.version || draftSignature(record.state) !== signature) {
+          uncertain = true; this.previousWrite.set(id, structuredClone(issuedNow));
+          throw new AppDeliveryError('The saved draft response did not match this save. Your work is preserved.');
         }
         this.adopt(record); return record;
       }

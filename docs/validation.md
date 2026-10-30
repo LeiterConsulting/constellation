@@ -1,8 +1,36 @@
 # Release evidence
 
-This page summarizes the **Constellation 1.0.0** qualification recorded on October 29, 2026. The [detailed record](reference/validation-1.0.md) retains timings, faults, setup/cleanup and superseded-candidate information. Private hosts, keys, indexed rows, user files and lab screenshots remain outside Git.
+Current release: **Constellation 1.0.1 / build 61**, qualified October 30, 2026. The patch retains the bounded Enterprise support profile. The earlier [1.0 record](reference/validation-1.0.md) preserves the original runtime, failures and upgrade/rollback evidence. Private hosts, keys, indexed rows, user files and lab screenshots remain outside Git.
 
-## Qualified package
+## 1.0.1 — October 30, 2026
+
+The qualified candidate bytes are retained for the 1.0.1 release. These patch checks supplement the earlier 1.0.0 qualification below.
+
+| Item | Recorded result |
+| --- | --- |
+| Package | 1.0.1 / build 61; SHA-256 `8f875e0a204630589df32c1bec8b8d4e6e4d50d49fd01b6951c38617b4b79515` |
+| Archive | 545 regular files / 5,574,733 bytes; one app root; no macOS sidecars or extended tar metadata |
+| Release | [v1.0.1](https://github.com/LeiterConsulting/constellation/releases/tag/v1.0.1) |
+| Installation | Same archive on Enterprise 10.2.8 and 10.4.4; no restart required |
+| Offline checks | 637 Python / 151 frontend tests passed; Node 22 production build and browser budget passed |
+| AppInspect 4.2.1 precert | 0 errors / 0 failures / 0 future failures; 7 warning checks / 1 skipped |
+| Repeated ordinary-author flows | Three two-page creation/edit cycles per provider: OpenAI, Ollama and managed AITK; all nine completed with exact draft reopen and private native definition readback |
+| Recovery | One OpenAI creation used the existing bounded repair loop; the other seventeen cohort turns completed without repair. Temperature-cutoff and independent-measurement probes passed separately |
+| Page scheduling | An existing eight-page, 65-tile, 32-source operational dashboard reached later-page sources, including graph auxiliary sources and dynamic inputs; original definitions and conversation remained unchanged |
+| Browser flows | All three providers: selected-table chat edits, live preview rows and overview/detail/return navigation; normal Studio rendering and row/return checks. An edited AITK draft also passed the app’s save-private-copy dialog and exact native readback |
+| Save diagnosis | A controlled response disconnect was confirmed by exact readback/receipt. A real stale-browser conflict retained the winning revision; the existing save-as-new action preserved the browser's work |
+
+The cohort used direct OpenAI **gpt-6-luna**, Ollama **qwen3-coder:latest** and the existing managed AITK connection. Creation took approximately 28–46 seconds for direct OpenAI, 14–28 seconds for Ollama and 26–30 seconds for AITK in this small concurrent lab exercise. These are observed samples, not a latency guarantee or comparison of equivalent models/hardware. Ordinary authors had no native credential-store capabilities.
+
+The preview retains 200-row/five-second query limits and an eight-consumer-source bound **per active page**. Capped operational and detail results remained partial. Page switching was exercised in the browser; late-result exclusion, effective-token caching, expiry and input/error distinctions also have offline regression coverage.
+
+The recent-pointer failure is a reproduced post-commit failure path, not a confirmed explanation for every earlier save conflict. Its fix keeps an already verified primary save successful. True concurrent edits still require preserving both versions. The patch does not change native document schema, query/measurement validation, draft schema 3, portable format 5 or credential permissions. Temporary authors, the copied provider key and private test objects were removed; existing administrator settings and the operational demo were preserved.
+
+The AppInspect warnings cover bundled Splunk library telemetry, Python compatibility notices, admin-only Cloud role differences and a vendor schema's example IP string. They do not establish Cloud approval. This remains bounded single-search-head Enterprise qualification, without a new independent review, SHC coordination or complete Studio parity claim.
+
+## 1.0.0 — October 29, 2026
+
+### Qualified package
 
 | Item | Recorded value |
 | --- | --- |
@@ -16,7 +44,7 @@ This page summarizes the **Constellation 1.0.0** qualification recorded on Octob
 
 The release app bytes were not rebuilt for the documentation refresh. Documentation images are [synthetic local UI captures](screenshots.md), separate from qualification.
 
-## What was checked
+### What was checked
 
 | Evidence | Result | What it establishes |
 | --- | --- | --- |
@@ -34,7 +62,7 @@ The release app bytes were not rebuilt for the documentation refresh. Documentat
 
 The direct models were OpenAI **gpt-6-luna** and Ollama **qwen3-coder:latest**. AITK 6.1/6.2 used **OpenAI gpt-5-mini**, with a recorded **16,000-token / LOW** configuration. Connection tests and authoring qualification are separate; other models are not automatically covered.
 
-## Interpretation and retained failures
+### Interpretation and retained failures
 
 Capped live previews in the operational-data cohort remained labelled **partial**. Tiny synthetic transformation probes separately checked missing-value/count/temperature rules. Neither result proves every business calculation is correct.
 
@@ -42,7 +70,7 @@ The detailed record preserves preparatory harness errors, superseded candidates 
 
 Human/independent reviews remain follow-up work. No unaided-user success rate, independent human security audit, full native parity, production SLA, SHC coordination or Cloud approval is claimed.
 
-## 1.0.0 technical release candidate — October 29, 2026
+### 1.0.0 technical release candidate — October 29, 2026
 
 This heading preserves the original qualification link. Read the [complete dated 1.0 record](reference/validation-1.0.md#100-technical-release-candidate--october-29-2026). The accepted candidate bytes were published unchanged.
 

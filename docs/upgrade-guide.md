@@ -18,6 +18,8 @@ Use **Install app from file** in Splunk app management and deliberately select i
 
 Constellation 1.0 retains **draft schema 3** and **portable format 5**. No credential, draft, media or native-view migration runs for the qualified 0.43-to-1.0 path. Content-derived browser/handler names prevent stale assets and workers, but a version label alone does not prove the new runtime loaded.
 
+Version 1.0.1 also retains schema 3 and portable format 5. Its optional save receipts are metadata beside the snapshot, not new conversation fields. Older records need no migration; receipts must match the stored revision and content before they are used. The 1.0.0-to-1.0.1 update was checked on both recorded Enterprise targets without a restart. Follow your own instance's restart indication and refresh old workspace tabs. The [1.0.1 qualification](validation.md#101--october-30-2026) is separate from the earlier 1.0 rollback cycle.
+
 ## Verify after updating
 
 As an intended ordinary author:

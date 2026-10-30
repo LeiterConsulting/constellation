@@ -1,19 +1,20 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { isSplunk } from './api';
-import { DraftSync, type DraftSnapshot, type DraftRecord } from './drafts';
+import { DraftSync, draftSaveDetails, type DraftSnapshot, type DraftRecord } from './drafts';
 import { DraftRecovery } from './draftRecovery';
 
 export function useDraftPersistence(id: string, snapshot: DraftSnapshot, ready: boolean) {
   const [sync] = useState(() => new DraftSync());
   const [status, setStatus] = useState('Loading drafts…');
   const [error, setError] = useState('');
+  const [diagnostic, setDiagnostic] = useState('');
   const [recovery] = useState(() => new DraftRecovery());
   const owner = useRef('');
   const [protectedRefresh, setProtectedRefresh] = useState(true);
   const current = useRef({ id, snapshot }); current.current = { id, snapshot };
   const adopt = useCallback((record: DraftRecord, pending = false) => {
     if (pending) sync.resume(record.id, record.version); else sync.adopt(record);
-    setError(''); setStatus(pending ? 'Saving draft…' : 'Draft saved');
+    setError(''); setDiagnostic(''); setStatus(pending ? 'Saving draft…' : 'Draft saved');
   }, [sync]);
   const restore = useCallback((user: string, identifier: string, record: DraftRecord | null, deleted = false) => {
     owner.current = user;
@@ -39,10 +40,10 @@ export function useDraftPersistence(id: string, snapshot: DraftSnapshot, ready: 
     try {
       await sync.save(captured.id, captured.snapshot);
       checkpoint();
-      if (current.current.id === captured.id) { setError(''); setStatus(sync.matches(captured.id, current.current.snapshot) ? 'Draft saved' : 'Saving draft…'); }
+      if (current.current.id === captured.id) { setError(''); setDiagnostic(''); setStatus(sync.matches(captured.id, current.current.snapshot) ? 'Draft saved' : 'Saving draft…'); }
       return true;
     } catch (failure) {
-      if (current.current.id === captured.id) { setError(failure instanceof Error ? failure.message : 'Draft could not be saved.'); setStatus('Not saved'); }
+      if (current.current.id === captured.id) { setError(failure instanceof Error ? failure.message : 'Draft could not be saved.'); setDiagnostic(draftSaveDetails(failure)); setStatus('Not saved'); }
       return false;
     }
   }, [sync, checkpoint]);
@@ -63,5 +64,5 @@ export function useDraftPersistence(id: string, snapshot: DraftSnapshot, ready: 
     window.addEventListener('beforeunload', protect);
     return () => window.removeEventListener('beforeunload', protect);
   }, [ready, checkpoint]);
-  return { adopt, restore, flush, sync, status: !protectedRefresh && status !== 'Draft saved' ? `${status} Keep this tab open until saved.` : status, error };
+  return { adopt, restore, flush, sync, status: !protectedRefresh && status !== 'Draft saved' ? `${status} Keep this tab open until saved.` : status, error, diagnostic };
 }

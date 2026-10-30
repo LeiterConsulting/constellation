@@ -103,7 +103,7 @@ def main():
         'Install the enclosed ' + package.name + ' through Splunk app management using [installation](docs/installation.md). Verify SHA256SUMS before use.\n\n'
         'The [documentation index](docs/README.md) separates author, administrator and developer paths. [Support scope](docs/support-policy.md) and [security](SECURITY.md) describe limits and data handling.\n\n'
         'First-party code and documentation use the [MIT License](LICENSE). Keep this license with redistributed copies; third-party notices remain in the app archive.\n\n'
-        'The app bytes are the qualified 1.0 release. Documentation images are local synthetic examples, not live acceptance evidence.\n').encode()
+        'The app bytes match the qualified ' + VERSION + ' package recorded in docs/validation.md. Documentation images are local synthetic examples, not live acceptance evidence.\n').encode()
     local = {name: data.decode() if name.endswith('.md') else None for name, data in files.items()}
     findings = link_findings(local)
     if findings:

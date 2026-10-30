@@ -116,7 +116,7 @@ export default function App({ initialColorScheme }: { initialColorScheme: 'light
   const [environmentError, setEnvironmentError] = useState('');
   const dialogOpen = !!(imagesOpen || modal || pagesOpen || settingsOpen || saveOpen || detailsOpen || environmentOpen || dataChooser);
   const previewEarliest = dataContext?.earliest || nativePreviewRange(revision.definition);
-  const searches = useSearchPreview(revision.definition, tokens, previewEarliest);
+  const searches = useSearchPreview(revision.definition, tokens, previewEarliest, activeTab);
   revisionRef.current = revision;
   const empty = Object.keys(revision.definition.visualizations).length === 0 && Object.keys(revision.definition.inputs || {}).length === 0;
   const hasConversation = messages.some(message => message.user);
@@ -358,7 +358,7 @@ export default function App({ initialColorScheme }: { initialColorScheme: 'light
         const id = newDraftId();
         try { const record = await persistence.sync.save(id, { ...snapshot, definition: { ...snapshot.definition, title: `${snapshot.definition.title || 'Dashboard'} · copy` } }); activate(record.state.definition, record); }
         catch (failure) { setStatus(failure instanceof Error ? failure.message : 'A new draft could not be saved.'); }
-      })()}>Save as new draft</Button></Actions></MessageBar> : null}
+      })()}>Save as new draft</Button></Actions>{persistence.diagnostic ? <details><summary>Save details</summary><Muted>{persistence.diagnostic}</Muted></details> : null}</MessageBar> : null}
       {selecting?<Muted role="status">Select an element on the canvas to focus the conversation. Escape cancels; the focus list also supports keyboard selection.</Muted>:null}
       {unavailableDraft ? <EmptyCanvas $floating={floating && !collapsed} aria-label="Unavailable draft">
         <h2>This draft isn’t available.</h2>

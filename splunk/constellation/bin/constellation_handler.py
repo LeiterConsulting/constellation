@@ -86,6 +86,8 @@ class ConstellationHandler(PersistentServerConnectionApplication):
                 payload['validationError'] = error.validation_error
             if getattr(error, 'recovery', None):
                 payload['recovery'] = error.recovery
+            if getattr(error, 'draft_diagnostics', None):
+                payload['draftDiagnostics'] = error.draft_diagnostics
             return {'status': error.status, 'payload': payload, 'headers': {'Cache-Control': 'no-store'}}
         except Exception as error:
             # Framework/transport exceptions can contain secrets. Never echo or log them.
