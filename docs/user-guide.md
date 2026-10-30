@@ -1,6 +1,6 @@
 # Constellation user guide
 
-Create a dashboard from a question and Splunk data, refine it through chat, and save a native Dashboard Studio copy. This guide describes version **1.0.0**.
+Create a dashboard from a question and Splunk data, refine it through chat, and save a native Dashboard Studio copy. This guide describes version **1.0.1**.
 
 **Before you begin:** Constellation must be installed in Splunk, your account must be able to search the chosen data, and a provider must be configured. If **Settings** or **Test model** needs attention, follow [provider setup](providers.md) or ask your administrator.
 
@@ -63,6 +63,8 @@ Check the default view, at least two selections where data permits, and the retu
 
 For dependent inputs, describe the parent and child choices. Native cascading reset is version-gated; earlier targets can use dependent searches with separately configured resets. An unset required input waits for a choice rather than inventing results.
 
+Previews follow the active page, including its charts, page inputs and global inputs. Switching pages cancels obsolete preview work. Fresh unchanged results can be reused for up to one minute; use the dataset/time menu's **Refresh searches** for current results. Each page previews up to eight consumer sources, with 200 rows and five seconds per query. Use **Search details** for partial, waiting, failed or stale evidence, and native Studio when a page exceeds the preview limit.
+
 For a table trend, ask for a **native sparkline column** alongside scalar metrics. Older Studio targets render missing sparkline buckets as zero; Constellation asks whether to accept labelled zero fill or use a separate trend chart. Review [native coverage](native-coverage.md#tables-and-sparklines) before interpreting gaps.
 
 ## Save, reopen and restore
@@ -79,6 +81,8 @@ Drafts save privately in Splunk with their conversation, brief, selected data, p
 | Reopen the same page and focus | **More → Copy draft link**. The link still requires the owning user. |
 
 During **Saving draft…**, small pending changes can recover within the same tab's storage limits. **Keep this tab open until saved** means you should wait before refresh or closure. The tab copy expires after six hours and is not a backup across closed tabs. A conflict preserves local work and offers a separate copy.
+
+An uncertain save is checked against its exact stored state and revision before being confirmed. For a genuine conflict, choose **Save as new draft** to keep both versions. **Save details** expands to show the save stage, revisions and operation ID; include those controlled details when reporting a problem, without sharing the dashboard's content.
 
 Opening a missing, deleted or another user's draft does not create a replacement. Use **Dashboards** or deliberately choose **New dashboard**.
 

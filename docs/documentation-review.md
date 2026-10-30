@@ -1,5 +1,13 @@
 # Documentation assessment and closeout
 
+## 1.0.1 release edition — October 30, 2026
+
+The README, documentation index, installation/upgrade steps, author guide and troubleshooting now describe 1.0.1, active-page preview bounds and save-conflict diagnosis. Release links and the app checksum identify build 61; the app retains the exact bytes used for the recorded patch qualification. Historical 1.0.0 evidence remains dated separately.
+
+The illustrated PDF is regenerated from the current Markdown guide, with the retained, explicitly synthetic 1.0 screenshots. All six pages are rendered and visually checked. The handoff includes the matching app, current guides, PDF, images, MIT license, dependency notices and per-file checksums. Archive validation and download verification remain part of publication; see [development](development.md#publishing-a-release).
+
+## Original 1.0 assessment — October 29, 2026
+
 Reviewed October 29, 2026 against the released **1.0.0 / build 60** source, public contracts, qualification records and release downloads. This is an editorial/content assessment and operated visual inspection, not an unaided-user trial or an independent human security audit.
 
 ## Findings and changes

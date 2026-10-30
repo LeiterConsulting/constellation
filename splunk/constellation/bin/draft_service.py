@@ -21,6 +21,18 @@ def timestamp():
     return datetime.now(timezone.utc).isoformat()
 
 
+def state_digest(state):
+    return hashlib.sha256(json.dumps(state, sort_keys=True, separators=(',', ':'), ensure_ascii=True).encode('utf-8')).hexdigest()
+
+
+def save_error(message, status, code, stage, expected, stored=None, write_id=None):
+    error = ProviderError(message, status, code)
+    error.draft_diagnostics = {'stage': stage, 'expectedVersion': expected}
+    if stored is not None: error.draft_diagnostics['storedVersion'] = stored
+    if write_id: error.draft_diagnostics['writeId'] = write_id
+    return error
+
+
 def validate_snapshot(state):
     allowed = {'definition', 'messages', 'prompt', 'attachments', 'tokens', 'activeTab', 'selected',
                'suggestions', 'activity', 'saved', 'dataContext', 'searchesEnabled', 'pendingRequest', 'pagePurposes', 'brief'}
@@ -111,7 +123,17 @@ class DraftService:
                   'version': int(content.get('version', 0)), 'updatedAt': content.get('updated_at', ''),
                   'deletedAt': content.get('deleted_at') or None, 'kind': content.get('kind', 'draft'),
                   'schemaVersion': int(content.get('schema_version', 0))}
-        if include_state and 'state' in content: result['state'] = migrate_snapshot(json.loads(content['state']), result['schemaVersion'])
+        if include_state and 'state' in content:
+            result['state'] = migrate_snapshot(json.loads(content['state']), result['schemaVersion'])
+            # Receipts are optional metadata, outside draft schema 3. Old writers
+            # may leave stale metadata; never attribute it to a newer revision.
+            if (re.fullmatch(r'[a-f0-9]{32}', content.get('write_id', ''))
+                    and content.get('write_version') == str(result['version'])
+                    and content.get('write_digest') == state_digest(result['state'])
+                    and str(content.get('write_base', '')).isdigit()
+                    and int(content['write_base']) == result['version'] - 1):
+                result['writeReceipt'] = {'id': content['write_id'], 'baseVersion': int(content['write_base']),
+                                          'version': result['version'], 'digest': content['write_digest']}
         return result
 
     def listing(self):
@@ -139,32 +161,50 @@ class DraftService:
         if record['deletedAt'] and not deleted: raise ProviderError('This draft is in Trash. Restore it before editing.', 409)
         return record
 
-    def write(self, identifier, expected, state, deleted=None, kind='draft', extra=None, active=True):
+    def write(self, identifier, expected, state, deleted=None, kind='draft', extra=None, active=True, write_id=None):
         entry = self.entry(identifier)
         version = int(entry['content'].get('version', 0)) if entry else 0
         if type(expected) is not int or expected != version:
-            raise ProviderError('This draft changed in another session. Save your current work as a new draft to keep both versions.', 409, 'draft_conflict')
+            raise save_error('This draft changed in another session. Save your current work as a new draft to keep both versions.',
+                             409, 'draft_conflict', 'compare', expected, version, write_id)
         fields = {'title': state['definition'].get('title', '')[:200] or 'Untitled dashboard',
                   'state': json.dumps(state, separators=(',', ':'), ensure_ascii=True),
                   'version': str(version + 1), 'updated_at': timestamp(), 'deleted_at': deleted or '', 'kind': kind}
         old_state = migrate_snapshot(json.loads(entry['content']['state']), int(entry['content'].get('schema_version', 0))) if entry else None
         fields['history'] = draft_history.next_history(entry, state, old_state)
         fields['schema_version'] = str(SCHEMA_VERSION)
+        fields.update(write_id=write_id or '', write_base=str(version) if write_id else '',
+                      write_version=str(version + 1) if write_id else '', write_digest=state_digest(state) if write_id else '')
         fields.update(extra or {})
         path = self.base + '/' + self.key(identifier)
-        if entry: self.request(path, 'POST', fields)
-        else:
-            listing = self.listing()
-            if listing['retainedRecords'] >= 200:
-                raise ProviderError('This account has reached the 200-record limit, including drafts and retained recovery copies.', 413)
-            self.request(self.base, 'POST', dict(fields, name=self.key(identifier)))
+        if not entry and self.listing()['retainedRecords'] >= 200:
+            raise ProviderError('This account has reached the 200-record limit, including drafts and retained recovery copies.', 413)
+        try:
+            if entry: self.request(path, 'POST', fields)
+            else: self.request(self.base, 'POST', dict(fields, name=self.key(identifier)))
+        except ProviderError as error:
+            if error.status < 500: raise
+            raise save_error('The draft save could not be confirmed. Your work is still in this tab.',
+                             503, 'draft_write_uncertain', 'write', expected, write_id=write_id) from None
         # User-namespace creation is already private. Changing its ACL requires
         # privileges an ordinary author need not hold; verify rather than widen.
-        saved = self.entry(identifier)
+        try: saved = self.entry(identifier)
+        except ProviderError as error:
+            if error.status < 500: raise
+            raise save_error('The draft save could not be read back. Your work is still in this tab.',
+                             503, 'draft_write_uncertain', 'readback', expected, write_id=write_id) from None
         if not saved or any(saved['content'].get(key, '') != value for key, value in fields.items()):
-            raise ProviderError('The saved draft did not match its readback. Your current work is still in this tab.', 503)
-        if active and not deleted: self.set_active(identifier)
-        return self.record(saved)
+            raise save_error('The saved draft did not match its readback. Your current work is still in this tab.',
+                             503, 'draft_write_uncertain', 'readback', expected, write_id=write_id)
+        result = self.record(saved)
+        if active and not deleted:
+            try: self.set_active(identifier)
+            except ProviderError:
+                # The authoritative draft has already committed and matched its
+                # readback. A recent-list pointer failure must not turn that
+                # success into a false conflict on the next autosave.
+                result['saveNotice'] = 'recent_pointer_unavailable'
+        return result
 
     def set_active(self, identifier):
         preference = self.request(self.base + '/' + self.preference)
@@ -193,16 +233,27 @@ class DraftService:
                 if body.get('schemaVersion', SCHEMA_VERSION) != SCHEMA_VERSION:
                     raise ProviderError('This browser uses a different draft format. Refresh the app before saving; your current work is still here.', 409, 'draft_schema')
                 state = validate_snapshot(body.get('state'))
+                write_id = body.get('writeId')
+                if write_id is not None and (not isinstance(write_id, str) or not re.fullmatch(r'[a-f0-9]{32}', write_id)):
+                    raise ProviderError('The draft write identifier is invalid.')
                 old = self.entry(identifier)
                 if old and int(old['content'].get('schema_version', 0)) > SCHEMA_VERSION:
                     raise ProviderError('This draft uses a newer session schema. Update the app before editing it.', 409, 'draft_schema')
                 if old and old['content'].get('deleted_at'):
                     raise ProviderError('This draft was deleted in another session. Save a new draft to keep your current work.', 409, 'draft_conflict')
+                if write_id and old and old['content'].get('write_id') == write_id:
+                    if (old['content'].get('write_base') == str(body.get('version'))
+                            and old['content'].get('write_version') == old['content'].get('version')
+                            and json.loads(old['content']['state']) == state):
+                        return self.record(old)
+                    raise save_error('This save identifier belongs to a different draft write. Your work is preserved.',
+                                     409, 'draft_write_id_reused', 'compare', body.get('version'),
+                                     int(old['content']['version']), write_id)
                 if (old and type(body.get('version')) is int and body['version'] >= 0
                         and body['version'] < int(old['content']['version'])
                         and json.loads(old['content']['state']) == state):
                     return self.record(old)  # Retry after an unknown save outcome.
-                return self.write(identifier, body.get('version'), state)
+                return self.write(identifier, body.get('version'), state, write_id=write_id)
             record = self.read(identifier, deleted=True)
             if record['kind'] != 'draft': raise ProviderError('Use the saved-dashboard restore action for this item.')
             if record['deletedAt'] and action not in ('restore', 'duplicate'):

@@ -26,6 +26,7 @@ export class DraftRecovery {
       const state = value.state;
       if (value.issued) {
         if (value.issued.version !== value.version) throw new Error();
+        if (value.issued.writeId !== undefined && !/^[a-f0-9]{32}$/.test(value.issued.writeId)) throw new Error();
         validateDefinition(value.issued.state.definition);
       }
       validateDefinition(state.definition);
@@ -43,7 +44,7 @@ export class DraftRecovery {
   checkpoint(owner: string, id: string, version: number, state: DraftSnapshot, issued?: DraftWrite): boolean {
     try {
       // Copy only the draft contract, never arbitrary runtime/connection properties.
-      const raw = JSON.stringify({ schema: 1, owner, id, version, time: this.now(), state: snapshot(state), issued: issued ? { version: issued.version, state: snapshot(issued.state) } : undefined });
+      const raw = JSON.stringify({ schema: 1, owner, id, version, time: this.now(), state: snapshot(state), issued: issued ? { version: issued.version, state: snapshot(issued.state), writeId: issued.writeId } : undefined });
       if (!owner || raw.length > MAX_CHARS) throw new Error();
       this.storage().setItem(KEY, raw);
       return true;
@@ -57,7 +58,9 @@ export class DraftRecovery {
     if (server && draftSignature(server.state) === draftSignature(local.state)) { this.clear(id); return { record: server, pending: false }; }
     // Only an exact in-flight write at its expected next revision can advance our base.
     const version = server && local.issued && local.issued.version === local.version && server.version === local.version + 1
-      && draftSignature(server.state) === draftSignature(local.issued.state) ? server.version : local.version;
+      && draftSignature(server.state) === draftSignature(local.issued.state)
+      && (!server.writeReceipt || !local.issued.writeId || (server.writeReceipt.id === local.issued.writeId
+        && server.writeReceipt.baseVersion === local.version && server.writeReceipt.version === server.version)) ? server.version : local.version;
     // Any other newer revision must conflict rather than overwrite another session.
     return { record: { ...(server || { id, title: local.state.definition.title || 'Untitled dashboard', updatedAt: '', deletedAt: null, kind: 'draft' }), version, state: local.state }, pending: true, issued: version === local.version ? local.issued : undefined };
   }

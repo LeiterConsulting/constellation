@@ -29,6 +29,7 @@ Paths below are under the Python app bin directory or src as appropriate.
 | Drafts/history/management | draft_service.py, draft_migrations.py, dashboard_library.py, draft_history.py | Ownership, revisions, no future-schema rewrite, recoverable deletion |
 | Native/portable artwork and knowledge | native_media.py, portableAssets.ts, portable_knowledge.py, search_references.py | Fresh objects, exact privacy/content readback, remap known literal slots only |
 | Progress and delivery | authoring_progress.py, authoring_delivery.py, authoringRun.ts | Session-signed one-use runs, no inference replay, late-result rejection |
+| Page preview scheduling | previewSources.ts, previewBatch.ts, useSearchPreview.ts | Active-page consumers, effective-request caching, bounded jobs and late-result exclusion |
 | Workspace and persistence | App.tsx, useDraftPersistence.ts, drafts.ts, PreviewLoader.tsx | Explicit save status, local conflict protection, deferred renderer with preserved module links |
 | Bundled guidance | contracts/knowledge.json, knowledge_service.py | Version-filtered attributed retrieval; guidance grants no authority |
 
@@ -48,11 +49,15 @@ Draft schema 3 stores the native definition with conversation, brief, focus, inp
 
 The browser retains a bounded same-tab recovery snapshot while a save is unconfirmed. Exact issued-state/revision proof is required before reconciling uncertain saves. Conflicts preserve local work; interrupted inference is not replayed. See [retention](../SECURITY.md#drafts-and-retention).
 
+Version 1.0.1 adds owner-private save receipts outside the schema-3 snapshot: operation ID, expected/committed revision and a canonical snapshot digest. Uncertain writes are confirmed by exact readback; a receipt belonging to another operation cannot authorize rebasing. Error details contain only a stage, revisions and operation ID. A recent-draft pointer failure after verified primary readback does not invalidate the committed draft. Legacy writes remain supported and stale receipt metadata is ignored.
+
 Validated authoring replies can remain in private search-head-local delivery files for five minutes. The original session-signed handle is required. Acknowledgement/Stop removes replies; later control activity cleans expired records, with no idle background timer. Disk failure can leave original response delivery available without a recovery copy. See [delivery contract](reference/design-notes.md#delivery-recovery-018).
 
 ## Preview and native output
 
 The preview embeds the pinned Dashboard Framework and reruns supported sources as the current user. It distinguishes complete, partial, waiting, failed and stale snapshots. Native scheduled-report cache/owner semantics and arbitrary custom renderer execution are not reproduced.
+
+Version 1.0.1 schedules global inputs and the active page's input/chart source aliases, rather than the first sources declared in the document. Source resolution carries chain/report dependencies without executing unconsumed parents separately. A page batch retains the eight-consumer-source bound. Effective query/token/range keys reuse fresh snapshots; page changes cancel obsolete jobs and late results cannot populate cache. Preview planning never rewrites the native definition.
 
 The stored/exported definition retains unknown native properties and unsupported imported work. New unavailable features fail validation. Saving produces a normal native Studio copy, whose execution, rendering and sharing must be verified separately.
 

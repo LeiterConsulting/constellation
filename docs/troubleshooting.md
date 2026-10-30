@@ -28,7 +28,7 @@ A bounded sample cannot establish a complete schema, total population or absence
 
 **Partial** means a limit or diagnostic affected the preview. **Stale** means a retained snapshot needs refresh. Use the dataset/time menu for **Search details**, **Refresh searches** or **Pause searches**.
 
-Ordinary previews are limited to 200 rows, five seconds per query and eight sources. Aggregates can still be partial. The preview runs supported read-only searches as you; native Studio may use saved-report schedules, caches or different report execution policy. Check the native result separately.
+Ordinary previews are limited to 200 rows, five seconds per query and eight consumer sources on the active page, including global/page inputs and chart aliases. Switch pages to preview that page's sources. Fresh unchanged results can be reused for up to one minute; use **Refresh searches** for a new snapshot. Aggregates can still be partial. The preview runs supported read-only searches as you; native Studio may use saved-report schedules, caches or different report execution policy. Check the native result separately.
 
 Unsupported imported properties remain in the definition. Custom renderers and some advanced/native execution surfaces use placeholders or native-only guidance. See [feature limits](studio-support.md).
 
@@ -56,7 +56,8 @@ AITK 6.1 native connection update/delete returned HTTP 500 during qualification 
 | --- | --- |
 | **Saving draft…** | Wait for **Draft saved** before leaving. |
 | **Keep this tab open until saved** | Do not close/refresh yet; large files or blocked/full tab storage may prevent a recovery copy. |
-| A version conflict | Keep both versions using the offered separate-copy action. Do not overwrite another session. |
+| A version conflict | Use **Save as new draft** to keep both versions. Expand **Save details** for the stage, expected/stored revisions and operation ID. |
+| A save could not be confirmed | Keep the tab open while exact readback is attempted. Inspect **Save details** and retained work before retrying; an interrupted response does not establish whether the write committed. |
 | An unavailable/deleted draft link | Open your own work through **Dashboards**, or deliberately start **New dashboard**. |
 | Interrupted inference after refresh | Review the restored request. It is not sent again automatically. |
 

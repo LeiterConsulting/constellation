@@ -42,7 +42,7 @@ describe('durable draft writes', () => {
     sync.adopt(record('draft', 7, state()));
     await expect(sync.save('draft', state('latest'))).rejects.toThrow('lost response');
     expect(writer).toHaveBeenCalledTimes(1); expect(sync.version('draft')).toBe(7);
-    expect(sync.issued('draft')).toEqual({ version: 7, state: state('latest') });
+    expect(sync.issued('draft')).toMatchObject({ version: 7, state: state('latest'), writeId: expect.stringMatching(/^[a-f0-9]{32}$/) });
     const reader = vi.fn(); const denied = new DraftSync(async () => { throw new Error('Permission denied'); }, reader);
     await expect(denied.save('draft', state())).rejects.toThrow('Permission denied'); expect(reader).not.toHaveBeenCalled();
   });
@@ -54,6 +54,37 @@ describe('durable draft writes', () => {
     }));
     await Promise.all(authors.flatMap((sync, owner) => Array.from({ length: 20 }, (_, turn) => sync.save('draft', state(`${owner}:${turn}`)))));
     expect(versions).toEqual([20, 20, 20]); expect(confirmed.map(item => item.prompt)).toEqual(['0:19', '1:19', '2:19']);
+  });
+  it('confirms a structured post-commit failure and rejects another write identity even for equal content', async () => {
+    let writeId = '';
+    const failure = Object.assign(new Error('readback failed'), { code: 'draft_write_uncertain' });
+    const writer = vi.fn(async (_id, _version, _state, id) => { writeId = id; throw failure; });
+    const reader = vi.fn(async () => ({ ...record('draft', 8, state('latest')),
+      writeReceipt: { id: writeId, baseVersion: 7, version: 8, digest: 'synthetic' } }));
+    const sync = new DraftSync(writer, reader); sync.adopt(record('draft', 7, state()));
+    await sync.save('draft', state('latest'));
+    expect(writer).toHaveBeenCalledTimes(1); expect(sync.version('draft')).toBe(8);
+    const guarded = new DraftSync(writer, async () => ({ ...record('draft', 8, state('latest')),
+      writeReceipt: { id: 'f'.repeat(32), baseVersion: 7, version: 8, digest: 'synthetic' } }));
+    guarded.adopt(record('draft', 7, state()));
+    await expect(guarded.save('draft', state('latest'))).rejects.toBe(failure);
+  });
+  it('reconciles its earlier uncertain committed write before saving a newer queued edit', async () => {
+    let priorId = '', reads = 0;
+    const writer = vi.fn(async (id, version, snapshot, writeId) => {
+      if (!priorId) { priorId = writeId; throw new AppDeliveryError('unknown'); }
+      if (version === 7) throw Object.assign(new Error('conflict'), { code: 'draft_conflict' });
+      return record(id, version + 1, snapshot);
+    });
+    const sync = new DraftSync(writer, async () => {
+      if (!reads++) throw new AppDeliveryError('read unavailable');
+      return { ...record('draft', 8, state('first')), writeReceipt: { id: priorId, baseVersion: 7, version: 8, digest: 'synthetic' } };
+    });
+    sync.adopt(record('draft', 7, state()));
+    await expect(sync.save('draft', state('first'))).rejects.toThrow('unknown');
+    await sync.save('draft', state('second'));
+    expect(writer.mock.calls.map(call => call[1])).toEqual([7, 7, 8]);
+    expect(sync.matches('draft', state('second'))).toBe(true);
   });
   it('supports HTTP Splunk origins without the secure-context randomUUID API', () => {
     vi.stubGlobal('crypto', { getRandomValues: (bytes: Uint8Array) => bytes.fill(171) });

@@ -54,7 +54,7 @@ def inline(text):
 styles=getSampleStyleSheet()
 styles.add(ParagraphStyle(name='GuideTitle',fontName='Helvetica-Bold',fontSize=27,leading=31,textColor=INK,spaceAfter=14,keepWithNext=True))
 styles.add(ParagraphStyle(name='GuideHeading',fontName='Helvetica-Bold',fontSize=16,leading=20,textColor=INK,spaceBefore=15,spaceAfter=9,keepWithNext=True))
-styles.add(ParagraphStyle(name='GuideBody',fontName='Helvetica',fontSize=10.3,leading=15.2,textColor=INK,spaceAfter=9))
+styles.add(ParagraphStyle(name='GuideBody',fontName='Helvetica',fontSize=10.3,leading=15.2,textColor=INK,spaceAfter=9,allowWidows=0))
 styles.add(ParagraphStyle(name='GuideList',parent=styles['GuideBody'],leftIndent=17,firstLineIndent=0,bulletIndent=0,spaceAfter=7))
 styles.add(ParagraphStyle(name='GuideCaption',fontName='Helvetica-Oblique',fontSize=8.5,leading=12,textColor=MUTED,spaceBefore=6,spaceAfter=12))
 styles.add(ParagraphStyle(name='GuideQuote',parent=styles['GuideBody'],leftIndent=12,rightIndent=12,backColor=colors.HexColor('#eef4f1'),borderPadding=8,spaceBefore=5,spaceAfter=13))

@@ -9,7 +9,8 @@ export const secureSettingsOrigin = () => window.location.protocol === 'https:' 
 export type ProviderName = 'openai' | 'ollama' | 'aitk';
 export const providerLabel = (provider?: ProviderName) => provider === 'aitk' ? 'Splunk AITK' : provider === 'ollama' ? 'Ollama' : 'OpenAI';
 interface RecoveryStats { modelCalls: number; queryChecks: number; seconds: number; }
-type ProviderFailure = Error & { validationError?: string; code?: string; recovery?: RecoveryStats };
+type ProviderFailure = Error & { validationError?: string; code?: string; recovery?: RecoveryStats;
+  draftDiagnostics?: { stage: string; expectedVersion: number; storedVersion?: number; writeId?: string } };
 export function failureActivity(error: unknown): string[] {
   if (!(error instanceof Error)) return [];
   const failure = error as ProviderFailure;
@@ -27,7 +28,7 @@ export async function providerRequest<T>(action: 'settings' | 'models' | 'test' 
     body: body ? JSON.stringify(body) : undefined, headers: body ? { 'Content-Type': 'application/json' } : {}, signal });
   return recoverRead(retryableRead(action, body), ['author', 'test', 'dependencies'].includes(action) ? 240_000 : 30_000, signal, async remaining => {
     const { response, result } = await fetchWithDeadline(url, init, remaining, async response => {
-      let result: T & { error?: string; validationError?: string; code?: string; recovery?: Record<string, unknown> };
+      let result: T & { error?: string; validationError?: string; code?: string; recovery?: Record<string, unknown>; draftDiagnostics?: Record<string, unknown> };
       try { result = await response.json(); } catch (failure) {
         if ([502, 503, 504].includes(response.status)) throw new AppDeliveryError('The Splunk connection was interrupted. Your current draft is preserved.');
         if (failure instanceof SyntaxError) throw new Error('The app service is unavailable. Check your Splunk session and try again.');
@@ -39,6 +40,13 @@ export async function providerRequest<T>(action: 'settings' | 'models' | 'test' 
     if (!response.ok || result.error) {
       const failure: ProviderFailure = new Error(result.error || `The app service returned HTTP ${response.status}.`);
       failure.code = result.code;
+      const diagnostic = result.draftDiagnostics;
+      if (action === 'drafts' && diagnostic && ['compare', 'write', 'readback'].includes(String(diagnostic.stage))
+          && Number.isSafeInteger(diagnostic.expectedVersion) && Number(diagnostic.expectedVersion) >= 0) {
+        failure.draftDiagnostics = { stage: String(diagnostic.stage), expectedVersion: Number(diagnostic.expectedVersion),
+          ...(Number.isSafeInteger(diagnostic.storedVersion) && Number(diagnostic.storedVersion) >= 0 ? { storedVersion: Number(diagnostic.storedVersion) } : {}),
+          ...(typeof diagnostic.writeId === 'string' && /^[a-f0-9]{32}$/.test(diagnostic.writeId) ? { writeId: diagnostic.writeId } : {}) };
+      }
       if (typeof result.validationError === 'string') failure.validationError = result.validationError;
       const evidence = result.recovery;
       if (evidence && ['modelCalls', 'queryChecks', 'seconds'].every(key => typeof evidence[key] === 'number' && Number.isFinite(evidence[key]) && Number(evidence[key]) >= 0)) {

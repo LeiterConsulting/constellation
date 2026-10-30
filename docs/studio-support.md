@@ -48,7 +48,7 @@ Search-result completion is not proof of analytical correctness. New actual-data
 
 | Surface | Bound |
 | --- | --- |
-| Ordinary preview | 200 rows / five seconds per query / eight sources |
+| Ordinary preview in 1.0.1 | 200 rows / five seconds per query / eight consumer sources on the active page, including global/page inputs and chart aliases; chain/report ancestry resolves within each guarded request |
 | Preview windows | 15 minutes, one hour, 24 hours or seven days |
 | Field inspection | Bounded current-user sample; wide/large events can reduce retained rows; missing fields are not proof of absence |
 | Search freshness | Snapshots become stale after one minute; refresh for current results |

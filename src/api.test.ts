@@ -15,6 +15,15 @@ const install = (handler: (url: string, init?: RequestInit) => Response) => {
 };
 afterEach(() => { vi.unstubAllGlobals(); vi.clearAllMocks(); });
 describe('native dashboard handoff', () => {
+  it('keeps only bounded save diagnostics and does not replay an uncertain write', async () => {
+    const fetcher = install(() => new Response(JSON.stringify({ error: 'Save not confirmed', code: 'draft_write_uncertain',
+      draftDiagnostics: { stage: 'readback', expectedVersion: 3, storedVersion: 4, writeId: 'a'.repeat(32), privatePayload: 'SYNTHETIC PRIVATE CONTENT' } }), { status: 503 }));
+    const failure = await providerRequest('drafts', { action: 'save' }).catch(error => error);
+    const diagnostic = (failure as { draftDiagnostics: unknown }).draftDiagnostics;
+    expect(diagnostic).toEqual({ stage: 'readback', expectedVersion: 3, storedVersion: 4, writeId: 'a'.repeat(32) });
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(JSON.stringify(diagnostic)).not.toContain('PRIVATE');
+  });
   it('retries an interrupted read once but never replays inference or writes', async () => {
     install(() => json({ configured: true }));
     const fetcher = vi.mocked(fetch).mockRejectedValueOnce(new TypeError('fixture-private'));

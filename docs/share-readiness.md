@@ -1,6 +1,6 @@
-# Sharing the 1.0 release
+# Sharing the 1.0.1 release
 
-Use the [release downloads](https://github.com/LeiterConsulting/constellation/releases/tag/v1.0.0), verify SHA256SUMS and follow the [installation guide](installation.md). The documentation bundle includes the same qualified app plus the current guides and screenshots.
+Use the [release downloads](https://github.com/LeiterConsulting/constellation/releases/tag/v1.0.1), verify SHA256SUMS and follow the [installation guide](installation.md). The documentation bundle includes the same qualified app plus the current guides and screenshots.
 
 First-party code and documentation use the [MIT License](../LICENSE). Keep the license and [upstream notices](../third_party/README.md) with redistributed copies. Repository access is needed only while visibility is private. See the [publication review](publication-review.md) for the visibility-change handoff.
 

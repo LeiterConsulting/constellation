@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.0.1 — October 30, 2026
+
+- Preview the active page's chart and input sources, including global inputs and auxiliary chart aliases, within the existing search limits. Resolve chain/report ancestry and cancel obsolete page work without changing native definitions.
+- Reuse fresh unchanged query snapshots and refresh expired ones when a page is revisited. Keep partial, waiting and failed evidence distinct.
+- Add optional owner-private save-operation receipts and bounded conflict diagnostics. Confirm uncertain writes by exact readback and retain genuine concurrent-edit conflicts.
+- Keep a verified draft save successful when only the recent-draft pointer fails. Preserve draft schema 3, portable format 5, credential permissions and native save-new-copy behavior.
+
+- Record final-package ordinary-author multi-page creation/editing, active-page browser checks and save-response/conflict recovery separately from the 1.0.0 evidence. See [validation](docs/validation.md#101--october-30-2026).
+
 ## Public-repository preparation — October 29, 2026
 
 - Review reachable source/history, pull-request metadata, all release downloads and available Actions logs for publication hygiene.

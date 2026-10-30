@@ -46,6 +46,50 @@ class MemoryDrafts(DraftService):
 
 class DraftTests(unittest.TestCase):
     identifier = 'a' * 32
+    def test_verified_commit_survives_recent_pointer_failure_without_false_conflict(self):
+        class BrokenRecent(MemoryDrafts):
+            def set_active(self, identifier): raise ProviderError('synthetic pointer failure', 503)
+        store = BrokenRecent()
+        body = {'action': 'save', 'id': self.identifier, 'version': 0, 'writeId': 'b' * 32, 'state': blank()}
+        first = store.operation(body)
+        self.assertEqual(first['saveNotice'], 'recent_pointer_unavailable')
+        self.assertEqual(first['writeReceipt']['id'], body['writeId'])
+        body.update(version=1, writeId='c' * 32)
+        body['state']['prompt'] = 'A newer authorized edit'
+        self.assertEqual(store.operation(body)['version'], 2)
+
+    def test_unknown_post_commit_write_can_be_identified_and_retried_idempotently(self):
+        class LostReply(MemoryDrafts):
+            fail = True
+            def request(self, path, method='GET', fields=None, projection=False):
+                result = super().request(path, method, fields, projection)
+                if self.fail and method == 'POST' and fields and 'state' in fields:
+                    self.fail = False
+                    raise ProviderError('synthetic response loss', 503)
+                return result
+        store = LostReply()
+        body = {'action': 'save', 'id': self.identifier, 'version': 0, 'writeId': 'b' * 32, 'state': blank()}
+        with self.assertRaises(ProviderError) as failed: store.operation(body)
+        self.assertEqual(failed.exception.code, 'draft_write_uncertain')
+        self.assertEqual(failed.exception.draft_diagnostics, {'stage': 'write', 'expectedVersion': 0, 'writeId': 'b' * 32})
+        self.assertEqual(store.read(self.identifier)['writeReceipt']['id'], 'b' * 32)
+        self.assertEqual(store.operation(body)['version'], 1)
+        body['state']['prompt'] = 'Different work must use a new identity'
+        with self.assertRaises(ProviderError) as reused: store.operation(body)
+        self.assertEqual(reused.exception.code, 'draft_write_id_reused')
+        self.assertEqual(store.read(self.identifier)['state']['prompt'], blank()['prompt'])
+
+    def test_conflict_diagnostics_are_payload_free_and_legacy_writes_clear_receipts(self):
+        store = MemoryDrafts()
+        store.operation({'action': 'save', 'id': self.identifier, 'version': 0, 'writeId': 'b' * 32, 'state': blank()})
+        changed = blank(); changed['prompt'] = 'SYNTHETIC PRIVATE CONTENT'
+        with self.assertRaises(ProviderError) as conflict:
+            store.operation({'action': 'save', 'id': self.identifier, 'version': 0, 'writeId': 'c' * 32, 'state': changed})
+        self.assertEqual(conflict.exception.code, 'draft_conflict')
+        self.assertEqual(conflict.exception.draft_diagnostics['storedVersion'], 1)
+        self.assertNotIn('PRIVATE', json.dumps(conflict.exception.draft_diagnostics))
+        second = store.operation({'action': 'save', 'id': self.identifier, 'version': 1, 'state': changed})
+        self.assertNotIn('writeReceipt', second)
     def test_listing_identifies_only_authenticated_owner_for_refresh_recovery(self):
         self.assertEqual(MemoryDrafts(user='alice').listing()['owner'], 'alice')
         self.assertEqual(MemoryDrafts(user='bob').listing()['owner'], 'bob')
