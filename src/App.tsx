@@ -284,7 +284,7 @@ export default function App({ initialColorScheme }: { initialColorScheme: 'light
           setHistory(previous => [...previous.slice(-19), previousRevision]); setFuture([]); setRevision(next); setSaved(null);
           updated = next;
           setSelected(value => validFocus(next.definition,value) ? value : '');
-          setStatus(result.recovery&&result.recovery.modelCalls>1?'Dashboard updated after automatic recovery.':'Dashboard updated.');
+          setStatus(result.repaired?'Dashboard updated after automatic recovery.':'Dashboard updated.');
         } else setStatus(result.dataContext && fieldDefinitionKey(result.dataContext) !== fieldDefinitionKey(scopeOverride || dataContext) ? 'Field definitions updated.' : 'The agent replied. The document is unchanged.');
         setActivity([...result.activity, ...(result.validationNotes || []).map(note => `Corrected during validation: ${note}`),
           ...(result.recovery ? [`${result.recovery.modelCalls} model requests · ${result.recovery.queryChecks} search checks${typeof result.recovery.seconds==='number'?` · ${Math.round(result.recovery.seconds)} seconds`:''}.`] : [])]); setProposals({ key: promptContextKey(updated.number, updated.definition, selected, activeTab, result.dataContext || scopeOverride || dataContext, {brief:result.brief || brief,messages:[...messages,{user:true,text}]}), items: result.suggestions }); setAttachments([]); addMessage(result.message);

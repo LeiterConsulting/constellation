@@ -2,7 +2,7 @@
 
 Before changing repository visibility, use the [publication review](publication-review.md). Upstream attribution sources are recorded in [dependency notices](../third_party/README.md).
 
-Choose a path by what you need to do. These guides describe **Constellation 1.0.1**; historical records are kept separately.
+Choose a path by what you need to do. These guides describe **Constellation 1.0.2**; historical records are kept separately.
 
 ## Use Constellation
 
@@ -13,7 +13,7 @@ Choose a path by what you need to do. These guides describe **Constellation 1.0.
 5. [Save a native dashboard](user-guide.md#use-the-result-in-splunk).
 6. [Move artwork and dependencies](assets-and-portability.md).
 
-The [illustrated user guide](user-guide.md) covers the complete workflow. Download its [PDF edition](https://github.com/LeiterConsulting/constellation/releases/download/v1.0.1/constellation-1.0.1-user-guide.pdf) for offline reading.
+The [illustrated user guide](user-guide.md) covers the complete workflow. Download its [PDF edition](https://github.com/LeiterConsulting/constellation/releases/download/v1.0.2/constellation-1.0.2-user-guide.pdf) for offline reading.
 
 [Glossary](glossary.md) explains draft, native copy, scope, token and snapshot.
 

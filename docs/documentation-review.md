@@ -1,5 +1,11 @@
 # Documentation assessment and closeout
 
+## 1.0.2 release edition — October 30, 2026
+
+The README, current guides and release links identify 1.0.2 / build 62 and retain the exact lab-qualified app archive. The author guide adds concise examples for multi-page requests and calculated table columns. The validation record distinguishes repeated provider/API flows, operated browser checks, partial previews and separately labelled synthetic calculation probes. Historical evidence and screenshot provenance remain unchanged.
+
+The PDF is regenerated from this edition of the Markdown guide, rendered and visually inspected before distribution. The release includes matching Markdown/PDF guides, the offline handoff, MIT license, dependency notices and checksums.
+
 ## 1.0.1 release edition — October 30, 2026
 
 The README, documentation index, installation/upgrade steps, author guide and troubleshooting now describe 1.0.1, active-page preview bounds and save-conflict diagnosis. Release links and the app checksum identify build 61; the app retains the exact bytes used for the recorded patch qualification. Historical 1.0.0 evidence remains dated separately.

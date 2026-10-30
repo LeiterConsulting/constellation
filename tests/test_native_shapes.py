@@ -71,10 +71,11 @@ class NativeShapeTests(unittest.TestCase):
 
     def test_network_auxiliary_node_source_is_not_confused_with_link_source(self):
         item = viz('networkGraph', {'source': '> primary | seriesByName("from")', 'target': '> primary | seriesByName("to")',
+                                   'nodeIds': '> nodeSource | seriesByName("id")',
                                    'nodeValues': '> nodeSource | seriesByName("magnitude")'}, {'primary': 'links', 'nodeSource': 'nodes'})
-        outputs = {'links': frame(['from', 'to'], [['A', 'B']]), 'nodes': frame(['id', 'magnitude'], [['A', 8]])}
+        outputs = {'links': frame(['from', 'to'], [['A', 'B'], ['B', None]]), 'nodes': frame(['id', 'magnitude'], [['A', 8], ['B', 4]])}
         validate_shape(item, outputs)
-        outputs['nodes'] = frame(['id', 'magnitude'], [['A', 'SECRET_SYNTHETIC_VALUE']])
+        outputs['nodes'] = frame(['id', 'magnitude'], [['A', 'SECRET_SYNTHETIC_VALUE'], ['B', 4]])
         with self.assertRaises(ProviderError) as raised: validate_shape(item, outputs)
         self.assertNotIn('SECRET_SYNTHETIC_VALUE', str(raised.exception))
 

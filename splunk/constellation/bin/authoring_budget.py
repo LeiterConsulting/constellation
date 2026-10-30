@@ -37,6 +37,9 @@ class AuthoringBudget:
             self.instructions = request['instructions']
             self.schema = copy.deepcopy(request['text']['format']['schema'])
         context = dict(self.context, definition=model_document(document), modelLimits=dict(self.context.get('modelLimits', {})))
+        from dashboard_plan import eligible as board_eligible
+        self.board_plan = bool(board_eligible(context, document) and all(part.get('type') == 'input_text' for item in request['input'] for part in item['content']))
+        if self.board_plan: self.phase = 'complete'
         if self.phase == 'foundation':
             context['authoringStage'] = 'INTERNAL FOUNDATION: Build only one useful chart and its search on the first requested page. At most one search and one chart. Give that page its requested purpose. Defer other pages, charts, filters and navigation to the next internal stage. Do not ask the user to split the request. The draft will remain unchanged until all stages pass.'
             request['max_output_tokens'] = 3500
@@ -100,6 +103,15 @@ class AuthoringBudget:
             request['instructions'] = native_instructions(self.native_flat)
             request['text']['format']['schema']['properties']['changes'].update(items=schema_for(context['request'], self.native_flat), minItems=1, maxItems=1)
             request['max_output_tokens'] = 4500
+        if self.board_plan:
+            from dashboard_plan import schema_for as board_schema, INSTRUCTIONS as BOARD_INSTRUCTIONS, counts, page_names, page_types
+            self.compact = self.native_plan = False
+            request['instructions'] = BOARD_INSTRUCTIONS
+            request['text']['format']['schema']['properties']['changes'].update(items=board_schema(context), minItems=1, maxItems=1)
+            pages, panels, per = counts(context['request'])
+            context['creationRequirements'] = {'pages': pages, 'panels': panels, 'panelsPerPage': per,
+                                               'pageNames': page_names(context['request'], pages), 'maximumExpandedSources': 8}
+            request['max_output_tokens'] = CREATE_OUTPUT_TOKENS
         if self.creation and context.get('dataProfile'):
             request['instructions'] += '\n\n' + CONCISE_CREATION
             properties = request['text']['format']['schema'].get('properties', {})
@@ -110,8 +122,11 @@ class AuthoringBudget:
                 for field, maximum in (('label', 48), ('prompt', 200), ('reason', 100)):
                     if field in suggestion: suggestion[field]['maxLength'] = maximum
         content = request['input'][0]['content']
-        if self.native_plan:
+        if self.native_plan or self.board_plan:
             context = {key: context[key] for key in ('request', 'definition', 'canvasState', 'environment', 'history', 'focus', 'pagePurposes', 'dashboardBrief', 'modelLimits', 'dataProfile', 'svgAssets') if key in context}
+            if self.board_plan:
+                context['creationRequirements'] = {'pages': pages, 'panels': panels, 'panelsPerPage': per,
+                                                   'pageNames': page_names(context['request'], pages), 'requiredTypesByPage': page_types(context['request']), 'maximumExpandedSources': 8}
             from native_creation import bound_profile
             context['dataProfile'] = bound_profile(context.get('dataProfile'))
         if self.compact:
@@ -196,7 +211,17 @@ class AuthoringBudget:
         # contracts are needed only by paths that can actually emit native edits;
         # specialized query/navigation compilers hold those properties unchanged.
         context['retrievedGuidance'] = self.context.get('retrievedGuidance', [])
-        if not (self.compact or self.native_plan or self.svg_plan or any(context.get(flag) for flag in ('formattingOnly', 'rowNavigationOnly', 'routeOnly', 'buttonRouteOnly', 'pageMetadataOnly', 'calculationOnly', 'tableSparklineOnly', 'newMenusOnly'))):
+        from board_batches import recipe_goal
+        self.board_batch = self.board_plan and self.provider in ('ollama','aitk') and recipe_goal(context)
+        self.board_sources = self.board_batch and not hasattr(self,'verified_pool')
+        if self.board_batch:
+            from board_batches import source_schema, layout_schema, pool_context, SOURCE_INSTRUCTIONS, LAYOUT_INSTRUCTIONS
+            request['instructions'] = SOURCE_INSTRUCTIONS if self.board_sources else LAYOUT_INSTRUCTIONS
+            schema = source_schema(context) if self.board_sources else layout_schema(context,self.verified_pool,self.pool_receipts)
+            request['text']['format']['schema']['properties']['changes'].update(items=schema,minItems=1,maxItems=1)
+            request['max_output_tokens'] = min(request['max_output_tokens'],3500 if self.board_sources else 6000)
+            if not self.board_sources: context['verifiedSourcePool'] = pool_context(self.verified_pool,self.pool_receipts)
+        if not (self.compact or self.native_plan or self.board_plan or self.svg_plan or any(context.get(flag) for flag in ('formattingOnly', 'rowNavigationOnly', 'routeOnly', 'buttonRouteOnly', 'pageMetadataOnly', 'calculationOnly', 'tableSparklineOnly', 'newMenusOnly'))):
             if 'nativeAuthoring' in self.context: context['nativeAuthoring'] = self.context['nativeAuthoring']
         # A conservative estimate, not a tokenizer or a verified upstream limit.
         # Drop only rolling history; the durable brief and exact document remain.
@@ -222,8 +247,31 @@ class AuthoringBudget:
         self.phase = 'complete'
         self.prepare(request, document)
 
+    def advance_sources(self, request, document, actions, receipts):
+        self.verified_pool = copy.deepcopy(actions[0]['sources'])
+        self.pool_receipts = copy.deepcopy(receipts)
+        try:
+            self.prepare(request,document)
+        except ProviderError:
+            # A composition-admission failure must still be repairable as a
+            # source-pool failure, never leave a half-promoted batch behind.
+            del self.verified_pool
+            del self.pool_receipts
+            self.prepare(request,document)
+            raise
+        self.stages += 1
+
     def actions(self, actions, document):
         """Keep page identity stable when completing this turn's new foundation."""
+        if getattr(self, 'board_plan', False):
+            if getattr(self,'board_batch',False):
+                from board_batches import expand_layout
+                return expand_layout(actions,document,self.context,self.verified_pool,self.pool_receipts)
+            from dashboard_plan import expand
+            compiled = expand(actions, document, self.context.get('dataProfile'), self.context['request'])
+            self.plan_summary = {'pages':len(actions[0]['pages']), 'panels':len(actions[0]['panels']),
+                                 'sources':sum(a.get('op')=='search' or (a.get('op')=='set' and a.get('path','').startswith('/dataSources/')) for a in compiled)}
+            return compiled
         if self.context.get('reportTransformOnly'):
             from report_actions import compile_plan
             return compile_plan(actions, document, self.context)
@@ -284,6 +332,15 @@ class AuthoringBudget:
 
     def feedback(self, request, envelope):
         """Keep the current candidate and latest feedback, not every failed reply."""
+        if getattr(self, 'board_plan', False):
+            from native_creation import bound_profile
+            envelope = dict(envelope, rejectedOutput='', request='Return ONE complete corrected boardPlan for the SAME original goal. Keep every page, panel, binding and route; reuse compatible sources within the eight-source closure. The server compiles against the ORIGINAL blank document.')
+            envelope['recoveryFeedback'] = {key: value for key, value in envelope.get('recoveryFeedback', {}).items() if key not in ('candidateDefinition', 'placementHint')}
+            envelope['recoveryFeedback']['editsApplyTo'] = 'original'
+            if getattr(self,'board_batch',False):
+                stage = 'boardSources' if self.board_sources else 'boardLayout'
+                envelope['request'] = 'Return ONE complete corrected '+stage+' for the SAME original goal. Keep every requested calculation and panel; no partial dashboard has been accepted. '+('Correct the shared source pool before composition.' if self.board_sources else 'Use only the verifiedSourcePool and its actual field names; sources are held by the server.')
+            if 'dataProfile' in envelope['recoveryFeedback']: envelope['recoveryFeedback']['dataProfile'] = bound_profile(envelope['recoveryFeedback']['dataProfile'])
         if getattr(self, 'menu_plan', False):
             from native_creation import bound_profile
             envelope = dict(envelope, rejectedOutput='', request='Return a complete corrected menu/search plan for the SAME original request. The server recompiles against the original; include every requested new menu and its searches. Preserve all existing work.')
@@ -341,6 +398,20 @@ class AuthoringBudget:
             # The exact staged document already represents the parsed proposal.
             # Do not resend a second copy in its older action/wire representation.
             envelope = dict(envelope, rejectedOutput='')
+        candidate=envelope.get('recoveryFeedback',{}).get('candidateDefinition')
+        if not self.creation and self.context.get('focus',{}).get('kind')in('visualization','input','page')and isinstance(candidate,dict):
+            first=request['input'][0]['content'][0]
+            current=json.loads(first['text'])
+            if isinstance(current,dict)and 'definition'in current:
+                # One exact reference document, not original + candidate.
+                # The verified original focused receipt and durable brief
+                # remain available; server-side validation is unchanged.
+                reference=self.context['definition']if envelope['recoveryFeedback'].get('editsApplyTo')=='original'else candidate
+                current['definition']=model_document(reference)
+                first['text']=json.dumps(current,separators=(',',':'))
+                feedback={k:v for k,v in envelope['recoveryFeedback'].items()if k!='candidateDefinition'}
+                if not re.search(r'\b(?:move|resize|place|reposition|layout|width|height|overlap)\b',self.context['request'],re.I):feedback.pop('placementHint',None)
+                envelope=dict(envelope,recoveryFeedback=feedback,request='Correct the current request against definition, which holds the exact reference document for editsApplyTo. Preserve verified original focused calculations and all unrelated work. No new changes have been accepted.')
         request['input'] = request['input'][:1]
         entry = {'role': 'user', 'content': [{'type': 'input_text', 'text': ''}]}
         request['input'].append(entry)

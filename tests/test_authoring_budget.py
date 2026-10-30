@@ -12,6 +12,16 @@ from provider_service import ProviderError
 from authoring_budget import AuthoringBudget
 
 class AuthoringBudgetTests(unittest.TestCase):
+    def test_focused_repair_keeps_one_exact_large_candidate_without_losing_original_receipt(self):
+        original={'title':'Original','visualizations':{'table':{'future':'fixture'*7000}}};candidate=copy.deepcopy(original);candidate['title']='Uncommitted'
+        context={'request':'Add two columns to this selected table','canvasState':'dashboard','focus':{'kind':'visualization','id':'table'},'history':[],'definition':original,'focusedSourceReceipt':{'originalQuery':'verified fixture'}}
+        budget=AuthoringBudget({'provider':'ollama'},context);request={'instructions':'Fixture','text':{},'max_output_tokens':8500,'input':[{'role':'user','content':[{'type':'input_text','text':json.dumps(context)}]}]}
+        envelope={'rejectedOutput':'old wire proposal','recoveryFeedback':{'candidateDefinition':candidate,'editsApplyTo':'candidate','placementHint':{'unneeded':'layout'},'validationError':'Fix one field'}}
+        budget.feedback(request,envelope);first=json.loads(request['input'][0]['content'][0]['text']);feedback=json.loads(request['input'][1]['content'][0]['text'])
+        self.assertEqual(first['definition'],candidate);self.assertEqual(first['focusedSourceReceipt'],context['focusedSourceReceipt']);self.assertNotIn('candidateDefinition',feedback['recoveryFeedback']);self.assertNotIn('placementHint',feedback['recoveryFeedback']);self.assertEqual(feedback['rejectedOutput'],'')
+        self.assertEqual(budget.context['definition'],original);self.assertEqual(envelope['recoveryFeedback']['candidateDefinition'],candidate)
+        envelope['recoveryFeedback']['editsApplyTo']='original';budget.feedback(request,envelope)
+        self.assertEqual(json.loads(request['input'][0]['content'][0]['text'])['definition'],original);self.assertNotIn('candidateDefinition',json.loads(request['input'][1]['content'][0]['text'])['recoveryFeedback'])
     def test_schema_ignoring_compact_reply_keeps_small_plan_repair_against_original(self):
         from agent_service import SCHEMA
         context={'request':'Build three pages with exactly six charts','canvasState':'blank','history':[],'dataProfile':PROFILE,'modelLimits':{'contextTokens':32768}}

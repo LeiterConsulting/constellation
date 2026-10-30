@@ -33,6 +33,15 @@ def requested_types(prompt):
     return found
 
 
+def unavailable_requested_types(prompt, environment):
+    requested = requested_types(prompt)
+    advertised = environment.get('visualizations')
+    missing = requested - set(advertised) if isinstance(advertised, list) and all(isinstance(v, str) for v in advertised) else set()
+    if 'splunk.networkGraph' in requested and not environment.get('features', {}).get('networkGraph'):
+        missing.add('splunk.networkGraph')
+    return sorted(missing)
+
+
 def validate_native_intent(prompt, document, previous, focus):
     if document == previous: return
     charts = document.get('visualizations', {})

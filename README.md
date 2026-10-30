@@ -2,9 +2,9 @@
 
 Create and edit **Splunk Dashboard Studio** dashboards through a conversation beside a live canvas. Choose data your Splunk account can search, refine a selected chart or input, and save a normal native Studio dashboard.
 
-**Version 1.0.1** · [Download](https://github.com/LeiterConsulting/constellation/releases/tag/v1.0.1) · [User guide](docs/user-guide.md) · [Documentation](docs/README.md)
+**Version 1.0.2** · [Download](https://github.com/LeiterConsulting/constellation/releases/tag/v1.0.2) · [User guide](docs/user-guide.md) · [Documentation](docs/README.md)
 
-**New in 1.0.1:** previews follow the active page, reuse fresh results and cancel obsolete work. Draft-save receipts distinguish uncertain delivery from genuine conflicts. [Release evidence](docs/validation.md#101--october-30-2026) records the bounded three-provider checks.
+**New in 1.0.2:** shared-search planning for larger multi-page dashboards, stronger native chart bindings and verified additions to selected tables. The existing validation and recovery limits remain in place. [Release evidence](docs/validation.md#102--october-30-2026) records nine repeated ordinary-author flows across all three providers.
 
 ## Start here
 
@@ -35,13 +35,13 @@ Constellation runs inside Splunk. It does not require a separate agent service o
 
 | File | Purpose |
 | --- | --- |
-| [Installable app](https://github.com/LeiterConsulting/constellation/releases/download/v1.0.1/constellation-1.0.1.tar.gz) | Install or update through Splunk app management. |
-| [App and documentation bundle](https://github.com/LeiterConsulting/constellation/releases/download/v1.0.1/constellation-1.0.1-handoff.zip) | The same app, user guide, screenshots and administrator/reference material. |
-| [User guide · Markdown](https://github.com/LeiterConsulting/constellation/releases/download/v1.0.1/constellation-1.0.1-user-guide.md) | Standalone guide text. The bundle includes its local images. |
-| [User guide · PDF](https://github.com/LeiterConsulting/constellation/releases/download/v1.0.1/constellation-1.0.1-user-guide.pdf) | Illustrated guide for reading or printing. |
-| [MIT license](https://github.com/LeiterConsulting/constellation/releases/download/v1.0.1/LICENSE) | First-party license accompanying the app and documentation. |
-| [Dependency notices](https://github.com/LeiterConsulting/constellation/releases/download/v1.0.1/constellation-1.0.1-third-party-notices.zip) | Upstream notices, also embedded in the app and included in the handoff. |
-| [SHA256SUMS](https://github.com/LeiterConsulting/constellation/releases/download/v1.0.1/SHA256SUMS) | Verify every release download. |
+| [Installable app](https://github.com/LeiterConsulting/constellation/releases/download/v1.0.2/constellation-1.0.2.tar.gz) | Install or update through Splunk app management. |
+| [App and documentation bundle](https://github.com/LeiterConsulting/constellation/releases/download/v1.0.2/constellation-1.0.2-handoff.zip) | The same app, user guide, screenshots and administrator/reference material. |
+| [User guide · Markdown](https://github.com/LeiterConsulting/constellation/releases/download/v1.0.2/constellation-1.0.2-user-guide.md) | Standalone guide text. The bundle includes its local images. |
+| [User guide · PDF](https://github.com/LeiterConsulting/constellation/releases/download/v1.0.2/constellation-1.0.2-user-guide.pdf) | Illustrated guide for reading or printing. |
+| [MIT license](https://github.com/LeiterConsulting/constellation/releases/download/v1.0.2/LICENSE) | First-party license accompanying the app and documentation. |
+| [Dependency notices](https://github.com/LeiterConsulting/constellation/releases/download/v1.0.2/constellation-1.0.2-third-party-notices.zip) | Upstream notices, also embedded in the app and included in the handoff. |
+| [SHA256SUMS](https://github.com/LeiterConsulting/constellation/releases/download/v1.0.2/SHA256SUMS) | Verify every release download. |
 
 ## Supported scope
 

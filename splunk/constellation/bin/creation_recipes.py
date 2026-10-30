@@ -48,7 +48,7 @@ for variant in RECIPE_PANEL['properties']['recipe']['anyOf']:
 FIELD = r'[A-Za-z_][A-Za-z0-9_]*'
 
 
-def compile_recipe(recipe, chart_type, profile):
+def compile_recipe(recipe, chart_type, profile, format_values=True):
     if not isinstance(recipe, dict):
         raise ProviderError('Use one documented search recipe object.')
     required = {'stats': {'kind', 'metrics', 'groupBy'}, 'timechart': {'kind', 'metrics'}, 'table': {'kind', 'columns'}}.get(recipe.get('kind') if isinstance(recipe.get('kind'), str) else '')
@@ -60,7 +60,7 @@ def compile_recipe(recipe, chart_type, profile):
     known = {f['name']: f for f in profile.get('fields', [])}
     def field(value):
         if not isinstance(value, str) or not re.fullmatch(FIELD, value) or value not in known:
-            raise ProviderError('Use exact verified literal input fields in the search recipe.')
+            raise ProviderError('Use exact verified literal input fields in the search recipe, not aggregate output aliases. Available inputs: '+', '.join(sorted(known))[:600])
         return value
     kind, metrics, group, columns = (recipe[k] for k in RECIPE['required'])
     if kind not in ('stats', 'timechart', 'table') or not isinstance(metrics, list) or not isinstance(columns, list) or not isinstance(group, str):
@@ -76,7 +76,7 @@ def compile_recipe(recipe, chart_type, profile):
     if kind == 'timechart' and group:
         raise ProviderError('A timechart recipe uses groupBy:"" to keep its declared metric aliases. Row navigation already filters its device; only stats recipes may group by a field. Preserve this trend and its metrics.')
     if group: field(group)
-    aliases, expressions, formatting = [], [], []
+    aliases, expressions, formatting, copies, canonical = [], [], [], [], {}
     for metric in metrics:
         sparkline = isinstance(metric, dict) and metric.get('function') == 'sparkline'
         required_metric = set(SPARKLINE_METRIC['required']) if sparkline else {'function', 'field', 'alias'}
@@ -105,12 +105,15 @@ def compile_recipe(recipe, chart_type, profile):
                 raise ProviderError('Recipe metric ' + alias + ': ' + function + '(' + value + ') requires an inspected numeric input field. Preserve the metric; use a native timestamp aggregate for _time.')
             expression = function + '(' + value + ')'
         if sparkline: expression = 'sparkline(' + expression + ',' + metric['span'] + ')'
-        expressions.append(expression + ' AS ' + alias);aliases.append(alias)
-        if chart_type == 'splunk.table' and value and not sparkline:
+        if expression in canonical:copies.append(alias+'='+canonical[expression])
+        else:expressions.append(expression+' AS '+alias);canonical[expression]=alias
+        aliases.append(alias)
+        if format_values and chart_type == 'splunk.table' and value and not sparkline:
             timestamp = value == '_time' and function in ('min', 'max', 'latest', 'earliest') and (known[value].get('numeric') is True or profile.get('scope', {}).get('index') and not profile.get('scope', {}).get('query'))
             if timestamp: formatting.append(alias + '=strftime(' + alias + ',"%Y-%m-%d %H:%M:%S")')
             elif function != 'count' and known[value].get('numeric') is True: formatting.append(alias + '=round(' + alias + ',2)')
     pipeline = '| ' + kind + (' bins=100' if kind == 'timechart' else '') + ' ' + ' '.join(expressions) + (' BY ' + group if group else '')
+    if copies:pipeline += ' | eval '+', '.join(copies)
     if formatting: pipeline += ' | eval ' + ', '.join(formatting)
     if chart_type == 'splunk.table': return pipeline, '', (['_time'] if kind == 'timechart' else [group] if group else []) + aliases
     if chart_type == 'splunk.singlevalue':

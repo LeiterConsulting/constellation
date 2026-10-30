@@ -1,6 +1,42 @@
 # Release evidence
 
-Current release: **Constellation 1.0.1 / build 61**, qualified October 30, 2026. The patch retains the bounded Enterprise support profile. The earlier [1.0 record](reference/validation-1.0.md) preserves the original runtime, failures and upgrade/rollback evidence. Private hosts, keys, indexed rows, user files and lab screenshots remain outside Git.
+Current release: **Constellation 1.0.2 / build 62**, qualified October 30, 2026. The patch retains the bounded Enterprise support profile. The earlier [1.0 record](reference/validation-1.0.md) preserves the original runtime, failures and upgrade/rollback evidence. Private hosts, keys, indexed rows, user files and lab screenshots remain outside Git.
+
+## 1.0.2 — October 30, 2026
+
+The qualified app bytes are retained unchanged for the 1.0.2 release. The same archive was installed on the two existing single-head Enterprise targets without a restart.
+
+| Item | Recorded result |
+| --- | --- |
+| Package | 1.0.2 / build 62; SHA-256 `7df2620bb442ac4617f46cae677c29af1719d99984e5cddb010eb461288958fc` |
+| Release | [v1.0.2](https://github.com/LeiterConsulting/constellation/releases/tag/v1.0.2) |
+| Archive | 550 regular files / 5,596,190 bytes; one app root; no macOS sidecars, extended tar metadata or local evidence |
+| Offline checks | 672 Python / 151 frontend tests passed; Node 22 production build and browser budget passed |
+| AppInspect 4.2.1 precert | 0 errors / 0 failures / 0 future failures; 7 warning checks / 1 skipped; local precert, not Cloud certification |
+| Larger ordinary-author cohort | Three fresh eight-page, 24-chart create/edit cycles per provider; all nine cycles and 27 turns passed on Enterprise 10.2.8 |
+| Editing and persistence | Named min/max table additions, selected line-to-area conversion, unrelated-definition preservation, row/detail/return routing, exact conversation/draft reopen and private native save/readback |
+| Ordinary-user browser | All three providers: element selection, focused chat title edit, row/detail/return navigation and refresh. Exact readback preserved unrelated native work. AITK also saved through the app dialog and opened the populated native table |
+| Native graph bindings | Enterprise 10.4.4 ordinary-author creation/editing of three pages / nine network, Sankey and table charts using three shared sources; exact private save/reopen |
+| Native rendering tier | All three graph-board pages rendered in native Studio using a separate administrator-owned private copy. This rendering tier is separate from the ordinary-author API/search/save evidence |
+| Calculations | All nine boards exercised with actual bounded previews and separately labelled synthetic cutoff/missing-data probes; exact 150 retained, higher temperatures excluded, independent Wi-Fi and event populations retained |
+| Cancellation and version gates | Stop during Ollama's second planning call returned cancellation, without a partial draft or delivered reply. All three providers rejected the unavailable native network family on the older target before inference |
+| Preservation and cleanup | Existing hero definition/conversation/native view, administrator connections, AITK policy and author role unchanged. Four temporary users, two copied owner-only key records, one temporary role and all owned test views/configurations/jobs removed; key absence verified |
+
+The ordinary-author accounts had no administrator, credential-store or vendor AI configuration/command capabilities. Direct OpenAI used `gpt-6-luna`, Ollama used `qwen3-coder:latest`, and managed AITK used the lab's approved OpenAI connection. The repeated cohort used one real sensor dataset; a separate component/severity log dataset exercised native network bindings. It is not a cross-model or business-domain success-rate benchmark.
+
+| Provider | Creation times, three runs | Repairs across nine cohort turns |
+| --- | --- | --- |
+| OpenAI | 35.63 / 69.32 / 37.61 seconds | One creation repair for an invalid compose ID |
+| Ollama | 109.42 / 78.33 / 78.04 seconds | None; two intentional internal planning calls per creation |
+| Managed AITK | 73.24 / 71.28 / 86.94 seconds | None; two intentional internal planning calls per creation |
+
+These are observed wall times including caller-scoped inspection and validation, not a latency guarantee or controlled speed comparison. Eligible named table edits took 3.48–3.70 seconds with no inference; OpenAI's more complex pipelines retained model editing. Existing recovery limits remained three model calls, sixteen query checks and the elapsed-time admission budget. Native alias probes separately verified shared stats/timechart aliases under all four temporary accounts.
+
+The calculation checks covered 58 generated source definitions: 49 actual previews completed, and nine raw-detail previews remained explicitly partial at the row bound. Synthetic probes checked known values and populations separately. Neither bounded data inspection nor synthetic agreement proves every analytical decision is correct.
+
+Preparatory candidates exposed native target-only graph-node membership, invalid internal field names, repeated timechart specifiers with different aliases, redundant source fragments, overly large focused-repair context and omitted exact table aliases/projections. Fixes retain caller searches and native validation. A preparatory save conflict came from the test browser autosaving a draft while the API harness was writing it; conflict protection held and the harness was corrected. The cancellation probe initially expected the wrong result response; it was corrected to the existing HTTP 409 cancellation contract, without a runtime change. Superseded archives and private evidence remain local.
+
+The initial planner remains bounded to eligible empty inspected SPL canvases. Complex pipelines, native table-sparkline formatting and unsupported combinations retain general authoring. Existing drafts and graphs are preserved during installation rather than automatically rewritten. Full native parity, arbitrary providers/models, unaided-user acceptance, production performance, SHC and Cloud approval remain outside this qualification.
 
 ## 1.0.1 — October 30, 2026
 

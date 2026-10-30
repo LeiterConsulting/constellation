@@ -374,6 +374,19 @@ class AgentService:
         if scope is not None and not isinstance(scope, dict): raise ProviderError('Select a valid data context.')
         if scope and (selected_report or not body.get('dataContext')):
             scope = dict(scope, earliest=inferred_range(prompt) or scope.get('earliest', '-24h'))
+        if not document.get('visualizations') and not document.get('dataSources'):
+            from native_intent import unavailable_requested_types
+            unavailable = unavailable_requested_types(prompt, environment)
+            if unavailable:
+                cards = []
+                if unavailable == ['splunk.networkGraph'] and 'splunk.linkgraph' in environment.get('visualizations', []):
+                    alternative = re.sub(r'splunk\.networkGraph', 'splunk.linkgraph', prompt, flags=re.I)
+                    alternative = re.sub(r'\bnetwork[ -]?graphs?\b', 'link graph', alternative, flags=re.I)
+                    if len(alternative) <= 1200: cards = [{'label':'Use a link graph','prompt':alternative,'reason':'Use a relationship chart supported by this instance.'}]
+                return {'revision':revision,'message':'This instance does not support the requested native chart: '+', '.join(k.removeprefix('splunk.') for k in unavailable)+'. Choose a supported alternative or use a compatible Splunk instance before building.',
+                        'changes':[],'suggestions':cards if body.get('suggestionFormat')=='cards' else [c['prompt'] for c in cards],
+                        'repaired':False,'activity':['Checked requested native chart availability before inference'],
+                        'model':saved['model'],'recovery':recovery.evidence(),'brief':brief,'pagePurposes':purposes}
         self.progress('profile')
         profile = data.profile(scope) if scope else None
         if profile and getattr(getattr(data, '_source_resolver', None), 'used_report', False):
@@ -455,9 +468,11 @@ class AgentService:
             context['formattingOnly'] = 'Format only existing numeric columns through formatTable. Omit absent or already-readable timestamps. Do not add aggregates, columns, search or binding edits.'
         from table_sort import exact_table_sort
         local_sort = exact_table_sort(prompt, focus.get('id'), document, profile, table_receipt, attachments)
+        from table_aggregates import exact_table_aggregates
+        local_aggregate = exact_table_aggregates(prompt,focus.get('id'),document,profile,table_receipt,attachments)
         from native_events import exact_event_set
         local_event = exact_event_set(prompt, focus.get('id'), document, attachments)
-        local_proposal = local_sort or local_event
+        local_proposal = local_sort or local_event or local_aggregate
         guidance = retrieve_guidance(prompt, document, environment, real_data=bool(profile), brief=brief, focus=focus)
         context['retrievedGuidance'] = guidance
         context['nativeAuthoring'] = authoring_contract(prompt, document, environment, brief, focus)
@@ -566,6 +581,21 @@ class AgentService:
                 if not format_only and isinstance(result['changes'], list) and any(isinstance(action, dict) and action.get('op') == 'formatTable' for action in result['changes']):
                     raise ProviderError('formatTable is unavailable for this broader edit. Preserve the verified aggregation, add the requested calculation through a search/native query edit and display new output columns in the table projection. Use final SPL eval after aggregation for any requested formatting.')
                 validate_data_claims(result, profile)
+                if getattr(budget,'board_sources',False):
+                    from board_batches import source_actions, normalize_plan
+                    # Searches are verified in the same caller-scoped recovery
+                    # session, without staging a partial user document. The
+                    # next call receives only recipes/output field metadata.
+                    source_plan=normalize_plan(result['changes'],context)
+                    source_changes=compile_actions(document,source_actions(source_plan,context,server_pool=True),profile)
+                    source_candidate=apply_changes(document,source_changes)
+                    validate_features(source_candidate,document,environment)
+                    self.progress('search',attempt+1)
+                    pool_receipts=data.validate_searches(source_candidate,document,profile)
+                    if attempt==MAX_MODEL_CALLS-1:
+                        raise ProviderError('The verified source pool needs a composition step within the recovery budget.',422,'recovery_budget')
+                    budget.advance_sources(request,document,source_plan,pool_receipts)
+                    continue
                 if route_schema:
                     if not isinstance(result['changes'],list)or len(result['changes'])!=1 or not isinstance(result['changes'][0],dict)or result['changes'][0].get('op')!='route' or any(result['changes'][0].get(key)not in route_schema['properties'][key]['enum']for key in ('sourceId','pageId','field')):
                         raise ProviderError('Return exactly one complete route action using only the sourceId, pageId and verified field listed in routeOnly.',422,'route_plan')
@@ -649,6 +679,12 @@ class AgentService:
                     result['changes'] = proposal.changes
                     validate_features(draft, document, environment)
                     receipts = data.validate_searches(draft, document, profile)
+                precision = getattr(data, 'native_corrections', [])
+                if precision:
+                    draft = proposal.stage(precision)
+                    result['changes'] = proposal.changes
+                    validate_features(draft, document, environment)
+                    receipts = data.validate_searches(draft, document, profile)
                 validate_requested_columns(prompt, body.get('selected', ''), draft, receipts, table_receipt)
                 validate_creation_columns(prompt, draft, document, profile, receipts)
                 if budget.phase == 'complete': validate_sparkline_request(prompt, draft, receipts)
@@ -699,7 +735,7 @@ class AgentService:
                     profile['independentMeasurements'] = data.independent_populations
                     profile['retainSourceRows'] = retain_source_rows(prompt, brief)
                     profile.update(profile_policy(prompt, brief, environment))
-                if getattr(budget, 'compact', False) or getattr(budget, 'native_plan', False) or getattr(budget, 'menu_plan', False):
+                if getattr(budget, 'compact', False) or getattr(budget, 'native_plan', False) or getattr(budget, 'menu_plan', False) or getattr(budget, 'board_plan', False):
                     # This turn began on an empty verified canvas. Its rejected
                     # composition is transient, never accepted user work. Replan
                     # compactly against the exact original, retaining receipts

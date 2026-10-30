@@ -51,6 +51,7 @@ Search-result completion is not proof of analytical correctness. New actual-data
 | Ordinary preview in 1.0.1 | 200 rows / five seconds per query / eight consumer sources on the active page, including global/page inputs and chart aliases; chain/report ancestry resolves within each guarded request |
 | Preview windows | 15 minutes, one hour, 24 hours or seven days |
 | Field inspection | Bounded current-user sample; wide/large events can reduce retained rows; missing fields are not proof of absence |
+| Larger initial plan, 1.0.2 | Eligible empty inspected SPL boards: eight pages / 24 panels / eight expanded affected sources, including filtered clones and auxiliary sources. Unsupported complex requests use general authoring; imported boards retain their native structure. |
 | Search freshness | Snapshots become stale after one minute; refresh for current results |
 | Chat references | Two files / 4 MB each |
 | Draft storage | 200 retained records including Trash/recovery; 11.5 MB snapshot bound |
