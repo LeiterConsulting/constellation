@@ -1,6 +1,6 @@
 # Constellation user guide
 
-Create a dashboard from a question and Splunk data, refine it through chat, and save a native Dashboard Studio copy. This guide describes version **1.0.1**.
+Create a dashboard from a question and Splunk data, refine it through chat, and save a native Dashboard Studio copy. This guide describes version **1.0.2**.
 
 **Before you begin:** Constellation must be installed in Splunk, your account must be able to search the chosen data, and a provider must be configured. If **Settings** or **Test model** needs attention, follow [provider setup](providers.md) or ask your administrator.
 
@@ -29,6 +29,8 @@ Turn on **Select element** and choose an element on the canvas. Alternatively, e
 
 > Change only this table: round latency to one decimal and keep its existing columns and row links.
 
+For a calculated table column, name the measurement and the result you want. For example: “For only this selected table, add minimum and maximum latency columns named minimum_latency and maximum_latency alongside its existing columns.” Use **Inspect fields** if a measurement name or unit is unclear. The app checks new columns against the returned search fields.
+
 **Keep exploring** offers follow-on requests. Selecting one fills the composer; you can edit it before sending. A suggestion is a proposed next step, not proof of a relationship in the data.
 
 Choose **Float** to move the conversation over the canvas, **Dock** to return it beside the canvas, or **Hide** to collapse it. **Show conversation** opens it again.
@@ -54,6 +56,8 @@ Explain recorded units explicitly. A name hint is not evidence of a physical uni
 ## Create pages and navigation
 
 Use **Pages** to add or rename a page and give it a purpose. Page purposes help organize the conversation; they do not create an access boundary.
+
+When creating several pages, state their names, purposes and required charts together. For example: “Create Overview, Trends and Device detail, with three charts on each page.” Related charts can share searches; larger requests may take more than one internal planning step. Watch progress or use **Stop**; the board changes only after validation.
 
 For linked pages, name the source, destination and filter:
 

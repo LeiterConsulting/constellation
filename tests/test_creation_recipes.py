@@ -16,6 +16,11 @@ def recipe(kind='stats', metrics=None, group='device_name', columns=None):
             'groupBy':group,'columns':columns or []}
 
 class RecipeTests(unittest.TestCase):
+    def test_repeated_aggregate_uses_one_native_specifier_and_keeps_every_alias(self):
+        metrics=[{'function':'count','field':'','alias':'readings'},{'function':'count','field':'','alias':'history_count'},{'function':'avg','field':'temperature_f','alias':'mean_f'},{'function':'avg','field':'temperature_f','alias':'temperature_mean'}]
+        original=copy.deepcopy(metrics);query,x,y=compile_recipe({'kind':'timechart','metrics':metrics},'splunk.line',PROFILE,format_values=False)
+        self.assertEqual(query,'| timechart bins=100 count AS readings avg(temperature_f) AS mean_f | eval history_count=readings, temperature_mean=mean_f')
+        self.assertEqual(y,['readings','history_count','mean_f','temperature_mean']);self.assertEqual(x,'_time');self.assertEqual(metrics,original)
     def test_kind_specific_plans_compile_without_irrelevant_fields_and_preserve_legacy(self):
         for modern, legacy, chart in (
             ({'kind':'stats','metrics':recipe()['metrics'],'groupBy':'device_name'},recipe(),'splunk.table'),

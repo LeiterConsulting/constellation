@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.0.2 — October 30, 2026
+
+- Compile eligible larger fresh SPL boards from a shared-source plan with explicit page membership, native bindings and destination-local row navigation. Keep the existing search and recovery budgets.
+- Reuse compatible stats and identically bucketed timechart outputs without changing aliases, missing-value populations or explicit consumer projections.
+- Remove unused model search declarations before dispatch, and reject overall KPI bindings to a grouped summary's last row.
+- Separate basic larger Ollama/AITK source planning from page composition, combining compatible recipes and binding the second internal step to verified output fields within the existing recovery budget.
+- Compute repeated aggregates once and retain their aliases through value copies. Keep one exact reference definition in focused repairs and expose explicitly named table additions after output verification.
+- Compile unambiguous named numeric aggregate additions on selected ordinary tables locally, cloning shared sources and retaining all search/output validation. Ambiguous or compound requests retain model authoring.
+- Validate numeric chart axes, both network endpoint sets and node-array alignment against actual output. Revalidate unchanged chain descendants when their parent changes.
+- Give newly created stats-backed single values non-temporal display defaults and bounded precision for verified fractions, preserving explicit options and existing native work.
+- Retain the general authoring path for requests outside the bounded initial planner; reject unavailable native chart families before inference.
+
+- Qualify three eight-page, 24-chart creation/editing cycles per provider with ordinary authors, plus focused browser edits, native saves, cancellation and calculation probes. See [validation](docs/validation.md#102--october-30-2026).
+
 ## 1.0.1 — October 30, 2026
 
 - Preview the active page's chart and input sources, including global inputs and auxiliary chart aliases, within the existing search limits. Resolve chain/report ancestry and cancel obsolete page work without changing native definitions.

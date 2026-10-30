@@ -226,9 +226,17 @@ class DataService:
         for identifier, item in document.get('inputs', {}).items():
             if item != previous.get('inputs', {}).get(identifier):
                 needed.update(item.get('dataSources', {}).values())
-        pending = [(identifier, source) for identifier, source in document.get('dataSources', {}).items()
-                   if source != previous.get('dataSources', {}).get(identifier) or identifier in needed]
-        if len(pending) > 8: raise ProviderError('Build at most eight new search sources in one turn.')
+        sources = document.get('dataSources', {})
+        affected = {key for key, value in sources.items() if value != previous.get('dataSources', {}).get(key)}
+        # A changed parent also changes every native chain extending it, even
+        # when that child and its consuming chart have no literal JSON edits.
+        while True:
+            children = {key for key, value in sources.items() if value.get('type') == 'ds.chain'
+                        and (value.get('options', {}).get('extend') or value.get('extend')) in affected}
+            if children <= affected: break
+            affected.update(children)
+        pending = [(identifier, source) for identifier, source in sources.items() if identifier in affected or identifier in needed]
+        if len(pending) > 8: raise ProviderError('Validate at most eight affected search sources in one turn, including reused sources and auxiliary dependencies. Share compatible outputs or use a smaller affected source set; preserve every requested chart.')
         problems = []
         for identifier, source in pending:
             try:
@@ -305,9 +313,11 @@ class DataService:
                     if missing:
                         problems.append('Native ' + root + ' ' + identifier[:100] + ', ' + path[:160] + ': missing actual source fields ' + ', '.join(sorted(missing))[:180] + '. Use verified output aliases and preserve existing calculations.')
                 if root == 'visualizations':
-                    changed = item != previous.get('visualizations', {}).get(identifier) or any(source in needed or document.get('dataSources', {}).get(source) != previous.get('dataSources', {}).get(source) for source in item.get('dataSources', {}).values())
+                    changed = item != previous.get('visualizations', {}).get(identifier) or any(source in needed or source in affected for source in item.get('dataSources', {}).values())
                     try: validate_shape(self.media.validation_item(item) if changed else item, outputs)
                     except ProviderError as error: problems.append(str(error))
         if problems:
             raise ProviderError('\n'.join(problems[:16])[:10000])
+        from native_builders import verified_precision
+        self.native_corrections = verified_precision(document, previous, outputs)
         return receipts

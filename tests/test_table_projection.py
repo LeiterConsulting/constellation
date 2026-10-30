@@ -10,6 +10,15 @@ from provider_service import ProviderError
 
 
 class TableProjectionTests(unittest.TestCase):
+    def test_explicit_named_columns_are_verified_and_shown_in_requested_order(self):
+        document={'visualizations':{'table':{'type':'splunk.table','dataSources':{'primary':'source'},'options':{'table':'> primary | frameBySeriesNames("device", "count")','future':{'keep':True}},'eventHandlers':[{'future':'keep'}]}}}
+        document=dict(blank()['definition'],**document);document['dataSources']={'source':{'type':'ds.search','options':{'query':'| makeresults'}}};original=copy.deepcopy(document);prompt='For only this selected table, add minimum and maximum temperature columns named minimum_temperature_f and maximum_temperature_f alongside its existing columns.'
+        receipts=[{'source':'source','fields':['device','count','minimum_temperature_f','maximum_temperature_f']}]
+        changes=verified_requested_projection(prompt,'table',document,receipts);self.assertEqual(len(changes),1);candidate=apply_changes(document,changes)
+        self.assertEqual(candidate['visualizations']['table']['options']['table'],'> primary | frameBySeriesNames("device", "count", "minimum_temperature_f", "maximum_temperature_f")');self.assertEqual(document,original)
+        self.assertEqual(candidate['visualizations']['table']['eventHandlers'],original['visualizations']['table']['eventHandlers']);self.assertEqual(candidate['visualizations']['table']['options']['future'],{'keep':True});validate_requested_columns(prompt,'table',candidate,receipts)
+        with self.assertRaises(ProviderError):validate_requested_columns(prompt,'table',candidate,[{'source':'source','fields':['device','count']}])
+        self.assertEqual(verified_requested_projection('Add columns named Minimum temperature and Maximum temperature.','table',document,receipts),[])
     def setUp(self):
         self.doc = {'visualizations': {'table': {'type': 'splunk.table', 'dataSources': {'primary': 'source'}, 'options': {'table': '> primary | frameBySeriesNames("device", "count")'}}}}
         self.receipts = [{'source': 'source', 'fields': ['device', 'count', 'host_count']}]

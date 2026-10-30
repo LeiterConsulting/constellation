@@ -20,7 +20,7 @@ CONTRACTS = {
     'splunk.pie': {'source': 'label selects one category series; value selects one numeric series. Preserve null measurements.', 'events': ['point.click']},
     'splunk.punchcard': {'source': 'x and y select category series; size selects one nonnegative numeric series.', 'events': ['point.click', 'legend.click']},
     'splunk.timeline': {'source': 'x selects standard _time (Splunk adapts its epoch seconds) or an ISO timestamp string, y selects a lane, duration selects nonnegative milliseconds. Do not bind raw custom epoch numbers directly: derive a separate ISO field with strftime(start_ms/1000,"%Y-%m-%dT%H:%M:%S.%3N%:z") when input is milliseconds. Preserve original timestamps. durationUnit requires its documented version.', 'events': ['event.click', 'lane.click', 'legend.click']},
-    'splunk.networkGraph': {'source': 'primary supplies source and target node IDs. Optional nodeSource supplies nodeIds and aligned node styling. Use explicit series selectors for custom names; links and node styling can use different source aliases.', 'events': ['node.click', 'node.mouseOver', 'node.mouseOut', 'node.drag']},
+    'splunk.networkGraph': {'source': 'Native node membership is inferred from the source series. Include target-only nodes as source rows with null target in a graph-only chain, preserving actual edges and weights. A read-only closure uses eval constellation_role=mvappend("edge","node") | mvexpand constellation_role | eval source=if(constellation_role="edge",source,target), target=if(constellation_role="edge",target,null()) | fields - constellation_role (adapt literal endpoint aliases). Do not use blocked appendpipe/subsearches or duplicate self-links. nodeIds is for styling; it must also include BOTH endpoint sets. A separate nodeSource chain can mvappend/mvexpand both fields then stats by id. Bind nodeIds/nodeTexts and node values explicitly to that aligned node frame. Use explicit series selectors for custom names.', 'events': ['node.click', 'node.mouseOver', 'node.mouseOut', 'node.drag']},
 }
 
 
@@ -84,7 +84,8 @@ def direct_fields(binding, aliases, outputs):
 
 def validate_shape(item, outputs):
     kind = item.get('type')
-    if kind not in CONTRACTS: return
+    axes = kind in ('splunk.line', 'splunk.area', 'splunk.bar', 'splunk.column', 'splunk.scatter')
+    if kind not in CONTRACTS and not axes: return
     aliases = item.get('dataSources', {}); source = aliases.get('primary')
     if source not in outputs: return
     if kind in ('splunk.map', 'splunk.choropleth.svg'):
@@ -113,8 +114,20 @@ def validate_shape(item, outputs):
             fail('x needs standard _time or an ISO timestamp series. Raw custom epoch numbers do not render reliably; derive a separate ISO field using the declared input unit, preserving original timestamps.')
         if number and any(not numeric(value) for value in values): fail(name + ' needs numeric output; do not replace unknown measurements with zero.')
         if nonnegative and any(numeric(value) and float(value) < 0 for value in values): fail(name + ' needs nonnegative values; resolve the intended measurement instead of clamping it silently.')
+        return selected
 
-    if kind == 'splunk.sankey':
+    if axes:
+        channel('x')
+        for name in ('y', 'y2'):
+            selected = direct_fields(options.get(name), aliases, outputs)
+            if selected is None: continue
+            sid, names = selected; actual = outputs[sid]
+            if not actual['fields'] and not actual['results']: continue
+            if not names or set(names) - {f['name'] for f in actual['fields']}:
+                fail(name + ' must select existing numeric series; split timecharts bind the actual returned series, not absent category names.')
+            if '_time' in names or any(present(row.get(field)) and not numeric(row.get(field)) for row in actual['results'] for field in names):
+                fail(name + ' needs numeric series; keep category/time fields out of the metric frame.')
+    elif kind == 'splunk.sankey':
         if fields and not {'source', 'target'} <= set(fields): fail('The search must return the exact source and target fields.')
         channel('linkValues', '> primary | seriesByName("value")' if 'value' in fields else '> primary | seriesByType("number")', True, True)
         for name in ('source', 'target'):
@@ -140,7 +153,30 @@ def validate_shape(item, outputs):
         channel('y', '> primary | seriesByPrioritizedTypes("string","number")')
         channel('duration', number=True, nonnegative=True)
     elif kind == 'splunk.networkGraph':
-        channel('source', '> primary | frameBySeriesTypes("string") | seriesByIndex(0)')
-        channel('target', '> primary | frameBySeriesTypes("string") | seriesByIndex(1)')
+        start = channel('source', '> primary | frameBySeriesTypes("string") | seriesByIndex(0)')
+        end = channel('target', '> primary | frameBySeriesTypes("string") | seriesByIndex(1)')
+        if start is not None and end is not None:
+            if len(outputs[start[0]]['results'])!=len(outputs[end[0]]['results']):
+                fail('source and target must align one endpoint per link row; do not bind a node frame as an edge endpoint frame.')
+            source_ids = {str(row[start[1][0]]) for row in outputs[start[0]]['results'] if present(row.get(start[1][0]))}
+            target_ids = {str(row[end[1][0]]) for row in outputs[end[0]]['results'] if present(row.get(end[1][0]))}
+            if target_ids - source_ids:
+                fail('Native graph membership comes from source, not nodeIds. Include target-only endpoints as source rows with null target in a graph-only chain, preserving real links and shared edge weights.')
+        node_binding = options.get('nodeIds', '> source')
+        nodes = start if isinstance(node_binding, str) and node_binding.strip() == '> source' else channel('nodeIds')
+        if nodes is not None:
+            sid, names = nodes
+            ids = {str(row[names[0]]) for row in outputs[sid]['results'] if present(row.get(names[0]))}
+            endpoints = set()
+            for selected in (start, end):
+                if selected is not None:
+                    endpoint_sid, fields = selected
+                    endpoints.update(str(row[fields[0]]) for row in outputs[endpoint_sid]['results'] if present(row.get(fields[0])))
+            if endpoints - ids:
+                fail('nodeIds omits ' + str(len(endpoints - ids)) + ' observed source/target endpoints. Include both endpoint sets in an aligned node source; the default source-only node list can hide nodes and links.')
+            for name in ('nodeTexts', 'nodeValues', 'nodeColors', 'nodeTypes', 'nodeIcons', 'nodeIconColors', 'nodeSize', 'xPositions', 'yPositions'):
+                selected = direct_fields(options.get(name), aliases, outputs)
+                if selected is not None and len(outputs[selected[0]]['results']) != len(outputs[sid]['results']):
+                    fail(name + ' must align one value with each nodeIds row; link rows and node rows are different populations.')
         for name in ('nodeValues', 'linkWidth', 'nodeSize', 'xPositions', 'yPositions'):
             if isinstance(options.get(name), str) and options[name].lstrip().startswith('>'): channel(name, number=True, nonnegative=name in ('nodeSize', 'linkWidth'))

@@ -8,7 +8,7 @@ def focused_calculation(prompt, selected, document, profile, receipt, attachment
     """One explicit new aggregate on an exclusive inspected SPL table source."""
     if attachments or not profile or not receipt or receipt.get('status')=='failed' or profile.get('scope',{}).get('language','spl')!='spl':return None
     table,requested,_fields=requested_columns(prompt,selected,document,[])
-    if len(requested)!=1 or not re.search(r'(?i)\bchange no other element\b|\bto only this selected\b.{0,50}\btable\b',prompt):return None
+    if len(requested)!=1 or not re.search(r'(?i)\bchange no other element\b|\b(?:to|for) only this selected\b.{0,50}\btable\b',prompt):return None
     if re.search(r'\b(?:move|resize|rename|retarget|remove|delete|create)\b',prompt,re.I):return None
     aggregates=re.findall(r'\b(avg|min|max|sum|count|latest|earliest)\(\s*([A-Za-z_][A-Za-z0-9_.]*)\s*\)\s+AS\s+([A-Za-z_][A-Za-z0-9_]*)\b',prompt,re.I)
     if len(aggregates)!=1 or aggregates[0][2]in {f['name']for f in receipt.get('fields',[])}:return None
@@ -53,6 +53,8 @@ def requested_columns(prompt, selected, document, receipts):
     # A literal comma-separated list is explicit output intent too. Restrict it
     # to plain fields and a sentence boundary; prose/formatting stays unparsed.
     field = r'[A-Za-z_][A-Za-z0-9_]*'
+    named = re.findall(r'\bcolumns?\s+(?:named|called)\s+('+field+r'(?:\s*,\s*'+field+r')*(?:\s*,?\s+and\s+'+field+r')?)\s*(?=[.;\n]|$|\balongside\b|\bwhile\b|\bwithout\b|\bto the existing\b)',prompt,re.I)
+    for literal in named:requested.update(re.split(r'\s*,\s*(?:and\s+)?|\s+and\s+',literal,flags=re.I))
     lists = re.findall(r'\b(?:display|show)\s+(?:columns\s+)?(' + field + r'(?:\s*,\s*' + field + r')+(?:\s*,?\s+and\s+' + field + r')?)\s*(?=[.;\n]|$)', prompt, re.I)
     for literal in lists:
         names = re.split(r'\s*,\s*(?:and\s+)?|\s+and\s+', literal, flags=re.I)
@@ -79,7 +81,10 @@ def verified_requested_projection(prompt, selected, document, receipts):
     except (ValueError, TypeError): return []
     if (not visible or any(not isinstance(field, str) for field in visible)
             or not set(visible) <= fields): return []
-    missing = sorted(requested - set(visible))
+    def order(field):
+        match=re.search(r'\b'+re.escape(field)+r'\b',prompt)
+        return (match.start()if match else len(prompt),field)
+    missing = sorted(requested - set(visible),key=order)
     if not missing: return []
     value = '> primary | frameBySeriesNames(' + ', '.join(json.dumps(field) for field in visible + missing) + ')'
     return [{'op': 'set', 'path': '/visualizations/' + selected.replace('~', '~0').replace('/', '~1') + '/options/table', 'value': json.dumps(value)}]
@@ -222,7 +227,7 @@ def validate_creation_columns(prompt, document, previous, profile, receipts):
 def validate_selected_calculation(prompt, selected, candidate, previous):
     """Explicit table-only calculations cannot edit a different element/source."""
     _table, requested, _fields = requested_columns(prompt, selected, previous, [])
-    if not requested or not re.search(r'(?i)\bchange no other element\b|\bto only this selected\b.{0,50}\btable\b', prompt): return
+    if not requested or not re.search(r'(?i)\bchange no other element\b|\b(?:to|for) only this selected\b.{0,50}\btable\b', prompt): return
     if candidate == previous: return  # A clarification can legitimately make no edits.
     visualizations = previous.get('visualizations', {})
     if any(candidate.get('visualizations', {}).get(key) != value for key, value in visualizations.items() if key != selected) or set(candidate.get('visualizations', {})) != set(visualizations):
@@ -240,7 +245,7 @@ def isolate_selected_calculation(prompt, selected, candidate, previous):
     """Clone a changed shared search only for an explicit table-only calculation."""
     import hashlib
     _table, requested, _fields = requested_columns(prompt, selected, previous, [])
-    if not requested or not re.search(r'(?i)\bchange no other element\b|\bto only this selected\b.{0,50}\btable\b', prompt): return []
+    if not requested or not re.search(r'(?i)\bchange no other element\b|\b(?:to|for) only this selected\b.{0,50}\btable\b', prompt): return []
     before_table = previous.get('visualizations', {}).get(selected, {})
     after_table = candidate.get('visualizations', {}).get(selected, {})
     bindings = before_table.get('dataSources', {})
