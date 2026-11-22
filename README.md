@@ -6,6 +6,8 @@ Create and edit **Splunk Dashboard Studio** dashboards through a conversation be
 
 **New in 1.0.2:** shared-search planning for larger multi-page dashboards, stronger native chart bindings and verified additions to selected tables. The existing validation and recovery limits remain in place. [Release evidence](docs/validation.md#102--october-30-2026) records nine repeated ordinary-author flows across all three providers.
 
+The **1.1.0-preview** lab build lets [Splunk Discovery Tool](https://github.com/LeiterConsulting/splunk-discovery-tool) submit reviewed dashboard plans through Splunk MCP Server. See the [pilot runbook](docs/integrations/mcp-dashboard-pilot.md) for the available modes and qualification status.
+
 ## Start here
 
 1. **Install:** have an administrator install the release archive using the [installation guide](docs/installation.md).

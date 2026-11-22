@@ -55,6 +55,8 @@ The OpenAI handler derives the owner/credential path from the verified caller, r
 
 Actual indexed-data searches, draft storage and native saves retain caller authority. No author role is automatically granted. See [security](../SECURITY.md) and [AITK setup](aitk-setup.md).
 
+The optional MCP pilot reuses the caller-scoped authoring service. Its authoring mode verifies the configured model and provider origin against administrator settings before inference. It checks the requested page and panel coverage after the standard search and Studio checks and confirms owner-private readback of both saved artifacts. [MCP pilot runbook](integrations/mcp-dashboard-pilot.md)
+
 ## Persistence and recovery
 
 Draft schema 3 stores the native definition with conversation, brief, focus, input/page state and pending references. Provider secrets and search-result caches are excluded. Revision checks and local locking serialize one search head; replication is not distributed compare-and-swap.

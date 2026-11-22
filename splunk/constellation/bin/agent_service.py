@@ -310,13 +310,15 @@ class AgentService:
         self.provider, self.runtime = provider, runtime
         self.progress = progress or (lambda *args: None)
 
-    def assist(self, body):
+    def assist(self, body, *, check_provider=None):
         prompt, revision, document = body.get('prompt'), body.get('revision'), body.get('definition')
         if not isinstance(prompt, str) or not 1 <= len(prompt.strip()) <= 8000 or type(revision) is not int or revision < 0:
             raise ProviderError('Provide a prompt and a valid dashboard revision.')
         validate_document(document)
         brief = authoring_brief(body)
         saved = self.provider.configured()
+        if check_provider:
+            check_provider(saved)
         history = body.get('history', [])
         if not isinstance(history, list) or len(history) > 12:
             raise ProviderError('Use at most twelve recent conversation messages.')

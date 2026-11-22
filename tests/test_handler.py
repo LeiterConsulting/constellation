@@ -33,7 +33,7 @@ class HandlerBoundaryTests(unittest.TestCase):
     def test_unknown_methods_are_rejected(self):
         self.assertEqual(self.request(method='DELETE')['status'],404)
     def test_unconfigured_settings_have_no_secret(self):
-        with patch.object(handler.OpenAIStoreProxy,'read',return_value=None):
+        with patch('openai_connection.OpenAIStoreProxy.read',return_value=None):
             result=self.request()
         self.assertEqual(result['status'],200)
         self.assertFalse(result['payload']['keyConfigured'])
@@ -48,7 +48,7 @@ class HandlerBoundaryTests(unittest.TestCase):
         self.assertEqual(result['aitkAccess'], {'available': False, 'connection': '', 'unavailable': True})
         self.assertNotIn('fixture-native-error', json.dumps(result))
     def test_internal_exceptions_are_never_echoed(self):
-        with patch.object(handler.OpenAIStoreProxy,'read',side_effect=ValueError('fixture-secret-value')):
+        with patch('openai_connection.OpenAIStoreProxy.read',side_effect=ValueError('fixture-secret-value')):
             result=self.request()
         self.assertEqual(result['status'],500)
         self.assertNotIn('fixture-secret-value',json.dumps(result))

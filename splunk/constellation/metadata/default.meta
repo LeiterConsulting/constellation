@@ -25,3 +25,7 @@ export = none
 owner = nobody
 access = read : [ admin ], write : [ admin ]
 export = none
+
+[constellation_mcp_pilot]
+access = read : [ admin ], write : [ admin ]
+export = none

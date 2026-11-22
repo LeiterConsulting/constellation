@@ -14,7 +14,8 @@ class DriverIdentityTests(unittest.TestCase):
         first = pin_driver_revision(original, '123456abcdef')
         second = pin_driver_revision(original, 'abcdef123456')
         self.assertNotEqual(first, second)
-        self.assertEqual(first.count(b'driver.env.CONSTELLATION_RUNTIME_REVISION = 123456abcdef\n'), 4)
+        self.assertEqual(first.count(b'driver.env.CONSTELLATION_RUNTIME_REVISION = 123456abcdef\n'),
+                         original.count(b'scripttype = persist\n'))
         strip = lambda text: re.sub(rb'driver.env.CONSTELLATION_RUNTIME_REVISION = [a-f0-9]{12}\n', b'', text)
         self.assertEqual(strip(first), original); self.assertEqual(strip(second), original)
         for marker in (b'CONSTELLATION_CONTROL = 1', b'CONSTELLATION_AITK_INFERENCE = 1', b'CONSTELLATION_OPENAI_PRIVATE = 1'):

@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.1.0-preview · MCP lab pilot
+
+- Package opt-in Splunk MCP declarations for dashboard creation and status lookup.
+- Verify caller identity and argument transport in probe mode. Exercise private saves, link readback and duplicate recovery with fixed count recipes in fixture mode.
+- Author reviewed Discovery chat and report briefs through the ordinary Splunk user's configured OpenAI or Ollama route. Require an exact administrator-approved provider, origin and model before inference.
+- Document lab setup and live qualification in the [pilot runbook](docs/integrations/mcp-dashboard-pilot.md).
+
 ## 1.0.2 — October 30, 2026
 
 - Compile eligible larger fresh SPL boards from a shared-source plan with explicit page membership, native bindings and destination-local row navigation. Keep the existing search and recovery budgets.

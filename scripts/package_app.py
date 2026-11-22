@@ -76,6 +76,11 @@ if handler_path in files:
         private_module = 'openai_private_handler_' + handler_id
         files['constellation/bin/' + private_module + '.py'] = files.pop(private_path)
         files[restmap_path] = files[restmap_path].replace(b'openai_private_handler.py', (private_module + '.py').encode()).replace(b'openai_private_handler.', (private_module + '.').encode())
+    pilot_path = 'constellation/bin/mcp_pilot_handler.py'
+    if pilot_path in files:
+        pilot_module = 'mcp_pilot_handler_' + handler_id
+        files['constellation/bin/' + pilot_module + '.py'] = files.pop(pilot_path)
+        files[restmap_path] = files[restmap_path].replace(b'mcp_pilot_handler.py', (pilot_module + '.py').encode()).replace(b'mcp_pilot_handler.', (pilot_module + '.').encode())
 files['constellation/default/data/ui/views/renderer_baseline.xml'] = xml.encode()
 for package in ['dashboard-core','dashboard-presets','dashboard-context','dashboard-state','dashboard-layouts','dashboard-inputs','datasources','react-ui','themes','react-icons','splunk-utils']:
     license_file = ROOT / 'node_modules' / '@splunk' / package / 'LICENSE'
