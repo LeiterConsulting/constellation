@@ -1,6 +1,6 @@
 # Constellation dashboard creation over Splunk MCP
 
-Preview contract v1 · Constellation 1.1.0-preview
+MCP pilot contract v1 · Constellation 1.1.0
 
 An explicit request to create a dashboard from a Discovery conversation or report produces a private Dashboard Studio view and a private editable Constellation draft. Discovery displays **Open dashboard** and **Edit in Constellation** from the returned receipt. A dashboard opened in Studio is an independent copy. To publish later draft edits, the author uses **Save to Splunk** to create another copy. [Splunk Discovery Tool repository](https://github.com/LeiterConsulting/splunk-discovery-tool)
 
@@ -12,7 +12,7 @@ An explicit request to create a dashboard from a Discovery conversation or repor
 | `get_creation_status` | `constellation_get_creation_status` | `schema_version`, `request_id`, `expected_user` | Read the author's creation receipt and recover links after a lost response. |
 | `inspect_dashboard_source` | `constellation_inspect_dashboard_source` | `schema_version`, `expected_user`, `scope_json` | Optional field and sample coverage for the selected source under the authenticated caller. |
 
-The registration app ID is `constellation`. Qualify the exact names and schemas returned by `tools/list` on each supported server version. Discovery binds the two approved names to a configured instance and verifies their argument schemas. The application contract below is inside the MCP result envelope. The envelope mapping is part of the server qualification.
+The registration app ID is `constellation`. Qualify the exact names and schemas returned by `tools/list` on each server version. Discovery binds Create and Status to a configured instance and verifies their argument schemas. Inspect is optional. The application contract below is inside the MCP result envelope. The envelope mapping is part of the server qualification.
 
 Create and Status accept `schema_version: "1"` and the same caller-generated `request_id`. The client generates the ID before dispatch using a UTC timestamp and 32 lowercase hex characters from a random UUID, for example `20261120T150000Z-1ebac9f4b9284a50aee98820181a5e61`. It records the ID with the initiating turn and the current connection binding. The JSON-RPC message ID serves transport correlation only. The client supplies `expected_user` from its verified connection binding. The server compares this assertion to the authenticated Splunk session before any work. Only the session supplies authority. A mismatch returns `identity_unavailable` and reveals no operation details.
 

@@ -1,6 +1,6 @@
-# Constellation 1.1.0-preview.2 MCP lab pilot
+# Constellation 1.1.0 MCP lab pilot
 
-This lab preview of the `constellation` app adds source inspection, dashboard creation, and receipt recovery to [Splunk Discovery Tool](https://github.com/LeiterConsulting/splunk-discovery-tool) through Splunk MCP Server. Use it on a single Enterprise test search head with backed-up drafts and intended pilot authors. Keep the exact previous installer and follow the [upgrade guide](../upgrade-guide.md) for recovery.
+The opt-in MCP pilot in Constellation 1.1.0 adds source inspection, dashboard creation, and receipt recovery to [Splunk Discovery Tool](https://github.com/LeiterConsulting/splunk-discovery-tool) through Splunk MCP Server. Use it on a single Enterprise test search head with backed-up drafts and intended pilot authors. Keep the exact previous installer and follow the [upgrade guide](../upgrade-guide.md) for recovery.
 
 Install Constellation and Splunk MCP Server on the same Enterprise search head. Discovery runs separately and needs a verified MCP profile for the Splunk user who can search the source and own the result. For the preview, use a Discovery build that includes dashboard creation. Source inspection fits Discovery builds that advertise the optional tool on the dashboard card.
 
@@ -19,9 +19,9 @@ The fixture accepts one administrator-approved literal index, an optional litera
 
 ## Install and test
 
-1. Verify the package checksum, install or update through Splunk App Management and check **1.1.0-preview.2 / build 70**. Use verified TLS on the management and Web endpoints. The installer defaults to `off`.
+1. Verify the package checksum, install or update through Splunk App Management and check **1.1.0 / build 71**. Use verified TLS on the management and Web endpoints. The installer defaults to `off`.
 2. [Register or verify the tools](#register-the-mcp-tools). Check the exact `tools/list` names and input schemas on the author's MCP connection.
-3. Set `mode = probe` in the app's administrator-managed `local/constellation_mcp_pilot.conf` and set `allowed_users` to the comma-separated exact Splunk usernames of the disposable authors. Each author also needs Splunk's `mcp_tool_execute` capability and a client authenticated as that author. The Constellation allowlist grants access only to its two endpoints. Reopen the signed-in client connection. Exercise both tools and compare the create digest to SHA-256 of the parsed brief serialized as JSON with sorted keys, compact separators and ASCII escaping. Use quotes, a backslash, a literal dollar sign and Unicode in the synthetic title. Capture the actual MCP envelope and elapsed time in private evidence. [Splunk MCP role configuration](https://help.splunk.com/en/splunk-enterprise/mcp-server-for-splunk-platform/1.0/configure-the-splunk-mcp-server)
+3. Set `mode = probe` in the app's administrator-managed `local/constellation_mcp_pilot.conf` and set `allowed_users` to the comma-separated exact Splunk usernames of the disposable authors. Each author also needs Splunk's `mcp_tool_execute` capability and a client authenticated as that author. Reopen the signed-in client connection. Exercise Create and Status and compare the create digest to SHA-256 of the parsed brief serialized as JSON with sorted keys, compact separators and ASCII escaping. Use quotes, a backslash, a literal dollar sign and Unicode in the synthetic title. Capture the actual MCP envelope and elapsed time in private evidence. [Splunk MCP role configuration](https://help.splunk.com/en/splunk-enterprise/mcp-server-for-splunk-platform/1.0/configure-the-splunk-mcp-server)
 4. As the second ordinary author, call both tools while asserting the first author's `expected_user`. Confirm `identity_unavailable` and the absence of artifact links. Repeat with the second author's own expected username and a separate MCP session. Inspect the same forwarded identity using Splunk's current context. An administrator's connection cannot establish this gate.
 5. Enable `mode = fixture` after the identity and mapping checks. Configure `allowed_index` as a disposable search-visible index and `web_base` as the absolute HTTPS Splunk Web base including its locale and any proxy prefix. Example values are below.
 6. Submit the sample brief as a scalar JSON string with a live `request_id`, `expected_user` and `schema_version: "1"`. Confirm both links under the same user's normal Web login. Compare the two private definitions, native rendering and editability. Call status from a new session and repeat the exact create request. Confirm one draft, one Studio view and identical IDs. Change the brief using the same ID and expect `request_conflict`.
@@ -38,7 +38,7 @@ web_base = https://splunk.example.com/splunk/en-US
 
 ## Register the MCP tools
 
-Download the versioned `-mcp-registration.json` beside the app archive and verify its checksum. Preview 2 ships the registration definitions separately. The app still provides the three authenticated REST endpoints.
+Download the versioned `-mcp-registration.json` beside the app archive and verify its checksum. The registration definitions ship separately from the three authenticated REST endpoints in the app.
 
 1. In the MCP Server administration UI or through `GET /services/mcp_tools?external_app_id=constellation`, check which entries already exist. Keep entries whose names, required arguments, and execution mappings match the registration JSON.
 2. On a fresh install with no entries for `constellation`, send the downloaded JSON to `POST /services/mcp_tools` as `application/json`. Use a Splunk bearer token with `mcp_tool_admin` and a verified TLS connection. The batch operation replaces the entire app namespace. If some entries already exist, submit only the missing individual tool objects from the JSON `tools` array.
@@ -99,7 +99,7 @@ The fixed fixture isolates transport, ownership, native writes and recovery from
 
 ## Build evidence
 
-The published build 70 upgrade preserved all existing MCP entries, settings, receipts, drafts, and native views in the single-head lab. Both Discovery entry points created dashboards afterward. See the [preview 2 release evidence](../validation.md#110-preview2-build-70) for the package, upgrade, and browser checks.
+See the [1.1.0 release evidence](../validation.md#110-build-71) for the final package and upgrade checks. The preceding [preview.2 walkthrough](../validation.md#110-preview2-build-70) records post-upgrade creation from both Discovery entry points and the browser checks.
 
 - Build 66 packaged 559 regular files. Its SHA-256 is `311b9712201d176500823f18660bcd8ac75e22ae84d840623da80d34673ee4a7`. The package passed 689 Python tests, 151 frontend tests, the production build and archive checks. Inspection has local contract and handler coverage. Live gateway qualification is pending.
 - Local AppInspect 4.4.0 passed the dedicated MCP signature check on build 66. The general static-directory check still rejects the bundled signature path. The report recorded 0 errors, 1 failure, 8 warnings and 1 skipped check.

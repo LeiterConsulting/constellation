@@ -1,6 +1,21 @@
 # Release evidence
 
-Current release: **Constellation 1.0.2 / build 62**, qualified October 30, 2026. The patch retains the bounded Enterprise support profile. The earlier [1.0 record](reference/validation-1.0.md) preserves the original runtime, failures and upgrade/rollback evidence. Private hosts, keys, indexed rows, user files and lab screenshots remain outside Git.
+The current release is **Constellation 1.1.0 / build 71**. The workspace support profile and the opt-in MCP pilot have separate evidence. Earlier records preserve the original runtime, observed failures, and upgrade and rollback evidence. Private hosts, keys, indexed rows, user files, and lab screenshots remain outside Git.
+
+## 1.1.0 build 71
+
+This release carries the workspace and opt-in MCP pilot qualified in preview.2. The pilot continues to default to off. The [preview.2 walkthrough](#110-preview2-build-70) records the full Discovery Chat and Report creation runs, and the [1.0.2 record](#102--october-30-2026) preserves the earlier multi-provider workspace evidence.
+
+| Check | Recorded result |
+| --- | --- |
+| Installer | SHA-256 `d513a601baedf0358b5d3628ac3c220bf442c1ba12ac53e368c136c0fb1b7055`. The archive contains 557 regular files. |
+| Runtime comparison | The only changed archive member from preview.2 is `default/app.conf`, which identifies version 1.1.0 and build 71. The separate MCP registration JSON is byte-identical with SHA-256 `9b796a6721f26ddd7c7dd1dc39b6a1a23af82b042da1cf636ddbe2592e12597a`. |
+| Offline checks | 697 Python tests, 151 frontend tests, and the production build passed. |
+| Local AppInspect 4.4.0 precert | Zero errors, failures, or future failures, with eight warning checks and one skipped check. |
+| Live upgrade | The verified final archive upgraded build 70 on Enterprise 10.4.4 with MCP Server 1.2.1. No restart was required. All 17 registration definitions and their enablement, pilot and provider settings, caller roles, 18 retained receipts, 24 private draft records, and 23 private native views matched. |
+| Post-upgrade readback | Status and source inspection responded as the existing caller. The two synthetic Discovery Studio/draft pairs matched and all eight saved searches reran with the reviewed source. Both dashboards retained the expected counts of 12 requests and three failures. |
+
+This exact-archive check used the existing pilot identity. Distinct-user live acceptance, production rollout, search-head clustering, and Cloud certification require separate qualification.
 
 ## 1.0.2 — October 30, 2026
 

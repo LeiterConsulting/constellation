@@ -1,8 +1,8 @@
 # Install Constellation
 
-This guide is for Splunk administrators installing **1.0.2**. Authors can start with the [user guide](user-guide.md) once installation and provider access are ready.
+This guide is for Splunk administrators installing **1.1.0**. Authors can start with the [user guide](user-guide.md) once installation and provider access are ready.
 
-For the separate **1.1.0-preview.2** release, follow the [MCP pilot runbook](integrations/mcp-dashboard-pilot.md) to install the preview and register or verify its tools.
+For the optional Discovery integration, follow the [MCP pilot runbook](integrations/mcp-dashboard-pilot.md) to register or verify its tools and approve an authoring provider.
 
 ## Check the deployment
 
@@ -19,17 +19,13 @@ Node/npm and a separate Python installation are **not required to install the re
 
 ## Download and verify
 
-Get the app, **LICENSE**, **third-party-notices ZIP** and **SHA256SUMS** from [release v1.0.2](https://github.com/LeiterConsulting/constellation/releases/tag/v1.0.2). Install the app archive inside the documentation ZIP, or download the standalone tar.gz.
+Get the app, **LICENSE**, **third-party-notices ZIP** and **SHA256SUMS** from [release v1.1.0](https://github.com/LeiterConsulting/constellation/releases/tag/v1.1.0). Install the app archive inside the documentation ZIP, or download the standalone tar.gz.
 
 ~~~sh
-shasum -a 256 constellation-1.0.2.tar.gz
+shasum -a 256 constellation-1.1.0.tar.gz
 ~~~
 
-Compare the digest with its line in SHA256SUMS. The qualified app digest is:
-
-~~~text
-7df2620bb442ac4617f46cae677c29af1719d99984e5cddb010eb461288958fc
-~~~
+Compare the digest with its line in SHA256SUMS or in the [build 71 evidence](validation.md#110-build-71).
 
 First-party code and documentation use the [MIT License](../LICENSE). The app embeds it and the collected [dependency notices](../third_party/README.md). Both are also supplied beside the installer and inside the handoff bundle; keep them with redistributed copies.
 

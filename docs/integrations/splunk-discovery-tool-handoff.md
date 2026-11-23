@@ -1,12 +1,12 @@
 # Discovery Tool handoff for Constellation dashboard creation
 
-Proposed client implementation · November 20, 2026
+Integration guidance for the Constellation 1.1.0 MCP pilot
 
 A user can ask Discovery to create a Dashboard Studio dashboard from the current conversation or a report they can open. Build one bounded dashboard brief, submit it through the user's assigned Splunk MCP connection, and display the resulting private **Open dashboard** and **Edit in Constellation** actions.
 
-**Start with the [shared contract](mcp-dashboard-contract.md).** It defines both tools, input limits, example arguments and receipt states. The [Constellation design](constellation-mcp-design.md) covers the server implementation and joint qualification gates. The [lab pilot runbook](mcp-dashboard-pilot.md) records the preview deployment and the probe and fixture modes. Keep the four files together when sharing the handoff.
+The [shared contract](mcp-dashboard-contract.md) defines Create, Status, optional Inspect, input limits, and receipt states. The [Constellation design](constellation-mcp-design.md) covers the server implementation. The [lab pilot runbook](mcp-dashboard-pilot.md) covers registration and test modes. See the [release evidence](../validation.md#110-build-71) for the current qualification.
 
-## Integration points observed in Discovery 2.2.2
+## Historical integration points in Discovery 2.2.2
 
 | Current path | Implement here |
 | --- | --- |
