@@ -1,6 +1,6 @@
 # Constellation user guide
 
-Create a dashboard from a question and Splunk data, refine it through chat, and save a native Dashboard Studio copy. The core workspace instructions cover version **1.0.2**. The Discovery workflow uses **1.1.0-preview.2**.
+Create a dashboard from a question and Splunk data, refine it through chat, and save a native Dashboard Studio copy. **Constellation 1.1.0** also includes an administrator-enabled pilot for creating dashboards from Splunk Discovery Tool.
 
 **Before you begin:** Constellation must be installed in Splunk, your account must be able to search the chosen data, and a provider must be configured. If **Settings** or **Test model** needs attention, follow [provider setup](providers.md) or ask your administrator.
 

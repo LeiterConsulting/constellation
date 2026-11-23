@@ -1,6 +1,8 @@
-# Constellation 1.0 support and updates
+# Constellation support and updates
 
-The 1.0 release profile is Splunk Enterprise on a single Linux search head, with native Dashboard Studio output and OpenAI, Ollama or administrator-approved AITK inference. The qualification targets are Enterprise 10.2.8 / Studio 1.23.12 and Enterprise 10.4.4 / Studio 1.26.6. Version-specific authoring remains gated by the installed environment. A provider connection test is separate from dashboard-task qualification; unknown model capacities and file modalities remain guarded.
+The workspace release profile is Splunk Enterprise on a single Linux search head, with native Dashboard Studio output and OpenAI, Ollama or administrator-approved AITK inference. Earlier workspace qualification covered Enterprise 10.2.8 / Studio 1.23.12 and Enterprise 10.4.4 / Studio 1.26.6. Version-specific authoring remains gated by the installed environment. A provider connection test is separate from dashboard-task qualification. Unknown model capacities and file modalities remain guarded.
+
+Constellation 1.1.0 also includes the opt-in Splunk MCP pilot for Discovery. Its live scope is one test search head on Enterprise 10.4.4 and MCP Server 1.2.1 with a single verified caller. The pilot defaults to off. [Setup and qualification](integrations/mcp-dashboard-pilot.md)
 
 The app supports its documented guarded search, editing, draft and transfer workflows. A saved dashboard is a normal native Studio definition under ordinary Splunk permissions. Bounded previews rerun supported read-only searches as the current user; they are not scheduled report caches or report-owner execution. Complete Studio parity is an ongoing feature target, not a claim attached to 1.0.
 
@@ -14,7 +16,7 @@ The current 1.x line receives fixes. Use patch releases for compatible bug/secur
 
 ## Report a problem
 
-Use the repository's [bug report form](https://github.com/LeiterConsulting/constellation/issues/new?template=bug_report.yml). Include app, Splunk, Studio, provider/model versions, a short reproducible sequence, expected/actual behavior and the affected surface (preview, native Studio, chat or storage). Share synthetic examples and app error codes. Do not attach keys, internal hosts, indexed rows, private definitions/files or raw provider errors. Use [private vulnerability reporting](../SECURITY.md#reporting-a-vulnerability) for security issues. Repository access is required while distribution remains private.
+Use the repository's [bug report form](https://github.com/LeiterConsulting/constellation/issues/new?template=bug_report.yml). Include app, Splunk, Studio, provider/model versions, a short reproducible sequence, expected/actual behavior and the affected surface (preview, native Studio, chat or storage). Share synthetic examples and app error codes. Do not attach keys, internal hosts, indexed rows, private definitions/files or raw provider errors. Use [private vulnerability reporting](../SECURITY.md#reporting-a-vulnerability) for security issues.
 
 ## Install, update and rollback
 

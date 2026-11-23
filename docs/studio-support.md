@@ -1,6 +1,6 @@
 # Supported features and limits
 
-This is the **Constellation 1.0** support contract. It separates app behavior, bounded preview execution and native Studio output. An inventory entry or preserved property is not proof of rendered parity.
+This is the Constellation workspace support contract. It separates app behavior, bounded preview execution and native Studio output. See the [1.1.0 release evidence](validation.md#110-build-71) for the package and MCP pilot boundary.
 
 ## Qualified deployment
 
@@ -16,7 +16,7 @@ This is the **Constellation 1.0** support contract. It separates app behavior, b
 
 ## Authoring and editing
 
-| Area | 1.0 behavior | Boundary |
+| Area | Workspace behavior | Boundary |
 | --- | --- | --- |
 | New work | Empty canvas, inspected starter questions, existing SPL/SPL2 scope or Studio import | Suggestions use bounded field evidence, not verified general business meaning or cross-dataset relationships |
 | Focus | Chart/input/page selection, docked/floating conversation, contextual proposals | Selecting a proposal fills an editable request; it does not execute it |

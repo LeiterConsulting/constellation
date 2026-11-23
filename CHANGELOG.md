@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.0 — November 23, 2026
+
+- Release the Constellation workspace with the opt-in Discovery dashboard pilot. The three MCP tools cover source inspection, creation, and receipt lookup.
+- Retain focused recovery guidance across Create and Status, including the verified author's receipt headroom. The pilot defaults to off.
+- Distribute administrator registration JSON separately from the Splunk installer. [Upgrade and qualification evidence](docs/validation.md#110-build-71)
+
 ## 1.1.0-preview.2 · MCP lab pilot
 
 - Preserve actionable source, coverage, settings, and provider outcomes across Create and Status.
