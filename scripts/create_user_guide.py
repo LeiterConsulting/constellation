@@ -86,7 +86,7 @@ def export(output):
             p=Paragraph(inline(line[2:]),styles['GuideTitle']);p.bookmark='constellation-user-guide';p.level=0;story.append(p);index+=1;continue
         if line.startswith('## '):
             title=line[3:];slug=re.sub(r'[^\w\- ]','',title.lower()).replace(' ','-')
-            if slug=='build-your-first-dashboard':story.append(PageBreak())
+            if slug in ('build-your-first-dashboard', 'create-from-discovery-preview'):story.append(PageBreak())
             p=Paragraph(inline(title),styles['GuideHeading']);p.bookmark=slug;p.level=1;story.append(p);index+=1;continue
         image=re.fullmatch(r'!\[([^\]]*)\]\(([^)]+)\)',line)
         if image:
