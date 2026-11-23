@@ -114,11 +114,19 @@ This heading preserves the original qualification link. Read the [complete dated
 
 The installable archive has SHA-256 `5fb8dfe4bd1aa82157abf46f2f676263a2492cbcef2802f7ace005f60f728dc0` and contains 557 regular files. The companion registration JSON has SHA-256 `9b796a6721f26ddd7c7dd1dc39b6a1a23af82b042da1cf636ddbe2592e12597a`. This package passed 697 Python tests, 151 frontend tests, and the production build. Local AppInspect 4.4.0 precert returned zero errors, failures, or future failures, with eight warning checks and one skipped check. Cloud certification remains separate.
 
-Splunk MCP Server 1.2.1 accepted the generated Create, Status, and Inspect definitions in an isolated disabled namespace. Readback matched the execution mappings and required arguments. The existing enabled tool names, execution mappings, and required argument types agreed with the release payload. Removing the disabled test entries preserved every active catalog entry.
+### Published-package upgrade — November 23, 2026
 
-On the Enterprise 10.4.4 and Splunk MCP Server 1.2.1 lab, the existing signed-in connection listed Create, Status, and Inspect. An intentional empty source returned `needs_input/no_data`, and a fresh Status lookup returned the same code. The reviewed retry saved a private native dashboard and matching draft.
+The published archive upgraded build 69 to build 70 on one Splunk Enterprise 10.4.4 and MCP Server 1.2.1 test search head. Splunk reported no restart requirement. Before-and-after readback matched all 17 MCP catalog entries and their enablement, including Create, Status, and Inspect. Pilot and provider settings, caller roles, 16 retained receipts, 22 owner-private draft records, and 21 owner-private native views also matched. The install required no MCP re-registration in this lab.
 
-Discovery chat and report each produced a four-panel OpenAI-authored dashboard on the preceding lab build. Native and draft definitions matched. All eight searches started with the exact reviewed synthetic base and used the one-hour range. Safari opened both native dashboards and both editable drafts. Each showed 12 requests, three failures, a failure timeline, and a grouped service comparison. Distinct-user and production qualification are outside this run.
+Discovery v3 reran Chat and Report through its saved MCP connection after the upgrade. Each one-page plan was approved without outline edits and inspection reported a complete 12-row synthetic sample. Constellation authored both plans through the existing OpenAI route. A fresh Status lookup agreed with each Create receipt, and both private Studio definitions exactly matched their editable drafts. All eight saved searches preserved the exact reviewed SPL base and the one-hour range. Both Studio views and both draft previews rendered 12 requests, three failures, a failure timeline, and a grouped service comparison.
+
+Discovery used a temporary local Ollama planner during the walkthrough. The returned Splunk Web hostname hit a certificate warning in the in-app browser, so rendering was verified through the same signed-in lab instance at its already trusted address. This run covered one existing caller and synthetic data. Distinct-user, production, and Cloud qualification remain separate.
+
+### Earlier MCP checks
+
+Splunk MCP Server 1.2.1 accepted the generated Create, Status, and Inspect definitions in an isolated disabled namespace. Readback matched the execution mappings and required arguments. Removing the disabled test entries preserved every active catalog entry.
+
+On the preceding lab build, an intentional empty source returned `needs_input/no_data`, with the same code on a fresh Status lookup. The reviewed retry saved a private native dashboard and matching draft. Safari also rendered the four-panel native views and editable drafts built from chat and report.
 
 ## 1.1.0-preview build 66
 

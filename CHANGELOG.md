@@ -5,7 +5,8 @@
 - Preserve actionable source, coverage, settings, and provider outcomes across Create and Status.
 - Report the current author's receipt headroom and next expiration. Keep the default of 12 and allow up to 32 for an administrator-configured single-author lab.
 - Distribute the MCP registration definitions beside the app so existing tool entries can be reused and fresh installs can register the same v1 names, schemas, and endpoints through Splunk MCP Server.
-- Verify native dashboards and editable drafts created from Discovery chat and reports in Safari. [Preview evidence](docs/validation.md#110-preview2-build-70)
+- Verify the published build 70 upgrade from lab build 69. The MCP catalog, pilot settings, retained receipts, drafts, and native views matched after the upgrade.
+- Rerun Discovery chat and report creation against the installed build. Both four-panel dashboards returned a private Studio view and matching editable draft, and both rendered the expected synthetic totals. [Preview evidence](docs/validation.md#110-preview2-build-70)
 
 ## 1.1.0-preview · MCP lab pilot
 

@@ -26,6 +26,8 @@ Version 1.0.2 also retains schema 3, portable format 5 and the existing credenti
 
 For an MCP preview update, retain the existing caller-owned drafts, dashboards, receipt store, and pilot settings. Preview 2 carries the same v1 MCP routes. Check the enabled catalog against the separate registration JSON after updating. Follow the [registration procedure](integrations/mcp-dashboard-pilot.md#register-the-mcp-tools) for any missing entry.
 
+The published build 70 archive upgraded build 69 in place on a single Enterprise 10.4.4 test search head. Its existing MCP entries, pilot settings, receipts, and private artifacts survived, and Chat and Report both created dashboards after the upgrade. [Upgrade evidence](validation.md#published-package-upgrade--november-23-2026)
+
 As an intended ordinary author:
 
 1. Reopen a draft and its conversation, brief, page/input state and pending files.
