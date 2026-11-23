@@ -2,6 +2,8 @@
 
 ## 1.1.0-preview · MCP lab pilot
 
+- Add optional caller-scoped source inspection for Discovery dashboard cards. Return bounded field coverage before creation and keep full validation in Create.
+
 - Package opt-in Splunk MCP declarations for dashboard creation and status lookup.
 - Verify caller identity and argument transport in probe mode. Exercise private saves, link readback and duplicate recovery with fixed count recipes in fixture mode.
 - Author reviewed Discovery chat and report briefs through the ordinary Splunk user's configured OpenAI or Ollama route. Require an exact administrator-approved provider, origin and model before inference.

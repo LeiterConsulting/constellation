@@ -15,7 +15,8 @@ from test_drafts_and_data import DataRuntime, MemoryDrafts
 from compatibility import feature_profile
 from dashboard_library import parse_view
 from mcp_pilot_authoring import require_provider
-from mcp_pilot_input import parse_brief, request_identity, web_base
+from mcp_pilot_input import parse_brief, parse_inspection, request_identity, web_base
+from mcp_pilot_inspection import inspect_source
 from mcp_pilot_ledger import ADMISSION_SECONDS, CLAIM_SECONDS, PilotLedger, RETAIN_SECONDS
 from mcp_pilot_service import PilotCreation, build_fixture
 from provider_service import ProviderError
@@ -266,6 +267,70 @@ class PilotHandlerTests(unittest.TestCase):
             self.assertEqual(failure['payload']['code'], 'identity_unavailable')
             ledger.assert_not_called()
 
+    def test_missing_status_reports_mode_for_the_verified_caller_without_writing(self):
+        handler = self.load_handler()
+        wire = {'method': 'GET', 'session': {'user': 'alice', 'authtoken': 'fixture-session'},
+                'query': [('schema_version', '1'), ('request_id', IDENTIFIER), ('expected_user', 'alice')]}
+        with TemporaryDirectory() as root, patch.dict('os.environ', {
+            'CONSTELLATION_MCP_PILOT': 'status', 'SPLUNK_HOME': root,
+        }), patch.object(handler, 'SearchService') as runtime, patch.object(handler, 'DraftService') as drafts:
+            runtime.return_value.user = drafts.return_value.user = 'alice'
+            runtime.return_value.request.return_value = {'entry': [
+                {'content': {'username': 'alice', 'capabilities': ['search']}}]}
+            status = handler.PilotHandler()
+            for mode in ('fixture', 'authoring'):
+                with self.subTest(mode=mode), patch.object(handler, 'config', return_value={
+                    'mode': mode, 'users': {'alice'},
+                }):
+                    runtime.return_value.request.reset_mock()
+                    reply = status.handle(json.dumps(wire))
+                    self.assertEqual(reply['status'], 200)
+                    self.assertEqual(reply['payload'], {
+                        'schema_version': '1', 'request_id': IDENTIFIER, 'status': 'not_found', 'warnings': [],
+                        'pilot': {'mode': mode, 'identity_verified': True},
+                    })
+                    runtime.return_value.request.assert_called_once_with('/services/authentication/current-context')
+            drafts.return_value.request.assert_not_called()
+            self.assertFalse((Path(root) / 'var').exists())
+
+    def test_inspection_uses_the_same_caller_session_and_never_opens_save_paths(self):
+        handler = self.load_handler()
+        scope = {'source': {'kind': 'spl', 'query': 'search index=fixture_index service="café & test"'},
+                 'time_range': {'earliest': '-1h', 'latest': 'now'}}
+        arguments = {'schema_version': '1', 'expected_user': 'alice',
+                     'scope_json': json.dumps(scope, ensure_ascii=False)}
+        wire = {'method': 'POST', 'session': {'user': 'alice', 'authtoken': 'fixture-session'}}
+        with patch.dict('os.environ', {'CONSTELLATION_MCP_PILOT': 'inspect'}), \
+                patch.object(handler, 'config', return_value={'mode': 'authoring', 'users': {'alice'}}) as settings, \
+                patch.object(handler, 'SearchService') as runtime, patch.object(handler, 'inspect_source') as inspect_call, \
+                patch.object(handler, 'PilotLedger') as ledger, patch.object(handler, 'DraftService') as drafts:
+            context = {'username': 'alice', 'capabilities': ['search']}
+            runtime.return_value.request.return_value = {'entry': [{'content': context}]}
+            inspect_call.return_value = {'schema_version': '1', 'status': 'observed'}
+            app = handler.PilotHandler()
+            for encoder in (urlencode, json.dumps):
+                with self.subTest(encoder=encoder.__name__):
+                    reply = app.handle(json.dumps(dict(wire, payload=encoder(arguments))))
+                    self.assertEqual(reply, {'status': 200, 'payload': inspect_call.return_value,
+                                             'headers': {'Cache-Control': 'no-store'}})
+                    runtime.assert_called_with('alice', 'fixture-session')
+                    inspect_call.assert_called_with(runtime.return_value, scope)
+            wire['payload'] = urlencode(arguments)
+            inspect_call.reset_mock()
+            for mode, code in (('off', 'feature_disabled'), ('fixture', 'feature_disabled'), ('probe', 'pilot_probe_only')):
+                with self.subTest(mode=mode):
+                    settings.return_value['mode'] = mode
+                    self.assertEqual(app.handle(json.dumps(wire))['payload']['code'], code)
+            settings.return_value['mode'] = 'authoring'
+            self.assertEqual(app.handle(json.dumps(dict(wire, method='GET')))['status'], 405)
+            switched = dict(wire, payload=urlencode(dict(arguments, expected_user='peer')))
+            self.assertEqual(app.handle(json.dumps(switched))['payload']['code'], 'identity_unavailable')
+            context['capabilities'] = []
+            self.assertEqual(app.handle(json.dumps(wire))['payload']['code'], 'identity_unavailable')
+            inspect_call.assert_not_called()
+            ledger.assert_not_called()
+            drafts.assert_not_called()
+
     def test_registration_routes_and_schema_are_aligned(self):
         from configparser import ConfigParser
         app = Path(__file__).resolve().parents[1] / 'splunk/constellation'
@@ -273,15 +338,121 @@ class PilotHandlerTests(unittest.TestCase):
         tools.read(app / 'default/tools.conf')
         routes.read(app / 'default/restmap.conf')
         schemas = json.loads((app / 'static/tool_input_payload_signatures.json').read_text())
-        self.assertEqual(set(schemas), {'create_dashboard', 'get_creation_status'})
+        operations = {'create_dashboard': ('create', 'post'), 'get_creation_status': ('status', 'get'),
+                      'inspect_dashboard_source': ('inspect', 'post')}
+        self.assertEqual(set(schemas), set(operations))
         for name in schemas:
+            operation, method = operations[name]
             tool = tools['restmap:' + name]
             route = routes['script:' + tool['endpoint_name']]
             self.assertEqual(route['passSystemAuth'], 'false')
             self.assertEqual(route['passSession'], 'true')
             self.assertEqual(route['requireAuthentication'], 'true')
             self.assertEqual(route['handler'], 'mcp_pilot_handler.PilotHandler')
-            self.assertEqual(route['driver.env.constellation_mcp_pilot'], 'create' if name == 'create_dashboard' else 'status')
-            self.assertEqual(tool['method'], 'post' if name == 'create_dashboard' else 'get')
+            self.assertEqual(route['driver.env.constellation_mcp_pilot'], operation)
+            self.assertEqual(route['match'], '/constellation/mcp/v1/' + operation)
+            self.assertEqual(route['passPayload'], 'true' if method == 'post' else 'false')
+            self.assertEqual(tool['method'], method)
             self.assertEqual(set(schemas[name]['required']), set(schemas[name]['properties']))
             self.assertTrue(all(p['required'] == 'true' for p in schemas[name]['properties'].values()))
+            if method == 'post':
+                self.assertEqual(schemas[name]['body_template'],
+                                 {key: '$' + key + '$' for key in schemas[name]['required']})
+
+
+class PilotInspectionTests(unittest.TestCase):
+    def setUp(self):
+        self.scope = {'source': {'kind': 'index', 'index': 'fixture_index', 'sourcetype': 'fixture:events'},
+                      'time_range': {'earliest': '-1h', 'latest': 'now'}}
+        self.runtime = FixtureRuntime()
+
+    def test_index_inspection_returns_one_bounded_metadata_sample(self):
+        rows = [{'latency_ms': '0', '_raw': 'PRIVATE CELL', 'broken\nfield': '1'},
+                {'latency_ms': ['1', '2']}, {}]
+        fields = [dict(name=name) for name in ('latency_ms', '_raw', 'broken\nfield')]
+        fields.extend({'name': 'field_' + str(i)} for i in range(20))
+        with patch.object(self.runtime, 'preview', return_value={
+            'results': rows, 'fields': fields, 'state': 'partial',
+            'evidence': {'reasons': ['Search stopped at a resource limit.', 'PRIVATE DIAGNOSTIC']},
+        }) as preview:
+            reply = inspect_source(self.runtime, parse_inspection(json.dumps(self.scope)))
+        preview.assert_called_once_with({'query': 'search index="fixture_index" sourcetype="fixture:events" | head 201',
+                                         'language': 'spl', 'earliest': '-1h', 'fieldDiscovery': True})
+        self.assertEqual(reply['status'], 'observed')
+        self.assertEqual(reply['source'], dict(self.scope['source'], language='spl'))
+        self.assertEqual(reply['time_range'], self.scope['time_range'])
+        self.assertEqual(reply['sample'], {'rows': 3, 'row_limit': 200, 'grain': 'indexed_observations',
+                                          'completion': 'partial', 'reasons': ['resource_limit']})
+        self.assertEqual(len(reply['fields']), 12)
+        self.assertEqual(reply['fields'][0], {'name': 'latency_ms', 'present': 2, 'missing': 1,
+                                             'numeric': 1, 'multivalue': 1, 'role': 'measurement',
+                                             'unit': 'ms', 'basis': 'field_name'})
+        self.assertNotRegex(json.dumps(reply), r'PRIVATE|broken|_raw')
+
+    def test_spl_returns_aggregate_grain_and_suppresses_dynamic_column_names(self):
+        for pipeline, expected_fields in (
+            ('stats count AS events', [{'name': 'events', 'present': 1, 'missing': 0,
+                                        'numeric': 1, 'multivalue': 0, 'role': 'unknown', 'basis': 'unknown'}]),
+            ('timechart count BY host', []),
+            ('eval {host}=count', []),
+            ('xyseries _time host count', []),
+        ):
+            with self.subTest(pipeline=pipeline):
+                query = 'search index=fixture_index service="café | xyseries" | ' + pipeline
+                scope = dict(self.scope, source={'kind': 'spl', 'query': query})
+                column = 'events' if expected_fields else 'private_value_as_field_name'
+                with patch.object(self.runtime, 'preview', return_value={
+                    'results': [{column: '0'}], 'fields': [{'name': column}], 'state': 'complete',
+                }) as preview:
+                    result = inspect_source(self.runtime, scope)
+                preview.assert_called_once_with({'query': query + ' | head 201', 'language': 'spl',
+                                                 'earliest': '-1h', 'fieldDiscovery': True})
+                self.assertEqual(result['status'], 'observed')
+                self.assertEqual(result['source'], {'kind': 'spl', 'language': 'spl'})
+                self.assertEqual(result['sample']['grain'], 'existing_search_output')
+                self.assertEqual(result['fields'], expected_fields)
+                self.assertEqual(result['sample']['reasons'], [] if expected_fields else ['dynamic_field_names'])
+                self.assertNotRegex(json.dumps(result), r'fixture_index|private_value')
+
+    def test_zero_rows_are_empty_only_after_verified_completion(self):
+        for completion, status, reasons in (
+            ('complete', 'empty', []),
+            ('partial', 'inconclusive', ['unverified_completion']),
+            ('unknown', 'inconclusive', []),
+            ('timeout', 'inconclusive', ['preview_timeout']),
+        ):
+            with self.subTest(completion=completion), patch.object(self.runtime, 'preview', return_value={
+                'results': [], 'fields': [{'name': 'latency_ms'}], 'state': completion,
+            }) as preview:
+                if completion == 'timeout':
+                    preview.side_effect = ProviderError('PRIVATE MESSAGE', 422, 'preview_timeout')
+                result = inspect_source(self.runtime, self.scope)
+                self.assertEqual(result['status'], status)
+                self.assertEqual(result['fields'], [])
+                state = 'unknown' if completion == 'timeout' else completion
+                self.assertEqual(result['sample'], {'rows': 0, 'row_limit': 200, 'grain': 'indexed_observations',
+                                                     'completion': state, 'reasons': reasons})
+
+    def test_scope_rejects_unavailable_forms_and_keeps_upstream_errors_private(self):
+        for invalid_scope in (
+            dict(self.scope, source={'kind': 'saved_report', 'app': 'search', 'name': 'fixture'}),
+            dict(self.scope, time_range={'earliest': '-30d', 'latest': 'now'}),
+            dict(self.scope, time_range={'earliest': '-1h', 'latest': '2026-01-01'}),
+            dict(self.scope, source=dict(self.scope['source'], app='search')),
+            dict(self.scope, profile={}),
+        ):
+            with self.assertRaises(ProviderError) as error:
+                parse_inspection(json.dumps(invalid_scope))
+            self.assertEqual(error.exception.code, 'invalid_request')
+        malformed_search = dict(self.scope, source={'kind': 'spl', 'query': 'search index=fixture_index earliest=-3h'})
+        inaccessible_index = dict(self.scope, source={'kind': 'index', 'index': 'unavailable'})
+        for scope in (malformed_search, inaccessible_index):
+            with patch.object(self.runtime, 'preview') as preview, self.assertRaises(ProviderError) as error:
+                inspect_source(self.runtime, scope)
+            self.assertEqual(error.exception.code, 'inspection_failed')
+            preview.assert_not_called()
+        with patch.object(self.runtime, 'preview', side_effect=ProviderError('PRIVATE MESSAGE', 503, 'splunk_transport')), \
+                self.assertRaises(ProviderError) as error:
+            inspect_source(self.runtime, self.scope)
+        self.assertEqual(error.exception.code, 'inspection_unavailable')
+        self.assertNotIn('PRIVATE', str(error.exception))

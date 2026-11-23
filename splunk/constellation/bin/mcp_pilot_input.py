@@ -45,14 +45,19 @@ def strict_object(text, maximum=16384):
     return result
 
 
-def request_identity(arguments, create):
-    required = {'schema_version', 'request_id', 'expected_user'}
-    if create:
-        required.add('brief_json')
+def validate_arguments(arguments, required):
     if set(arguments) != required:
         raise invalid()
     if arguments['schema_version'] != '1':
         raise ProviderError('This pilot supports dashboard contract v1.', 400, 'unsupported_contract')
+    text_field(arguments['expected_user'], 1, 200)
+
+
+def request_identity(arguments, create):
+    required = {'schema_version', 'request_id', 'expected_user'}
+    if create:
+        required.add('brief_json')
+    validate_arguments(arguments, required)
     request_id = arguments['request_id']
     if not isinstance(request_id, str) or not ID_PATTERN.fullmatch(request_id):
         raise invalid()
@@ -60,7 +65,6 @@ def request_identity(arguments, create):
         issued_at = datetime.strptime(request_id[:16], '%Y%m%dT%H%M%SZ').replace(tzinfo=timezone.utc)
     except ValueError:
         raise invalid() from None
-    text_field(arguments['expected_user'], 1, 200)
     return request_id, issued_at.timestamp()
 
 
@@ -76,25 +80,7 @@ def strict_fields(value, required, optional=()):
         raise invalid()
 
 
-def parse_brief(raw):
-    brief = strict_object(raw)
-    strict_fields(brief, ('title', 'purpose', 'source', 'time_range', 'pages'),
-                  ('requirements', 'findings', 'provenance'))
-    text_field(brief['title'], 1, 120)
-    text_field(brief['purpose'], 1, 500)
-    text_field(brief.get('requirements', ''), 0, 1200)
-    findings = brief.get('findings', [])
-    if not isinstance(findings, list) or len(findings) > 4:
-        raise invalid()
-    for finding in findings:
-        text_field(finding, 1, 300)
-    if 'provenance' in brief:
-        provenance = brief['provenance']
-        strict_fields(provenance, ('kind', 'label'))
-        if provenance['kind'] not in ('conversation', 'discovery_report'):
-            raise invalid()
-        text_field(provenance['label'], 1, 120)
-    scope = brief['source']
+def validate_source_window(scope, window):
     if not isinstance(scope, dict):
         raise invalid()
     kind = scope.get('kind')
@@ -115,10 +101,39 @@ def parse_brief(raw):
         text_field(scope['name'], 1, 200)
     else:
         raise invalid()
-    window = brief['time_range']
     strict_fields(window, ('earliest', 'latest'))
     if not isinstance(window['earliest'], str) or window['earliest'] not in RANGES or window['latest'] != 'now':
         raise invalid()
+
+
+def parse_inspection(raw):
+    scope = strict_object(raw)
+    strict_fields(scope, ('source', 'time_range'))
+    validate_source_window(scope['source'], scope['time_range'])
+    if scope['source']['kind'] not in ('index', 'spl'):
+        raise invalid()
+    return scope
+
+
+def parse_brief(raw):
+    brief = strict_object(raw)
+    strict_fields(brief, ('title', 'purpose', 'source', 'time_range', 'pages'),
+                  ('requirements', 'findings', 'provenance'))
+    text_field(brief['title'], 1, 120)
+    text_field(brief['purpose'], 1, 500)
+    text_field(brief.get('requirements', ''), 0, 1200)
+    findings = brief.get('findings', [])
+    if not isinstance(findings, list) or len(findings) > 4:
+        raise invalid()
+    for finding in findings:
+        text_field(finding, 1, 300)
+    if 'provenance' in brief:
+        provenance = brief['provenance']
+        strict_fields(provenance, ('kind', 'label'))
+        if provenance['kind'] not in ('conversation', 'discovery_report'):
+            raise invalid()
+        text_field(provenance['label'], 1, 120)
+    validate_source_window(brief['source'], brief['time_range'])
     pages = brief['pages']
     if not isinstance(pages, list) or not 1 <= len(pages) <= 2:
         raise invalid()

@@ -57,6 +57,8 @@ Actual indexed-data searches, draft storage and native saves retain caller autho
 
 The optional MCP pilot reuses the caller-scoped authoring service. Its authoring mode verifies the configured model and provider origin against administrator settings before inference. It checks the requested page and panel coverage after the standard search and Studio checks and confirms owner-private readback of both saved artifacts. [MCP pilot runbook](integrations/mcp-dashboard-pilot.md)
 
+The optional MCP inspection endpoint uses the same verified caller and bounded source profiler. It returns sample coverage for the selected source without calling a provider or opening the creation ledger. Discovery can display the sample while the user reviews the plan. Create repeats source inspection and validates under the caller's current permissions. [MCP inspection contract](integrations/mcp-dashboard-contract.md#optional-source-inspection)
+
 ## Persistence and recovery
 
 Draft schema 3 stores the native definition with conversation, brief, focus, input/page state and pending references. Provider secrets and search-result caches are excluded. Revision checks and local locking serialize one search head; replication is not distributed compare-and-swap.

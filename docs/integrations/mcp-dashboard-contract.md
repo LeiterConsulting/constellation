@@ -1,23 +1,63 @@
 # Constellation dashboard creation over Splunk MCP
 
-Proposed contract v1 · November 20, 2026
+Preview contract v1 · Constellation 1.1.0-preview
 
-An explicit request to create a dashboard from a Discovery conversation or report produces a private Dashboard Studio view and a private editable Constellation draft. Discovery displays **Open dashboard** and **Edit in Constellation** from the returned receipt. A dashboard opened in Studio is an independent copy. To publish later draft edits, the author uses **Save to Splunk** to create another copy.
+An explicit request to create a dashboard from a Discovery conversation or report produces a private Dashboard Studio view and a private editable Constellation draft. Discovery displays **Open dashboard** and **Edit in Constellation** from the returned receipt. A dashboard opened in Studio is an independent copy. To publish later draft edits, the author uses **Save to Splunk** to create another copy. [Splunk Discovery Tool repository](https://github.com/LeiterConsulting/splunk-discovery-tool)
 
 ## Tools
 
-| App stanza name | Expected MCP callable name | Arguments | Effect |
+| App stanza name | MCP callable name | Arguments | Effect |
 | --- | --- | --- | --- |
 | `create_dashboard` | `constellation_create_dashboard` | `schema_version`, `request_id`, `expected_user`, `brief_json` | Create one new draft and one new private native view for the authenticated author. |
 | `get_creation_status` | `constellation_get_creation_status` | `schema_version`, `request_id`, `expected_user` | Read the author's creation receipt and recover links after a lost response. |
+| `inspect_dashboard_source` | `constellation_inspect_dashboard_source` | `schema_version`, `expected_user`, `scope_json` | Optional field and sample coverage for the selected source under the authenticated caller. |
 
 The registration app ID is `constellation`. Qualify the exact names and schemas returned by `tools/list` on each supported server version. Discovery binds the two approved names to a configured instance and verifies their argument schemas. The application contract below is inside the MCP result envelope. The envelope mapping is part of the server qualification.
 
-Both tools accept `schema_version: "1"` and the same caller-generated `request_id`. The client generates the ID before dispatch using a UTC timestamp and 32 lowercase hex characters from a random UUID, for example `20261120T150000Z-1ebac9f4b9284a50aee98820181a5e61`. It records the ID with the initiating turn and the current connection binding. The JSON-RPC message ID serves transport correlation only. The client supplies `expected_user` from its verified connection binding. The server compares this assertion to the authenticated Splunk session before any work. Only the session supplies authority. A mismatch returns `identity_unavailable` and reveals no operation details.
+Create and Status accept `schema_version: "1"` and the same caller-generated `request_id`. The client generates the ID before dispatch using a UTC timestamp and 32 lowercase hex characters from a random UUID, for example `20261120T150000Z-1ebac9f4b9284a50aee98820181a5e61`. It records the ID with the initiating turn and the current connection binding. The JSON-RPC message ID serves transport correlation only. The client supplies `expected_user` from its verified connection binding. The server compares this assertion to the authenticated Splunk session before any work. Only the session supplies authority. A mismatch returns `identity_unavailable` and reveals no operation details.
+
+## Optional source inspection
+
+`constellation_inspect_dashboard_source` accepts three required scalar strings. Set `schema_version` to `"1"`, derive `expected_user` from the same verified connection used for Create and serialize one object with exactly `source` and `time_range` as `scope_json`. Use the literal index or guarded SPL forms below. The same rolling windows apply. The initial endpoint works in pilot authoring mode for its allowlisted users. POST keeps the query out of the request URL. The endpoint runs one bounded search job as the caller.
+
+```json
+{
+  "schema_version": "1",
+  "expected_user": "example_author",
+  "scope_json": "{\"source\":{\"kind\":\"index\",\"index\":\"example_metrics\",\"sourcetype\":\"example:service\"},\"time_range\":{\"earliest\":\"-24h\",\"latest\":\"now\"}}"
+}
+```
+
+Example application payload
+
+```json
+{
+  "schema_version": "1",
+  "status": "observed",
+  "source": {"kind": "index", "index": "example_metrics", "sourcetype": "example:service", "language": "spl"},
+  "time_range": {"earliest": "-24h", "latest": "now"},
+  "sample": {
+    "rows": 18, "row_limit": 200, "grain": "indexed_observations",
+    "completion": "partial", "reasons": ["resource_limit"]
+  },
+  "fields": [
+    {"name": "latency_ms", "present": 15, "missing": 3, "numeric": 15, "multivalue": 0,
+     "role": "measurement", "unit": "ms", "basis": "field_name"}
+  ]
+}
+```
+
+- `observed` means the sample contains output rows, including partial samples. `empty` requires a complete zero-row sample. An incomplete zero-row sample or a preview deadline returns `inconclusive`.
+- Completion is `complete`, `partial` or `unknown`. Reason codes are `resource_limit`, `row_limit`, `unverified_completion`, `search_warning`, `byte_limit`, `preview_timeout` and `dynamic_field_names`. The last reason marks a field list suppressed because a query can derive output-column names from values. It describes the field list independently of search completion.
+- For SPL, `source` contains `kind` and `language`, and sample grain is `existing_search_output`. Aggregate output rows can exist when the underlying event count is zero. Coverage counts use retained rows. The shortlist contains up to 12 fields. Unit hints are optional and labelled by provenance. Render field names as text.
+- The response excludes the original SPL, event values, native search handles, diagnostics and secrets. Inspection uses no inference provider, draft, dashboard or creation receipt. The existing five-second native search limit and polling limits apply. Discovery should keep the card responsive while a sample runs.
+- A failed call can return a bounded error code such as `invalid_request`, `unsupported_contract`, `identity_unavailable`, `feature_disabled`, `pilot_probe_only`, `inspection_failed` or `inspection_unavailable`. Handle the MCP transport envelope first. Capability absence, an unavailable sample or discarded stale data should leave Create available under its usual rules.
+
+Bind advisory evidence to the verified connection, Splunk user, exact selected source and range, and discard late results when the binding changes. Discovery supplies the reviewed source and time range in Create. Constellation runs fresh source, provider, search, Studio and private-write checks. Inspection results grant no authority and are outside the Create and Status schemas.
 
 ## Creation arguments
 
-The proposed gateway surface uses scalar strings. Discovery constructs and validates the inner object and serializes it exactly once into `brief_json`. Constellation independently checks both layers, rejects unknown keys and duplicate JSON keys, and enforces a 16 KiB UTF-8 brief limit. Scalar mapping, quotes, backslashes, Unicode and literal dollar signs must round-trip through the actual tool registration before enablement.
+The gateway uses scalar strings. Discovery constructs and validates the inner object and serializes it exactly once into `brief_json`. Constellation independently checks both layers, rejects unknown keys and duplicate JSON keys, and enforces a 16 KiB UTF-8 brief limit. Verify scalar mapping, quotes, backslashes, Unicode and literal dollar signs through the installed registration.
 
 | Brief field | Contract |
 | --- | --- |

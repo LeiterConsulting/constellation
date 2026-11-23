@@ -30,6 +30,12 @@ Verify symbols and entry points against your current branch before editing. [Dis
 7. Give create its own timeout based on the jointly measured pilot contract. Keep status short and independently callable while create is in flight. The current 45-second non-search default would interrupt some observed Constellation workloads. Resume with status after an ambiguous response, using capped backoff and the returned poll hint. A local wait deadline leaves an unresolved request available in the chat history. Closing the chat or stopping local polling is not server-side cancellation.
 8. Only after a valid `not_found` and within the contract's retry window may the app send the identical request once on the same binding. Concurrent actions should converge on the same operation. Avoid logging generic tool arguments, results or URLs. Log only redacted action, state, timing and safe error code.
 
+## Inspect the selected source
+
+Use `constellation_inspect_dashboard_source` when the verified connection advertises the optional tool. Show the active source and time range first. Run inspection in the background if the card has no fresh sample for that exact connection, identity, scope and range. Discard late results after any of those change. Treat output-row coverage and field-name unit hints as planning context. A partial or inconclusive sample can still support a reviewed plan. Keep the user's outbound and Incognito settings in effect when passing any sample metadata to a model. [Source inspection contract](mcp-dashboard-contract.md#optional-source-inspection)
+
+Create receives the reviewed source and range and runs fresh validation. Keep it available under its usual authorization rules when inspection is absent or unavailable.
+
 ## Receipt and card
 
 Parse the real MCP envelope before rendering. Support the one qualified wrapper for the target, including JSON text inside MCP content if needed. Treat transport errors, JSON-RPC errors, `isError`, malformed results and unknown versions as failures to read the receipt. Require the original request ID, validate types and lengths, and check URL paths against the verified IDs. Accept only HTTPS using the independently configured Splunk Web base for that connection, including port and proxy prefix. Reject arbitrary external destinations, credentials in URLs and unexpected route components. Render warnings and messages as text.

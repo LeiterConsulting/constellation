@@ -110,6 +110,16 @@ Human/independent reviews remain follow-up work. No unaided-user success rate, i
 
 This heading preserves the original qualification link. Read the [complete dated 1.0 record](reference/validation-1.0.md#100-technical-release-candidate--october-29-2026). The accepted candidate bytes were published unchanged.
 
+## 1.1.0-preview build 66
+
+The installable MCP preview archive has SHA-256 `311b9712201d176500823f18660bcd8ac75e22ae84d840623da80d34673ee4a7`. The package contains 559 regular files beneath `constellation/`. It passed 689 Python tests, 151 frontend tests, the production build, and archive checks for macOS sidecars and local data. The packaged tool declarations and REST mappings were checked against the runtime. [Pilot evidence and setup](integrations/mcp-dashboard-pilot.md#build-evidence)
+
+On build 65, a live Discovery chat and report each produced a private native Studio dashboard and matching Constellation draft through Ollama. A separate test through the existing signed-in Discovery connection created a private pair through OpenAI in 6.1 seconds. An explicit status call returned the same artifact IDs. Readback verified the definitions, caller ownership and synthetic search output. Opening the links in Splunk Web remained unverified in that lab.
+
+Build 66 adds optional, current-user source inspection. Constellation's handler and sampling tests passed. Discovery's synthetic browser tests covered changes of scope, partial samples, late replies and plan review. Discovery also parsed synthetic index and SPL responses from the build 66 schema and implementation. Live inspection through the Splunk MCP gateway and distinct-user qualification are pending.
+
+Local AppInspect 4.4.0 passed the MCP signature-specific check. Its general static-directory check rejected the JSON signature file at Splunk's documented registration path. This build is a single-search-head Enterprise lab preview. Cloud and production qualification remain pending. [Splunk MCP app registration](https://dev.splunk.com/enterprise/docs/devtools/splunkmcp/addmcptoapps)
+
 ## Earlier evidence
 
 The [validation history](history/validation.md) retains every earlier dated section, package hash, failed candidate and bounded rerun. Development milestones are not all separate releases. The [changelog](../CHANGELOG.md) identifies included increments.

@@ -9,7 +9,8 @@ from splunk.persistconn.application import PersistentServerConnectionApplication
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from draft_service import DraftService, state_digest
-from mcp_pilot_input import config, invalid, parse_brief, request_identity, strict_object
+from mcp_pilot_input import config, invalid, parse_brief, parse_inspection, request_identity, strict_object, validate_arguments
+from mcp_pilot_inspection import inspect_source
 from mcp_pilot_ledger import PilotLedger
 from mcp_pilot_service import PilotCreation
 from provider_service import ProviderError
@@ -31,13 +32,13 @@ def mapping(pairs):
     return result
 
 
-def wire_arguments(request, create):
-    if create:
+def wire_arguments(request, post):
+    if post:
         payload = request.get('payload', '')
         if not isinstance(payload, str) or len(payload) > 55000:
             raise invalid()
         if payload.lstrip().startswith('{'):
-            # The outer JSON can expand the inner UTF-8 brief through escaping.
+            # The outer JSON can expand the inner UTF-8 document through escaping.
             return strict_object(payload, maximum=55000)
         try:
             return mapping(parse_qsl(payload, keep_blank_values=True, strict_parsing=True,
@@ -61,19 +62,24 @@ class PilotHandler(PersistentServerConnectionApplication):
 
     def handle(self, raw):
         try:
-            if self.operation not in ('create', 'status'):
+            if self.operation not in ('create', 'status', 'inspect'):
                 return self.response(503, {'error': 'The pilot endpoint is unavailable.', 'code': 'pilot_unconfirmed'})
             create = self.operation == 'create'
+            inspection = self.operation == 'inspect'
+            post = self.operation != 'status'
             request = json.loads(raw)
-            if request.get('method', '').upper() != ('POST' if create else 'GET'):
+            if request.get('method', '').upper() != ('POST' if post else 'GET'):
                 return self.response(405, {'error': 'Use the registered tool method.', 'code': 'method_not_allowed'})
             settings = config()
             if settings['mode'] == 'off':
                 raise ProviderError('The dashboard pilot is disabled.', 403, 'feature_disabled')
             session = request.get('session') or {}
             user, token = session.get('user'), session.get('authtoken')
-            arguments = wire_arguments(request, create)
-            identifier, issued = request_identity(arguments, create)
+            arguments = wire_arguments(request, post)
+            if inspection:
+                validate_arguments(arguments, {'schema_version', 'expected_user', 'scope_json'})
+            else:
+                identifier, issued = request_identity(arguments, create)
             if not isinstance(user, str) or not token or user != arguments['expected_user'] or user not in settings['users']:
                 raise ProviderError('The dashboard pilot is unavailable to this identity.', 403, 'identity_unavailable')
             runtime = SearchService(user, token)
@@ -81,6 +87,13 @@ class PilotHandler(PersistentServerConnectionApplication):
             context = entries[0].get('content', {}) if len(entries) == 1 else {}
             if context.get('username') != user or 'search' not in context.get('capabilities', []):
                 raise ProviderError('The dashboard pilot is unavailable to this identity.', 403, 'identity_unavailable')
+            if inspection:
+                if settings['mode'] == 'probe':
+                    raise ProviderError('Probe mode does not run source inspection searches.', 403, 'pilot_probe_only')
+                if settings['mode'] != 'authoring':
+                    raise ProviderError('Source inspection requires dashboard authoring mode.', 403, 'feature_disabled')
+                scope = parse_inspection(arguments['scope_json'])
+                return self.response(200, inspect_source(runtime, scope))
             brief = parse_brief(arguments['brief_json']) if create else None
             if settings['mode'] == 'probe':
                 evidence = {'mode': 'probe', 'identity_verified': True}
@@ -92,6 +105,8 @@ class PilotHandler(PersistentServerConnectionApplication):
             root = Path(os.environ['SPLUNK_HOME']) / 'var' / 'lib' / 'splunk' / 'constellation_mcp_pilot'
             service = PilotCreation(runtime, DraftService(user, token), PilotLedger(root), settings)
             result = service.create(identifier, issued, brief) if create else service.status(identifier)
+            if not create and result['status'] == 'not_found':
+                result['pilot'] = {'mode': settings['mode'], 'identity_verified': True}
             return self.response(200, result)
         except ProviderError as error:
             # Only application-defined messages may cross the pilot boundary.
@@ -100,5 +115,8 @@ class PilotHandler(PersistentServerConnectionApplication):
                 return self.response(error.status, {'error': 'The Splunk pilot request failed.', 'code': 'pilot_request_failed'})
             return self.response(error.status, {'error': str(error), 'code': code})
         except Exception:
+            if self.operation == 'inspect':
+                return self.response(503, {'error': 'Source inspection is temporarily unavailable.',
+                                           'code': 'inspection_unavailable'})
             return self.response(503, {'error': 'The pilot response could not be confirmed. Check status.',
                                        'code': 'pilot_unconfirmed'})

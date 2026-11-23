@@ -79,5 +79,37 @@
       "expected_user"
     ],
     "additionalProperties": false
+  },
+  "inspect_dashboard_source": {
+    "title": "Inspect a dashboard source",
+    "type": "object",
+    "properties": {
+      "schema_version": {
+        "type": "string",
+        "title": "Contract version",
+        "description": "Use dashboard contract version 1.",
+        "enum": ["1"],
+        "required": "true"
+      },
+      "expected_user": {
+        "type": "string",
+        "title": "Expected Splunk user",
+        "description": "The verified Splunk username from this connection binding.",
+        "required": "true"
+      },
+      "scope_json": {
+        "type": "string",
+        "title": "Dashboard source and time range",
+        "description": "One serialized v1 object with a literal index or guarded SPL source and a supported rolling time range.",
+        "required": "true"
+      }
+    },
+    "required": ["schema_version", "expected_user", "scope_json"],
+    "additionalProperties": false,
+    "body_template": {
+      "schema_version": "$schema_version$",
+      "expected_user": "$expected_user$",
+      "scope_json": "$scope_json$"
+    }
   }
 }
