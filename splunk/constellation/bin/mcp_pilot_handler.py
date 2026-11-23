@@ -11,7 +11,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from draft_service import DraftService, state_digest
 from mcp_pilot_input import config, invalid, parse_brief, parse_inspection, request_identity, strict_object, validate_arguments
 from mcp_pilot_inspection import inspect_source
-from mcp_pilot_ledger import PilotLedger
+from mcp_pilot_ledger import DEFAULT_AUTHOR_LIMIT, PilotLedger
 from mcp_pilot_service import PilotCreation
 from provider_service import ProviderError
 from search_service import SearchService
@@ -103,10 +103,13 @@ class PilotHandler(PersistentServerConnectionApplication):
                                          code='pilot_probe_only', pilot=evidence))
                 return self.response(200, PilotCreation.reply(identifier, 'not_found', pilot=evidence))
             root = Path(os.environ['SPLUNK_HOME']) / 'var' / 'lib' / 'splunk' / 'constellation_mcp_pilot'
-            service = PilotCreation(runtime, DraftService(user, token), PilotLedger(root), settings)
+            ledger = PilotLedger(root, author_limit=settings.get('author_limit', DEFAULT_AUTHOR_LIMIT))
+            service = PilotCreation(runtime, DraftService(user, token), ledger, settings)
             result = service.create(identifier, issued, brief) if create else service.status(identifier)
             if not create and result['status'] == 'not_found':
                 result['pilot'] = {'mode': settings['mode'], 'identity_verified': True}
+                if settings['mode'] == 'authoring':
+                    result['pilot']['receipt_capacity'] = ledger.capacity(user)
             return self.response(200, result)
         except ProviderError as error:
             # Only application-defined messages may cross the pilot boundary.

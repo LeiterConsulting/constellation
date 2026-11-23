@@ -110,6 +110,16 @@ Human/independent reviews remain follow-up work. No unaided-user success rate, i
 
 This heading preserves the original qualification link. Read the [complete dated 1.0 record](reference/validation-1.0.md#100-technical-release-candidate--october-29-2026). The accepted candidate bytes were published unchanged.
 
+## 1.1.0-preview.2 build 70
+
+The installable archive has SHA-256 `5fb8dfe4bd1aa82157abf46f2f676263a2492cbcef2802f7ace005f60f728dc0` and contains 557 regular files. The companion registration JSON has SHA-256 `9b796a6721f26ddd7c7dd1dc39b6a1a23af82b042da1cf636ddbe2592e12597a`. This package passed 697 Python tests, 151 frontend tests, and the production build. Local AppInspect 4.4.0 precert returned zero errors, failures, or future failures, with eight warning checks and one skipped check. Cloud certification remains separate.
+
+Splunk MCP Server 1.2.1 accepted the generated Create, Status, and Inspect definitions in an isolated disabled namespace. Readback matched the execution mappings and required arguments. The existing enabled tool names, execution mappings, and required argument types agreed with the release payload. Removing the disabled test entries preserved every active catalog entry.
+
+On the Enterprise 10.4.4 and Splunk MCP Server 1.2.1 lab, the existing signed-in connection listed Create, Status, and Inspect. An intentional empty source returned `needs_input/no_data`, and a fresh Status lookup returned the same code. The reviewed retry saved a private native dashboard and matching draft.
+
+Discovery chat and report each produced a four-panel OpenAI-authored dashboard on the preceding lab build. Native and draft definitions matched. All eight searches started with the exact reviewed synthetic base and used the one-hour range. Safari opened both native dashboards and both editable drafts. Each showed 12 requests, three failures, a failure timeline, and a grouped service comparison. Distinct-user and production qualification are outside this run.
+
 ## 1.1.0-preview build 66
 
 The installable MCP preview archive has SHA-256 `311b9712201d176500823f18660bcd8ac75e22ae84d840623da80d34673ee4a7`. The package contains 559 regular files beneath `constellation/`. It passed 689 Python tests, 151 frontend tests, the production build, and archive checks for macOS sidecars and local data. The packaged tool declarations and REST mappings were checked against the runtime. [Pilot evidence and setup](integrations/mcp-dashboard-pilot.md#build-evidence)

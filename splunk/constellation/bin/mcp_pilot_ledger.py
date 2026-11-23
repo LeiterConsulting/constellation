@@ -1,5 +1,6 @@
 """Single-head operation claims. Stores IDs, digests and bounded receipt metadata."""
 from contextlib import contextmanager
+from datetime import datetime, timezone
 import json
 import os
 from pathlib import Path
@@ -12,6 +13,8 @@ from provider_service import ProviderError
 RETAIN_SECONDS = 7 * 86400
 ADMISSION_SECONDS = 86400
 CLAIM_SECONDS = 90
+DEFAULT_AUTHOR_LIMIT = 12
+MAX_AUTHOR_LIMIT = 32
 TERMINAL = {'created', 'draft_only', 'failed', 'needs_input', 'indeterminate'}
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS operations (
@@ -25,10 +28,11 @@ CREATE TABLE IF NOT EXISTS operations (
 
 
 class PilotLedger:
-    def __init__(self, root, clock=time.time):
+    def __init__(self, root, clock=time.time, *, author_limit=DEFAULT_AUTHOR_LIMIT):
         self.root = Path(root)
         self.path = self.root / 'operations.sqlite3'
         self.clock = clock
+        self.author_limit = author_limit
 
     @contextmanager
     def connection(self, writable):
@@ -67,6 +71,22 @@ class PilotLedger:
             row = self.load(connection, owner, request_id)
             return row[1] if row and row[0] + RETAIN_SECONDS > self.clock() else None
 
+    def capacity(self, owner):
+        retained, oldest = 0, None
+        if self.path.exists():
+            cutoff = int(self.clock()) - RETAIN_SECONDS
+            with self.connection(writable=False) as connection:
+                retained, oldest = connection.execute(
+                    'SELECT count(*), min(accepted) FROM operations WHERE owner = ? AND accepted > ?',
+                    (owner, cutoff)).fetchone()
+        return {
+            'limit': self.author_limit,
+            'retained': retained,
+            'available': max(0, self.author_limit - retained),
+            'next_expiration': (datetime.fromtimestamp(oldest + RETAIN_SECONDS, timezone.utc)
+                                .strftime('%Y-%m-%dT%H:%M:%SZ')) if oldest is not None else None,
+        }
+
     def claim(self, owner, request_id, issued_at, digest, *, lease=CLAIM_SECONDS):
         now = int(self.clock())
         with self.connection(writable=True) as connection:
@@ -82,7 +102,7 @@ class PilotLedger:
                 raise ProviderError('This dashboard request ID is outside its admission window.', 422,
                                     'request_expired')
             owned = connection.execute('SELECT payload FROM operations WHERE owner = ?', (owner,)).fetchall()
-            if len(owned) >= 12 or connection.execute('SELECT count(*) FROM operations').fetchone()[0] >= 128:
+            if len(owned) >= self.author_limit or connection.execute('SELECT count(*) FROM operations').fetchone()[0] >= 128:
                 raise ProviderError('The pilot receipt limit has been reached.', 429, 'pilot_capacity')
             if any(self.active(json.loads(row[0])) for row in owned):
                 raise ProviderError('An operation is already in progress for this author.', 429, 'pilot_busy')

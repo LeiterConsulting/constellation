@@ -11,6 +11,7 @@ from xml.sax.saxutils import escape
 from check_repository import path_issues, text_issues
 from package_runtime import pin_driver_revision
 from package_licenses import collect_runtime_notices
+from package_mcp_registration import ASSET_SUFFIX, DECLARATIONS, registration
 
 ROOT = Path(__file__).resolve().parents[1]
 source = ROOT / 'splunk' / 'constellation'
@@ -29,16 +30,24 @@ version = json.loads((ROOT / 'package.json').read_text())['version']
 definition_json = json.dumps(definition, indent=2).replace(']]>', ']]]]><![CDATA[>')
 xml = '<dashboard version="2" theme="light"><label>' + escape(definition['title']) + '</label><description>' + escape(definition['description']) + '</description><definition><![CDATA[' + definition_json + ']]></definition></dashboard>'
 files = {'constellation/LICENSE': (ROOT / 'LICENSE').read_bytes()}
+registration_text = json.dumps(registration(source), indent=2) + '\n'
+if text_issues(registration_text):
+    raise SystemExit('Refusing to package unreviewed MCP registration text.')
+registration_data = registration_text.encode()
 for path in sorted(source.rglob('*')):
     if path.is_file() and '__pycache__' not in path.parts and path.suffix != '.pyc':
+        relative = path.relative_to(source).as_posix()
+        # Register with the management API so App Manager does not replace existing schemas.
+        if relative in DECLARATIONS:
+            continue
         data = path.read_bytes()
-        name = 'splunk/constellation/' + str(path.relative_to(source))
+        name = 'splunk/constellation/' + relative
         issues = path_issues(name)
         try: issues += text_issues(data.decode('utf-8'))
         except UnicodeDecodeError: pass
         if issues:
             raise SystemExit('Refusing to package ' + name + ': ' + ', '.join(issues))
-        files['constellation/' + str(path.relative_to(source))] = data
+        files['constellation/' + relative] = data
 for path in sorted(dist.rglob('*')):
     if path.is_file() and path.name != 'index.html' and '.vite' not in path.relative_to(dist).parts: files['constellation/appserver/static/' + str(path.relative_to(dist))] = path.read_bytes()
 # Splunk Web can retain its static cache key across an app update. Give each
@@ -97,5 +106,9 @@ with output.open('wb') as handle:
     with gzip.GzipFile(fileobj=handle, mode='wb', filename='', mtime=0) as compressed:
         compressed.write(buffer.getvalue())
 digest = hashlib.sha256(output.read_bytes()).hexdigest()
-(output.parent / 'SHA256SUMS').write_text(digest + '  ' + output.name + '\n')
+registration_output = output.parent / ('constellation-' + version + ASSET_SUFFIX)
+registration_output.write_bytes(registration_data)
+registration_digest = hashlib.sha256(registration_data).hexdigest()
+(output.parent / 'SHA256SUMS').write_text(f'{digest}  {output.name}\n'
+                                         f'{registration_digest}  {registration_output.name}\n')
 print(json.dumps({'artifact': str(output), 'sha256': digest, 'files': len(files), 'bytes': output.stat().st_size}))

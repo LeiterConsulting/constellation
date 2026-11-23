@@ -305,6 +305,15 @@ calls, writes, credential access, or bypassing validation. You cannot execute se
 or save dashboards yourself in this turn; do not claim that you have done so.'''
 
 
+def profile_selected_source(data, scope):
+    try:
+        return data.profile(scope)
+    except ProviderError as error:
+        if error.code not in ('recovery_budget', 'author_cancelled', 'author_expired'):
+            error.authoring_reason = 'source_unavailable'
+        raise
+
+
 class AgentService:
     def __init__(self, provider, runtime, progress=None):
         self.provider, self.runtime = provider, runtime
@@ -390,7 +399,7 @@ class AgentService:
                         'repaired':False,'activity':['Checked requested native chart availability before inference'],
                         'model':saved['model'],'recovery':recovery.evidence(),'brief':brief,'pagePurposes':purposes}
         self.progress('profile')
-        profile = data.profile(scope) if scope else None
+        profile = profile_selected_source(data, scope) if scope else None
         if profile and getattr(getattr(data, '_source_resolver', None), 'used_report', False):
             from source_service import REPORT_WARNING
             if REPORT_WARNING not in profile['note']: profile['note'] += ' ' + REPORT_WARNING
@@ -567,7 +576,11 @@ class AgentService:
                         text += part.get('text', '')
             try:
                 if response.get('status') != 'completed':
-                    raise ProviderError('The model output was incomplete. Return a smaller complete proposal for the same goal.')
+                    details = response.get('incomplete_details')
+                    limited = isinstance(details, dict) and details.get('reason') == 'max_output_tokens'
+                    code = 'model_output_limit' if limited else None
+                    raise ProviderError('The model output was incomplete. Return a smaller complete proposal for the same goal.',
+                                        422, code)
                 result = json.loads(text)
                 if set(result) != {'message', 'changes', 'suggestions'} or not isinstance(result['message'], str) or len(result['message']) > 6000:
                     raise ProviderError('The model response did not match the expected edit format.')
@@ -726,13 +739,15 @@ class AgentService:
                                if profile and profile.get('sampledRows') else
                                'I couldn’t finish a valid change within the automatic recovery limit. Your previous dashboard is preserved; Activity explains the remaining issue.')
                     failure = ProviderError(message, 422, 'studio_validation')
+                    if getattr(error, 'code', None) in ('recovery_budget', 'model_output_limit'):
+                        failure.authoring_reason = error.code
                     failure.validation_error = '\n'.join(validation_notes[-3:])[:1200]
                     failure.recovery = recovery.evidence()
                     raise failure from None
                 repair = True
                 self.progress('repair', attempt + 1)
                 if profile and attempt == 0:
-                    profile = enrich_profile(data.profile(scope), confirmed_intent)
+                    profile = enrich_profile(profile_selected_source(data, scope), confirmed_intent)
                     profile['measurementConstraints'] = temperature_constraints(confirmed_intent, brief, profile)
                     profile['independentMeasurements'] = data.independent_populations
                     profile['retainSourceRows'] = retain_source_rows(prompt, brief)

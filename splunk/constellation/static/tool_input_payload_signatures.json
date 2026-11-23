@@ -1,6 +1,6 @@
 {
   "create_dashboard": {
-    "title": "Create a dashboard pilot fixture",
+    "title": "Create a private Dashboard Studio dashboard",
     "type": "object",
     "properties": {
       "schema_version": {

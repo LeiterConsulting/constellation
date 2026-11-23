@@ -2,6 +2,8 @@
 
 This guide is for Splunk administrators installing **1.0.2**. Authors can start with the [user guide](user-guide.md) once installation and provider access are ready.
 
+For the separate **1.1.0-preview.2** release, follow the [MCP pilot runbook](integrations/mcp-dashboard-pilot.md) to install the preview and register or verify its tools.
+
 ## Check the deployment
 
 | Requirement | 1.0 scope |

@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 import sys
 import unittest
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'splunk/constellation/bin'))
 from provider_service import ProviderError, ProviderService
@@ -127,6 +128,37 @@ class StudioAgentTests(unittest.TestCase):
         client = Client([bad, bad, bad])
         with self.assertRaises(ProviderError): AgentService(ProviderService(Store(), client), Runtime()).assist(self.body())
         self.assertEqual(len(client.calls), 3)
+
+    def test_bounded_repair_retains_typed_output_and_recovery_limit_reasons(self):
+        provider = ProviderService(Store())
+        service = AgentService(provider, Runtime())
+        incomplete = {'status': 'incomplete', 'incomplete_details': {'reason': 'max_output_tokens'}}
+        with patch.object(provider, 'complete', return_value=incomplete) as complete, \
+                self.assertRaises(ProviderError) as error:
+            service.assist(self.body())
+        self.assertEqual(complete.call_count, 3)
+        self.assertEqual(error.exception.code, 'studio_validation')
+        self.assertEqual(error.exception.authoring_reason, 'model_output_limit')
+        good = self.result([change('/title', 'Healthy')])
+        client = Client([good])
+        service = AgentService(ProviderService(Store(), client), Runtime())
+        with patch('agent_service.validate_features', side_effect=ProviderError('Search budget exhausted.', 422, 'recovery_budget')), \
+                self.assertRaises(ProviderError) as error:
+            service.assist(self.body())
+        self.assertEqual(len(client.calls), 1)
+        self.assertEqual(error.exception.code, 'studio_validation')
+        self.assertEqual(error.exception.authoring_reason, 'recovery_budget')
+
+    def test_selected_source_error_preserves_the_original_code_and_a_safe_reason(self):
+        client = Client([])
+        service = AgentService(ProviderService(Store(), client), Runtime())
+        with patch('agent_service.DataService.profile',
+                   side_effect=ProviderError('Synthetic native diagnostic.', 422, 'preview_failed')), \
+                self.assertRaises(ProviderError) as error:
+            service.assist(self.body(dataContext={'index': 'fixture_index', 'earliest': '-24h'}))
+        self.assertEqual(client.calls, [])
+        self.assertEqual(error.exception.code, 'preview_failed')
+        self.assertEqual(error.exception.authoring_reason, 'source_unavailable')
 
     def test_newer_visualization_is_not_added_to_older_target(self):
         bad = self.result([change('/visualizations/viz_network', {'type': 'splunk.networkgraph'})])

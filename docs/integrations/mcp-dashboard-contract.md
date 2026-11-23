@@ -94,7 +94,7 @@ Synthetic `tools/call` arguments, shown with the proposed callable name:
 
 ## Receipt
 
-Every application receipt carries string `schema_version`, `request_id`, `status` and an array of `warnings` with bounded `code` and `message`. `message` is optional display text. `running` also carries `stage` (`accepted`, `authoring`, `validating`, `saving_draft` or `saving_native`) and `poll_after_ms`. `needs_input` carries one `question`. `failed` and `indeterminate` carry a safe `code`. Treat unknown statuses or versions as a client compatibility error.
+Every application receipt carries string `schema_version`, `request_id`, `status` and an array of `warnings` with bounded `code` and `message`. `message` is optional display text. `running` also carries `stage` (`accepted`, `authoring`, `validating`, `saving_draft` or `saving_native`) and `poll_after_ms`. `needs_input` carries one `question` and may carry a safe `code`. `failed` and `indeterminate` carry a safe `code`. Treat unknown statuses or versions as a client compatibility error.
 
 | Status | What Discovery shows | Links |
 | --- | --- | --- |
@@ -107,6 +107,25 @@ Every application receipt carries string `schema_version`, `request_id`, `status
 | `not_found` | No usable receipt for this connection and caller. | None. Status tool only. |
 
 For status lookup, send the same `schema_version`, `expected_user` and `request_id` without the brief.
+
+An authoring-mode `not_found` response may include `pilot.receipt_capacity` for the verified caller. Its `limit`, `retained` and `available` counts describe that caller's seven-day receipt window. `next_expiration` is the next retained receipt's expiration in UTC or null for an empty window. This lookup does not reserve capacity. It excludes the separate pilot-wide limit and one-active-request check. A Create refused with `pilot_capacity` was never admitted and has no receipt.
+
+### Actionable authoring reasons
+
+Constellation stores the reason with the terminal receipt. Status returns the same code and question as Create for that request. Earlier receipts and general clarifications may include only the question. Display the question when a client lacks a specific action for its code.
+
+| Status | Code | When to use it |
+| --- | --- | --- |
+| `needs_input` | `source_unavailable` | The selected source was unsupported or could not be inspected under the caller. An inconclusive sample belongs here. Review access, scope or time range. |
+| `needs_input` | `no_data` | A complete bounded sample returned zero rows. Try a different source or time range. The fixed fixture also uses `no_data` as a failure code. |
+| `needs_input` | `panel_coverage` | The proposed dashboard did not satisfy the approved page and panel plan or lacked usable search receipts. Simplify the selected panels. |
+| `needs_input` | `authoring_settings` | The caller has no completed provider configuration or its route or model differs from the approved configuration. Review Constellation Settings. |
+| `failed` | `provider_timeout`, `provider_connection` | The provider timed out or its connection was unavailable. Check the connection before retrying. |
+| `failed` | `model_token_limit`, `model_output_limit` | The input exceeded the model's context budget or the output reached its limit. Try a narrower plan or a suitable model. |
+| `failed` | `recovery_budget` | Authoring reached an explicit search, inference or recovery budget. Simplify the plan before retrying. |
+| `failed` | `validation_failed` | A check failed without one of the typed reasons above. |
+
+Questions use fixed text. The receipt contains no provider response body, validation trace or search text. Once saving starts, ambiguous writes still use `indeterminate` and `write_unconfirmed` or reconcile by exact readback.
 
 Example success receipt
 

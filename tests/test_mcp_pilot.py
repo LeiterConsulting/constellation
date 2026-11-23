@@ -15,7 +15,7 @@ from test_drafts_and_data import DataRuntime, MemoryDrafts
 from compatibility import feature_profile
 from dashboard_library import parse_view
 from mcp_pilot_authoring import require_provider
-from mcp_pilot_input import parse_brief, parse_inspection, request_identity, web_base
+from mcp_pilot_input import config, parse_brief, parse_inspection, request_identity, web_base
 from mcp_pilot_inspection import inspect_source
 from mcp_pilot_ledger import ADMISSION_SECONDS, CLAIM_SECONDS, PilotLedger, RETAIN_SECONDS
 from mcp_pilot_service import PilotCreation, build_fixture
@@ -162,6 +162,71 @@ class PilotTests(unittest.TestCase):
             claim(0)
         self.assertEqual(old.exception.code, 'request_expired')
 
+    def test_two_extra_admissions_preserve_receipts_and_expiration(self):
+        def claim(ledger, index, owner='alice'):
+            identifier = IDENTIFIER[:-2] + f'{index:02x}'
+            return identifier, ledger.claim(owner, identifier, self.clock, 'fixture-digest')
+
+        existing = {}
+        for index in range(12):
+            key, _ = claim(self.ledger, index)
+            existing[key] = self.ledger.advance('alice', key, 'accepted', 'failed', code='validation_failed')
+            self.clock += 1
+        peer, _ = claim(self.ledger, 30, owner='bob')
+        self.ledger.advance('bob', peer, 'accepted', 'failed')
+
+        with self.assertRaises(ProviderError) as error:
+            claim(self.ledger, 12)
+        self.assertEqual(error.exception.code, 'pilot_capacity')
+        unchanged = self.ledger.path.read_bytes()
+        self.assertEqual(self.ledger.capacity('alice'), {
+            'limit': 12, 'retained': 12, 'available': 0, 'next_expiration': '2026-11-27T15:00:00Z',
+        })
+        self.assertEqual(self.ledger.capacity('bob')['retained'], 1)
+        self.assertEqual(self.ledger.path.read_bytes(), unchanged)
+
+        raised = PilotLedger(self.ledger.root, clock=lambda: self.clock, author_limit=14)
+        self.assertEqual(raised.capacity('alice')['available'], 2)
+        key, _ = claim(raised, 12)
+        with self.assertRaises(ProviderError) as busy:
+            claim(raised, 13)
+        self.assertEqual(busy.exception.code, 'pilot_busy')
+        raised.advance('alice', key, 'accepted', 'failed')
+        second, _ = claim(raised, 13)
+        with self.assertRaises(ProviderError) as full:
+            claim(raised, 14)
+        self.assertEqual(full.exception.code, 'pilot_capacity')
+        for key, stored in existing.items():
+            self.assertEqual(raised.get('alice', key), stored)
+        self.assertEqual(self.ledger.get('alice', second)['stage'], 'accepted')
+        self.assertEqual(self.ledger.capacity('alice')['available'], 0)
+        self.clock = NOW + RETAIN_SECONDS
+        self.assertEqual(raised.capacity('alice')['available'], 1)
+        self.assertIsNone(raised.get('alice', next(iter(existing))))
+
+    def test_authoring_capacity_override_requires_a_single_allowlisted_author(self):
+        with TemporaryDirectory() as temp:
+            local = Path(temp) / 'local'
+            local.mkdir()
+            path = local / 'constellation_mcp_pilot.conf'
+            base = ('[pilot]\nmode = authoring\nweb_base = ' + BASE
+                    + '\nauthoring_provider = openai\nauthoring_route = https://api.openai.com/v1'
+                      '\nauthoring_model = fixture\n')
+            for users, setting, expected in (
+                ('alice, bob', '', 12), ('alice', '14', 14), ('alice', '32', 32),
+                ('alice, bob', '14', None), ('', '14', None),
+                ('alice', '33', None), ('alice', '11', None), ('alice', 'invalid', None),
+            ):
+                with self.subTest(users=users, setting=setting):
+                    path.write_text(base + 'allowed_users = ' + users + '\n'
+                                    + ('authoring_receipt_limit = ' + setting + '\n' if setting else ''))
+                    if expected is None:
+                        with self.assertRaises(ProviderError) as invalid:
+                            config(temp)
+                        self.assertEqual(invalid.exception.code, 'pilot_configuration')
+                    else:
+                        self.assertEqual(config(temp)['author_limit'], expected)
+
     def test_out_of_scope_requests_do_not_search_or_write(self):
         for n, incoming in enumerate((dict(brief(), requirements='Use seconds.'), dict(brief(), source={
                 'kind': 'spl', 'query': 'search index=fixture_index'})), 1):
@@ -203,7 +268,61 @@ class PilotTests(unittest.TestCase):
         with self.assertRaises(ProviderError) as error:
             require_provider({'provider': 'ollama', 'base_url': 'https://other.example.com',
                               'model': approved[2]}, approved)
-        self.assertEqual(error.exception.code, 'authoring_input')
+        self.assertEqual(error.exception.code, 'authoring_settings')
+
+    def test_terminal_authoring_reasons_survive_status_and_duplicate_create(self):
+        self.settings.update(mode='authoring', provider_route=('openai', 'https://api.openai.com/v1', 'fixture'))
+        cases = (
+            ('source_unavailable', 'needs_input', 'source_unavailable'),
+            ('no_data', 'needs_input', 'no_data'),
+            ('panel_coverage', 'needs_input', 'panel_coverage'),
+            ('authoring_settings', 'needs_input', 'authoring_settings'),
+            ('authoring_input', 'needs_input', None),
+            ('provider_timeout', 'failed', 'provider_timeout'),
+            ('openai_connection_unavailable', 'failed', 'provider_connection'),
+            ('model_context_budget', 'failed', 'model_token_limit'),
+            ('model_output_limit', 'failed', 'model_output_limit'),
+            ('recovery_budget', 'failed', 'recovery_budget'),
+            ('private-unknown-diagnostic', 'failed', 'validation_failed'),
+        )
+        for index, (reason, outcome, code) in enumerate(cases):
+            with self.subTest(reason=reason):
+                identifier = IDENTIFIER[:-2] + f'{index:02x}'
+                failure = ProviderError('private diagnostic with SPL http://example.invalid/raw', 422, reason)
+                with patch('mcp_pilot_service.build_authoring', side_effect=failure) as author:
+                    reply = self.service().create(identifier, NOW, brief())
+                    self.assertEqual(reply['status'], outcome)
+                    self.assertEqual(reply.get('code'), code)
+                    self.assertEqual('question' in reply, outcome == 'needs_input')
+                    self.assertNotRegex(json.dumps(reply), r'private diagnostic|example\.invalid|private-unknown-diagnostic')
+                    self.ledger = PilotLedger(self.ledger.root, clock=lambda: self.clock)
+                    self.assertEqual(self.service().status(identifier), reply)
+                    self.assertEqual(self.service().create(identifier, NOW, brief()), reply)
+                    author.assert_called_once()
+        self.assertEqual(self.drafts.writes, 0)
+        self.assertFalse(self.drafts.entries)
+        self.assertNotIn(b'private diagnostic', self.ledger.path.read_bytes())
+
+    def test_no_changes_distinguishes_an_empty_source_from_an_inconclusive_profile(self):
+        self.settings.update(mode='authoring', provider_route=('openai', 'https://api.openai.com/v1', 'fixture'))
+        for completion, expected in (('complete', 'no_data'), ('unknown', 'source_unavailable')):
+            with self.subTest(completion=completion), patch('mcp_pilot_authoring.AgentService') as agent, \
+                    patch('mcp_pilot_authoring.user_provider'):
+                agent.return_value.assist.return_value = {
+                    'changes': [], 'dataProfile': {'sampledRows': 0, 'completion': {'state': completion}},
+                }
+                identifier = IDENTIFIER[:-1] + ('0' if completion == 'complete' else '1')
+                reply = self.service().create(identifier, NOW, brief())
+                self.assertEqual(reply['status'], 'needs_input')
+                self.assertEqual(reply['code'], expected)
+                self.assertEqual(self.service().status(identifier), reply)
+
+    def test_save_failure_still_requires_uncertain_write_reconciliation(self):
+        with patch.object(self.drafts, 'write', side_effect=ProviderError('Write outcome unknown.', 504, 'provider_timeout')):
+            reply = self.service().create(IDENTIFIER, NOW, brief())
+        self.assertEqual(reply['status'], 'indeterminate')
+        self.assertEqual(reply['code'], 'write_unconfirmed')
+        self.assertEqual(self.service().status(IDENTIFIER), reply)
 
     def test_exact_envelope_and_restricted_url(self):
         self.assertEqual(parse_brief(json.dumps(brief())), brief())
@@ -285,10 +404,15 @@ class PilotHandlerTests(unittest.TestCase):
                     runtime.return_value.request.reset_mock()
                     reply = status.handle(json.dumps(wire))
                     self.assertEqual(reply['status'], 200)
-                    self.assertEqual(reply['payload'], {
+                    expected = {
                         'schema_version': '1', 'request_id': IDENTIFIER, 'status': 'not_found', 'warnings': [],
                         'pilot': {'mode': mode, 'identity_verified': True},
-                    })
+                    }
+                    if mode == 'authoring':
+                        expected['pilot']['receipt_capacity'] = {
+                            'limit': 12, 'retained': 0, 'available': 12, 'next_expiration': None,
+                        }
+                    self.assertEqual(reply['payload'], expected)
                     runtime.return_value.request.assert_called_once_with('/services/authentication/current-context')
             drafts.return_value.request.assert_not_called()
             self.assertFalse((Path(root) / 'var').exists())
@@ -358,6 +482,38 @@ class PilotHandlerTests(unittest.TestCase):
             if method == 'post':
                 self.assertEqual(schemas[name]['body_template'],
                                  {key: '$' + key + '$' for key in schemas[name]['required']})
+
+    def test_release_registration_preserves_mcp_names_and_argument_mappings(self):
+        root = Path(__file__).resolve().parents[1]
+        with patch.object(sys, 'path', [str(root / 'scripts'), *sys.path]):
+            from package_mcp_registration import registration
+        asset = registration(root / 'splunk' / 'constellation')
+        self.assertEqual(asset['external_app_id'], 'constellation')
+        expected = {
+            'constellation_create_dashboard': ('POST', 'create', {'request_id', 'brief_json'}),
+            'constellation_get_creation_status': ('GET', 'status', {'request_id'}),
+            'constellation_inspect_dashboard_source': ('POST', 'inspect', {'scope_json'}),
+        }
+        self.assertEqual(len(asset['tools']), len(expected))
+        for tool in asset['tools']:
+            method, operation, extra = expected[tool['name']]
+            arguments = {'schema_version', 'expected_user'} | extra
+            schema = tool['inputSchema']
+            self.assertEqual(set(schema['required']), arguments)
+            self.assertEqual(set(schema['properties']), arguments)
+            self.assertNotIn('additionalProperties', schema)
+            self.assertNotIn('enabled', tool)
+            execution = tool['_meta']['execution']
+            self.assertEqual(execution['endpoint'], '/services/constellation/mcp/v1/' + operation)
+            self.assertEqual(execution['method'], method)
+            self.assertEqual(execution['params']['output_mode'], 'json')
+            if method == 'GET':
+                self.assertNotIn('body', execution)
+                mapping = {key: value for key, value in execution['params'].items() if key != 'output_mode'}
+            else:
+                self.assertEqual(execution['headers']['Content-Type'], 'application/x-www-form-urlencoded')
+                mapping = execution['body']
+            self.assertEqual(mapping, {key: '$' + key + '$' for key in arguments})
 
 
 class PilotInspectionTests(unittest.TestCase):
