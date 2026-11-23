@@ -21,6 +21,23 @@ PARTIAL = {'code': 'search_partial', 'message': 'A bounded search returned a par
 VERIFIED = {'draft_readback': 'verified', 'native_readback': 'verified',
             'owner_and_privacy': 'verified', 'search_checks': 'bounded'}
 AUTHORING_LEASE_SECONDS = 240
+AUTHORING_QUESTIONS = {
+    'source_unavailable': 'Can you choose a source and time range that this Splunk connection can inspect?',
+    'no_data': 'No rows were returned for the selected source and time range. Can you choose a different source or range?',
+    'panel_coverage': 'Can you simplify the requested pages or panels so each panel can be verified?',
+    'authoring_settings': 'Can you select the approved provider and model in Constellation Settings?',
+    'authoring_input': 'Can you clarify the dashboard plan or choose a source and time range with data?',
+}
+FAILURE_CODES = {
+    'no_data': 'no_data',
+    'provider_timeout': 'provider_timeout',
+    'provider_connection': 'provider_connection',
+    'openai_connection_unavailable': 'provider_connection',
+    'model_context_budget': 'model_token_limit',
+    'model_token_limit': 'model_token_limit',
+    'model_output_limit': 'model_output_limit',
+    'recovery_budget': 'recovery_budget',
+}
 
 
 def build_fixture(runtime, brief):
@@ -134,7 +151,8 @@ class PilotCreation:
             return self.reply(request_id, 'draft_only', warnings=record['warnings'],
                               **self.links(record, draft, None))
         if stage == 'needs_input':
-            return self.reply(request_id, 'needs_input', question=record['question'])
+            details = {'code': record['code']} if 'code' in record else {}
+            return self.reply(request_id, 'needs_input', question=record['question'], **details)
         if stage == 'failed':
             return self.reply(request_id, 'failed', code=record['code'])
         if self.ledger.active(record):
@@ -216,9 +234,15 @@ class PilotCreation:
         except ProviderError as error:
             if stage in ('saving_draft', 'saving_native'):
                 record = self.ledger.advance(self.owner, request_id, stage, 'indeterminate')
-            elif error.code == 'authoring_input':
-                record = self.ledger.advance(self.owner, request_id, stage, 'needs_input', question=str(error))
             else:
-                code = 'no_data' if error.code == 'no_data' else 'validation_failed'
-                record = self.ledger.advance(self.owner, request_id, stage, 'failed', code=code)
+                reason = getattr(error, 'authoring_reason', error.code)
+                if not isinstance(reason, str):
+                    reason = None
+                if authoring and reason in AUTHORING_QUESTIONS:
+                    details = {} if reason == 'authoring_input' else {'code': reason}
+                    record = self.ledger.advance(self.owner, request_id, stage, 'needs_input',
+                                                 question=AUTHORING_QUESTIONS[reason], **details)
+                else:
+                    code = FAILURE_CODES.get(reason, 'validation_failed')
+                    record = self.ledger.advance(self.owner, request_id, stage, 'failed', code=code)
             return self.status(request_id, record)

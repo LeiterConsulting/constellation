@@ -6,7 +6,7 @@ Create and edit **Splunk Dashboard Studio** dashboards through a conversation be
 
 **New in 1.0.2:** shared-search planning for larger multi-page dashboards, stronger native chart bindings and verified additions to selected tables. The existing validation and recovery limits remain in place. [Release evidence](docs/validation.md#102--october-30-2026) records nine repeated ordinary-author flows across all three providers.
 
-**MCP preview** · [Download 1.1.0-preview](https://github.com/LeiterConsulting/constellation/releases/tag/v1.1.0-preview) · [Setup and testing](docs/integrations/mcp-dashboard-pilot.md)
+**MCP preview** · [Download 1.1.0-preview.2](https://github.com/LeiterConsulting/constellation/releases/tag/v1.1.0-preview.2) · [Setup and testing](docs/integrations/mcp-dashboard-pilot.md)
 
 ## Start here
 
@@ -43,7 +43,7 @@ In a Discovery chat or report, browse data on the connected Splunk instance, rev
 | `constellation_create_dashboard` | Rechecks the reviewed source, validates generated searches and Studio bindings, and saves both private artifacts. |
 | `constellation_get_creation_status` | Looks up the caller's request and recovers verified links after a delayed or interrupted response. |
 
-An administrator enables the integration, chooses an approved authoring connection and grants access to pilot authors. Source coverage describes sampled output rows. Create runs fresh checks against the current data. [Administrator runbook](docs/integrations/mcp-dashboard-pilot.md) · [Tool contract](docs/integrations/mcp-dashboard-contract.md) · [Preview evidence](docs/validation.md#110-preview-build-66)
+An administrator enables the integration, chooses an approved authoring connection and grants access to pilot authors. New installs use the separate MCP registration JSON. Existing compatible tool registrations can be reused. Source coverage describes sampled output rows, and Create runs fresh checks against the current data. [Administrator runbook](docs/integrations/mcp-dashboard-pilot.md) · [Tool contract](docs/integrations/mcp-dashboard-contract.md) · [Preview evidence](docs/validation.md#110-preview2-build-70)
 
 ## Stable downloads
 

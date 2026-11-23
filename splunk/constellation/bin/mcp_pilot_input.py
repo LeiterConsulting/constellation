@@ -6,6 +6,7 @@ from pathlib import Path
 import re
 from urllib.parse import urlsplit
 
+from mcp_pilot_ledger import DEFAULT_AUTHOR_LIMIT, MAX_AUTHOR_LIMIT
 from provider_service import ProviderError
 from search_context import RANGES
 
@@ -184,6 +185,11 @@ def config(app_root=None):
                   'web_base': web_base(settings.get('pilot', 'web_base', fallback=''))
                   if mode in ('fixture', 'authoring') else ''}
         if mode == 'authoring':
+            limit = settings.getint('pilot', 'authoring_receipt_limit', fallback=DEFAULT_AUTHOR_LIMIT)
+            if (not DEFAULT_AUTHOR_LIMIT <= limit <= MAX_AUTHOR_LIMIT
+                    or (limit > DEFAULT_AUTHOR_LIMIT and len(result['users']) != 1)):
+                raise ValueError()
+            result['author_limit'] = limit
             result['provider_route'] = tuple(
                 settings.get('pilot', key, fallback='').strip()
                 for key in ('authoring_provider', 'authoring_route', 'authoring_model'))

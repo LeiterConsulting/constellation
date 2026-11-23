@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.1.0-preview.2 · MCP lab pilot
+
+- Preserve actionable source, coverage, settings, and provider outcomes across Create and Status.
+- Report the current author's receipt headroom and next expiration. Keep the default of 12 and allow up to 32 for an administrator-configured single-author lab.
+- Distribute the MCP registration definitions beside the app so existing tool entries can be reused and fresh installs can register the same v1 names, schemas, and endpoints through Splunk MCP Server.
+- Verify native dashboards and editable drafts created from Discovery chat and reports in Safari. [Preview evidence](docs/validation.md#110-preview2-build-70)
+
 ## 1.1.0-preview · MCP lab pilot
 
 - Add optional caller-scoped source inspection for Discovery dashboard cards. Return bounded field coverage before creation and keep full validation in Create.

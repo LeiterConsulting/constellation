@@ -1,6 +1,6 @@
 # Constellation user guide
 
-Create a dashboard from a question and Splunk data, refine it through chat, and save a native Dashboard Studio copy. The core workspace instructions cover version **1.0.2**. The Discovery workflow uses **1.1.0-preview**.
+Create a dashboard from a question and Splunk data, refine it through chat, and save a native Dashboard Studio copy. The core workspace instructions cover version **1.0.2**. The Discovery workflow uses **1.1.0-preview.2**.
 
 **Before you begin:** Constellation must be installed in Splunk, your account must be able to search the chosen data, and a provider must be configured. If **Settings** or **Test model** needs attention, follow [provider setup](providers.md) or ask your administrator.
 
@@ -118,6 +118,8 @@ Attachments can remain in the private draft. Review their content and provider p
 3. Approve the plan. Constellation checks the current source and validates its Studio output. Use **Open dashboard** for the private native copy or **Edit in Constellation** for the matching draft. Sign in to Splunk Web as the owning user.
 
 If the response is delayed or interrupted, use **Check status** on the existing request. The administrator configures MCP access and the approved inference route. Preview creation is unavailable while Discovery's Incognito mode is active. [Setup and qualification](integrations/mcp-dashboard-pilot.md) · [Splunk Discovery Tool repository](https://github.com/LeiterConsulting/splunk-discovery-tool)
+
+If Constellation asks you to change the source, range, or panels, review the revised plan before submitting it again. If the pilot is at capacity, your saved drafts and dashboards remain available. An administrator can check when an existing request receipt will expire.
 
 ## When a step does not complete
 

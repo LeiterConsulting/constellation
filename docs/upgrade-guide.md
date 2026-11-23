@@ -24,6 +24,8 @@ Version 1.0.1 also retains schema 3 and portable format 5. Its optional save rec
 
 Version 1.0.2 also retains schema 3, portable format 5 and the existing credential permissions. Larger initial-board planning requires no stored-document migration. Existing definitions and conversations are preserved. The [1.0.2 qualification](validation.md#102--october-30-2026) records the update checks separately from 1.0.1.
 
+For an MCP preview update, retain the existing caller-owned drafts, dashboards, receipt store, and pilot settings. Preview 2 carries the same v1 MCP routes. Check the enabled catalog against the separate registration JSON after updating. Follow the [registration procedure](integrations/mcp-dashboard-pilot.md#register-the-mcp-tools) for any missing entry.
+
 As an intended ordinary author:
 
 1. Reopen a draft and its conversation, brief, page/input state and pending files.

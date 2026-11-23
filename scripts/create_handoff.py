@@ -7,6 +7,7 @@ import zipfile
 from check_repository import text_issues, path_issues
 from check_documentation import link_findings
 from package_licenses import curated_files, notices_archive
+from package_mcp_registration import ASSET_SUFFIX
 
 ROOT = Path(__file__).resolve().parents[1]
 VERSION = json.loads((ROOT / 'package.json').read_text())['version']
@@ -81,6 +82,8 @@ def main():
     if digest not in recorded:
         raise SystemExit('The app bytes are not identified by the current validation record.')
     files = {package.name: app}
+    registration = package.with_name('constellation-' + VERSION + ASSET_SUFFIX)
+    files[registration.name] = registration.read_bytes()
     files.update(curated_files(ROOT)[1])
     files['constellation-' + VERSION + '-third-party-notices.zip'] = notices_archive(ROOT)
     for name in DOCS:
