@@ -99,7 +99,7 @@ The fixed fixture isolates transport, ownership, native writes and recovery from
 
 ## Build evidence
 
-See the [preview 2 release evidence](../validation.md#110-preview2-build-70) for packaging, registration and Safari checks.
+The published build 70 upgrade preserved all existing MCP entries, settings, receipts, drafts, and native views in the single-head lab. Both Discovery entry points created dashboards afterward. See the [preview 2 release evidence](../validation.md#110-preview2-build-70) for the package, upgrade, and browser checks.
 
 - Build 66 packaged 559 regular files. Its SHA-256 is `311b9712201d176500823f18660bcd8ac75e22ae84d840623da80d34673ee4a7`. The package passed 689 Python tests, 151 frontend tests, the production build and archive checks. Inspection has local contract and handler coverage. Live gateway qualification is pending.
 - Local AppInspect 4.4.0 passed the dedicated MCP signature check on build 66. The general static-directory check still rejects the bundled signature path. The report recorded 0 errors, 1 failure, 8 warnings and 1 skipped check.

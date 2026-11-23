@@ -2,11 +2,11 @@
 
 Create and edit **Splunk Dashboard Studio** dashboards through a conversation beside a live canvas. Choose data your Splunk account can search, refine a selected chart or input, and save a normal native Studio dashboard.
 
-**Version 1.0.2** · [Download](https://github.com/LeiterConsulting/constellation/releases/tag/v1.0.2) · [User guide](docs/user-guide.md) · [Documentation](docs/README.md)
+**Current MCP build: 1.1.0-preview.2** · [Download](https://github.com/LeiterConsulting/constellation/releases/tag/v1.1.0-preview.2) · [Setup](docs/integrations/mcp-dashboard-pilot.md) · [Live upgrade and creation checks](docs/validation.md#110-preview2-build-70)
 
-**New in 1.0.2:** shared-search planning for larger multi-page dashboards, stronger native chart bindings and verified additions to selected tables. The existing validation and recovery limits remain in place. [Release evidence](docs/validation.md#102--october-30-2026) records nine repeated ordinary-author flows across all three providers.
+**Workspace release: 1.0.2** · [Download](https://github.com/LeiterConsulting/constellation/releases/tag/v1.0.2) · [User guide](docs/user-guide.md) · [Documentation](docs/README.md)
 
-**MCP preview** · [Download 1.1.0-preview.2](https://github.com/LeiterConsulting/constellation/releases/tag/v1.1.0-preview.2) · [Setup and testing](docs/integrations/mcp-dashboard-pilot.md)
+Version 1.0.2 adds shared-search planning for larger multi-page dashboards, stronger native chart bindings, and verified additions to selected tables. [Release evidence](docs/validation.md#102--october-30-2026)
 
 ## Start here
 
