@@ -5,7 +5,7 @@ import sys
 from splunk.persistconn.application import PersistentServerConnectionApplication
 import splunk.rest
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from provider_service import ProviderService, ProviderError
+from provider_service import ProviderError, user_provider
 from search_service import SearchService
 from agent_service import AgentService
 from draft_service import DraftService
@@ -13,7 +13,6 @@ from data_service import DataService
 from dashboard_library import DashboardLibrary
 from authoring_progress import AuthoringProgress
 from credential_store import CredentialStore
-from openai_connection import OpenAIStoreProxy, OpenAIClientProxy
 from dashboard_dependencies import DashboardDependencies
 
 
@@ -55,9 +54,7 @@ class ConstellationHandler(PersistentServerConnectionApplication):
             if not isinstance(body, dict):
                 raise ProviderError('Expected a JSON object.')
             runtime = SearchService(session['user'], session['authtoken'])
-            from connection_store import ConnectionStore, ConnectionPreferences
-            store = ConnectionStore(OpenAIStoreProxy(runtime), ConnectionPreferences(session['user'], session['authtoken']))
-            service = ProviderService(store, client=OpenAIClientProxy(runtime), runtime=runtime)
+            service = user_provider(runtime)
             routes = {('GET','settings'): service.settings, ('POST','settings'): lambda: service.save(body),
                       ('POST','models'): service.models, ('POST','test'): service.test,
                       ('POST','assist'): lambda: service.assist(body),

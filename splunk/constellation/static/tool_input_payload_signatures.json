@@ -1,0 +1,115 @@
+{
+  "create_dashboard": {
+    "title": "Create a dashboard pilot fixture",
+    "type": "object",
+    "properties": {
+      "schema_version": {
+        "type": "string",
+        "title": "Contract version",
+        "description": "Use dashboard contract version 1.",
+        "enum": [
+          "1"
+        ],
+        "required": "true"
+      },
+      "request_id": {
+        "type": "string",
+        "title": "Request ID",
+        "description": "UTC timestamp followed by a hyphen and 32 lowercase UUID hex digits.",
+        "pattern": "^[0-9]{8}T[0-9]{6}Z-[a-f0-9]{32}$",
+        "required": "true"
+      },
+      "expected_user": {
+        "type": "string",
+        "title": "Expected Splunk user",
+        "description": "The verified Splunk username from this connection binding.",
+        "required": "true"
+      },
+      "brief_json": {
+        "type": "string",
+        "title": "Dashboard brief",
+        "description": "One serialized v1 dashboard brief JSON object.",
+        "required": "true"
+      }
+    },
+    "required": [
+      "schema_version",
+      "request_id",
+      "expected_user",
+      "brief_json"
+    ],
+    "additionalProperties": false,
+    "body_template": {
+      "schema_version": "$schema_version$",
+      "request_id": "$request_id$",
+      "expected_user": "$expected_user$",
+      "brief_json": "$brief_json$"
+    }
+  },
+  "get_creation_status": {
+    "title": "Read a dashboard creation receipt",
+    "type": "object",
+    "properties": {
+      "schema_version": {
+        "type": "string",
+        "title": "Contract version",
+        "description": "Use dashboard contract version 1.",
+        "enum": [
+          "1"
+        ],
+        "required": "true"
+      },
+      "request_id": {
+        "type": "string",
+        "title": "Request ID",
+        "description": "UTC timestamp followed by a hyphen and 32 lowercase UUID hex digits.",
+        "pattern": "^[0-9]{8}T[0-9]{6}Z-[a-f0-9]{32}$",
+        "required": "true"
+      },
+      "expected_user": {
+        "type": "string",
+        "title": "Expected Splunk user",
+        "description": "The verified Splunk username from this connection binding.",
+        "required": "true"
+      }
+    },
+    "required": [
+      "schema_version",
+      "request_id",
+      "expected_user"
+    ],
+    "additionalProperties": false
+  },
+  "inspect_dashboard_source": {
+    "title": "Inspect a dashboard source",
+    "type": "object",
+    "properties": {
+      "schema_version": {
+        "type": "string",
+        "title": "Contract version",
+        "description": "Use dashboard contract version 1.",
+        "enum": ["1"],
+        "required": "true"
+      },
+      "expected_user": {
+        "type": "string",
+        "title": "Expected Splunk user",
+        "description": "The verified Splunk username from this connection binding.",
+        "required": "true"
+      },
+      "scope_json": {
+        "type": "string",
+        "title": "Dashboard source and time range",
+        "description": "One serialized v1 object with a literal index or guarded SPL source and a supported rolling time range.",
+        "required": "true"
+      }
+    },
+    "required": ["schema_version", "expected_user", "scope_json"],
+    "additionalProperties": false,
+    "body_template": {
+      "schema_version": "$schema_version$",
+      "expected_user": "$expected_user$",
+      "scope_json": "$scope_json$"
+    }
+  }
+}

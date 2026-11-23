@@ -2,7 +2,7 @@
 
 Before changing repository visibility, use the [publication review](publication-review.md). Upstream attribution sources are recorded in [dependency notices](../third_party/README.md).
 
-Choose a path by what you need to do. These guides describe **Constellation 1.0.2**; historical records are kept separately.
+Choose a path by what you need to do. The core guides describe **Constellation 1.0.2**. The MCP preview has its own setup and validation record.
 
 ## Use Constellation
 
@@ -16,6 +16,13 @@ Choose a path by what you need to do. These guides describe **Constellation 1.0.
 The [illustrated user guide](user-guide.md) covers the complete workflow. Download its [PDF edition](https://github.com/LeiterConsulting/constellation/releases/download/v1.0.2/constellation-1.0.2-user-guide.pdf) for offline reading.
 
 [Glossary](glossary.md) explains draft, native copy, scope, token and snapshot.
+
+## Connect Discovery through MCP
+
+- [User workflow](user-guide.md#create-from-discovery-preview) for reviewing a plan, inspecting field coverage and opening the resulting dashboard and draft.
+- [Pilot runbook](integrations/mcp-dashboard-pilot.md) for installation, registration, permissions, provider approval and verification.
+- [MCP tool contract](integrations/mcp-dashboard-contract.md) for the arguments, samples, receipts and recovery behavior of all three tools.
+- [Splunk Discovery Tool repository](https://github.com/LeiterConsulting/splunk-discovery-tool) for the client application.
 
 ## Administer
 

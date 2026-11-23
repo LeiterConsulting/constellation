@@ -1,10 +1,10 @@
 # Constellation user guide
 
-Create a dashboard from a question and Splunk data, refine it through chat, and save a native Dashboard Studio copy. This guide describes version **1.0.2**.
+Create a dashboard from a question and Splunk data, refine it through chat, and save a native Dashboard Studio copy. The core workspace instructions cover version **1.0.2**. The Discovery workflow uses **1.1.0-preview**.
 
 **Before you begin:** Constellation must be installed in Splunk, your account must be able to search the chosen data, and a provider must be configured. If **Settings** or **Test model** needs attention, follow [provider setup](providers.md) or ask your administrator.
 
-**In this guide:** [Build](#build-your-first-dashboard) · [Refine](#refine-a-chart-input-or-page) · [Keep context](#keep-context-with-the-dashboard) · [Pages](#create-pages-and-navigation) · [Resume](#save-reopen-and-restore) · [Native output](#use-the-result-in-splunk) · [Files](#use-an-image-or-pdf-reference) · [Help](#when-a-step-does-not-complete)
+**In this guide:** [Build](#build-your-first-dashboard) · [Refine](#refine-a-chart-input-or-page) · [Keep context](#keep-context-with-the-dashboard) · [Pages](#create-pages-and-navigation) · [Resume](#save-reopen-and-restore) · [Native output](#use-the-result-in-splunk) · [Files](#use-an-image-or-pdf-reference) · [Discovery preview](#create-from-discovery-preview) · [Help](#when-a-step-does-not-complete)
 
 ![Dashboard canvas and docked conversation in the light theme.](images/workspace-docked-light.jpg)
 
@@ -110,6 +110,14 @@ Use **Attach sketch or PDF** when available, describe whether it supplies layout
 At most **two files, 4 MB each** are accepted. OpenAI image/PDF support depends on an exact recognized model ID. Ollama images require advertised vision support; its PDF route is blocked. AITK is text-only. Unknown support blocks file transmission. See [provider and file support](providers.md#reference-files).
 
 Attachments can remain in the private draft. Review their content and provider policy before sending them. **More → Images and icons** is a separate native artwork workflow; see [assets and portability](assets-and-portability.md).
+
+## Create from Discovery preview
+
+1. Open a chat or a report in Splunk Discovery Tool and ask for a dashboard. Use an assigned MCP connection for the Splunk user who will own the result.
+2. Review the plan and time range. Use **Browse Splunk data** to change the index or sourcetype. Index coverage can load in the background. Use **Inspect search** to check reviewed SPL. Field counts describe the sample.
+3. Approve the plan. Constellation checks the current source and validates its Studio output. Use **Open dashboard** for the private native copy or **Edit in Constellation** for the matching draft. Sign in to Splunk Web as the owning user.
+
+If the response is delayed or interrupted, use **Check status** on the existing request. The administrator configures MCP access and the approved inference route. Preview creation is unavailable while Discovery's Incognito mode is active. [Setup and qualification](integrations/mcp-dashboard-pilot.md) · [Splunk Discovery Tool repository](https://github.com/LeiterConsulting/splunk-discovery-tool)
 
 ## When a step does not complete
 

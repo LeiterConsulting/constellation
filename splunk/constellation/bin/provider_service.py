@@ -82,6 +82,14 @@ def has_key(config):
     return bool(config.get('api_key') or config.get('key_configured'))
 
 
+def user_provider(runtime):
+    from connection_store import ConnectionPreferences, ConnectionStore
+    from openai_connection import OpenAIClientProxy, OpenAIStoreProxy
+
+    store = ConnectionStore(OpenAIStoreProxy(runtime), ConnectionPreferences(runtime.user, runtime.token))
+    return ProviderService(store, client=OpenAIClientProxy(runtime), runtime=runtime)
+
+
 class ProviderService:
     def __init__(self, store, client=None, runtime=None, ollama=None):
         from provider_adapters import OllamaClient, AITKClient
